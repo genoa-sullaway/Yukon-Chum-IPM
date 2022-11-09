@@ -1,0 +1,263 @@
+---
+title: "ASL_DFA_Summary"
+author: "Genoa Sullaway"
+date: "11/1/2022"
+output: html_document
+---
+
+```{r set groups}
+upper <- c("Dawson (Village/City)","Yukon Crossing, Y.T., Canada (Village/City)","Bearfeed Creek","Big Salmon River",
+             "Blind Creek" )
+  middle <-c( "Anvik Bluff", "Anvik River","Fairbanks (Village/City)","Galena (Village/City)",
+              "Manley (Village/City)", "Nenana (Village/City)","Nulato (Village/City)","Rampart (Village/City)",
+              "Rampart Rapids", "Ruby (Village/City)", "Stevens Village (Village/City)","Tanana (Village/City)",
+              "Y4 (Subdistrict 4)", "Y5 (Subdistrict 5)","Y6 (Subdistrict 6)","Beaver (Village/City)","Chatanika (Village/City)",
+              "Chena River","Chulitna River","Clear (Village/City)", "Gisasa River", "Goodpaster River", "Henshaw Creek","Kaltag (Village/City)"
+              )
+  lower <-c("Alakanuk (Village/City)", "Big Eddy", "Emmonak (Village/City)","Flat Island","Grayling (Village/City)",
+            "Halfway Island","Kotlik (Village/City)", "Marshall (Village/City)","Mountain Village (Village/City)",
+            "Ohogamiut (Village/City)","Pilot Station (Village/City)", "St Marys (Village/City)","Y1 (Subdistrict 1)",
+            "Y2 (Subdistrict 2)","Y3 (Subdistrict 3)","Andreafsky River", "Andreafsky River (East Fork)", "Ingersoll Islands"
+            )
+```
+
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+library(MARSS)
+library(bayesdfa)
+
+#load explore and tidy ASL data to go into a DFA for alpha parameter
+#ASL data is from open knowledge network, Oke et al 2020. Here: https://knb.ecoinformatics.org/view/doi:10.5063/F1707ZTM
+
+asl_dat <-read.csv("data/ASL_summary_byFWSWage.csv")
+# separate Chum into Fall and Summer based on upper and lower spawning locations.
+# Fall = upper, summer = lower
+fall_chum_yukon <- c( )
+summer_chum_yukon <- c( )
+
+chum_tidy <- asl_dat %>%
+  filter(Species == "chum",
+         !sampleYear < 1980,
+          ASLProjectType %in% c("commercial catch", "escapement"),
+         SASAP.Region %in% c("Yukon", "Kuskokwim"), 
+         !Fresh.Water.Age == "NA") %>% 
+  dplyr::mutate(stock_group = case_when(SASAP.Region == "Kuskokwim" ~ "chum_kuskokwim", 
+                                      LocationID %in% upper ~ "fall_chum_yukon",
+                                      LocationID %in% middle ~ "fall_chum_yukon",
+                                      LocationID %in% lower ~ "summer_chum_yukon",
+                                      Lon > -141 ~ "fall_chum_yukon",
+                                      Lat <= 63 ~ "summer_chum_yukon", 
+                                      Lat > 63 ~ "fall_chum_yukon",
+                                      TRUE ~ "NA")) %>%
+  filter(!stock_group == "NA") #%>% # 5 NA's, one from Utquaivik the rest are from general yukon district, all from 2009... 
+   
+asl_chum <- chum_tidy %>% 
+  group_by(stock_group, Salt.Water.Age,sampleYear) %>% 
+  dplyr::summarise(mean = mean(mean)) %>% 
+  filter(Salt.Water.Age %in% c(2,3,4,5,6,7))
+
+```
+ 
+# Plot Chum data 
+
+```{r Plot Time Series for Chum}
+
+ggplot(data = asl_chum) +
+  geom_point(aes(x=as.numeric(sampleYear), y = mean)) +
+  facet_grid(Salt.Water.Age~stock_group) +
+  theme_classic()
+
+```
+ 
+
+## What is the proportion of data per stock group?
+
+```{r}
+ 
+```
+ 
+## Run a DFA loop to ask what is the trend for size at each age for Yukon and Kuskokwim watersheds, separately? 
+
+```{r}
+#DFA MARSS Ex: https://atsa-es.github.io/atsa-labs/sec-dfa-fitting-dfa-models-with-marss.html
+# going to use BayesDFA from ward et al 
+# run example here: https://cran.r-project.org/web/packages/bayesdfa/vignettes/bayesdfa.html
+
+mcmc_iter <- 4000
+mcmc_chains <- 3
+mcmc_thin <- 10
+
+# here I have four observed time series (n = 4, ages 2,3,4,5)
+# and want to fit a model with one hidden trends (m = 1).
+
+# run a DFA loop to ask what is the trend for size at age for Yukon and Kuskokwim watersheds separately? 
+
+#filter so projects are just escapement? 
+
+region_list <- unique(asl_chum$stock_group)
+
+dfa_size_age_output <- list()
+loo_size_age_output <- list()
+ 
+ for (i in 1:length(region_list)) {
+  
+  region <- region_list[[i]]
+ 
+  ##  0s are replaced with NA's and the data z-scored
+  all_dat <- asl_chum %>% 
+    filter(stock_group == region) %>% 
+    dplyr::mutate(mean = scale(mean))  %>% 
+    spread(Salt.Water.Age, mean) %>% 
+    ungroup() %>% 
+    arrange(sampleYear) %>% 
+    dplyr::select(-sampleYear, -stock_group)   
+  
+  all_dat <-   na.omit(all_dat)
+  all_dat_mat <- t(all_dat)
+  
+  # fit models with a RW 1 trend process  
+  dfa_rw <- fit_dfa(y = all_dat_mat, iter = mcmc_iter, thin = mcmc_thin, scale="zscore", chains = mcmc_chains, num_trends = 1,par_list="all")
+  loos_rw = loo::loo(dfa_rw$model,moment_match=TRUE)$estimates[3,] 
+  
+  # fit models with varying numbers of knots in a b-spline
+  dfa_bs<- fit_dfa(y = all_dat_mat, iter = mcmc_iter, thin = mcmc_thin,scale="zscore",
+                   chains = mcmc_chains, num_trends = 1, trend_model = "bs", 
+                   n_knots = 16,par_list="all")
+  loos_bs = loo::loo(dfa_bs$model,moment_match=TRUE)$estimates[3,] 
+  
+  # fit models with a Gaussian process 
+  dfa_gp<- fit_dfa(y = all_dat_mat, iter = mcmc_iter, thin = mcmc_thin,scale="zscore",
+                   chains = mcmc_chains, num_trends = 1, trend_model = "gp", 
+                   n_knots = 16,par_list="all")
+  loos_gp = loo::loo(dfa_gp$model,moment_match=TRUE)$estimates[3,] 
+  
+  loo_size_age_output[[i]] = data.frame(model = c("dfa_rw", "dfa_bs", "dfa_gp"), 
+                           LOOIC = c(loos_rw[1],loos_bs[1],  loos_gp[1]),
+                           SE = c(loos_rw[2],loos_bs[2],  loos_gp[2]))
+  
+  dfa_size_age_output[[i]] <- list(dfa_rw,dfa_bs,dfa_gp)
+ 
+  model_names = c("dfa_rw", "dfa_bs", "dfa_gp")
+  names(dfa_size_age_output[[i]]) <- model_names
+  # mod_select<- loo_compare %>%
+  #   mutate(flag = case_when(LOOIC == min(LOOIC) ~ 1,
+  #                           TRUE ~ 0)) %>% 
+  #   filter(flag ==1) %>%
+  #   dplyr::select(model)
+ 
+  # best_mod<-mod_select$model
+ 
+  # #select the best DFA /region... [may want to just do the same ones for simplicity]
+  # dfa_size_age_output[[i]] <- dfa_list[grep(print(best_mod), names(dfa_list))]
+  
+ }
+
+ #name the DFA List
+    names(dfa_size_age_output) <- region_list
+    
+    r <- rotate_trends(dfa_size_age_output$summer_chum_yukon$dfa_rw)
+    plot_trends(r) + theme_bw() ++ ggtitle("Summer Yukon Chum")
+    plot_fitted(dfa_size_age_output$summer_chum_yukon$dfa_rw) + theme_bw()
+  
+    k <- rotate_trends(dfa_size_age_output$fall_chum_yukon$dfa_rw)
+    plot_trends(k) + theme_bw() + ggtitle("Fall Yukon Chum")
+    plot_fitted(dfa_size_age_output$fall_chum_yukon$dfa_rw) + theme_bw()
+     
+
+    k <- rotate_trends(dfa_size_age_output$chum_kuskokwim$dfa_rw)
+    plot_trends(k) + theme_bw() + ggtitle("Kuskokwim Chum")
+    plot_fitted(dfa_size_age_output$chum_kuskokwim$dfa_rw) + theme_bw()
+     
+```
+ 
+# Are there different trends in age composition? (this should be the driver, there are less older fish, not necessarily that older fish are getting smaller)
+
+ok i think this DF is set up wrong, get counts in each age class for each year (age composition) then look at trend for counts in each age class over time. 
+
+```{r}
+
+AL_chum <- chum_tidy %>% 
+  #filter(ASLProjectType == "escapement") %>% 
+  group_by(stock_group, sampleYear) %>% 
+  count(Salt.Water.Age) %>% 
+  #group_by(stock_group, sampleYear) %>% 
+  mutate(prop = n/sum(n)#,
+         #check =sum(n)
+         )
+ # dplyr::summarise(mean_age = mean(Salt.Water.Age)) 
+
+# plot 
+ggplot(data = AL_chum) +
+  geom_point(aes(x=as.numeric(sampleYear), y = prop)) +
+  facet_grid(Salt.Water.Age~stock_group, scales = "free_y") +
+  theme_classic()
+```
+
+```{r}
+region_list <- unique(AL_chum$stock_group)
+
+dfa_size_age_output <- list()
+loo_size_age_output <- list()
+ 
+ for (i in 1:length(region_list)) {
+  
+  region <- region_list[[i]]
+ 
+  ##  0s are replaced with NA's and the data z-scored
+  all_dat <- AL_chum %>% 
+    filter(stock_group == region) %>% 
+    dplyr::select(-n) %>% 
+    #dplyr::mutate(mean = scale(mean))  %>% 
+    spread(Salt.Water.Age, prop) %>% 
+    ungroup() %>% 
+    arrange(sampleYear) %>% 
+    dplyr::select(-sampleYear, -stock_group)   
+  
+  all_dat <-   na.omit(all_dat)
+  all_dat_mat <- t(all_dat)
+  
+  # fit models with a RW 1 trend process  
+  dfa_rw <- fit_dfa(y = all_dat_mat, iter = mcmc_iter, thin = mcmc_thin, scale="zscore", chains = mcmc_chains, num_trends = 1,par_list="all")
+  loos_rw = loo::loo(dfa_rw$model,moment_match=TRUE)$estimates[3,] 
+  
+  # fit models with varying numbers of knots in a b-spline
+  dfa_bs<- fit_dfa(y = all_dat_mat, iter = mcmc_iter, thin = mcmc_thin,scale="zscore",
+                   chains = mcmc_chains, num_trends = 1, trend_model = "bs", 
+                   n_knots = 16,par_list="all")
+  loos_bs = loo::loo(dfa_bs$model,moment_match=TRUE)$estimates[3,] 
+  
+  # fit models with a Gaussian process 
+  dfa_gp<- fit_dfa(y = all_dat_mat, iter = mcmc_iter, thin = mcmc_thin,scale="zscore",
+                   chains = mcmc_chains, num_trends = 1, trend_model = "gp", 
+                   n_knots = 16,par_list="all")
+  loos_gp = loo::loo(dfa_gp$model,moment_match=TRUE)$estimates[3,] 
+  
+  loo_size_age_output[[i]] = data.frame(model = c("dfa_rw", "dfa_bs", "dfa_gp"), 
+                           LOOIC = c(loos_rw[1],loos_bs[1],  loos_gp[1]),
+                           SE = c(loos_rw[2],loos_bs[2],  loos_gp[2]))
+  
+  dfa_size_age_output[[i]] <- list(dfa_rw,dfa_bs,dfa_gp)
+ 
+  model_names = c("dfa_rw", "dfa_bs", "dfa_gp")
+  names(dfa_size_age_output[[i]]) <- model_names
+  # mod_select<- loo_compare %>%
+  #   mutate(flag = case_when(LOOIC == min(LOOIC) ~ 1,
+  #                           TRUE ~ 0)) %>% 
+  #   filter(flag ==1) %>%
+  #   dplyr::select(model)
+ 
+  # best_mod<-mod_select$model
+ 
+  # #select the best DFA /region... [may want to just do the same ones for simplicity]
+  # dfa_size_age_output[[i]] <- dfa_list[grep(print(best_mod), names(dfa_list))]
+  
+ }
+
+```
+
+
+ 
