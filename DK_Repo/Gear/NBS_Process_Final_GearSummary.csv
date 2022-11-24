@@ -1,0 +1,505 @@
+TAXA_COARSE,STAGE_NAME,GEAR_NAME,MESH,N
+Acartia spp.,ADULT,20BON,153,1128
+Acartia spp.,C-1 TO C-4,20BON,153,486
+Acartia spp.,C - 1 (COPEPODITE I),20BON,153,78
+Acartia spp.,C - 2 (COPEPODITE II),20BON,153,94
+Acartia spp.,C - 3 (COPEPODITE III),20BON,153,103
+Acartia spp.,C - 4 (COPEPODITE IV),20BON,153,110
+Acartia spp.,C - 5 (COPEPODITE V),20BON,153,428
+Acartia spp.,NOT DETERMINED,20BON,153,25
+Acartia spp.,C-1 TO C-5,Juday,168,104
+Acartia spp.,NOT DETERMINED,Juday,168,164
+Acartia spp.,ADULT,LG-CB,153,266
+Acartia spp.,C-1 TO C-4,LG-CB,153,90
+Acartia spp.,C - 1 (COPEPODITE I),LG-CB,153,27
+Acartia spp.,C - 2 (COPEPODITE II),LG-CB,153,27
+Acartia spp.,C - 3 (COPEPODITE III),LG-CB,153,25
+Acartia spp.,C - 4 (COPEPODITE IV),LG-CB,153,23
+Acartia spp.,C - 5 (COPEPODITE V),LG-CB,153,92
+Acartia spp.,NOT DETERMINED,LG-CB,153,8
+Acartia spp.,ADULT,PairoVET,153,231
+Acartia spp.,C - 1 (COPEPODITE I),PairoVET,153,118
+Acartia spp.,C - 2 (COPEPODITE II),PairoVET,153,131
+Acartia spp.,C - 3 (COPEPODITE III),PairoVET,153,120
+Acartia spp.,C - 4 (COPEPODITE IV),PairoVET,153,117
+Acartia spp.,C - 5 (COPEPODITE V),PairoVET,153,117
+Aglantha digitale,MEDUSA,60BON,333,3
+Aglantha digitale,MEDUSA,60BON,505,434
+Aglantha digitale,NOT DETERMINED,60BON,505,474
+Amphipoda,A + J (ADULT/JUVENILE),60BON,333,10
+Amphipoda,A + J (ADULT/JUVENILE),60BON,505,258
+Amphipoda,NOT DETERMINED,60BON,333,722
+Amphipoda,NOT DETERMINED,60BON,505,814
+Appendicularia_large,NOT DETERMINED,60BON,333,216
+Appendicularia_large,NOT DETERMINED,60BON,505,985
+Appendicularia_small,NOT DETERMINED,20BON,153,984
+Appendicularia_small,NOT DETERMINED,Juday,168,240
+Appendicularia_small,NOT DETERMINED,LG-CB,153,312
+Appendicularia_small,JUVENILE,PairoVET,153,22
+Appendicularia_small,NOT DETERMINED,PairoVET,153,173
+Bivalvia,LARVA,20BON,153,545
+Bivalvia,NOT DETERMINED,20BON,153,48
+Bivalvia,LARVA,Juday,168,172
+Bivalvia,LARVA,LG-CB,153,121
+Bivalvia,NOT DETERMINED,LG-CB,153,9
+Bivalvia,LARVA,PairoVET,153,129
+Brachyura,LARVA,60BON,333,131
+Brachyura,LARVA,60BON,505,1
+Brachyura,MEGALOPAE,60BON,333,34
+Brachyura,MEGALOPAE,60BON,505,433
+Brachyura,NOT DETERMINED,60BON,333,1
+Brachyura,NOT DETERMINED,60BON,505,5
+Brachyura,ZOEA,60BON,333,6
+Brachyura,ZOEA,60BON,505,191
+Calanus hyperboreus,ADULT,20BON,153,12
+Calanus hyperboreus,C - 1 (COPEPODITE I),20BON,153,1
+Calanus hyperboreus,C - 2 (COPEPODITE II),20BON,153,3
+Calanus hyperboreus,C - 3 (COPEPODITE III),20BON,153,14
+Calanus hyperboreus,C - 4 (COPEPODITE IV),20BON,153,28
+Calanus hyperboreus,C - 5 (COPEPODITE V),20BON,153,15
+Calanus hyperboreus,ADULT,60BON,505,34
+Calanus hyperboreus,C - 2 (COPEPODITE II),60BON,505,1
+Calanus hyperboreus,C - 3 (COPEPODITE III),60BON,505,34
+Calanus hyperboreus,C - 4 (COPEPODITE IV),60BON,505,64
+Calanus hyperboreus,C - 5 (COPEPODITE V),60BON,505,49
+Calanus hyperboreus,NOT DETERMINED,60BON,505,1
+Calanus hyperboreus,ADULT,LG-CB,153,7
+Calanus hyperboreus,C - 3 (COPEPODITE III),LG-CB,153,4
+Calanus hyperboreus,C - 4 (COPEPODITE IV),LG-CB,153,23
+Calanus hyperboreus,C - 5 (COPEPODITE V),LG-CB,153,14
+Calanus marshallae/glacialis,ADULT,20BON,153,203
+Calanus marshallae/glacialis,C - 1 (COPEPODITE I),20BON,153,89
+Calanus marshallae/glacialis,C - 2 (COPEPODITE II),20BON,153,293
+Calanus marshallae/glacialis,C - 3 (COPEPODITE III),20BON,153,238
+Calanus marshallae/glacialis,C - 4 (COPEPODITE IV),20BON,153,284
+Calanus marshallae/glacialis,C - 5 (COPEPODITE V),20BON,153,354
+Calanus marshallae/glacialis,NOT DETERMINED,20BON,153,3
+Calanus marshallae/glacialis,ADULT,60BON,333,273
+Calanus marshallae/glacialis,ADULT,60BON,505,429
+Calanus marshallae/glacialis,C - 3 (COPEPODITE III),60BON,333,164
+Calanus marshallae/glacialis,C - 3 (COPEPODITE III),60BON,505,1
+Calanus marshallae/glacialis,C - 4 (COPEPODITE IV),60BON,333,167
+Calanus marshallae/glacialis,C - 4 (COPEPODITE IV),60BON,505,684
+Calanus marshallae/glacialis,C - 5 (COPEPODITE V),60BON,333,180
+Calanus marshallae/glacialis,C - 5 (COPEPODITE V),60BON,505,766
+Calanus marshallae/glacialis,NOT DETERMINED,60BON,505,2
+Calanus marshallae/glacialis,ADULT,LG-CB,153,167
+Calanus marshallae/glacialis,C - 1 (COPEPODITE I),LG-CB,153,56
+Calanus marshallae/glacialis,C - 2 (COPEPODITE II),LG-CB,153,66
+Calanus marshallae/glacialis,C - 3 (COPEPODITE III),LG-CB,153,136
+Calanus marshallae/glacialis,C - 4 (COPEPODITE IV),LG-CB,153,163
+Calanus marshallae/glacialis,C - 5 (COPEPODITE V),LG-CB,153,178
+Calanus marshallae/glacialis,NOT DETERMINED,LG-CB,153,7
+Calanus pacificus,C - 4 (COPEPODITE IV),20BON,153,1
+Calanus pacificus,C - 5 (COPEPODITE V),20BON,153,3
+Calanus pacificus,ADULT,60BON,333,262
+Calanus pacificus,ADULT,60BON,505,6
+Calanus pacificus,C - 4 (COPEPODITE IV),60BON,333,131
+Calanus pacificus,C - 4 (COPEPODITE IV),60BON,505,2
+Calanus pacificus,C - 5 (COPEPODITE V),60BON,333,131
+Calanus pacificus,C - 5 (COPEPODITE V),60BON,505,6
+Caridea,A + J (ADULT/JUVENILE),60BON,333,132
+Caridea,A + J (ADULT/JUVENILE),60BON,505,62
+Caridea,JUVENILE,60BON,333,3
+Caridea,JUVENILE,60BON,505,9
+Caridea,LARVA,60BON,333,176
+Caridea,LARVA,60BON,505,98
+Caridea,MEGALOPAE,60BON,505,4
+Caridea,NOT DETERMINED,60BON,333,4
+Caridea,NOT DETERMINED,60BON,505,43
+Caridea,POST LARVA,60BON,333,1
+Caridea,POST LARVA,60BON,505,3
+Caridea,ZOEA,60BON,333,22
+Caridea,ZOEA,60BON,505,539
+Centropages abdominalis,ADULT,20BON,153,338
+Centropages abdominalis,C-1 TO C-4,20BON,153,260
+Centropages abdominalis,C - 1 (COPEPODITE I),20BON,153,37
+Centropages abdominalis,C - 2 (COPEPODITE II),20BON,153,37
+Centropages abdominalis,C - 3 (COPEPODITE III),20BON,153,31
+Centropages abdominalis,C - 4 (COPEPODITE IV),20BON,153,25
+Centropages abdominalis,C - 5 (COPEPODITE V),20BON,153,170
+Centropages abdominalis,NOT DETERMINED,20BON,153,7
+Centropages abdominalis,C-1 TO C-5,Juday,168,24
+Centropages abdominalis,NOT DETERMINED,Juday,168,244
+Centropages abdominalis,ADULT,LG-CB,153,27
+Centropages abdominalis,C-1 TO C-4,LG-CB,153,30
+Centropages abdominalis,C - 1 (COPEPODITE I),LG-CB,153,1
+Centropages abdominalis,C - 2 (COPEPODITE II),LG-CB,153,1
+Centropages abdominalis,C - 3 (COPEPODITE III),LG-CB,153,4
+Centropages abdominalis,C - 4 (COPEPODITE IV),LG-CB,153,1
+Centropages abdominalis,C - 5 (COPEPODITE V),LG-CB,153,17
+Centropages abdominalis,NOT DETERMINED,LG-CB,153,2
+Centropages abdominalis,ADULT,PairoVET,153,84
+Centropages abdominalis,C - 1 (COPEPODITE I),PairoVET,153,4
+Centropages abdominalis,C - 2 (COPEPODITE II),PairoVET,153,10
+Centropages abdominalis,C - 3 (COPEPODITE III),PairoVET,153,23
+Centropages abdominalis,C - 4 (COPEPODITE IV),PairoVET,153,45
+Centropages abdominalis,C - 5 (COPEPODITE V),PairoVET,153,51
+Chaetognatha,NOT DETERMINED,60BON,333,529
+Chaetognatha,NOT DETERMINED,60BON,505,2870
+Cirripedia_large,CYPRIS,60BON,333,37
+Cirripedia_large,CYPRIS,60BON,505,67
+Cirripedia_large,NAUPLIUS,60BON,333,79
+Cirripedia_large,NAUPLIUS,60BON,505,317
+Cirripedia_large,NOT DETERMINED,60BON,333,14
+Cirripedia_large,NOT DETERMINED,60BON,505,16
+Cirripedia_small,CYPRIS,20BON,153,455
+Cirripedia_small,NAUPLIUS,20BON,153,417
+Cirripedia_small,NOT DETERMINED,20BON,153,1
+Cirripedia_small,CYPRIS,Juday,168,29
+Cirripedia_small,NAUPLIUS,Juday,168,181
+Cirripedia_small,CYPRIS,LG-CB,153,198
+Cirripedia_small,NAUPLIUS,LG-CB,153,137
+Cirripedia_small,CYPRIS,PairoVET,153,43
+Cirripedia_small,NAUPLIUS,PairoVET,153,79
+Cladocera,A + J (ADULT/JUVENILE),20BON,153,253
+Cladocera,NOT DETERMINED,20BON,153,171
+Cladocera,NOT DETERMINED,Juday,168,85
+Cladocera,A + J (ADULT/JUVENILE),LG-CB,153,16
+Cladocera,NOT DETERMINED,LG-CB,153,74
+Cladocera,NOT DETERMINED,PairoVET,153,51
+Clione limacina,LARVA,60BON,333,1
+Clione limacina,NOT DETERMINED,60BON,333,20
+Clione limacina,NOT DETERMINED,60BON,505,433
+Cnidaria_large,LARVA,60BON,505,25
+Cnidaria_large,MEDUSA,60BON,333,141
+Cnidaria_large,MEDUSA,60BON,505,510
+Cnidaria_large,NOT DETERMINED,60BON,333,236
+Cnidaria_large,NOT DETERMINED,60BON,505,750
+Cnidaria_small,LARVA,20BON,153,15
+Cnidaria_small,MEDUSA,20BON,153,333
+Cnidaria_small,NOT DETERMINED,20BON,153,155
+Cnidaria_small,MEDUSA,Juday,168,6
+Cnidaria_small,NOT DETERMINED,Juday,168,77
+Cnidaria_small,LARVA,LG-CB,153,1
+Cnidaria_small,MEDUSA,LG-CB,153,100
+Cnidaria_small,NOT DETERMINED,LG-CB,153,74
+Cnidaria_small,NOT DETERMINED,PairoVET,153,52
+Copepod_large,ADULT,60BON,505,33
+Copepod_large,C-1 TO C-4,60BON,505,3
+Copepod_large,C - 3 (COPEPODITE III),60BON,333,1
+Copepod_large,C - 4 (COPEPODITE IV),60BON,333,1
+Copepod_large,C - 4 (COPEPODITE IV),60BON,505,5
+Copepod_large,C - 5 (COPEPODITE V),60BON,333,2
+Copepod_large,C - 5 (COPEPODITE V),60BON,505,29
+Copepod_large,NOT DETERMINED,60BON,333,2
+Copepod_large,NOT DETERMINED,60BON,505,2
+Copepod_small,ADULT,20BON,153,403
+Copepod_small,C-1 TO C-4,20BON,153,96
+Copepod_small,C - 3 (COPEPODITE III),20BON,153,1
+Copepod_small,C - 4 (COPEPODITE IV),20BON,153,4
+Copepod_small,C - 5 (COPEPODITE V),20BON,153,159
+Copepod_small,NOT DETERMINED,20BON,153,74
+Copepod_small,NOT DETERMINED,Juday,168,102
+Copepod_small,ADULT,LG-CB,153,224
+Copepod_small,C-1 TO C-4,LG-CB,153,14
+Copepod_small,C - 1 (COPEPODITE I),LG-CB,153,1
+Copepod_small,C - 2 (COPEPODITE II),LG-CB,153,4
+Copepod_small,C - 3 (COPEPODITE III),LG-CB,153,7
+Copepod_small,C - 4 (COPEPODITE IV),LG-CB,153,13
+Copepod_small,C - 5 (COPEPODITE V),LG-CB,153,47
+Copepod_small,NOT DETERMINED,LG-CB,153,33
+Copepod_small,ADULT,PairoVET,153,4
+Copepod_small,C - 5 (COPEPODITE V),PairoVET,153,7
+Copepod_small,NOT DETERMINED,PairoVET,153,59
+Ctenophora,NOT DETERMINED,60BON,333,131
+Ctenophora,NOT DETERMINED,60BON,505,106
+Cumacea,A + J (ADULT/JUVENILE),60BON,333,1
+Cumacea,A + J (ADULT/JUVENILE),60BON,505,17
+Cumacea,JUVENILE,60BON,505,1
+Cumacea,LARVA,60BON,505,1
+Cumacea,NOT DETERMINED,60BON,333,16
+Cumacea,NOT DETERMINED,60BON,505,90
+Echinodermata,A + J (ADULT/JUVENILE),20BON,153,10
+Echinodermata,LARVA,20BON,153,378
+Echinodermata,NOT DETERMINED,20BON,153,29
+Echinodermata,JUVENILE,Juday,168,2
+Echinodermata,LARVA,Juday,168,93
+Echinodermata,LARVA,LG-CB,153,65
+Echinodermata,LARVA,PairoVET,153,76
+Epilabidocera longipedata,ADULT,20BON,153,137
+Epilabidocera longipedata,C - 1 (COPEPODITE I),20BON,153,51
+Epilabidocera longipedata,C - 2 (COPEPODITE II),20BON,153,41
+Epilabidocera longipedata,C - 3 (COPEPODITE III),20BON,153,125
+Epilabidocera longipedata,C - 4 (COPEPODITE IV),20BON,153,118
+Epilabidocera longipedata,C - 5 (COPEPODITE V),20BON,153,97
+Epilabidocera longipedata,NOT DETERMINED,20BON,153,2
+Epilabidocera longipedata,ADULT,60BON,333,21
+Epilabidocera longipedata,ADULT,60BON,505,350
+Epilabidocera longipedata,C - 3 (COPEPODITE III),60BON,333,26
+Epilabidocera longipedata,C - 4 (COPEPODITE IV),60BON,333,30
+Epilabidocera longipedata,C - 4 (COPEPODITE IV),60BON,505,242
+Epilabidocera longipedata,C - 5 (COPEPODITE V),60BON,333,16
+Epilabidocera longipedata,C - 5 (COPEPODITE V),60BON,505,253
+Epilabidocera longipedata,NOT DETERMINED,60BON,505,4
+Epilabidocera longipedata,ADULT,LG-CB,153,5
+Epilabidocera longipedata,C - 3 (COPEPODITE III),LG-CB,153,3
+Epilabidocera longipedata,C - 4 (COPEPODITE IV),LG-CB,153,5
+Epilabidocera longipedata,C - 5 (COPEPODITE V),LG-CB,153,7
+Eucalanus bungii,C - 1 (COPEPODITE I),20BON,153,153
+Eucalanus bungii,C - 2 (COPEPODITE II),20BON,153,164
+Eucalanus bungii,C - 3 (COPEPODITE III),20BON,153,59
+Eucalanus bungii,C - 4 (COPEPODITE IV),20BON,153,132
+Eucalanus bungii,ADULT,60BON,333,266
+Eucalanus bungii,ADULT,60BON,505,173
+Eucalanus bungii,C - 3 (COPEPODITE III),60BON,333,150
+Eucalanus bungii,C - 3 (COPEPODITE III),60BON,505,209
+Eucalanus bungii,C - 4 (COPEPODITE IV),60BON,333,283
+Eucalanus bungii,C - 4 (COPEPODITE IV),60BON,505,290
+Eucalanus bungii,C - 5 (COPEPODITE V),60BON,333,276
+Eucalanus bungii,C - 5 (COPEPODITE V),60BON,505,442
+Eucalanus bungii,C - 1 (COPEPODITE I),LG-CB,153,83
+Eucalanus bungii,C - 2 (COPEPODITE II),LG-CB,153,86
+Eucalanus bungii,C - 3 (COPEPODITE III),LG-CB,153,53
+Eucalanus bungii,C - 4 (COPEPODITE IV),LG-CB,153,96
+Euphausia pacifica,A + J (ADULT/JUVENILE),60BON,333,131
+Euphausia pacifica,A + J (ADULT/JUVENILE),60BON,505,1
+Euphausia pacifica,ADULT,60BON,505,1
+Euphausia pacifica,JUVENILE,60BON,505,5
+Euphausia pacifica,NOT DETERMINED,60BON,333,1
+Euphausiacea,CALYPTOPIS (STAGE NOT DETERMINED),20BON,153,12
+Euphausiacea,CALYPTOPIS 1,20BON,153,134
+Euphausiacea,CALYPTOPIS 2,20BON,153,134
+Euphausiacea,CALYPTOPIS 3,20BON,153,134
+Euphausiacea,FURCILIA,20BON,153,298
+Euphausiacea,NAUPLIUS,20BON,153,150
+Euphausiacea,CALYPTOPIS (STAGE NOT DETERMINED),60BON,333,10
+Euphausiacea,CALYPTOPIS (STAGE NOT DETERMINED),60BON,505,23
+Euphausiacea,FURCILIA,60BON,333,164
+Euphausiacea,FURCILIA,60BON,505,450
+Euphausiacea,CALYPTOPIS (STAGE NOT DETERMINED),Juday,168,1
+Euphausiacea,FURCILIA,Juday,168,73
+Euphausiacea,NAUPLIUS,Juday,168,14
+Euphausiacea,CALYPTOPIS (STAGE NOT DETERMINED),LG-CB,153,3
+Euphausiacea,CALYPTOPIS 1,LG-CB,153,74
+Euphausiacea,CALYPTOPIS 2,LG-CB,153,74
+Euphausiacea,CALYPTOPIS 3,LG-CB,153,74
+Euphausiacea,FURCILIA,LG-CB,153,89
+Euphausiacea,NAUPLIUS,LG-CB,153,74
+Euphausiacea,CALYPTOPIS (STAGE NOT DETERMINED),PairoVET,153,14
+Euphausiacea,FURCILIA,PairoVET,153,52
+Euphausiacea,NAUPLIUS,PairoVET,153,4
+Eurytemora spp.,ADULT,20BON,153,178
+Eurytemora spp.,C-1 TO C-4,20BON,153,125
+Eurytemora spp.,C - 1 (COPEPODITE I),20BON,153,17
+Eurytemora spp.,C - 2 (COPEPODITE II),20BON,153,27
+Eurytemora spp.,C - 3 (COPEPODITE III),20BON,153,27
+Eurytemora spp.,C - 4 (COPEPODITE IV),20BON,153,21
+Eurytemora spp.,C - 5 (COPEPODITE V),20BON,153,97
+Eurytemora spp.,NOT DETERMINED,20BON,153,4
+Eurytemora spp.,C-1 TO C-5,Juday,168,4
+Eurytemora spp.,NOT DETERMINED,Juday,168,45
+Eurytemora spp.,ADULT,LG-CB,153,6
+Eurytemora spp.,C-1 TO C-4,LG-CB,153,13
+Eurytemora spp.,C - 1 (COPEPODITE I),LG-CB,153,2
+Eurytemora spp.,C - 2 (COPEPODITE II),LG-CB,153,1
+Eurytemora spp.,C - 5 (COPEPODITE V),LG-CB,153,5
+Eurytemora spp.,ADULT,PairoVET,153,36
+Eurytemora spp.,C-1 TO C-5,PairoVET,153,4
+Eurytemora spp.,C - 1 (COPEPODITE I),PairoVET,153,1
+Eurytemora spp.,C - 2 (COPEPODITE II),PairoVET,153,4
+Eurytemora spp.,C - 3 (COPEPODITE III),PairoVET,153,10
+Eurytemora spp.,C - 4 (COPEPODITE IV),PairoVET,153,16
+Eurytemora spp.,C - 5 (COPEPODITE V),PairoVET,153,22
+Limacina_large,NOT DETERMINED,60BON,333,59
+Limacina_large,NOT DETERMINED,60BON,505,321
+Limacina_small,NOT DETERMINED,20BON,153,380
+Limacina_small,JUVENILE,Juday,168,14
+Limacina_small,LARVA,Juday,168,18
+Limacina_small,NOT DETERMINED,Juday,168,125
+Limacina_small,NOT DETERMINED,LG-CB,153,146
+Limacina_small,NOT DETERMINED,PairoVET,153,63
+Metridia longa,ADULT,20BON,153,13
+Metridia longa,C - 5 (COPEPODITE V),20BON,153,25
+Metridia longa,ADULT,60BON,505,15
+Metridia longa,C - 4 (COPEPODITE IV),60BON,505,1
+Metridia longa,C - 5 (COPEPODITE V),60BON,505,16
+Metridia longa,ADULT,LG-CB,153,2
+Metridia longa,C - 5 (COPEPODITE V),LG-CB,153,5
+Metridia okhotensis,ADULT,20BON,153,2
+Metridia okhotensis,C - 4 (COPEPODITE IV),20BON,153,1
+Metridia okhotensis,C - 5 (COPEPODITE V),20BON,153,2
+Metridia okhotensis,ADULT,60BON,505,1
+Metridia okhotensis,C - 4 (COPEPODITE IV),60BON,505,1
+Metridia okhotensis,C - 5 (COPEPODITE V),60BON,505,4
+Metridia pacifica,ADULT,20BON,153,84
+Metridia pacifica,C - 4 (COPEPODITE IV),20BON,153,150
+Metridia pacifica,C - 5 (COPEPODITE V),20BON,153,131
+Metridia pacifica,ADULT,60BON,333,266
+Metridia pacifica,ADULT,60BON,505,111
+Metridia pacifica,C - 4 (COPEPODITE IV),60BON,333,13
+Metridia pacifica,C - 4 (COPEPODITE IV),60BON,505,95
+Metridia pacifica,C - 5 (COPEPODITE V),60BON,333,282
+Metridia pacifica,C - 5 (COPEPODITE V),60BON,505,236
+Metridia pacifica,NOT DETERMINED,60BON,505,1
+Metridia pacifica,ADULT,LG-CB,153,45
+Metridia pacifica,C - 4 (COPEPODITE IV),LG-CB,153,96
+Metridia pacifica,C - 5 (COPEPODITE V),LG-CB,153,110
+Metridia spp.,C - 1 (COPEPODITE I),20BON,153,204
+Metridia spp.,C - 2 (COPEPODITE II),20BON,153,199
+Metridia spp.,C - 3 (COPEPODITE III),20BON,153,176
+Metridia spp.,C-1 TO C-2,Juday,168,14
+Metridia spp.,C-1 TO C-3,Juday,168,10
+Metridia spp.,C - 1 (COPEPODITE I),LG-CB,153,97
+Metridia spp.,C - 2 (COPEPODITE II),LG-CB,153,94
+Metridia spp.,C - 3 (COPEPODITE III),LG-CB,153,91
+Metridia spp.,C - 1 (COPEPODITE I),PairoVET,153,11
+Metridia spp.,C - 2 (COPEPODITE II),PairoVET,153,16
+Metridia spp.,C - 3 (COPEPODITE III),PairoVET,153,21
+Mysidae,A + J (ADULT/JUVENILE),60BON,333,1
+Mysidae,A + J (ADULT/JUVENILE),60BON,505,54
+Mysidae,JUVENILE,60BON,333,1
+Mysidae,JUVENILE,60BON,505,10
+Mysidae,LARVA,60BON,505,2
+Mysidae,NOT DETERMINED,60BON,333,136
+Mysidae,NOT DETERMINED,60BON,505,95
+Mysidae,POST LARVA,60BON,505,1
+Neocalanus cristatus,C - 2 (COPEPODITE II),20BON,153,134
+Neocalanus cristatus,C - 4 (COPEPODITE IV),20BON,153,5
+Neocalanus cristatus,C - 5 (COPEPODITE V),20BON,153,44
+Neocalanus cristatus,ADULT,60BON,333,262
+Neocalanus cristatus,ADULT,60BON,505,3
+Neocalanus cristatus,C - 3 (COPEPODITE III),60BON,333,131
+Neocalanus cristatus,C - 3 (COPEPODITE III),60BON,505,1
+Neocalanus cristatus,C - 4 (COPEPODITE IV),60BON,333,131
+Neocalanus cristatus,C - 4 (COPEPODITE IV),60BON,505,12
+Neocalanus cristatus,C - 5 (COPEPODITE V),60BON,333,131
+Neocalanus cristatus,C - 5 (COPEPODITE V),60BON,505,171
+Neocalanus cristatus,C - 3 (COPEPODITE III),Juday,168,2
+Neocalanus cristatus,C - 4 (COPEPODITE IV),PairoVET,153,2
+Neocalanus cristatus,C - 5 (COPEPODITE V),PairoVET,153,1
+Neocalanus spp.,ADULT,20BON,153,10
+Neocalanus spp.,C - 1 (COPEPODITE I),20BON,153,2
+Neocalanus spp.,C - 2 (COPEPODITE II),20BON,153,135
+Neocalanus spp.,C - 3 (COPEPODITE III),20BON,153,8
+Neocalanus spp.,C - 4 (COPEPODITE IV),20BON,153,17
+Neocalanus spp.,C - 5 (COPEPODITE V),20BON,153,160
+Neocalanus spp.,ADULT,60BON,333,263
+Neocalanus spp.,ADULT,60BON,505,52
+Neocalanus spp.,C - 3 (COPEPODITE III),60BON,333,132
+Neocalanus spp.,C - 3 (COPEPODITE III),60BON,505,16
+Neocalanus spp.,C - 4 (COPEPODITE IV),60BON,333,131
+Neocalanus spp.,C - 4 (COPEPODITE IV),60BON,505,69
+Neocalanus spp.,C - 5 (COPEPODITE V),60BON,333,133
+Neocalanus spp.,C - 5 (COPEPODITE V),60BON,505,349
+Neocalanus spp.,C - 3 (COPEPODITE III),Juday,168,14
+Neocalanus spp.,C - 4 (COPEPODITE IV),Juday,168,7
+Neocalanus spp.,C - 5 (COPEPODITE V),Juday,168,4
+Neocalanus spp.,ADULT,LG-CB,153,9
+Neocalanus spp.,C - 3 (COPEPODITE III),LG-CB,153,2
+Neocalanus spp.,C - 4 (COPEPODITE IV),LG-CB,153,12
+Neocalanus spp.,C - 5 (COPEPODITE V),LG-CB,153,67
+Neocalanus spp.,ADULT,PairoVET,153,1
+Neocalanus spp.,C - 5 (COPEPODITE V),PairoVET,153,17
+Oithona spp.,ADULT,20BON,153,1501
+Oithona spp.,C-1 TO C-4,20BON,153,594
+Oithona spp.,C-1 TO C-5,20BON,153,140
+Oithona spp.,C - 1 (COPEPODITE I),20BON,153,11
+Oithona spp.,C - 2 (COPEPODITE II),20BON,153,13
+Oithona spp.,C - 3 (COPEPODITE III),20BON,153,16
+Oithona spp.,C - 4 (COPEPODITE IV),20BON,153,16
+Oithona spp.,C - 5 (COPEPODITE V),20BON,153,696
+Oithona spp.,C6 + C5,20BON,153,134
+Oithona spp.,NOT DETERMINED,20BON,153,292
+Oithona spp.,NOT DETERMINED,Juday,168,289
+Oithona spp.,ADULT,LG-CB,153,336
+Oithona spp.,C-1 TO C-4,LG-CB,153,113
+Oithona spp.,C - 1 (COPEPODITE I),LG-CB,153,47
+Oithona spp.,C - 2 (COPEPODITE II),LG-CB,153,57
+Oithona spp.,C - 3 (COPEPODITE III),LG-CB,153,61
+Oithona spp.,C - 4 (COPEPODITE IV),LG-CB,153,64
+Oithona spp.,C - 5 (COPEPODITE V),LG-CB,153,235
+Oithona spp.,C6 + C5,LG-CB,153,74
+Oithona spp.,NOT DETERMINED,LG-CB,153,97
+Oithona spp.,ADULT,PairoVET,153,338
+Oithona spp.,C-1 TO C-5,PairoVET,153,175
+Polychaeta_large,A + J (ADULT/JUVENILE),60BON,505,28
+Polychaeta_large,JUVENILE,60BON,505,9
+Polychaeta_large,LARVA,60BON,333,13
+Polychaeta_large,LARVA,60BON,505,133
+Polychaeta_large,NOT DETERMINED,60BON,333,72
+Polychaeta_large,NOT DETERMINED,60BON,505,146
+Polychaeta_small,A + J (ADULT/JUVENILE),20BON,153,68
+Polychaeta_small,LARVA,20BON,153,459
+Polychaeta_small,NOT DETERMINED,20BON,153,11
+Polychaeta_small,LARVA,Juday,168,298
+Polychaeta_small,NOT DETERMINED,Juday,168,7
+Polychaeta_small,A + J (ADULT/JUVENILE),LG-CB,153,33
+Polychaeta_small,LARVA,LG-CB,153,130
+Polychaeta_small,NOT DETERMINED,LG-CB,153,1
+Polychaeta_small,JUVENILE,PairoVET,153,68
+Polychaeta_small,LARVA,PairoVET,153,138
+Polychaeta_small,NOT DETERMINED,PairoVET,153,4
+Pseudocalanus spp.,ADULT,20BON,153,1567
+Pseudocalanus spp.,C - 1 (COPEPODITE I),20BON,153,830
+Pseudocalanus spp.,C - 2 (COPEPODITE II),20BON,153,857
+Pseudocalanus spp.,C - 3 (COPEPODITE III),20BON,153,857
+Pseudocalanus spp.,C - 4 (COPEPODITE IV),20BON,153,990
+Pseudocalanus spp.,C - 5 (COPEPODITE V),20BON,153,1543
+Pseudocalanus spp.,NOT DETERMINED,20BON,153,64
+Pseudocalanus spp.,C - 5 (COPEPODITE V),Juday,168,47
+Pseudocalanus spp.,C2-5,Juday,168,71
+Pseudocalanus spp.,NOT DETERMINED,Juday,168,548
+Pseudocalanus spp.,ADULT,LG-CB,153,464
+Pseudocalanus spp.,C - 1 (COPEPODITE I),LG-CB,153,248
+Pseudocalanus spp.,C - 2 (COPEPODITE II),LG-CB,153,248
+Pseudocalanus spp.,C - 3 (COPEPODITE III),LG-CB,153,248
+Pseudocalanus spp.,C - 4 (COPEPODITE IV),LG-CB,153,319
+Pseudocalanus spp.,C - 5 (COPEPODITE V),LG-CB,153,485
+Pseudocalanus spp.,NOT DETERMINED,LG-CB,153,34
+Pseudocalanus spp.,ADULT,PairoVET,153,310
+Pseudocalanus spp.,C - 1 (COPEPODITE I),PairoVET,153,166
+Pseudocalanus spp.,C - 2 (COPEPODITE II),PairoVET,153,173
+Pseudocalanus spp.,C - 3 (COPEPODITE III),PairoVET,153,175
+Pseudocalanus spp.,C - 4 (COPEPODITE IV),PairoVET,153,173
+Pseudocalanus spp.,C - 5 (COPEPODITE V),PairoVET,153,170
+Themisto libellula,A + J (ADULT/JUVENILE),60BON,333,15
+Themisto libellula,A + J (ADULT/JUVENILE),60BON,505,60
+Themisto libellula,NOT DETERMINED,60BON,505,271
+Themisto pacifica,A + J (ADULT/JUVENILE),60BON,505,81
+Themisto pacifica,NOT DETERMINED,60BON,333,1
+Themisto pacifica,NOT DETERMINED,60BON,505,171
+Themisto spp.,A + J (ADULT/JUVENILE),60BON,333,1
+Themisto spp.,A + J (ADULT/JUVENILE),60BON,505,26
+Themisto spp.,NOT DETERMINED,60BON,333,19
+Themisto spp.,NOT DETERMINED,60BON,505,108
+Thysanoessa inermis,A + J (ADULT/JUVENILE),60BON,333,136
+Thysanoessa inermis,A + J (ADULT/JUVENILE),60BON,505,14
+Thysanoessa inermis,ADULT,60BON,333,9
+Thysanoessa inermis,ADULT,60BON,505,67
+Thysanoessa inermis,JUVENILE,60BON,333,6
+Thysanoessa inermis,JUVENILE,60BON,505,314
+Thysanoessa inspinata,A + J (ADULT/JUVENILE),60BON,333,131
+Thysanoessa inspinata,A + J (ADULT/JUVENILE),60BON,505,1
+Thysanoessa inspinata,JUVENILE,60BON,505,2
+Thysanoessa longipes,A + J (ADULT/JUVENILE),60BON,333,132
+Thysanoessa longipes,A + J (ADULT/JUVENILE),60BON,505,3
+Thysanoessa longipes,ADULT,60BON,333,2
+Thysanoessa longipes,ADULT,60BON,505,4
+Thysanoessa longipes,JUVENILE,60BON,333,3
+Thysanoessa longipes,JUVENILE,60BON,505,41
+Thysanoessa raschii,A + J (ADULT/JUVENILE),60BON,333,143
+Thysanoessa raschii,A + J (ADULT/JUVENILE),60BON,505,19
+Thysanoessa raschii,ADULT,60BON,333,20
+Thysanoessa raschii,ADULT,60BON,505,181
+Thysanoessa raschii,JUVENILE,60BON,333,12
+Thysanoessa raschii,JUVENILE,60BON,505,446
+Thysanoessa spinifera,A + J (ADULT/JUVENILE),60BON,333,131
+Thysanoessa spinifera,A + J (ADULT/JUVENILE),60BON,505,1
+Thysanoessa spinifera,ADULT,60BON,505,2
+Thysanoessa spinifera,JUVENILE,60BON,505,5
+Tortanus discaudatus,ADULT,20BON,153,212
+Tortanus discaudatus,C-1 TO C-4,20BON,153,62
+Tortanus discaudatus,C - 1 (COPEPODITE I),20BON,153,2
+Tortanus discaudatus,C - 2 (COPEPODITE II),20BON,153,2
+Tortanus discaudatus,C - 5 (COPEPODITE V),20BON,153,94
+Tortanus discaudatus,NOT DETERMINED,20BON,153,1
+Tortanus discaudatus,ADULT,60BON,505,370
+Tortanus discaudatus,C - 5 (COPEPODITE V),60BON,505,136
+Tortanus discaudatus,NOT DETERMINED,60BON,505,1
+Tortanus discaudatus,ADULT,LG-CB,153,10
+Tortanus discaudatus,C - 5 (COPEPODITE V),LG-CB,153,3
+Tortanus discaudatus,C - 1 (COPEPODITE I),PairoVET,153,6
+Tortanus discaudatus,C - 2 (COPEPODITE II),PairoVET,153,4
+Tortanus discaudatus,C - 3 (COPEPODITE III),PairoVET,153,8
+Tortanus discaudatus,C - 4 (COPEPODITE IV),PairoVET,153,13

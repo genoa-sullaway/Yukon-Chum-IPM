@@ -1,0 +1,2285 @@
+---
+title: "BP Synthesis Data Set Construction"
+output: html_notebook
+---
+
+
+Load packages to be used in the analysis
+
+```{r}
+
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+packages <- c("tidyverse", "readxl", "RODBC", "here", "rnaturalearth", "rnaturalearthdata", "maps", "mapdata", "marmap", "rgdal")
+
+ipak(packages)
+
+```
+
+Read in the EMA data files
+
+```{r}
+
+BASIS_Zoo_1999_2004 <- read_xlsx (here("Raw-Data", "EMA-Historical-Data", "BASIS_Zoo_1999_2004.xlsx"), col_types = c("text", "text", "text", "numeric", "text", "numeric", "date", "date", "date", "numeric", "numeric", "text", "numeric", "numeric", "text", "text", "numeric", "text", "numeric", "text", "text", "text", "text", "numeric", "numeric", "numeric", "text", "text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
+
+
+BASIS_Zoo_2005_2009 <- read_xlsx (here("Raw-Data", "EMA-Historical-Data", "BASIS_Zoo_2005_2009.xlsx"), col_types = c("text", "text", "text", "numeric", "text", "numeric", "date", "date", "date", "numeric", "numeric", "text", "numeric", "numeric", "text", "text", "numeric", "text", "numeric", "text", "text", "text", "text", "numeric", "numeric", "numeric", "text", "text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
+
+BASIS_Zoo_2010_2013 <- read_xlsx (here("Raw-Data", "EMA-Historical-Data", "BASIS_Zoo_2010_2013.xlsx"), col_types = c("text", "text", "text", "numeric", "text", "numeric", "date", "date", "date", "numeric", "numeric", "text", "numeric", "numeric", "text", "text", "numeric", "text", "numeric", "text", "text", "text", "text", "numeric", "numeric", "numeric", "text", "text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
+
+BASIS_Zoo_2014_2017 <- read_xlsx (here("Raw-Data", "EMA-Historical-Data", "BASIS_Zoo_2014_2017_LonCorrected.xlsx"), col_types = c("text", "text", "text", "numeric", "text", "numeric", "date", "date", "date", "numeric", "numeric", "text", "numeric", "numeric", "text", "text", "numeric", "text", "numeric", "text", "text", "text", "text", "numeric", "numeric", "numeric", "text", "text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
+
+EMA_Combined <- rbind(BASIS_Zoo_1999_2004, BASIS_Zoo_2005_2009, BASIS_Zoo_2010_2013, BASIS_Zoo_2014_2017)
+
+rm(BASIS_Zoo_1999_2004, BASIS_Zoo_2005_2009, BASIS_Zoo_2010_2013, BASIS_Zoo_2014_2017)
+
+```
+
+
+
+Convert EMA fields into EcoDAAT fields
+
+```{r}
+
+#Create DAY, MONTH, YEAR columns from "HaulDate"
+
+EMA_Combined_Recode <-  EMA_Combined
+
+EMA_Combined_Recode <- separate(EMA_Combined_Recode, HaulDate, c("YEAR", "MONTH", "DAY"), sep="-")
+
+#Delete year column from the HaulID as there is already a year column
+
+EMA_Combined_Recode$YEAR <- NULL
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, YEAR = Year)
+
+
+#Extract Cruise code 
+EMA_Combined_Recode$CRUISE <- substring (EMA_Combined_Recode$StationID, 5,6)
+
+EMA_Combined_Recode$CRUISE_ID <- substring (EMA_Combined_Recode$StationID, 7,8)
+
+#Recod Cruise code with ship ID and 
+
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "01"] <- "SS"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "02"] <- "NWE"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "03"] <- "DY"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "04"] <- "GP"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "05"] <- "EE"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "06"] <- "HE"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "07"] <- "LU"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "08"] <- "BE"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "09"] <- "AE"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "10"] <- "JC"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "11"] <- "ST"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "12"] <- "CH"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "13"] <- "SA"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "14"] <- "QU"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "15"] <- "CF"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE == "16"] <- "OS"
+
+#Get last two digits of year
+
+EMA_Combined_Recode$CRUISE_YEAR <- substring (EMA_Combined_Recode$YEAR, 3,4)
+
+#Combined CRUISE with 
+
+EMA_Combined_Recode <- unite(EMA_Combined_Recode, "CRUISE", CRUISE, CRUISE_YEAR, sep="")
+
+EMA_Combined_Recode <- unite(EMA_Combined_Recode, "CRUISE", CRUISE, CRUISE_ID, sep = "-")
+
+
+#Count number of cruises in the EMA dataset
+
+EMA_Combined_Recode_byCRUISE <- group_by(EMA_Combined_Recode, CRUISE)
+EMA_Combined_Recode_CruiseCount <- summarise(EMA_Combined_Recode_byCRUISE, n_distinct(YEAR))
+
+ungroup(EMA_Combined_Recode)
+
+
+#Recode cruises to match nomenclature change in 2013 (i.e., 2DY12 becomes DY13-02 in 2013)
+
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="BE11-01"] <- "1BE11"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="BE12-01"] <- "1BE12"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="DY07-02"] <- "2OD07"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="DY08-06"] <- "6DY08"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="DY09-05"] <- "5DY09"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="DY10-04"] <- "4DY10"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="DY11-04"] <- "4DY11"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="DY12-03"] <- "3DY12"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="EE09-01"] <- "1EE09"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="EE10-01"] <- "1EE10"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="GP00-01"] <- "1GP00"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="GP99-01"] <- "1GP99"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="NWE06-01"] <- "1NW06"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="SS02-01"] <- "1SS02"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="SS03-01"] <- "1SS03"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="SS04-01"] <- "1SS04"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="SS05-01"] <- "1SS05"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="SS06-01"] <- "1SS06"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="SS07-01"] <- "1SS07"
+EMA_Combined_Recode$CRUISE[EMA_Combined_Recode$CRUISE=="NWE17-05"] <- "NW17-05"
+
+#Remove a few files
+
+rm(EMA_Combined_Recode_byCRUISE, EMA_Combined_Recode_CruiseCount)
+
+
+#Rename Abundance to EST_NUM_PERM3
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, EST_NUM_PERM3 = Abundance)
+
+#Rename GearDepth to MAX_GEAR_DEPTH and use to calculate EST_NUM_PERM3
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, MAX_GEAR_DEPTH = GearDepth)
+
+#Compute EST_NUM_PERM2 = EST_NUM_PERM3 * MAX_GEAR_DEPTH
+
+EMA_Combined_Recode$EST_NUM_PERM2 <- EMA_Combined_Recode$EST_NUM_PERM3*EMA_Combined_Recode$MAX_GEAR_DEPTH
+
+#Create columns GEAR_NAME, MESH from GearCode column
+
+EMA_Combined_Recode$GearCode[EMA_Combined_Recode$GearCode == "Bongo153"] <- "20BON_153"
+EMA_Combined_Recode$GearCode[EMA_Combined_Recode$GearCode == "Bongo333"] <- "60BON_333"
+EMA_Combined_Recode$GearCode[EMA_Combined_Recode$GearCode == "Bongo505"] <- "60BON_505"
+EMA_Combined_Recode$GearCode[EMA_Combined_Recode$GearCode == "Bongo80"] <- "80BON_153"
+EMA_Combined_Recode$GearCode[EMA_Combined_Recode$GearCode == "Juday"] <- "Juday_168"
+EMA_Combined_Recode$GearCode[EMA_Combined_Recode$GearCode == "PairoVET"] <- "PairoVET_153"
+
+EMA_Combined_Recode <- separate(EMA_Combined_Recode, GearCode, c("GEAR_NAME", "MESH"), sep = "_")
+
+#Rename GearInTime to GMT_DATE_TIME_TXT
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, GMT_DATE_TIME_TXT = GearInTime)
+  
+#Rename Quality to HAUL_PERFORMANCE and recode to match EcoDAAT 
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, HAUL_PERFORMANCE = Quality)
+
+EMA_Combined_Recode$HAUL_PERFORMANCE[EMA_Combined_Recode$HAUL_PERFORMANCE == "G"] <- "GOOD"
+EMA_Combined_Recode$HAUL_PERFORMANCE[EMA_Combined_Recode$HAUL_PERFORMANCE == "Q"] <- "QUEST"
+
+#Create LAT and LON column from GearInLatitude and Gear in Longitude
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, LAT = GearInLatitude)
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, LON = GearInLongitude)
+
+#Create column SEX_NAME from Sex and recode to match EcoDAAT categories
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, SEX_NAME = Sex)
+
+EMA_Combined_Recode$SEX_NAME[EMA_Combined_Recode$SEX_NAME == "M"] <- "MALE"
+EMA_Combined_Recode$SEX_NAME[EMA_Combined_Recode$SEX_NAME == "F"] <- "FEMALE"
+EMA_Combined_Recode$SEX_NAME[EMA_Combined_Recode$SEX_NAME == "U"] <- "NOT DETERMINED"
+
+#EMA Size categories are numerous, so keep this column, but rename as SIZE_NAME for merging
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, SIZE_NAME = Size)
+
+#Create STAGE_NAME category by renaming "StageCode" and recoding
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, STAGE_NAME = StageCode)
+
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "A"] <- "ADULT"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "A & J"] <- "A + J (ADULT/JUVENILE)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "adult"] <- "ADULT"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Adult"] <- "ADULT"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C1"] <- "C - 1 (COPEPODITE I)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C1-2"] <- "C-1 TO C-2"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C1-3"] <- "C-1 TO C-3"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C1-4"] <- "C-1 TO C-4"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C1-5"] <- "C-1 TO C-5"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C1-C4"] <- "C-1 TO C-4"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C2"] <- "C - 2 (COPEPODITE II)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C2-C3"] <- "C-2 TO C-3"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C2-C5"] <- "C-2 TO C-5"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C3"] <- "C - 3 (COPEPODITE III)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C3-C4"] <- "C-3 TO C-4"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C3-C5"] <- "C-3 TO C-5"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C4"] <- "C - 4 (COPEPODITE IV)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C4-C5"] <- "C-4 TO C-5"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C4-C6"] <- "C-4 TO C-6"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C5"] <- "C - 5 (COPEPODITE V)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "C6"] <- "ADULT"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "calyptopis"] <- "CALYPTOPIS (STAGE NOT DETERMINED)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "calyptopis 1"] <- "CALYPTOPIS (STAGE NOT DETERMINED)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "calyptopis 2"] <- "CALYPTOPIS (STAGE NOT DETERMINED)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "calyptopis 3"] <- "CALYPTOPIS (STAGE NOT DETERMINED)"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "cypris"] <- "CYPRIS"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Cypris"] <- "CYPRIS"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "egg"] <- "EGG"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Egg"] <- "EGG"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "furcilia"] <- "FURCILIA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Furcilia"] <- "FURCILIA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "J"] <- "JUVENILE"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "juvenile"] <- "JUVENILE"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Juvenile"] <- "JUVENILE"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "larva"] <- "LARVA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Larva"] <- "LARVA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "larval"] <- "LARVA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Larval"] <- "LARVA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "medusa"] <- "MEDUSA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Medusa"] <- "MEDUSA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "megalopa"] <- "MEGALOPAE"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Megalopa"] <- "MEGALOPAE"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "nauplius"] <- "NAUPLIUS"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Nauplius"] <- "NAUPLIUS"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "ND"] <- "NOT DETERMINED"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "post-larva"] <- "POST LARVA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "U"] <- "NOT DETERMINED"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "zoea"] <- "ZOEA"
+EMA_Combined_Recode$STAGE_NAME[EMA_Combined_Recode$STAGE_NAME == "Zoea"] <- "ZOEA"
+
+#Create Column STATION_NAME by using the last 3 digits of StationID
+
+EMA_Combined_Recode$STATION_NAME<- substring (EMA_Combined_Recode$StationID, 9,11)
+
+#Create TAXON_NAME column and recode to match EcoDAAT
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, TAXON_NAME = Current_Name)
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Acanthomysis sp."] <- "Acanthomysis spp."
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Acanthomysis stelleri"] <- "Acanthomysis stelleri (Exacanthomysis arctopacifica)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Anthoathecatae"] <- "Anthoathecata (Anthomedusae)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Cancridae"] <- "Cancridae (Brachyura)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Candacia columbiae"] <- "Candacia Columbiae"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Caprellidea"] <- "Caprellidae"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Clytia gregaria"] <- "Clytia gregaria (Phialidium gregarium)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Cnidaria"] <- "Cnidarian medusae"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Corophium spp."] <- "Corophium"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Disacanthomysis dybowskii"] <- "Discanthomysis (Acanthomysis) Dybowskii"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Epilabidocera amphitrites"] <- "Epilabidocera amphitrites (E. longipedata)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Epilabidocera longipedata"] <- "Epilabidocera amphitrites (E. longipedata)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Euphausia spp."] <- "Euphausiacea"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Eurytemora pacifica"] <- "Eurytemora pacifica (E. johanseni)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Eurytemora sp."] <- "Eurytemora spp."
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Gammaridae"] <- "Gammaridea (Unidentifiable)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Gammaridea"] <- "Gammaridea (Unidentifiable)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Hippolytidae"] <- "Hippolytidae (Caridea)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Hydromedusae (Hydroidolina"] <- "Hydromedusae"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Leptothecatae"] <- "Leptothecata (Leptomedusae)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Lithodidae"] <- "Lithodidae (Anomura)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Majidae"] <- "Majidae (Brachyura)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Meterythrops robusta"] <- "Meterythrops robustus (M. robusta)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Mysida"] <- "Mysida (Unidentifiable)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Octopoda"] <- "Octopodiformes (Octopus) larvae"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Oithona setigera"] <- "Oithona setigera (O. spinirostris)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Oithona spinirostris"] <- "Oithona setigera (O. spinirostris)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Chionoecetes spp."] <- "Oregoniidae (Brachyura)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Hyas spp."] <- "Oregoniidae (Brachyura)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Oregoniidae"] <- "Oregoniidae (Brachyura)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Pacifacanthomysis nephrophthalma"] <- "Pacifacanthomysis (Acanthomysis) nephrophthalma"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Paguridae"] <- "Paguridae (Anomura)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Paraeuchaeta elongata"] <- "Paraeuchaeta elongata (Euchaeta elongata)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Parasagitta elegans"] <- "Parasagitta (Sagitta) elegans"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Phoronida (actinotroch larva)"] <- "Phoronida actinotroch (larvae)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Podon leuckartii"] <- "Podon leuckarti"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Pseudoamallothrix ovata"] <- "Pseudoamallothrix (scolecithricella) ovata"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Syrrhoe"] <- "Syrrhoe spp."
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Tessarabrachion oculatus"] <- "Tessarabrachion oculatum"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Thecosomata"] <- "Thecosomata (Unidentifiable)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Themisto pacifica"] <- "Themisto pacifica (Parathemisto pacifica)"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Triconia sp."] <- "Triconia spp."
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Calanidae"] <- "Unidentified Calanids"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Calanoida"] <- "Unidentified Calanids"
+
+EMA_Combined_Recode$TAXON_NAME[EMA_Combined_Recode$TAXON_NAME == "Xenacanthomysis pseudomacropsis"] <- "Xenoacanthomysis (Acanthomysis) pseudomacropsis"
+
+
+
+#Create VOLUME_FILTERED column by renaming TowVOlume column
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, VOLUME_FILTERED = TowVolume)
+
+#Rename BottomDepth to BOTTOM_DEPTH to match EcoDAAT
+
+EMA_Combined_Recode <- rename(EMA_Combined_Recode, BOTTOM_DEPTH = BottomDepth)
+
+
+#Rearrange the file to add a column indicating origin of data, to have them in the same order as the EcoDAAT file and remove non-matched columns prior to merge
+
+
+EMA_Combined_Recode$DATA_SOURCE <- "EMA"
+
+#Inset columns not present in EMA, but will be in EcoDAAT
+
+EMA_Combined_Recode$DIS_PERVOLM2 <- NA
+EMA_Combined_Recode$DIS_PERVOLM3 <- NA
+EMA_Combined_Recode$FOCI_ID <- NA
+EMA_Combined_Recode$FOCI_SAMPLE_ID <- NA
+EMA_Combined_Recode$GEOGRAPHIC_AREA <- NA
+EMA_Combined_Recode$HAUL_ID <- NA
+EMA_Combined_Recode$HAUL_NAME <- NA
+EMA_Combined_Recode$MIN_GEAR_DEPTH <- NA
+EMA_Combined_Recode$NET <- NA
+EMA_Combined_Recode$SAMPLE_DEPTH <- NA
+EMA_Combined_Recode$SEX <- NA
+EMA_Combined_Recode$SPECIMEN_FORM <- NA
+EMA_Combined_Recode$STAGE <- NA
+EMA_Combined_Recode$TAXON_SIZE <- NA
+EMA_Combined_Recode$ZOOP_COPEPOD_NAUPLII <- NA
+EMA_Combined_Recode$ZOOP_EUPHAUSIID_EGG <- NA
+
+
+#Create HAUL_ID column information for merging purposes
+
+EMA_Combined_Recode$HAUL_ID <- paste0(EMA_Combined_Recode$CRUISE," ",EMA_Combined_Recode$STATION_NAME," ", 1," ", EMA_Combined_Recode$GEAR_NAME," ", 1)
+
+
+#Create vector of column names from the EcoDAAT File
+
+EcoDAAT_ColumnNames <- c("BOTTOM_DEPTH", "CRUISE", "DAY", "DIS_PERVOLM2", "DIS_PERVOLM3", "EST_NUM_PERM2", "EST_NUM_PERM3", "FOCI_ID", "FOCI_SAMPLE_ID", "GEAR_NAME", "GEOGRAPHIC_AREA", "GMT_DATE_TIME_TXT", "HAUL_ID", "HAUL_NAME", "HAUL_PERFORMANCE", "LAT", "LON", "MAX_GEAR_DEPTH", "MESH", "MIN_GEAR_DEPTH", "MONTH", "NET", "SAMPLE_DEPTH", "SEX", "SEX_NAME", "SIZE_NAME", "SPECIMEN_FORM", "STAGE", "STAGE_NAME", "STATION_NAME", "TAXON_NAME", "TAXON_SIZE", "VOLUME_FILTERED",  "YEAR", "ZOOP_COPEPOD_NAUPLII", "ZOOP_EUPHAUSIID_EGG", "DATA_SOURCE")
+
+EMA_Combined_Recode <- EMA_Combined_Recode[, EcoDAAT_ColumnNames]
+
+
+```
+
+Import EcoDAAT data
+
+Connect to database to import zoop data directly from EcoDAAT
+
+```{r}
+#Create connect to the AFSC database
+
+user <- readline("Input Username: ")
+pswd <- readline("Input Password: ")
+
+AFSC_Connect <- odbcConnect("AFSC", uid=user,  pwd=pswd)
+
+
+#Delete and refresh table to draw from, in this case it is SPECIMEN_MAIN_GEOM
+
+sqlQuery(AFSC_Connect,"DROP TABLE SPECIMEN_MAIN_GEOM;")
+
+sqlQuery(AFSC_Connect,"CREATE TABLE SPECIMEN_MAIN_GEOM AS SELECT * FROM ECODAAT.SPECIMEN_MAIN_GEOM;")
+
+
+#Run SQL Queries to build zooplankton dataset 
+
+#Query the database
+
+zoopdata <- sqlQuery(AFSC_Connect, "SELECT BOTTOM_DEPTH,
+CRUISE, DAY, DIS_PERVOLM2, DIS_PERVOLM3, EST_NUM_PERM2, EST_NUM_PERM3, FOCI_ID, FOCI_SAMPLE_ID, GEAR_NAME, 
+GEOGRAPHIC_AREA, GMT_DATE_TIME_TXT, HAUL_ID, HAUL_NAME, HAUL_PERFORMANCE, LAT, LON, MAX_GEAR_DEPTH, MESH,
+MIN_GEAR_DEPTH, MONTH, NET, SAMPLE_DEPTH, SEX, SEX_NAME, SIZE_NAME, SPECIMEN_FORM, STAGE, STAGE_NAME, STATION_NAME,
+TAXON_NAME, TAXON_SIZE, VOLUME_FILTERED, YEAR, ZOOP_COPEPOD_NAUPLII, ZOOP_EUPHAUSIID_EGG
+FROM SPECIMEN_MAIN_GEOM WHERE ORIG_DB LIKE 'BOB';", stringsAsFactors=FALSE)
+
+#Close database connection
+
+odbcClose(AFSC_Connect)
+
+
+#Drop one cruise using the old protocol OS17 and replace with correct data
+
+zoopdata <- filter(zoopdata, CRUISE!="OS17-01")
+
+#Bring in OS17-01
+
+OS1701 <- read.csv(here("Raw-Data", "OS1701_EcoFOCI_ZooplanktonNet.csv"))
+
+zoopdata <- rbind(zoopdata, OS1701)
+
+#Delete OS1701
+
+rm(OS1701)
+
+
+```
+
+Do some data tidying for the EcoDAAT data set and combine the EcoDAAT and EMA datasets
+
+
+```{r}
+
+#Recode mesh sizes for 150, 333, 500
+
+zoopdata$MESH[zoopdata$MESH==150] <- 153
+zoopdata$MESH[zoopdata$MESH==154] <- 153
+zoopdata$MESH[zoopdata$MESH==1153] <- 153
+zoopdata$MESH[zoopdata$MESH==335] <- 333
+zoopdata$MESH[zoopdata$MESH==500] <- 505
+
+
+#Count number of cruises in the EMA dataset
+
+EMA_Combined_Recode_byCRUISE <- group_by(EMA_Combined_Recode, CRUISE)
+EMA_Combined_Recode_CruiseCount <- summarise(EMA_Combined_Recode_byCRUISE, n_distinct(YEAR))
+
+ungroup(EMA_Combined_Recode)
+
+#Count number of cruises in the EMA dataset
+
+zoopdata_byCRUISE <- group_by(zoopdata, CRUISE)
+zoopdata_CruiseCount <- summarise(zoopdata_byCRUISE, n_distinct(YEAR))
+
+ungroup(zoopdata)
+
+
+
+#Do a join to see if cruises have matches in both datasets:
+
+TestData <- semi_join(EMA_Combined_Recode_CruiseCount, zoopdata_CruiseCount, by = "CRUISE")
+
+
+
+
+#10 cruises are present in EMA dataset and zoopdata data set, remove those from the EMA dataset to avoid double counting
+
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="1GP99")
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="3DY12")
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="AE14-01")
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="AE15-01")
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="DY14-06")
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="DY14-08")
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="DY15-07")
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="DY15-08")
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="DY16-09")
+EMA_Combined_Recode <- filter(EMA_Combined_Recode, CRUISE!="NW17-05")
+
+#RemoveFiles
+
+rm(EMA_Combined_Recode_byCRUISE, EMA_Combined_Recode_CruiseCount, zoopdata_byCRUISE, zoopdata_CruiseCount, TestData)
+
+#Combine the EMA and EcoDAAT datasets
+
+#Add Data Source file to the zoopdata prior to combination
+
+zoopdata$DATA_SOURCE <- "EcoDAAT"
+
+
+#Combine datasets 
+
+AllZoop_Raw <- rbind(EMA_Combined_Recode, zoopdata)
+
+
+
+#Create vector of Combined column names to trim dataset for final processing
+
+Combined_ColumnNames <- c("BOTTOM_DEPTH", "CRUISE", "DAY", "DIS_PERVOLM2", "DIS_PERVOLM3", "EST_NUM_PERM2", "EST_NUM_PERM3", "GEAR_NAME", "GMT_DATE_TIME_TXT", "HAUL_ID", "HAUL_PERFORMANCE", "LAT", "LON", "MAX_GEAR_DEPTH", "MESH", "MONTH", "SPECIMEN_FORM", "SEX_NAME", "SIZE_NAME", "STAGE_NAME", "STATION_NAME", "TAXON_NAME", "VOLUME_FILTERED",  "YEAR", "DATA_SOURCE")
+
+#Keep only those columns
+
+AllZoop_Raw <- AllZoop_Raw[,Combined_ColumnNames]
+
+#Remove files
+
+rm (EMA_Combined, EMA_Combined_Recode, zoopdata)
+
+
+
+```
+
+
+Quick map of the raw data stations
+
+```{r}
+
+#Quick plot to take a look at the dataset so far
+
+#Get world data from #natural earth package
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+
+# get regional polygons
+reg = map_data("world2Hires")
+reg = subset(reg, region %in% c('USSR', 'USA'))
+
+# convert lat longs
+reg$long = (360 - reg$long)*-1
+
+# set map limits
+lons = c(-179.5, -130)
+lats = c(50, 74)
+
+
+######################################
+
+# make plot
+Region_Map_RawData <- ggplot()+
+
+  # add coastline
+  geom_sf(data = world)+
+    coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
+
+  #Plot station points
+  geom_point(data=AllZoop_Raw, mapping=aes(LON, LAT))+
+
+  # formatting
+  theme_bw()+
+  xlab("Longitude")+
+  ylab("Latitude")
+
+Region_Map_RawData
+
+
+```
+
+Data Filtering for BP Synthesis Project
+
+```{r}
+
+#First filter for all data north of 60N
+
+NBS_Zoop <- filter(AllZoop_Raw, LAT>=60)
+
+
+#Now map again to take a look
+
+# make plot
+Region_Map_NBS_Process_1 <- ggplot()+
+
+  # add coastline
+  geom_sf(data = world)+
+    coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
+
+  #Plot station points
+  geom_point(data=NBS_Zoop, mapping=aes(LON, LAT))+
+
+  # formatting
+  theme_bw()+
+  xlab("Longitude")+
+  ylab("Latitude")
+
+Region_Map_NBS_Process_1
+
+
+#Looks like some data from the GOA is still present, so remove data > 155
+
+NBS_Zoop <- filter(NBS_Zoop, LON<= -150)
+
+#Now map again to take a look
+
+# make plot
+Region_Map_NBS_Process_2 <- ggplot()+
+
+  # add coastline
+  geom_sf(data = world)+
+    coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
+
+  #Plot station points
+  geom_point(data=NBS_Zoop, mapping=aes(LON, LAT))+
+
+  # formatting
+  theme_bw()+
+  xlab("Longitude")+
+  ylab("Latitude")
+
+Region_Map_NBS_Process_2
+
+#Spatial coverage looks correct
+
+#Now check temporal coverage
+
+sort(unique(NBS_Zoop$YEAR), decreasing = FALSE)
+
+#Remove data from 1996 as it is removed from all other years of collection
+
+NBS_Zoop <- filter(NBS_Zoop, YEAR!=1996)
+
+#Take a look at the gears present in the dataset
+
+unique(NBS_Zoop$GEAR_NAME)
+unique(NBS_Zoop$MESH)
+
+#Rough estimate of number of samples by gear type
+
+NBS_Zoop_Gear <- NBS_Zoop[, c("CRUISE", "GEAR_NAME", "MESH", "LAT", "LON")]
+
+NBS_Zoop_Gear <- distinct(NBS_Zoop_Gear)
+
+NBS_Zoop_Gear_byGear <- group_by(NBS_Zoop_Gear, GEAR_NAME, MESH)
+
+NBS_Gear_Summary <- summarise(NBS_Zoop_Gear_byGear, n())
+
+ungroup(NBS_Zoop_Gear)
+
+#This shows a few gears can be eliminated for low sample size (V60BON, 80BON) and CALVET has too small mesh size
+
+NBS_Zoop <- filter(NBS_Zoop, GEAR_NAME!="CALVET")
+NBS_Zoop <- filter(NBS_Zoop, GEAR_NAME!="V60BON")
+NBS_Zoop <- filter(NBS_Zoop, GEAR_NAME!="80BON")
+
+#Remove sled data as this is biased toward a bottom sample
+
+NBS_Zoop <- filter(NBS_Zoop, GEAR_NAME!="SLED")
+
+
+
+#Remove failed and questionable hauls
+
+#First save the NA since EMA data does not always record HAUL_PERFORMANCE
+
+HaulPerf_NA <- NBS_Zoop[is.na(NBS_Zoop$HAUL_PERFORMANCE),]
+
+NBS_Zoop_GOOD <- filter(NBS_Zoop, HAUL_PERFORMANCE=="GOOD")
+
+#Rebuild dataset without QUEST and FAIL HAULS
+
+NBS_Zoop <- rbind(HaulPerf_NA, NBS_Zoop_GOOD)
+
+
+
+#Write this raw file prior to further processing
+
+write.csv(NBS_Zoop, here("Raw-Data", "NBS_Zoop_Raw.csv"))
+
+```
+
+Bring in the Coarse Taxa List to aid in lumping and filter out some taxa
+
+
+```{r}
+
+TaxaList_Coarse <- read.csv(here("Taxa-Lists", "TaxaList_Coarse.csv"))
+
+#Now add this to the file
+
+TaxaList_Coarse <- distinct(TaxaList_Coarse)
+
+NBS_Zoop_Process <- left_join(NBS_Zoop, TaxaList_Coarse, by = "TAXON_NAME")
+
+#Filter out those data marked for removal
+
+NBS_Zoop_Process <- filter(NBS_Zoop_Process, NOTE != "Remove")
+
+
+```
+
+
+
+Create taxa specific data sets to select the correct stages from the correct GEAR_NAME and MESH for each specific coarse taxa
+
+Acartia spp
+
+```{r}
+
+Acartia_spp <- filter(NBS_Zoop_Process, TAXA_COARSE=="Acartia spp.")
+
+#Acartia is a small copepod, so all estimates should come from the smaller nets
+
+#Filter for correct gear
+
+Acartia_spp <- filter(Acartia_spp, GEAR_NAME!= "60BON")
+
+
+#Being to build final data set
+
+
+NBS_Zoop_Process_Final <- Acartia_spp
+
+
+
+```
+
+Aglantha digitale
+
+```{r}
+
+Aglantha_digitale <- filter(NBS_Zoop_Process, TAXA_COARSE=="Aglantha digitale")
+
+#Choose to estimate Cnidarians from the 60BON only
+
+Aglantha_digitale <- filter(Aglantha_digitale, GEAR_NAME=="60BON")
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Aglantha_digitale)
+
+
+```
+
+Amphipods
+
+```{r}
+
+Amphipoda <- filter(NBS_Zoop_Process, TAXA_COARSE=="Amphipoda")
+
+#Amhipods will be estimated from the 60BON only
+
+Amphipoda <- filter(Amphipoda, GEAR_NAME=="60BON")
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Amphipoda)
+
+
+```
+
+
+Anomura
+
+```{r}
+
+Anomura <- filter(NBS_Zoop_Process, TAXA_COARSE=="Anomura")
+
+#Anomura estimate from 60BON only
+
+Anomura <- filter(Amphipoda, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Anomura)
+
+
+```
+
+
+Appendicularia
+
+```{r}
+
+Appendicularia <- filter(NBS_Zoop_Process, TAXA_COARSE=="Appendicularia")
+
+#Can filter for both gears and then add a taxa coarse of Appendicularia_large and Appendicular_small
+
+Appendicularia_large <- filter(Appendicularia, GEAR_NAME=="60BON")
+
+#Recode coarse taxa
+
+Appendicularia_large$TAXA_COARSE[Appendicularia_large$TAXA_COARSE=="Appendicularia"] <- "Appendicularia_large"
+
+
+Appendicularia_small <- filter(Appendicularia, GEAR_NAME!="60BON")
+
+#Recode coarse taxa
+
+Appendicularia_small$TAXA_COARSE[Appendicularia_small$TAXA_COARSE=="Appendicularia"] <- "Appendicularia_small"
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Appendicularia_large, Appendicularia_small)
+
+
+```
+
+Bivalvia
+
+
+```{r}
+
+Bivalvia <- filter(NBS_Zoop_Process, TAXA_COARSE=="Bivalvia")
+
+#Bivalvia estimate from smaller nets only
+
+Bivalvia <- filter(Bivalvia, GEAR_NAME!="60BON")
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Bivalvia)
+
+
+
+
+```
+
+
+Brachyura
+
+```{r}
+
+Brachyura <- filter(NBS_Zoop_Process, TAXA_COARSE=="Brachyura")
+
+#Brachyura estimate from 60BON only
+
+Brachyura <- filter(Brachyura, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Brachyura)
+
+
+
+```
+
+Calanus hyperboreus
+
+
+
+```{r}
+
+Calanus_hyperboreus <- filter(NBS_Zoop_Process, TAXA_COARSE=="Calanus hyperboreus")
+
+
+#Separate EMA data as they were sorted under different protocols
+
+Calanus_hyperboreus_EMA <- filter(Calanus_hyperboreus, DATA_SOURCE=="EMA")
+Calanus_hyperboreus_EcoDAAT <- filter(Calanus_hyperboreus, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Calanus_hyperboreus_EcoDAAT_bySPECIMEN_FORM <- group_by(Calanus_hyperboreus_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Calanus_hyperboreus_EcoDAAT_FormSummary <- summarise(Calanus_hyperboreus_EcoDAAT_bySPECIMEN_FORM,n())
+
+#These look correct
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Calanus_hyperboreus_EMA_byGEAR_NAME <- group_by(Calanus_hyperboreus_EMA, MESH, GEAR_NAME)
+
+Calanus_hyperboreus_EMA_GearSummary <- summarise(Calanus_hyperboreus_EMA_byGEAR_NAME, n())
+
+#No issues with mismatched mesh and gear sizes. Need to filter for the correct stages for avoid double counts
+
+Calanus_hyperboreus_EMA <- filter(Calanus_hyperboreus_EMA, MESH != 153)
+
+
+#The other gears are correct, so rebuild dataset
+
+Calanus_hyperboreus <- rbind(Calanus_hyperboreus_EcoDAAT, Calanus_hyperboreus_EMA)
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Calanus_hyperboreus)
+
+
+```
+
+
+Calanus marshallae/glacialis
+
+
+```{r}
+
+Calanus <- filter(NBS_Zoop_Process, TAXA_COARSE=="Calanus marshallae/glacialis")
+
+#Separate EMA data as they were sorted under different protocols
+
+Calanus_EMA <- filter(Calanus, DATA_SOURCE=="EMA")
+Calanus_EcoDAAT <- filter(Calanus, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Calanus_EcoDAAT_bySPECIMEN_FORM <- group_by(Calanus_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Calanus_EcoDAAT_FormSummary <- summarise(Calanus_EcoDAAT_bySPECIMEN_FORM,n())
+
+#Do some filtering to get the correct stages from the correct gear for EcoDAAT data
+
+Calanus_EcoDAAT_B <- filter(Calanus_EcoDAAT, SPECIMEN_FORM=="B")
+Calanus_EcoDAAT_B <- filter(Calanus_EcoDAAT_B, MESH!=153)
+
+Calanus_EcoDAAT_C <- filter(Calanus_EcoDAAT, SPECIMEN_FORM=="C")
+Calanus_EcoDAAT_C <- filter(Calanus_EcoDAAT_C, MESH==153)
+Calanus_EcoDAAT_C <- filter(Calanus_EcoDAAT_C, GEAR_NAME=="20BON")
+
+Calanus_EcoDAAT_G <- filter(Calanus_EcoDAAT, SPECIMEN_FORM=="G")
+
+Calanus_EcoDAAT_H <- filter(Calanus_EcoDAAT, SPECIMEN_FORM=="H")
+
+Calanus_EcoDAAT_K <- filter(Calanus_EcoDAAT, SPECIMEN_FORM=="K")
+
+Calanus_EcoDAAT_L <- filter(Calanus_EcoDAAT, SPECIMEN_FORM=="L")
+
+#The other gears are correct, so rebuild dataset
+
+Calanus_EcoDAAT_Final <- rbind(Calanus_EcoDAAT_B, Calanus_EcoDAAT_C, Calanus_EcoDAAT_G, Calanus_EcoDAAT_H, Calanus_EcoDAAT_K, Calanus_EcoDAAT_L)
+
+ungroup(Calanus_EcoDAAT_Final)
+
+#Remove some files
+
+rm(Calanus_EcoDAAT_bySPECIMEN_FORM, Calanus_EcoDAAT_B, Calanus_EcoDAAT_C, Calanus_EcoDAAT_G, Calanus_EcoDAAT_H, Calanus_EcoDAAT_K, Calanus_EcoDAAT_L)
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Calanus_EMA_byGEAR_NAME <- group_by(Calanus_EMA, MESH, GEAR_NAME)
+
+Calanus_EMA_GearSummary <- summarise(Calanus_EMA_byGEAR_NAME, n())
+
+#No issues with mismatched mesh and gear sizes. Need to filter for the correct stages for avoid double counts
+
+Calanus_EMA_60BON <- filter(Calanus_EMA, GEAR_NAME=="60BON")
+
+Calanus_EMA_60BON_333 <- filter(Calanus_EMA_60BON, MESH==333)
+
+Calanus_EMA_60BON_333 <- filter(Calanus_EMA_60BON_333, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)"|STAGE_NAME=="C - 3 (COPEPODITE III)")
+
+Calanus_EMA_60BON_505 <- filter(Calanus_EMA_60BON, MESH==505)
+
+Calanus_EMA_60BON_505 <- filter(Calanus_EMA_60BON_505, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)")
+
+Calanus_EMA_20BON <- filter(Calanus_EMA, GEAR_NAME=="20BON")
+
+Calanus_EMA_20BON_153 <- filter(Calanus_EMA_20BON, MESH==153)
+
+Calanus_EMA_20BON_153 <- filter(Calanus_EMA_20BON_153, STAGE_NAME=="C - 2 (COPEPODITE II)"|STAGE_NAME=="C - 1 (COPEPODITE I)")
+
+#The other gears are correct, so rebuild dataset
+
+Calanus_EMA_Final <- rbind(Calanus_EMA_60BON_333, Calanus_EMA_60BON_505, Calanus_EMA_20BON_153)
+
+ungroup(Calanus_EMA_Final)
+
+#Remove some files
+
+rm(Calanus_EMA_byGEAR_NAME, Calanus_EMA_20BON, Calanus_EMA_20BON_153, Calanus_EMA_60BON, Calanus_EMA_60BON_333, Calanus_EMA_60BON_505)
+
+#Combine into final, Calanus data set
+
+Calanus <- rbind(Calanus_EMA_Final, Calanus_EcoDAAT_Final)
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Calanus)
+
+
+```
+
+
+Calanus pacificus
+
+
+```{r}
+
+Calanus_pacificus <- filter(NBS_Zoop_Process, TAXA_COARSE == "Calanus pacificus")
+
+
+#Separate EMA data as they were sorted under different protocols
+
+Calanus_pacificus_EMA <- filter(Calanus_pacificus, DATA_SOURCE=="EMA")
+Calanus_pacificus_EcoDAAT <- filter(Calanus_pacificus, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Calanus_pacificus_EcoDAAT_bySPECIMEN_FORM <- group_by(Calanus_pacificus_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Calanus_pacificus_EcoDAAT_FormSummary <- summarise(Calanus_pacificus_EcoDAAT_bySPECIMEN_FORM,n())
+
+#Stages and gear are correct for EcoDAAT data
+
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Calanus_pacificus_EMA_byGEAR_NAME <- group_by(Calanus_pacificus_EMA, MESH, GEAR_NAME)
+
+Calanus_pacificus_EMA_GearSummary <- summarise(Calanus_pacificus_EMA_byGEAR_NAME, n())
+
+# Need to filter for the correct stages for avoid double counts, just remove one Juday sample
+
+Calanus_pacificus_EMA <- filter(Calanus_pacificus_EMA, GEAR_NAME!="Juday")
+
+
+
+#Combine into final, Calanus_pacificus data set
+
+Calanus_pacificus <- rbind(Calanus_pacificus_EMA, Calanus_pacificus_EcoDAAT)
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Calanus_pacificus)
+
+
+
+
+```
+
+Caridea
+
+```{r}
+
+Caridea <- filter(NBS_Zoop_Process, TAXA_COARSE == "Caridea")
+
+#Caridea estimate from larger nets only
+
+Caridea <- filter(Caridea, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Caridea)
+
+
+```
+Centropages abdominalis
+
+```{r}
+
+Centropages <- filter(NBS_Zoop_Process, TAXA_COARSE=="Centropages abdominalis")
+
+
+#Separate EMA data as they were sorted under different protocols
+
+Centropages_EMA <- filter(Centropages, DATA_SOURCE=="EMA")
+Centropages_EcoDAAT <- filter(Centropages, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Centropages_EcoDAAT_bySPECIMEN_FORM <- group_by(Centropages_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Centropages_EcoDAAT_FormSummary <- summarise(Centropages_EcoDAAT_bySPECIMEN_FORM,n())
+
+
+#Filter for correct GEAR_NAME and MESH from EcoDAAT
+
+Centropages_EcoDAAT <- filter(Centropages_EcoDAAT, SPECIMEN_FORM!="G")
+
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Centropages_EMA_byGEAR_NAME <- group_by(Centropages_EMA, MESH, GEAR_NAME)
+
+Centropages_EMA_GearSummary <- summarise(Centropages_EMA_byGEAR_NAME, n())
+
+#For consistency, select the smaller gear only
+
+Centropages_EMA <- filter(Centropages_EMA, GEAR_NAME!="60BON")
+
+
+#Recombined data
+
+Centropages <- rbind(Centropages_EcoDAAT, Centropages_EMA)
+
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Centropages)
+
+
+
+
+
+```
+
+Chaetognatha
+
+```{r}
+
+Chaetognatha <- filter(NBS_Zoop_Process, TAXA_COARSE=="Chaetognatha")
+
+#Filter for Chaetognatha from the 60BON nets only
+
+Chaetognatha <- filter(Chaetognatha, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Chaetognatha)
+
+
+
+```
+
+Cirripedia
+
+```{r}
+
+Cirripedia <- filter(NBS_Zoop_Process, TAXA_COARSE == "Cirripedia")
+
+#Can filter for both gears and then add a taxa coarse of Cirripedia_large and Cirripedia_small
+
+Cirripedia_large <- filter(Cirripedia, GEAR_NAME=="60BON")
+
+#Recode coarse taxa
+
+Cirripedia_large$TAXA_COARSE[Cirripedia_large$TAXA_COARSE=="Cirripedia"] <- "Cirripedia_large"
+
+
+Cirripedia_small <- filter(Cirripedia, GEAR_NAME!="60BON")
+
+#Recode coarse taxa
+
+Cirripedia_small$TAXA_COARSE[Cirripedia_small$TAXA_COARSE=="Cirripedia"] <- "Cirripedia_small"
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Cirripedia_large, Cirripedia_small)
+
+
+
+
+```
+
+Cladocera
+
+```{r}
+
+Cladocera <- filter(NBS_Zoop_Process, TAXA_COARSE=="Cladocera")
+
+#Cladocera fromt he small net only
+
+#Filter for correct gear
+
+Cladocera <- filter(Cladocera, GEAR_NAME!= "60BON")
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Cladocera)
+
+
+```
+
+Clione limacina
+
+```{r}
+
+Clione <- filter(NBS_Zoop_Process, TAXA_COARSE=="Clione limacina")
+
+#Estimate from the larger net only
+
+Clione <- filter(Clione, GEAR_NAME=="60BON")
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Clione)
+
+
+
+
+
+```
+
+Cnidaria
+
+```{r}
+
+Cnidaria <- filter(NBS_Zoop_Process, TAXA_COARSE == "Cnidaria")
+
+#Can filter for both gears and then add a taxa coarse of Cnidaria_large and Cnidaria_small
+
+Cnidaria_large <- filter(Cnidaria, GEAR_NAME=="60BON")
+
+#Recode coarse taxa
+
+Cnidaria_large$TAXA_COARSE[Cnidaria_large$TAXA_COARSE=="Cnidaria"] <- "Cnidaria_large"
+
+
+Cnidaria_small <- filter(Cnidaria, GEAR_NAME!="60BON")
+
+#Recode coarse taxa
+
+Cnidaria_small$TAXA_COARSE[Cnidaria_small$TAXA_COARSE=="Cnidaria"] <- "Cnidaria_small"
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Cnidaria_large, Cnidaria_small)
+
+
+
+```
+
+Small and large copepods that do not belong to major taxonomic group
+
+
+```{r}
+
+
+Copepod_small <- filter(NBS_Zoop_Process, TAXA_COARSE == "Copepod_small")
+
+#Filter for the smaller mesh gears only
+
+Copepod_small <- filter(Copepod_small, GEAR_NAME!="60BON")
+
+#Now build the large dataset
+
+Copepod_large <- filter(NBS_Zoop_Process, TAXA_COARSE == "Copepod_large")
+
+#Filter for the smaller mesh gears only
+
+Copepod_large <- filter(Copepod_large, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Copepod_large, Copepod_small)
+
+
+
+```
+
+
+Ctenophora
+
+```{r}
+
+Ctenophora <- filter(NBS_Zoop_Process, TAXA_COARSE=="Ctenophora")
+
+#Filter for the large net only
+
+Ctenophora <- filter(Ctenophora, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Ctenophora)
+
+
+
+```
+
+
+Cumacea
+
+```{r}
+
+Cumacea <- filter(NBS_Zoop_Process, TAXA_COARSE=="Cumacea")
+
+#Filter for the large net only
+
+Cumacea <- filter(Cumacea, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Cumacea)
+
+
+
+```
+
+
+Decapoda
+
+
+```{r}
+
+Decapoda <- filter(NBS_Zoop_Process, TAXA_COARSE=="Decapoda")
+
+#Very few measurements of unidentfied decapods. We can ignore
+
+```
+
+
+Echinodermata
+
+```{r}
+
+Echinodermata <- filter(NBS_Zoop_Process, TAXA_COARSE=="Echinodermata")
+
+#Echinodermata are tiny, filter from small nets only
+
+Echinodermata <- filter(Echinodermata, GEAR_NAME!="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Echinodermata)
+
+
+
+
+```
+
+
+Epilabidocera longipedata
+
+```{r}
+
+Epilabidocera <- filter(NBS_Zoop_Process, TAXA_COARSE=="Epilabidocera longipedata")
+
+
+#Separate EMA data as they were sorted under different protocols
+
+Epilabidocera_EMA <- filter(Epilabidocera, DATA_SOURCE=="EMA")
+Epilabidocera_EcoDAAT <- filter(Epilabidocera, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Epilabidocera_EcoDAAT_bySPECIMEN_FORM <- group_by(Epilabidocera_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Epilabidocera_EcoDAAT_FormSummary <- summarise(Epilabidocera_EcoDAAT_bySPECIMEN_FORM,n())
+
+#Things are correct for the EcoDAAT data, not look at the EMA data
+
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Epilabidocera_EMA_byGEAR_NAME <- group_by(Epilabidocera_EMA, MESH, GEAR_NAME)
+
+Epilabidocera_EMA_GearSummary <- summarise(Epilabidocera_EMA_byGEAR_NAME, n())
+
+
+
+#No issues with mismatched mesh and gear sizes. Need to filter for the correct stages for avoid double counts
+
+Epilabidocera_EMA_60BON <- filter(Epilabidocera_EMA, GEAR_NAME=="60BON")
+
+Epilabidocera_EMA_60BON_333 <- filter(Epilabidocera_EMA_60BON, MESH==333)
+
+Epilabidocera_EMA_60BON_333 <- filter(Epilabidocera_EMA_60BON_333, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)"|STAGE_NAME=="C - 3 (COPEPODITE III)")
+
+Epilabidocera_EMA_60BON_505 <- filter(Epilabidocera_EMA_60BON, MESH==505)
+
+Epilabidocera_EMA_60BON_505 <- filter(Epilabidocera_EMA_60BON_505, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)")
+
+Epilabidocera_EMA_20BON <- filter(Epilabidocera_EMA, GEAR_NAME=="20BON")
+
+Epilabidocera_EMA_20BON_153 <- filter(Epilabidocera_EMA_20BON, MESH==153)
+
+Epilabidocera_EMA_20BON_153 <- filter(Epilabidocera_EMA_20BON_153, STAGE_NAME=="C - 2 (COPEPODITE II)"|STAGE_NAME=="C - 1 (COPEPODITE I)")
+
+#The other gears are correct, so rebuild dataset
+
+Epilabidocera_EMA_Final <- rbind(Epilabidocera_EMA_60BON_333, Epilabidocera_EMA_60BON_505, Epilabidocera_EMA_20BON_153)
+
+ungroup(Epilabidocera_EMA_Final)
+
+#Remove some files
+
+rm(Epilabidocera_EMA_byGEAR_NAME, Epilabidocera_EMA_20BON, Epilabidocera_EMA_20BON_153, Epilabidocera_EMA_60BON, Epilabidocera_EMA_60BON_333, Epilabidocera_EMA_60BON_505)
+
+#Combine into final, Epilabidocera data set
+
+Epilabidocera <- rbind(Epilabidocera_EMA_Final, Epilabidocera_EcoDAAT)
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Epilabidocera)
+
+
+```
+
+Eucalanus bungii
+
+```{r}
+
+Eucalanus <- filter(NBS_Zoop_Process, TAXA_COARSE=="Eucalanus bungii")
+
+
+#Separate EMA data as they were sorted under different protocols
+
+Eucalanus_EMA <- filter(Eucalanus, DATA_SOURCE=="EMA")
+Eucalanus_EcoDAAT <- filter(Eucalanus, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Eucalanus_EcoDAAT_bySPECIMEN_FORM <- group_by(Eucalanus_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Eucalanus_EcoDAAT_FormSummary <- summarise(Eucalanus_EcoDAAT_bySPECIMEN_FORM,n())
+
+
+
+#Do some filtering to get the correct stages from the correct gear for EcoDAAT data
+
+Eucalanus_EcoDAAT_A <- filter(Eucalanus_EcoDAAT, SPECIMEN_FORM=="A")
+Eucalanus_EcoDAAT_A <- filter(Eucalanus_EcoDAAT_A, MESH!=153)
+
+Eucalanus_EcoDAAT_B <- filter(Eucalanus_EcoDAAT, SPECIMEN_FORM=="B")
+Eucalanus_EcoDAAT_B <- filter(Eucalanus_EcoDAAT_B, MESH!=153)
+
+Eucalanus_EcoDAAT_C <- filter(Eucalanus_EcoDAAT, SPECIMEN_FORM=="C")
+Eucalanus_EcoDAAT_C <- filter(Eucalanus_EcoDAAT_C, MESH==153)
+
+Eucalanus_EcoDAAT_F <- filter(Eucalanus_EcoDAAT, SPECIMEN_FORM=="F")
+
+
+Eucalanus_EcoDAAT_G <- filter(Eucalanus_EcoDAAT, SPECIMEN_FORM=="G")
+
+Eucalanus_EcoDAAT_H <- filter(Eucalanus_EcoDAAT, SPECIMEN_FORM=="H")
+
+Eucalanus_EcoDAAT_K <- filter(Eucalanus_EcoDAAT, SPECIMEN_FORM=="K")
+
+Eucalanus_EcoDAAT_L <- filter(Eucalanus_EcoDAAT, SPECIMEN_FORM=="L")
+
+#The other gears are correct, so rebuild dataset
+
+Eucalanus_EcoDAAT_Final <- rbind(Eucalanus_EcoDAAT_A, Eucalanus_EcoDAAT_B, Eucalanus_EcoDAAT_C, Eucalanus_EcoDAAT_F,  Eucalanus_EcoDAAT_G, Eucalanus_EcoDAAT_H, Eucalanus_EcoDAAT_K, Eucalanus_EcoDAAT_L)
+
+ungroup(Eucalanus_EcoDAAT_Final)
+
+#Remove some files
+
+rm(Eucalanus_EcoDAAT_bySPECIMEN_FORM, Eucalanus_EcoDAAT_A, Eucalanus_EcoDAAT_B, Eucalanus_EcoDAAT_C, Eucalanus_EcoDAAT_F, Eucalanus_EcoDAAT_G, Eucalanus_EcoDAAT_H, Eucalanus_EcoDAAT_K, Eucalanus_EcoDAAT_L)
+
+
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Eucalanus_EMA_byGEAR_NAME <- group_by(Eucalanus_EMA, MESH, GEAR_NAME)
+
+Eucalanus_EMA_GearSummary <- summarise(Eucalanus_EMA_byGEAR_NAME, n())
+
+#No issues with mismatched mesh and gear sizes. Need to filter for the correct stages for avoid double counts
+
+Eucalanus_EMA_60BON <- filter(Eucalanus_EMA, GEAR_NAME=="60BON")
+
+Eucalanus_EMA_60BON_333 <- filter(Eucalanus_EMA_60BON, MESH==333)
+
+Eucalanus_EMA_60BON_333 <- filter(Eucalanus_EMA_60BON_333, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)"|STAGE_NAME=="C - 3 (COPEPODITE III)")
+
+Eucalanus_EMA_60BON_505 <- filter(Eucalanus_EMA_60BON, MESH==505)
+
+Eucalanus_EMA_60BON_505 <- filter(Eucalanus_EMA_60BON_505, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)"|STAGE_NAME=="C - 3 (COPEPODITE III)")
+
+Eucalanus_EMA_20BON <- filter(Eucalanus_EMA, GEAR_NAME=="20BON")
+
+Eucalanus_EMA_20BON_153 <- filter(Eucalanus_EMA_20BON, MESH==153)
+
+Eucalanus_EMA_20BON_153 <- filter(Eucalanus_EMA_20BON_153, STAGE_NAME=="C - 2 (COPEPODITE II)"|STAGE_NAME=="C - 1 (COPEPODITE I)")
+
+#The other gears are correct, so rebuild dataset
+
+Eucalanus_EMA_Final <- rbind(Eucalanus_EMA_60BON_333, Eucalanus_EMA_60BON_505, Eucalanus_EMA_20BON_153)
+
+ungroup(Eucalanus_EMA_Final)
+
+#Remove some files
+
+rm(Eucalanus_EMA_byGEAR_NAME, Eucalanus_EMA_20BON, Eucalanus_EMA_20BON_153, Eucalanus_EMA_60BON, Eucalanus_EMA_60BON_333, Eucalanus_EMA_60BON_505)
+
+#Combine into final, Eucalanus data set
+
+Eucalanus <- rbind(Eucalanus_EMA_Final, Eucalanus_EcoDAAT_Final)
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Eucalanus)
+
+
+
+```
+
+Euphausiacea pacifica 
+
+```{r}
+
+E_pacifica <- filter(NBS_Zoop_Process, TAXA_COARSE=="Euphausia pacifica")
+
+#Filter for large net only and stages are adult and juvenile
+
+E_pacifica <- filter(E_pacifica, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, E_pacifica)
+
+
+
+```
+
+
+Euphausiacea
+
+```{r}
+
+Euphausiacea <- filter(NBS_Zoop_Process, TAXA_COARSE=="Euphausiacea")
+
+#First separate out the adults belonging to Tessarbranchion oculatum
+
+	
+Tessarabrachion_oculatum <- filter (Euphausiacea, TAXON_NAME=="Tessarabrachion oculatum")
+
+
+#Now filter the Euphausiacea for the correct stages and nets
+
+Euphausiacea <- filter(Euphausiacea, TAXON_NAME!="Tessarabrachion oculatum")
+
+#Eliminate adult and juvenile stages, those should be identified to species
+
+Euphausiacea <- filter(Euphausiacea, STAGE_NAME!= "A + J (ADULT/JUVENILE)")
+
+Euphausiacea <- filter(Euphausiacea, STAGE_NAME!= "JUVENILE")
+
+#Get rid of the NOT DETERMINED
+
+Euphausiacea <- filter(Euphausiacea, STAGE_NAME!="NOT DETERMINED")
+
+#Get rid of the EGG
+
+Euphausiacea <- filter(Euphausiacea, STAGE_NAME!="EGG")
+
+
+#Now create the furcilia dataset
+
+Euphausiacea_furcilia <- filter(Euphausiacea, STAGE_NAME=="FURCILIA")
+
+Euphausiacea_furcilia <- filter(Euphausiacea, GEAR_NAME=="60BON")
+
+
+#Now create the calytopis dataset
+
+Euphausiacea_calyptopis <- filter(Euphausiacea, STAGE_NAME=="CALYPTOPIS (STAGE NOT DETERMINED)"|STAGE_NAME=="CALYPTOPIS 1"|STAGE_NAME=="CALYPTOPIS 2"|STAGE_NAME=="CALYPTOPIS 3")
+
+
+#Now create the nauplius dataset
+
+Euphausiacea_nauplius <- filter(Euphausiacea, STAGE_NAME=="NAUPLIUS")
+
+#Filter for small nets only
+
+Euphausiacea_nauplius <- filter(Euphausiacea_nauplius, GEAR_NAME!="60BON")
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Euphausiacea_furcilia, Euphausiacea_calyptopis, Euphausiacea_nauplius)
+
+
+
+```
+
+
+Eurytemora spp.
+
+```{r}
+
+Eurytemora <- filter(NBS_Zoop_Process, TAXA_COARSE=="Eurytemora spp.")
+
+#Filter from the small nets only
+
+Eurytemora <- filter(Eurytemora, GEAR_NAME!="60BON")
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Eurytemora)
+
+
+
+```
+
+
+Gastropoda
+
+
+```{r}
+
+Gastropoda <- filter(NBS_Zoop_Process, TAXA_COARSE=="Gastropoda")
+
+#Unidentified gastropods, can remove from final dataset
+
+
+```
+
+
+Limacina helicina
+
+
+```{r}
+
+Limacina <- filter(NBS_Zoop_Process, TAXA_COARSE=="Limacina helicina")
+
+#Can split into estiamtes from large and small nets
+
+
+Limacina_large <- filter(Limacina, GEAR_NAME=="60BON")
+
+#Rename the coarse taxa
+
+Limacina_large$TAXA_COARSE[Limacina_large$TAXA_COARSE=="Limacina helicina"] <- "Limacina_large"
+
+#Now do the small nets
+
+Limacina_small <- filter(Limacina, GEAR_NAME!="60BON")
+
+#Rename the coarse taxa
+
+Limacina_small$TAXA_COARSE[Limacina_small$TAXA_COARSE=="Limacina helicina"] <- "Limacina_small"
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Limacina_large, Limacina_small)
+
+
+
+```
+
+Metridia longa
+
+```{r}
+
+Metridia_longa <- filter(NBS_Zoop_Process, TAXA_COARSE=="Metridia longa")
+
+#Adults, C5 only so all is good, can add to full data set
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Metridia_longa)
+
+
+```
+
+
+Metridia okhotensis
+
+
+```{r}
+
+Metridia_okhotensis <- filter(NBS_Zoop_Process, TAXA_COARSE=="Metridia okhotensis")
+
+
+#Adults, C4, and C5 only so all is good, can add to full data set
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Metridia_okhotensis)
+
+
+
+
+```
+
+Metridia pacifica
+
+
+```{r}
+
+Metridia_pacifica <- filter(NBS_Zoop_Process, TAXA_COARSE=="Metridia pacifica")
+
+
+#Separate EMA data as they were sorted under different protocols
+
+Metridia_pacifica_EMA <- filter(Metridia_pacifica, DATA_SOURCE=="EMA")
+Metridia_pacifica_EcoDAAT <- filter(Metridia_pacifica, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Metridia_pacifica_EcoDAAT_bySPECIMEN_FORM <- group_by(Metridia_pacifica_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Metridia_pacifica_EcoDAAT_FormSummary <- summarise(Metridia_pacifica_EcoDAAT_bySPECIMEN_FORM,n())
+
+#Do some filtering to get the correct stages from the correct gear for EcoDAAT data
+
+Metridia_pacifica_EcoDAAT_B <- filter(Metridia_pacifica_EcoDAAT, SPECIMEN_FORM=="B")
+Metridia_pacifica_EcoDAAT_B <- filter(Metridia_pacifica_EcoDAAT_B, MESH!=153)
+
+Metridia_pacifica_EcoDAAT_C <- filter(Metridia_pacifica_EcoDAAT, SPECIMEN_FORM=="C")
+
+Metridia_pacifica_EcoDAAT_G <- filter(Metridia_pacifica_EcoDAAT, SPECIMEN_FORM=="G")
+
+
+Metridia_pacifica_EcoDAAT_H <- filter(Metridia_pacifica_EcoDAAT, SPECIMEN_FORM=="H")
+
+#Remove C3 stage
+
+Metridia_pacifica_EcoDAAT_H <- filter(Metridia_pacifica_EcoDAAT_H, STAGE_NAME!="C - 3 (COPEPODITE III)")
+
+
+Metridia_pacifica_EcoDAAT_K <- filter(Metridia_pacifica_EcoDAAT, SPECIMEN_FORM=="K")
+
+Metridia_pacifica_EcoDAAT_L <- filter(Metridia_pacifica_EcoDAAT, SPECIMEN_FORM=="L")
+
+#The other gears are correct, so rebuild dataset
+
+Metridia_pacifica_EcoDAAT_Final <- rbind(Metridia_pacifica_EcoDAAT_B, Metridia_pacifica_EcoDAAT_C, Metridia_pacifica_EcoDAAT_G, Metridia_pacifica_EcoDAAT_H, Metridia_pacifica_EcoDAAT_K, Metridia_pacifica_EcoDAAT_L)
+
+ungroup(Metridia_pacifica_EcoDAAT_Final)
+
+#Remove some files
+
+rm(Metridia_pacifica_EcoDAAT_bySPECIMEN_FORM, Metridia_pacifica_EcoDAAT_B, Metridia_pacifica_EcoDAAT_C, Metridia_pacifica_EcoDAAT_G, Metridia_pacifica_EcoDAAT_H, Metridia_pacifica_EcoDAAT_K, Metridia_pacifica_EcoDAAT_L)
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Metridia_pacifica_EMA_byGEAR_NAME <- group_by(Metridia_pacifica_EMA, MESH, GEAR_NAME)
+
+Metridia_pacifica_EMA_GearSummary <- summarise(Metridia_pacifica_EMA_byGEAR_NAME, n())
+
+#No issues with mismatched mesh and gear sizes. Need to filter for the correct stages for avoid double counts
+
+Metridia_pacifica_EMA_60BON <- filter(Metridia_pacifica_EMA, GEAR_NAME=="60BON")
+
+Metridia_pacifica_EMA_60BON_333 <- filter(Metridia_pacifica_EMA_60BON, MESH==333)
+
+Metridia_pacifica_EMA_60BON_333 <- filter(Metridia_pacifica_EMA_60BON_333, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)")
+
+Metridia_pacifica_EMA_60BON_505 <- filter(Metridia_pacifica_EMA_60BON, MESH==505)
+
+Metridia_pacifica_EMA_60BON_505 <- filter(Metridia_pacifica_EMA_60BON_505, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)")
+
+
+
+Metridia_pacifica_EMA_smallnets <- filter(Metridia_pacifica_EMA, GEAR_NAME!="60BON")
+
+Metridia_pacifica_EMA_smallnets <- filter(Metridia_pacifica_EMA_smallnets, STAGE_NAME=="C - 1 (COPEPODITE I)"|STAGE_NAME=="C - 2 (COPEPODITE II)"|STAGE_NAME=="C - 3 (COPEPODITE III)")
+
+#Rename Metridia pacific of early stages as Metridia spp.
+
+Metridia_pacifica_EMA_smallnets$TAXA_COARSE[Metridia_pacifica_EMA_smallnets$TAXA_COARSE=="Metridia pacifica"] <- "Metridia spp."
+
+#The other gears are correct, so rebuild dataset
+
+Metridia_pacifica_EMA_Final <- rbind(Metridia_pacifica_EMA_60BON_333, Metridia_pacifica_EMA_60BON_505, Metridia_pacifica_EMA_smallnets)
+
+ungroup(Metridia_pacifica_EMA_Final)
+
+#Remove some files
+
+rm(Metridia_pacifica_EMA_byGEAR_NAME, Metridia_pacifica_EMA_smallnets, Metridia_pacifica_EMA_60BON, Metridia_pacifica_EMA_60BON_333, Metridia_pacifica_EMA_60BON_505)
+
+#Combine into final, Metridia_pacifica data set
+
+Metridia_pacifica <- rbind(Metridia_pacifica_EMA_Final, Metridia_pacifica_EcoDAAT_Final)
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Metridia_pacifica)
+
+
+```
+
+Metridia spp.
+
+```{r}
+
+Metridia_spp <- filter(NBS_Zoop_Process, TAXA_COARSE=="Metridia spp.")
+
+#Filter for the small nets only
+
+Metridia_spp <- filter(Metridia_spp, GEAR_NAME!="60BON")
+
+#Now filter out the stages that are accurate for the small nets, anything less than stage C-3
+
+Metridia_spp <- filter(Metridia_spp, STAGE_NAME!= "C-1 TO C-5")
+Metridia_spp <- filter(Metridia_spp, STAGE_NAME!= "C3-4")
+Metridia_spp <- filter(Metridia_spp, STAGE_NAME!= "C3-5")
+Metridia_spp <- filter(Metridia_spp, STAGE_NAME!= "C - 4 (COPEPODITE IV)")
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Metridia_spp)
+
+
+```
+
+
+Mysids
+
+```{r}
+
+Mysidae <- filter(NBS_Zoop_Process, TAXA_COARSE=="Mysidae")
+
+#Filter for 60BON nets only
+
+Mysidae <- filter(Mysidae, GEAR_NAME=="60BON")
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Mysidae)
+
+
+
+```
+
+
+
+Neocalanus cristatus
+
+```{r}
+
+Cristatus <- filter(NBS_Zoop_Process, TAXA_COARSE=="Neocalanus cristatus")
+
+
+#Separate EMA data as they were sorted under different protocols
+
+Cristatus_EMA <- filter(Cristatus, DATA_SOURCE=="EMA")
+Cristatus_EcoDAAT <- filter(Cristatus, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Cristatus_EcoDAAT_bySPECIMEN_FORM <- group_by(Cristatus_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Cristatus_EcoDAAT_FormSummary <- summarise(Cristatus_EcoDAAT_bySPECIMEN_FORM,n())
+
+#Do some filtering to get the correct stages from the correct gear for EcoDAAT data
+
+Cristatus_EcoDAAT_A <- filter(Cristatus_EcoDAAT, SPECIMEN_FORM=="A")
+Cristatus_EcoDAAT_A <- filter(Cristatus_EcoDAAT_A, MESH!=153)
+
+Cristatus_EcoDAAT_B <- filter(Cristatus_EcoDAAT, SPECIMEN_FORM=="B")
+Cristatus_EcoDAAT_B <- filter(Cristatus_EcoDAAT_B, MESH!=153)
+
+Cristatus_EcoDAAT_C <- filter(Cristatus_EcoDAAT, SPECIMEN_FORM=="C")
+Cristatus_EcoDAAT_C <- filter(Cristatus_EcoDAAT_C, MESH==153)
+Cristatus_EcoDAAT_C <- filter(Cristatus_EcoDAAT_C, GEAR_NAME=="20BON")
+
+Cristatus_EcoDAAT_F <- filter(Cristatus_EcoDAAT, SPECIMEN_FORM=="F")
+
+Cristatus_EcoDAAT_G <- filter(Cristatus_EcoDAAT, SPECIMEN_FORM=="G")
+
+Cristatus_EcoDAAT_H <- filter(Cristatus_EcoDAAT, SPECIMEN_FORM=="H")
+
+Cristatus_EcoDAAT_K <- filter(Cristatus_EcoDAAT, SPECIMEN_FORM=="K")
+
+Cristatus_EcoDAAT_L <- filter(Cristatus_EcoDAAT, SPECIMEN_FORM=="L")
+
+#The other gears are correct, so rebuild dataset
+
+Cristatus_EcoDAAT_Final <- rbind(Cristatus_EcoDAAT_A, Cristatus_EcoDAAT_B, Cristatus_EcoDAAT_C, Cristatus_EcoDAAT_F, Cristatus_EcoDAAT_G, Cristatus_EcoDAAT_H, Cristatus_EcoDAAT_K, Cristatus_EcoDAAT_L)
+
+ungroup(Cristatus_EcoDAAT_Final)
+
+#Remove some files
+
+rm(Cristatus_EcoDAAT_bySPECIMEN_FORM, Cristatus_EcoDAAT_A, Cristatus_EcoDAAT_B, Cristatus_EcoDAAT_C, Cristatus_EcoDAAT_F, Cristatus_EcoDAAT_G, Cristatus_EcoDAAT_H, Cristatus_EcoDAAT_K, Cristatus_EcoDAAT_L)
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Cristatus_EMA_byGEAR_NAME <- group_by(Cristatus_EMA, MESH, GEAR_NAME)
+
+Cristatus_EMA_GearSummary <- summarise(Cristatus_EMA_byGEAR_NAME, n())
+
+#No issues with mismatched mesh and gear sizes. Need to filter for the correct stages for avoid double counts
+
+Cristatus_EMA_Final <-  filter(Cristatus_EMA, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)"|STAGE_NAME=="C - 3 (COPEPODITE III)")
+
+
+ungroup(Cristatus_EMA_Final)
+
+
+#Now combine EMA and EcoDAAT data together
+
+Cristatus_Final <- rbind(Cristatus_EMA_Final, Cristatus_EcoDAAT_Final)
+
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Cristatus_Final)
+
+
+```
+
+
+Neocalanus spp.
+
+```{r}
+
+Neocalanus <- filter(NBS_Zoop_Process, TAXA_COARSE=="Neocalanus spp.")
+
+
+#Separate EMA data as they were sorted under different protocols
+
+Neocalanus_EMA <- filter(Neocalanus, DATA_SOURCE=="EMA")
+Neocalanus_EcoDAAT <- filter(Neocalanus, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Neocalanus_EcoDAAT_bySPECIMEN_FORM <- group_by(Neocalanus_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Neocalanus_EcoDAAT_FormSummary <- summarise(Neocalanus_EcoDAAT_bySPECIMEN_FORM,n())
+
+#Do some filtering to get the correct stages from the correct gear for EcoDAAT data
+
+Neocalanus_EcoDAAT_B <- filter(Neocalanus_EcoDAAT, SPECIMEN_FORM=="B")
+Neocalanus_EcoDAAT_B <- filter(Neocalanus_EcoDAAT_B, MESH!=153)
+
+Neocalanus_EcoDAAT_C <- filter(Neocalanus_EcoDAAT, SPECIMEN_FORM=="C")
+Neocalanus_EcoDAAT_C <- filter(Neocalanus_EcoDAAT_C, MESH==153)
+Neocalanus_EcoDAAT_C <- filter(Neocalanus_EcoDAAT_C, GEAR_NAME=="20BON")
+
+Neocalanus_EcoDAAT_G <- filter(Neocalanus_EcoDAAT, SPECIMEN_FORM=="G")
+
+Neocalanus_EcoDAAT_H <- filter(Neocalanus_EcoDAAT, SPECIMEN_FORM=="H")
+
+Neocalanus_EcoDAAT_K <- filter(Neocalanus_EcoDAAT, SPECIMEN_FORM=="K")
+
+Neocalanus_EcoDAAT_L <- filter(Neocalanus_EcoDAAT, SPECIMEN_FORM=="L")
+
+#The other gears are correct, so rebuild dataset
+
+Neocalanus_EcoDAAT_Final <- rbind(Neocalanus_EcoDAAT_B, Neocalanus_EcoDAAT_C, Neocalanus_EcoDAAT_G, Neocalanus_EcoDAAT_H, Neocalanus_EcoDAAT_K, Neocalanus_EcoDAAT_L)
+
+ungroup(Neocalanus_EcoDAAT_Final)
+
+#Remove some files
+
+rm(Neocalanus_EcoDAAT_bySPECIMEN_FORM, Neocalanus_EcoDAAT_B, Neocalanus_EcoDAAT_C, Neocalanus_EcoDAAT_G, Neocalanus_EcoDAAT_H, Neocalanus_EcoDAAT_K, Neocalanus_EcoDAAT_L)
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Neocalanus_EMA_byGEAR_NAME <- group_by(Neocalanus_EMA, MESH, GEAR_NAME)
+
+Neocalanus_EMA_GearSummary <- summarise(Neocalanus_EMA_byGEAR_NAME, n())
+
+#No issues with mismatched mesh and gear sizes. Need to filter for the correct stages for avoid double counts
+
+Neocalanus_EMA_Final <-  filter(Neocalanus_EMA, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)"|STAGE_NAME=="C - 4 (COPEPODITE IV)"|STAGE_NAME=="C - 3 (COPEPODITE III)")
+
+
+ungroup(Neocalanus_EMA_Final)
+
+
+#NOw combine EMA and EcoDAAT data together
+
+Neocalanus_Final <- rbind(Neocalanus_EMA_Final, Neocalanus_EcoDAAT_Final)
+
+#Add to final dataset
+
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Neocalanus_Final)
+
+
+```
+
+
+Oithona spp.
+
+```{r}
+
+Oithona <- filter(NBS_Zoop_Process, TAXA_COARSE=="Oithona spp.")
+
+#Filter for small nets only
+
+Oithona <- filter(Oithona, GEAR_NAME!="60BON")
+
+
+#Add to final dataset
+
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Oithona)
+
+
+```
+
+Ostracoda
+
+
+```{r}
+
+Ostracoda <- filter(NBS_Zoop_Process, TAXA_COARSE=="Ostracoda")
+
+
+
+```
+
+
+Polychaeta
+
+```{r}
+
+Polychaeta <- filter(NBS_Zoop_Process, TAXA_COARSE=="Polychaeta")
+
+#Split into small and large estimates from the correct nets and meshes
+
+Polychaeta_large <- filter(Polychaeta, GEAR_NAME=="60BON")
+
+
+#Rename Polychaeta large
+
+Polychaeta_large$TAXA_COARSE[Polychaeta_large$TAXA_COARSE=="Polychaeta"] <- "Polychaeta_large"
+
+
+#Now do the small nets
+
+Polychaeta_small <- filter(Polychaeta, GEAR_NAME!="60BON")
+
+#Rename Polychaeta small
+
+Polychaeta_small$TAXA_COARSE[Polychaeta_small$TAXA_COARSE=="Polychaeta"] <- "Polychaeta_small"
+
+
+#Add to final dataset
+
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Polychaeta_large, Polychaeta_small)
+
+
+
+```
+
+
+Pseudocalanus
+
+```{r}
+
+Pseudocalanus <- filter(NBS_Zoop_Process, TAXA_COARSE=="Pseudocalanus spp.")
+
+#Filter for the small nets only
+
+Pseudocalanus <- filter(Pseudocalanus, GEAR_NAME!="60BON")
+
+
+#Add to final dataset
+
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Pseudocalanus)
+
+
+```
+
+
+Thaliacea
+
+```{r}
+
+Thaliacea <- filter(NBS_Zoop_Process, TAXA_COARSE=="Thaliacea")
+
+```
+
+
+Themisto abyssorum
+
+```{r}
+
+Themisto_abyssorum <- filter(NBS_Zoop_Process, TAXA_COARSE=="Themisto abyssorum")
+
+```
+
+
+Themisto libellula
+
+```{r}
+
+Themisto_libellula <- filter(NBS_Zoop_Process, TAXA_COARSE=="Themisto libellula")
+
+#Filter for the 60BON nets only
+
+Themisto_libellula <- filter(Themisto_libellula, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Themisto_libellula)
+
+```
+
+
+Themisto pacifica
+
+```{r}
+
+Themisto_pacifica <- filter(NBS_Zoop_Process, TAXA_COARSE=="Themisto pacifica")
+
+#Filter for the 60BON nets only
+
+Themisto_pacifica <- filter(Themisto_pacifica, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Themisto_pacifica)
+
+
+```
+
+Themisto spp.
+
+```{r}
+
+Themisto <- filter(NBS_Zoop_Process, TAXA_COARSE=="Themisto spp.")
+
+#Filter for the 60BON nets only
+
+Themisto<- filter(Themisto, GEAR_NAME=="60BON")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Themisto)
+
+
+```
+
+
+Thysanoessa species
+
+```{r}
+
+Thysanoessa <- filter(NBS_Zoop_Process, TAXA_COARSE=="Thysanoessa inermis"|TAXA_COARSE=="Thysanoessa inspinata"|TAXA_COARSE=="Thysanoessa longipes"|TAXA_COARSE=="Thysanoessa raschii"|TAXA_COARSE=="Thysanoessa spinifera")
+
+#Select for 60BON only
+
+Thysanoessa <- filter(Thysanoessa, GEAR_NAME=="60BON")
+
+#Now the correct stages
+
+Thysanoessa <- filter(Thysanoessa, STAGE_NAME=="A + J (ADULT/JUVENILE)"|STAGE_NAME=="JUVENILE"|STAGE_NAME=="ADULT")
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Thysanoessa)
+
+```
+
+
+Tortanus discaudatus
+
+
+```{r}
+
+Tortanus <- filter(NBS_Zoop_Process, TAXA_COARSE=="Tortanus discaudatus")
+
+#Separate EMA data as they were sorted under different protocols
+
+Tortanus_EMA <- filter(Tortanus, DATA_SOURCE=="EMA")
+Tortanus_EcoDAAT <- filter(Tortanus, DATA_SOURCE=="EcoDAAT")
+
+#Check to see if right stages are in the EcoDAAT data
+
+Tortanus_EcoDAAT_bySPECIMEN_FORM <- group_by(Tortanus_EcoDAAT, SPECIMEN_FORM, MESH, GEAR_NAME)
+
+Tortanus_EcoDAAT_FormSummary <- summarise(Tortanus_EcoDAAT_bySPECIMEN_FORM,n())
+
+#EcoDAAT data are correctly specified
+
+
+
+#Now filter the EMA data to match the EcoDAAT data. EMA tends to double count variables from both nets, so eliminate this
+
+#Check to see if what stages are where with EMA data
+
+Tortanus_EMA_byGEAR_NAME <- group_by(Tortanus_EMA, MESH, GEAR_NAME)
+
+Tortanus_EMA_GearSummary <- summarise(Tortanus_EMA_byGEAR_NAME, n())
+
+#No issues with mismatched mesh and gear sizes. Need to filter for the correct stages for avoid double counts
+
+Tortanus_EMA_60BON <- filter(Tortanus_EMA, GEAR_NAME=="60BON")
+
+Tortanus_EMA_60BON_333 <- filter(Tortanus_EMA_60BON, MESH==333)
+
+Tortanus_EMA_60BON_333 <- filter(Tortanus_EMA_60BON_333, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)")
+
+Tortanus_EMA_60BON_505 <- filter(Tortanus_EMA_60BON, MESH==505)
+
+Tortanus_EMA_60BON_505 <- filter(Tortanus_EMA_60BON_505, STAGE_NAME=="ADULT"|STAGE_NAME=="C - 5 (COPEPODITE V)")
+
+
+
+Tortanus_EMA_smallnets <- filter(Tortanus_EMA, GEAR_NAME!="60BON")
+
+
+Tortanus_EMA_smallnets <- filter(Tortanus_EMA_smallnets, STAGE_NAME=="C - 4 (COPEPODITE IV)"|STAGE_NAME=="C - 3 (COPEPODITE III)"|STAGE_NAME=="C - 2 (COPEPODITE II)"|STAGE_NAME=="C - 1 (COPEPODITE I)")
+
+#The other gears are correct, so rebuild dataset
+
+Tortanus_EMA_Final <- rbind(Tortanus_EMA_60BON_333, Tortanus_EMA_60BON_505, Tortanus_EMA_smallnets)
+
+ungroup(Tortanus_EMA_Final)
+
+#Remove some files
+
+rm(Tortanus_EMA_byGEAR_NAME,  Tortanus_EMA_smallnets, Tortanus_EMA_60BON, Tortanus_EMA_60BON_333, Tortanus_EMA_60BON_505)
+
+#Combine into final, Tortanus data set
+
+Tortanus <- rbind(Tortanus_EMA_Final, Tortanus_EcoDAAT)
+
+#Add to final dataset
+
+NBS_Zoop_Process_Final <- rbind (NBS_Zoop_Process_Final, Tortanus)
+
+
+```
+Now do biomass conversions
+
+
+```{r}
+
+#NOw read in the biomass conversion data set
+
+Biomass_annotated <- read_xlsx(here("Biomass", "Biomass-Annotated.xlsx"))
+
+#Merge the two data sets based on TAXA_COARSE, STAGE_NAME, SEX_NAME
+
+NBS_Zoop_Process_Final <- left_join(NBS_Zoop_Process_Final, Biomass_annotated, by = c("TAXA_COARSE", "STAGE_NAME", "SEX_NAME"))
+
+#Do some tidying to eliminate some columns
+
+NBS_Zoop_Process_Final$NOTE <- NULL
+NBS_Zoop_Process_Final$IND_WW_MG_NOTE <- NULL
+NBS_Zoop_Process_Final$IND_DW_MG_CONVERTED_NOTE <- NULL
+NBS_Zoop_Process_Final$IND_C_MG_CONVERTED_NOTE <- NULL
+NBS_Zoop_Process_Final$GROWTH_RATE_NOTE <- NULL
+
+
+#Create wet weight biomass column converted individual wet weight and abundance
+
+NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, BIOMASS_WW_MG_M3_MEAN = IND_WW_MG_MEASURED_MEAN*EST_NUM_PERM3)
+
+NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, BIOMASS_WW_MG_M3_SD = IND_WW_MG_MEASURED_SD*EST_NUM_PERM3)
+
+
+#Create dry weight biomass column converted individual dry weight and abundance
+
+NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, BIOMASS_DW_MG_M3_MEAN = IND_DW_MG_CONVERTED_MEAN*EST_NUM_PERM3)
+
+NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, BIOMASS_DW_MG_M3_SD = IND_DW_MG_CONVERTED_SD*EST_NUM_PERM3)
+
+
+#Create carbon weight biomass column converted individual carbon weight and abundance
+
+NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, BIOMASS_C_MG_M3_MEAN = IND_C_MG_CONVERTED_MEAN*EST_NUM_PERM3)
+
+NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, BIOMASS_C_MG_M3_SD = IND_C_MG_CONVERTED_SD*EST_NUM_PERM3)
+
+
+#Create carbon weight biomass column converted individual carbon weight and abundance
+
+NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, PRODUCTION_MG_C_D_MEAN = (IND_C_MG_CONVERTED_MEAN*EST_NUM_PERM3*GROWTH_RATE_MEAN)*24)
+
+NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, PRODUCTION_MG_C_D_SD = (IND_C_MG_CONVERTED_SD*EST_NUM_PERM3*GROWTH_RATE_SD)*24)
+
+
+```
+
+
+Now write processed dataset after adding biomass information
+
+```{r}
+
+
+write.csv(NBS_Zoop_Process_Final, here("Processed-Data", "NBS_Zoop_Process_Final.csv"), row.names = FALSE)
+
+```
+
+
