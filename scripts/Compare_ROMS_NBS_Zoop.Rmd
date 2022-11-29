@@ -1,0 +1,169 @@
+---
+title: "Compare ROMS to NBS Zoop"
+author: "Genoa Sullaway"
+date: "11/28/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#calanus model for GAM and empirical
+source("scripts/Function_AKMap.R") 
+
+library(ggpubr)
+library(viridis)
+library(visreg)
+library(mgcViz)
+   #save DF for model 
+df<-readRDS("data/ROMS_EMAcalanus.RDS")
+
+color = c("#2A8572",  "#F2AD00")
+color3 = c("#2A8572",  "#F2AD00", "#808080")
+ 
+df_input <- calanus %>%
+   dplyr::mutate(day_of_year = yday(ecofoci_date)) 
+```
+
+## Background
+- I want to see how ROMS and NBS zoop data compare, point to point to inform how I use zooplankton data/ROMS in the AYK prey index. 
+- I combined the EcoDAAT zoop data and the EMA zoop data (has NBS) using scripts adapted from DK, in scripts/Ecodaat_ema_combine_data.r, this script also converts to biomass. Next I matched in ROMS L2 using scripts/Compare_ROMS_Empirical.R, ROMS is matched to empirical data using nearest neighbor through space and time. 
+- Now I am going to run through some point to point comparisons to see if ROMS and empirical data have similiar relative and absolute trends in the NBS. 
+- In Sullaway et al in prep, I did not have this data, so I add it in here. Below, I plot estimated trends from both sources of information from a GAM and I show predicted differences in absolute values between the two. I see if predicted values change through space and time to inform which source of information I should use in the AYK prey index model. 
+- Right now everything shown is just for Calanus. 
+
+```{r cars}
+ 
+# what will probably be more interesting than GAM comparisons is the point to point comparisons for the Norton Sound regions
+# look at spatial distribution info for Chum to narrow down an area a little better
+
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+ 
+
+fig2<-function(df_input,sp,labels){
+  
+  pred_eco <- mgcv::gam(BIOMASS_C_MG_M3_MEAN ~ s(day_of_year, k=4) + 
+                          s(YEAR,k=5) + te(LON, LAT, bs=c("tp", "tp")),
+                        data = df_input,
+                        family = tw(link = "log")) 
+  
+  pred_roms <- mgcv::gam(NCaS ~ s(day_of_year, k=4) + 
+                           s(YEAR, k=5 ) + te(LON, LAT, bs=c("tp", "tp")),
+                         data = df_input,
+                         family = tw(link = "log")) 
+  
+  #day of year 
+  p1<- plot.gamViz(getViz(pred_eco))
+  
+  temp <- p1$plots[[1]]$ggObj
+  
+  p1df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                     ty=temp$data$ty, se =  temp$data$se) %>%
+    mutate(id = "sr-EM") %>%
+    filter(!x<100)
+  
+  p2<-plot.gamViz(getViz(pred_roms))
+  temp <- p2$plots[[1]]$ggObj
+  df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                   ty=temp$data$ty, se =  temp$data$se) %>%
+    mutate(id = "sr-ROMS-NPZ") %>% 
+    filter(!x<100) %>%
+    rbind(p1df)
+  
+  mean <- df %>%
+    group_by(id) %>%
+    slice_max(y)
+  
+  day_of_year <- ggplot(data = df,aes(x=x, y=y, group =id)) +
+    geom_path(color = "gray", show.legend = FALSE) +
+    geom_ribbon(aes(ymin = y-se, ymax = y+se, color = id), alpha = 0.5,show.legend = FALSE) +
+    geom_point(data = mean, aes(x=x, y=y, group =id, color = id), inherit.aes = TRUE) +
+    theme_classic()+
+    labs(x= "Day of Year", y="Log(Biomass)") +
+    scale_color_manual(values= color,labels=c("sr-EM", "sr-ROMS-NPZ")) +
+    theme(legend.position = "none" ) +  
+    ggtitle(paste0("",sp,"")) 
+  
+  leg <- get_legend(ggplot(data = df,aes(x=x, y=y, group =id)) +
+                      geom_path(color = "gray", show.legend = FALSE) +
+                      geom_ribbon(aes(ymin = y-se, ymax = y+se, color = id), alpha = 0.5,show.legend = FALSE) +
+                      geom_point(data = mean, aes(x=x, y=y, group =id, color = id), inherit.aes = TRUE) +
+                      theme_classic()+
+                      labs(x= "Day of Year", y="Log(Biomass)") +
+                      scale_color_manual(values= color,labels=c("sr-EM", "sr-ROMS-NPZ")) +
+                      theme(legend.title = element_blank()) +  
+                      ggtitle(paste0("",sp,"")) )
+  
+  # Convert to a ggplot and print
+  legend<-as_ggplot(leg)
+  
+  #########################################################################################################   
+  # YEAR 
+  temp <- p1$plots[[2]]$ggObj 
+  p1df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                     ty=temp$data$ty, se =  temp$data$se) %>%
+    mutate(id = "sr-EM")  
+  
+  p2<-plot.gamViz(getViz(pred_roms))
+  temp <- p2$plots[[2]]$ggObj 
+  df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                   ty=temp$data$ty, se =  temp$data$se) %>%
+    mutate(id = "sr-ROMS-NPZ")  %>%
+    rbind(p1df)
+  
+  year<-ggplot(data = df,aes(x=x, y=y, group =id)) +
+    geom_path(color = "gray",) +
+    geom_ribbon(aes(ymin = y-se, ymax = y+se, color = id), alpha = 0.5) +
+    theme_classic()+
+    labs(x= "Year", y="Log(Biomass)") +
+    scale_color_manual(values= color,
+                       labels=c("sr-EM", "sr-ROMS-NPZ")) +
+    theme(legend.position = "none")
+  
+  ############################################################################
+  #space
+  temp <- p1$plots[[3]]$ggObj 
+  p1df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                     z=temp$data$z, se =  temp$data$se) %>%
+    mutate(id = " sr-EM")  
+  
+  temp <- p2$plots[[3]]$ggObj 
+  
+  df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                   z=temp$data$z, se =  temp$data$se) %>%
+    mutate(id = "sr-ROMS-NPZ")  %>%
+    rbind(p1df)  %>%
+    filter(!z< -10) %>%
+    dplyr::rename(Biomass = "z")  %>%
+    filter(!is.na(Biomass))  
+  
+  space<-ggplot(data = df,aes(x=x, y=y, fill = Biomass)) +
+    geom_raster() +
+    theme_void() + 
+   geom_sf(data = ak, fill= "white", inherit.aes = FALSE) + 
+    facet_wrap(~id) +
+    scale_fill_viridis(name = "Log(Biomass)")  
+  
+  p1<-ggarrange(legend,day_of_year, year,space, nrow = 1, 
+                labels = labels,
+                widths=c(0.5,1,1,1), heights =c(0.5,1,1,1))
+ 
+  return(p1)
+}
+
+a<-fig2(df_input = calanus , sp="Calanus", labels = c("", "a.", "d.", "g."))
+ 
+
+a
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
