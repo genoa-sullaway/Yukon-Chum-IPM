@@ -1,3 +1,4 @@
+#this script matches ROMS into empirical data for Calanus and produces a final data set with associated ROMS values.  
 library(here)
 library(tidyverse)
 library(mgcv)
@@ -11,11 +12,12 @@ zoop <- read.csv(here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv")) %
   dplyr::mutate(ecofoci_date = as.Date(ecofoci_date, "%Y/%m/%d"),
                 ID = row_number())  %>%
   filter(!is.na(ecofoci_date)) %>% # NAs for date in the following years: 2002 2003 2005 2007 2010 2012, 4000 data points. Deleting for now unitl I talk to DK. 
-  group_by(ID, YEAR, MONTH, DAY, ecofoci_date, LAT, LON, TAXA_COARSE) %>%  # ROMS doesnt use stages - sum across stages 
+  group_by(ID, YEAR, MONTH, DAY, ecofoci_date, LAT, LON, TAXA_COARSE, MAX_GEAR_DEPTH) %>%  # ROMS doesnt use stages - sum across stages 
 #BIOMASS_MEAN_MG_DW 
   dplyr::summarise(BIOMASS_C_MG_M3_MEAN = sum(BIOMASS_C_MG_M3_MEAN) ) %>%
   filter(!LAT >68,
-         !LON > -155)
+         !LON > -155) %>% 
+  dplyr::mutate(depth_integrated_biomass = MAX_GEAR_DEPTH*BIOMASS_C_MG_M3_MEAN)
  
 # Load ROMS
 ROMS<- readRDS(here("data/romsL2.RDS")) %>%
@@ -70,7 +72,7 @@ prep_data_GAMS<-function(ROMS_sp, ecofoci_sp, eco_lab){
 }
 
 calanus <-prep_data_GAMS(ROMS_sp= "NCaS", ecofoci_sp= "Calanus marshallae/glacialis", eco_lab = "calanus")
-prep_data_GAMS(ROMS_sp= "Cop", ecofoci_sp= "Pseudocalanus")
-prep_data_GAMS(ROMS_sp= "NCaO", ecofoci_sp= "Neocalanus")
+# prep_data_GAMS(ROMS_sp= "Cop", ecofoci_sp= "Pseudocalanus")
+# prep_data_GAMS(ROMS_sp= "NCaO", ecofoci_sp= "Neocalanus")
 
 #Now that ROMS is 
