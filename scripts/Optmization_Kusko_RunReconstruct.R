@@ -12,33 +12,33 @@ library(here)
 
 # Load data =========================================================================================
 # proportions in each area/week/year - Pyj
-prop<- read_csv("data/Processed_Data/Proportions_run_present_weekly.csv") 
+prop<- read_csv("data/Processed_Data/Proportions_run_present_weekly.csv")[4:10] # only select some weeks for now because proportion has less weeks than the effort data...  
 # Escapement - Weir estimates by project 
 escapement <- read_csv("data/Processed_Data/kusko_escapement.csv") 
 catch<-read_csv("data/Processed_Data/catch.csv") 
 # Effort 
-effort <- read_csv("data/Processed_Data/effort.csv") 
+effort <- read_csv("data/Processed_Data/effort.csv")
 
 years <-unique(escapement$year)  #1976:2021 #length of years in dataset
 Nyear <- length(years)
-projects = 7 # number of weir projects 
+projects = ncol(escapement)-1 # number of weir projects 
 T =  Nyear*4 # "Total number of observations from all data sets" page 6 - I am not sure if 36 is right?? 
 weeks = ncol(prop)
 
 # Set up data that are inputs to likelihood fxns =========================================================================================
-obs_escape_project <- as.matrix(escapement[,2:8])
-obs_escape <- as.matrix(rowSums(escapement[,2:8]))
+obs_escape_project <- as.matrix(escapement[,1:9])
+obs_escape <- as.matrix(rowSums(escapement[,1:9]))
 obs_catch <- as.matrix(rowSums(catch[,2:3]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
-obs_N = as.matrix(obs_escape + obs_subsistence + obs_catch) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
+obs_N = as.matrix(obs_escape + obs_subsistence + obs_catch +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
 colnames(obs_N)<- NULL
  
 # Baranov Data Input =========================================================================================
 
 # this is a data input to the Baranov catch equation prediction (?) though notes say it is Nhat ?? 
 N_yi = as.matrix(obs_N*prop)  # number of chum present in commercial district by week/year
-B_yj = as.matrix(effort[,1:13]) # observed effort per week/year
+B_yj = as.matrix(effort[,1:7]) # observed effort per week/year
 
 # NLL Function =========================================================================================
 NLL <- function(pars,
@@ -67,10 +67,13 @@ NLL <- function(pars,
   baranov_sigma <- pars_start[2] # 
   grep("baranov_sigma", par_names)
   
-  escapement_slope <- pars_start[3:9] # 
+  escapement_slope <- pars_start[3:11] # 
   grep("escapement_slope", par_names)
   
-  N_sigma <- pars_start[10]
+  escapement_sigma <- pars_start[12]
+  grep("escapement_sigma", par_names)
+  
+  N_sigma <- pars_start[13]
   grep("N_sigma", par_names)
   
   # Step 1: Exponentiate model parameters back into normal space
@@ -92,7 +95,7 @@ NLL <- function(pars,
       }
     }
     
-    pred_catch[is.nan(pred_catch)] <- 0
+    pred_catch[is.na(pred_catch)] <- 0
     
     colnames(pred_catch) <- names(prop)
     
@@ -201,20 +204,21 @@ optim_output  <- optim(par=pars_start, # starting values for parameter estimatio
                        control=list(trace=TRUE, maxit=1e5))
   
   
+  # 
+  # # Print the result
+    print(optim_output)
+  # 
+  # # Access the estimated parameter values
+   param_est <- optim_output$par
  
-  # Print the result
-  print(optim_output)
-  
-  # Access the estimated parameter values
-  param_est <- optim_output$par
-
-  
-  # Access the objective function value at the estimated parameters
-  obj_fun_val <- optim_output$value
-  print(obj_fun_val)
-  
-  # Access the convergence code
-  conv_code <- optim_output$conv
-  print(conv_code)
-  
- 
+   
+   
+  # # Access the objective function value at the estimated parameters
+  # obj_fun_val <- optim_output$value
+  # print(obj_fun_val)
+  # 
+  # # Access the convergence code
+  # conv_code <- optim_output$conv
+  # print(conv_code)
+  # 
+  # 
