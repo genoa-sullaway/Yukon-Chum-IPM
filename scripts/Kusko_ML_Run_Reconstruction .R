@@ -12,6 +12,7 @@ NegLogLike_Fn = function(Par, Data){
   # Parameters
   Mean_hat = Par[1]
   SD_hat = Par[2]
+  
   # Log-likelihood
   LogLike_i = dnorm( Data$y, mean=Mean_hat, sd=SD_hat, log=TRUE )
   NegLogLike = -1 * sum(LogLike_i)
