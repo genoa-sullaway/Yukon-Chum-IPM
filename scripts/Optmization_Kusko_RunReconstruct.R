@@ -21,8 +21,8 @@ effort <- read_csv("data/Processed_Data/effort.csv")
 
 years <-unique(escapement$year)  #1976:2021 #length of years in dataset
 Nyear <- length(years)
-projects = ncol(escapement)-1 # number of weir projects 
-T =  Nyear*4 # "Total number of observations from all data sets" page 6 - I am not sure if 36 is right?? 
+projects = ncol(escapement)-1 # number of weir projects - the year column
+T =  Nyear*4 # "Total number of observations from all data sets" page 6 -here: number of years * 4 data sets. is this right? 
 weeks = ncol(prop)
 
 # Set up data that are inputs to likelihood fxns =========================================================================================
@@ -35,8 +35,6 @@ obs_N = as.matrix(obs_escape + obs_subsistence + obs_catch +catch[,4] + catch[,5
 colnames(obs_N)<- NULL
  
 # Baranov Data Input =========================================================================================
-
-# this is a data input to the Baranov catch equation prediction (?) though notes say it is Nhat ?? 
 N_yi = as.matrix(obs_N*prop)  # number of chum present in commercial district by week/year
 B_yj = as.matrix(effort[,1:7]) # observed effort per week/year
 
@@ -51,46 +49,35 @@ NLL <- function(pars,
                 weeks,
                 projects,
                 Nyear,
-                weights
-                
-                # ln_q_vec, # parameter- Baranov
-                # baranov_sigma, # parameter - Baranov
-                # ln_slope, # parameter
-                
-                # ln_sigma_C,  
-                ) { 
+                weights) { 
   
-  # Extract parameters, based on their location
+  # Step 1: Extract parameters, based on their location
   ln_q_vec <- pars_start[1] # 
   grep("ln_q_vec", par_names)
   
-  baranov_sigma <- pars_start[2] # 
-  grep("baranov_sigma", par_names)
+  # baranov_sigma <- pars_start[2] # 
+  # grep("baranov_sigma", par_names)
   
   escapement_slope <- pars_start[3:11] # 
   grep("escapement_slope", par_names)
   
-  escapement_sigma <- pars_start[12]
-  grep("escapement_sigma", par_names)
+  # escapement_sigma <- pars_start[12]
+  # grep("escapement_sigma", par_names)
   
-  N_sigma <- pars_start[13]
-  grep("N_sigma", par_names)
+  # N_sigma <- pars_start[13]
+  # grep("N_sigma", par_names)
   
-  # Step 1: Exponentiate model parameters back into normal space
-  # q <- exp(ln_q)
-  # slope <- exp(ln_slope)
-  # 
   # Step 2: Predict C, N, E
   
   # Predict C - Catch, using Baranov catch equation: =========================================================================================
 
     pred_catch <- matrix(ncol = weeks, nrow = Nyear)
   
-    error <- matrix(ncol = weeks, nrow = Nyear)
+    error <- matrix(0, ncol = weeks, nrow = Nyear)
   
     for (i in 1:weeks) {
       for (j in 1:Nyear) {
-      error[j,i] <- rnorm(0,baranov_sigma, n=1)
+     # error[j,i] <- rnorm(0,baranov_sigma, n=1)
       pred_catch[j,i] = N_yi[j,i]*(1-exp(-ln_q_vec*B_yj[j,i]))*exp(error[j,i])
       }
     }
@@ -102,25 +89,23 @@ NLL <- function(pars,
     # Predict N - Observed Total Return =========================================================================================
 
     #I am not sure how to do this part
-    lambda = rnorm(0,N_sigma, n=Nyear)
-    pred_N = obs_N*exp(lambda) # the paper actually has this equation:  pred_N = pred_N*exp(lamba), but I dont understand how that works because then where does the pred_N come from??? 
-  
+    lambda = rnorm(0,0, n=Nyear)
+    pred_N = obs_N*exp(lambda) 
+   
     # Predict E - Escapement =========================================================================================
-    
-    # not sure where this is used yet... error_fixed_escape <- rnorm(0, 1, n=36) # currently fixing sigma here
+ 
     pred_escape_pj <- matrix(ncol = projects, nrow = Nyear)
     
     for (p in 1:projects) {
       for (j in 1:Nyear) {
-        pred_escape_pj[j,] = escapement_slope[p]*obs_escape_project[j,]
+       Obs_Escapement[j,] = escapement_slope[p]*obs_escape_project[j,]
       }
     }
     
     colnames(pred_escape_pj) <- colnames(obs_escape_project)
-    
+
     # not sure where this is used yet... pred_escape = (pred_N-obs_subsistence-obs_commercial)*exp(error_fixed_escape)   
-    # pred_N is the last thing optimized
-    
+
   # Step 3: Extract model-predicted quantities for comparison to our observed data
     # From paper re weights: "A maximum likelihood model that allowed for the weighting (wi , wc , and wN) of individual datasets was used"
    
@@ -153,12 +138,12 @@ NLL <- function(pars,
 
 # Baranov parameters:
   ln_q_vec <- 0.25 #0.001 - 0.5 is standard 
-  baranov_sigma <- 0.1  
+  #baranov_sigma <- 0.1  
   
   escapement_slope <-rep(0.5, times = projects) # need to have its own list of slopes for each project 
-  escapement_sigma <- 0.1
+ # escapement_sigma <- 0.1
   
-  N_sigma <- 0.1
+ # N_sigma <- 0.1
   
   pars_start<- c(# Baranov 
                     ln_q_vec,
@@ -179,11 +164,13 @@ par_names <- c(# baranov parameters
                          # total return parameters
                           "N_sigma")  
   #assign weights 
-  w_c <- 0.5
-  w_i <- 0.3
-  w_n <- 0.2
+#The parameter weighting scheme used for the demonstration was 0.5 for the inriver component, 1.0 for the weir and sonar counts, and 2.0 for the catch-effort model. 
+#These parameter weights are the opposite of what the casual reader might expect, with smaller numbers indicating more weight and larger values indicating less weight. 
+  w_catch <- 2.0
+  w_escapement <- 1.0
+  w_inriver <- 0.5
   
-  weights <- c(w_c, w_i, w_n) 
+  weights <- c(w_catch,w_escapement,w_inriver) 
 
 # Run Optim ============================================================================================================
   
