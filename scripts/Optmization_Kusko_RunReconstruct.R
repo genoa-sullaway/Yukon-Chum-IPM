@@ -11,13 +11,19 @@ library(tidyverse)
 library(here)
 
 # Load data =========================================================================================
-# proportions in each area/week/year - Pyj
-prop<- read_csv("data/Processed_Data/Proportions_run_present_weekly.csv")[4:10] # only select some weeks for now because proportion has less weeks than the effort data...  
 # Escapement - Weir estimates by project 
-escapement <- read_csv("data/Processed_Data/kusko_escapement.csv") 
-catch<-read_csv("data/Processed_Data/catch.csv") 
+escapement <- read_csv("data/Processed_Data/kusko_escapement.csv") %>%
+  filter(year < 2008) 
+catch<-read_csv("data/Processed_Data/catch.csv") %>%
+  filter(Year < 2008) 
 # Effort 
-effort <- read_csv("data/Processed_Data/effort.csv")
+effort <- read_csv("data/Processed_Data/effort.csv") %>%
+  filter(year < 2008) 
+# proportions in each area/week/year - Pyj - right now, just fit for 2011
+prop<- read_csv("data/Processed_Data/Proportions_run_present_weekly.csv")[4:10] %>% # only select some weeks for now because proportion has less weeks than the effort data...  
+  mutate(year = 1976:2021) %>%
+  filter(year < 2008) %>%
+  select(-year)
 
 years <-unique(escapement$year)  #1976:2021 #length of years in dataset
 Nyear <- length(years)
@@ -31,7 +37,8 @@ obs_escape <- as.matrix(rowSums(escapement[,1:9]))
 obs_catch <- as.matrix(rowSums(catch[,2:3]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
-obs_N = as.matrix(obs_escape + obs_subsistence + obs_catch +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
+#equation 6 in Bue paper 
+obs_N = as.matrix(obs_escape + obs_subsistence + obs_catch)# +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
 colnames(obs_N)<- NULL
  
 # Baranov Data Input =========================================================================================
@@ -52,14 +59,17 @@ NLL <- function(pars,
                 weights) { 
   
   # Step 1: Extract parameters, based on their location
-  ln_q_vec <- pars_start[1] # 
+  
   grep("ln_q_vec", par_names)
+  ln_q_vec <- pars_start[1] # 
   
   # baranov_sigma <- pars_start[2] # 
   # grep("baranov_sigma", par_names)
+  grep("escapement_slope", par_names)  
+  escapement_slope <- pars_start[2:10] # 
   
-  escapement_slope <- pars_start[3:11] # 
-  grep("escapement_slope", par_names)
+  grep("pred_N", par_names)  
+  pred_N <- pars_start[11:42] 
   
   # escapement_sigma <- pars_start[12]
   # grep("escapement_sigma", par_names)
@@ -85,27 +95,33 @@ NLL <- function(pars,
     pred_catch[is.na(pred_catch)] <- 0
     
     colnames(pred_catch) <- names(prop)
-    
-    # Predict N - Observed Total Return =========================================================================================
 
-    #I am not sure how to do this part
-    lambda = rnorm(0,0, n=Nyear)
-    pred_N = obs_N*exp(lambda) 
-   
     # Predict E - Escapement =========================================================================================
  
-    pred_escape_pj <- matrix(ncol = projects, nrow = Nyear)
-    
-    for (p in 1:projects) {
-      for (j in 1:Nyear) {
-       Obs_Escapement[j,] = escapement_slope[p]*obs_escape_project[j,]
-      }
-    }
-    
-    colnames(pred_escape_pj) <- colnames(obs_escape_project)
-
-    # not sure where this is used yet... pred_escape = (pred_N-obs_subsistence-obs_commercial)*exp(error_fixed_escape)   
-
+    #colnames(pred_escape_pj) <- colnames(obs_escape_project)
+      pred_escape_pj <-matrix(NA, ncol = projects, nrow = Nyear) #obs_escape_project #"starting values" matrix(ncol = projects, nrow = Nyear)
+     
+     # pred_E <- matrix(ncol = projects, nrow = Nyear)
+     
+     for (p in 1:projects) {
+       for (j in 1:Nyear) {
+         pred_escape_pj[j,p] = escapement_slope[p]*obs_escape_project[j,p]
+       }
+     }
+     
+     pred_E <- rowSums(pred_escape_pj)
+     
+     # Predict N - Observed Total Return =========================================================================================
+     
+     # blank this out for now unless I decide to add in process variation?? 
+     #lambda = rnorm(0,0, n=Nyear)
+     #pred_N = pred_N*exp(lambda) # this is kind of useless but ill leave it in for now
+     
+     for (j in 1:Nyear) {
+       pred_N[[j]] = pred_E[[j]] + obs_subsistence[[j]] + obs_catch[[j]] # resovled equation 2 so that it equals N, makes more sense to me to allow you to optimize that way??
+       # pred_E[[j]] = (pred_N[[j]] - obs_subsistence[[j]] - obs_catch[[j]])
+     }
+     
   # Step 3: Extract model-predicted quantities for comparison to our observed data
     # From paper re weights: "A maximum likelihood model that allowed for the weighting (wi , wc , and wN) of individual datasets was used"
    
@@ -124,11 +140,15 @@ NLL <- function(pars,
         }
     }
     
-    #no 0's here so I dont think I have to do the loop.....
-    NLL_num_fish <- sum((log(obs_N) - log(pred_N))^2)/(weights[3]^2) 
-   
+ 
+    for (j in 1:Nyear) {
+      if(pred_N[j] > 0) {
+    NLL_N_TotalRun <- sum((log(obs_N) - log(pred_N))^2)/(weights[3]^2) 
+        }
+    }
+    
     # Calculate total objective function 
-   objFxn <- T/2*log(NLL_catch + NLL_escapement + NLL_num_fish) # T is number of obs.... 
+   objFxn <- T/2*log(NLL_catch + NLL_escapement + NLL_N_TotalRun) # T is number of obs.... 
   
   # Return the total objective function value
   return(objFxn)
@@ -140,29 +160,32 @@ NLL <- function(pars,
   ln_q_vec <- 0.25 #0.001 - 0.5 is standard 
   #baranov_sigma <- 0.1  
   
-  escapement_slope <-rep(0.5, times = projects) # need to have its own list of slopes for each project 
+  escapement_slope <- rep(0.5, times = projects) # need to have its own list of slopes for each project 
  # escapement_sigma <- 0.1
-  
+  pred_N <- obs_N #matrix(nrow = Nyear, ncol =1, obs_N) # starting values are just observed values?? 
  # N_sigma <- 0.1
   
   pars_start<- c(# Baranov 
                     ln_q_vec,
-                    baranov_sigma,
+                    #baranov_sigma,
                     # escapement parameters 
                     escapement_slope,
-                    escapement_sigma,
+                    pred_N
+                   # escapement_sigma,
                     # Total return parameters
-                    N_sigma # variation for lambda
+                    #N_sigma # variation for lambda
                     ) 
   
 par_names <- c(# baranov parameters
                           "ln_q_vec",
-                          "baranov_sigma",
+                          #"baranov_sigma",
                          #  escapement parameters 
-                           paste0("escapement_slope", c(1:projects)),
-                          "escapement_sigma", 
+                          paste0("escapement_slope", c(1:projects)),
+                          paste0("pred_N", c(1:Nyear))
+                         #"escapement_sigma", 
                          # total return parameters
-                          "N_sigma")  
+                         # "N_sigma"
+                         )  
   #assign weights 
 #The parameter weighting scheme used for the demonstration was 0.5 for the inriver component, 1.0 for the weir and sonar counts, and 2.0 for the catch-effort model. 
 #These parameter weights are the opposite of what the casual reader might expect, with smaller numbers indicating more weight and larger values indicating less weight. 

@@ -7,30 +7,24 @@
 # Load Packages =========================================================================================
 library(tidyverse)
 library(here)
-# 
-# ln_q_vec_par <- exp(optim_output$par[1])
-# baranov_sigma_par <- exp(optim_output$par[2])
-# escapement_slope_par <- exp(optim_output$par[3:11])
-# 
-# escapement_sigma_par <- exp(optim_output$par[12])
-# N_sigma_par <- exp(optim_output$par[13])
-
+ 
 estimated_parameters<-optim_output$par
 
 par_names <- c(# baranov parameters
   "ln_q_vec",
-  "baranov_sigma",
+  #"baranov_sigma",
   #  escapement parameters 
   paste0("escapement_slope", c(1:projects)),
-  "escapement_sigma", 
+  paste0("pred_N", c(1:Nyear))
+  #"escapement_sigma", 
   # total return parameters
-  "N_sigma")  
+  # "N_sigma"
+)  
 
 #assign weights 
 names(estimated_parameters) <- par_names
 # I think to plot I need to recreate the NLL function without the LL components to then get pred N and compare it to obs N?
-
-# NLL Function =========================================================================================
+ # NLL Function =========================================================================================
 predict_NLL <- function(pars,
                 #data
                 N_yi,
@@ -44,56 +38,65 @@ predict_NLL <- function(pars,
                 weights) { 
   
   # Step 1: Extract parameters, based on their location
-  ln_q_vec <- exp(pars[1]) # 
+  
   grep("ln_q_vec", par_names)
+  ln_q_vec <- pars_start[1] # 
   
-  baranov_sigma <- exp(pars[2]) # 
-  grep("baranov_sigma", par_names)
+  # baranov_sigma <- pars_start[2] # 
+  # grep("baranov_sigma", par_names)
+  grep("escapement_slope", par_names)  
+  escapement_slope <- pars_start[2:10] # 
   
-  escapement_slope <- exp(pars[3:11]) # 
-  grep("escapement_slope", par_names)
+  grep("pred_N", par_names)  
+  pred_N <- pars_start[11:42] 
   
-  escapement_sigma <- exp(pars[12])
-  grep("escapement_sigma", par_names)
+  # escapement_sigma <- pars_start[12]
+  # grep("escapement_sigma", par_names)
   
-  N_sigma <- exp(pars[13])
-  grep("N_sigma", par_names)
-  
+  # N_sigma <- pars_start[13]
+  # grep("N_sigma", par_names)
   
   # Step 2: Predict C, N, E
+  
   # Predict C - Catch, using Baranov catch equation: =========================================================================================
   
   pred_catch <- matrix(ncol = weeks, nrow = Nyear)
-  error <- matrix(ncol = weeks, nrow = Nyear)
+  
+  error <- matrix(0, ncol = weeks, nrow = Nyear)
   
   for (i in 1:weeks) {
     for (j in 1:Nyear) {
-      error[j,i] <- rnorm(0,baranov_sigma, n=1)
+      # error[j,i] <- rnorm(0,baranov_sigma, n=1)
       pred_catch[j,i] = N_yi[j,i]*(1-exp(-ln_q_vec*B_yj[j,i]))*exp(error[j,i])
     }
   }
   
   pred_catch[is.na(pred_catch)] <- 0
+  
   colnames(pred_catch) <- names(prop)
-  
-  # Predict N - Observed Total Return =========================================================================================
-  
-  #I am not sure how to do this part
-  lambda = rnorm(0,N_sigma, n=Nyear)
-  pred_N = obs_N*exp(lambda) # the paper actually has this equation:  pred_N = pred_N*exp(lamba), but I dont understand how that works because then where does the pred_N come from??? 
   
   # Predict E - Escapement =========================================================================================
   
-  pred_escape_pj <- matrix(ncol = projects, nrow = Nyear)
+  #colnames(pred_escape_pj) <- colnames(obs_escape_project)
+  pred_escape_pj <-matrix(NA, ncol = projects, nrow = Nyear) #obs_escape_project #"starting values" matrix(ncol = projects, nrow = Nyear)
+  
+  # pred_E <- matrix(ncol = projects, nrow = Nyear)
   
   for (p in 1:projects) {
     for (j in 1:Nyear) {
-      pred_escape_pj[j,] = escapement_slope[p]*obs_escape_project[j,]
+      pred_escape_pj[j,p] = escapement_slope[p]*obs_escape_project[j,p]
     }
   }
   
-  colnames(pred_escape_pj) <- colnames(obs_escape_project)
+  pred_E <- rowSums(pred_escape_pj)
   
+  # Predict N - Observed Total Return =========================================================================================
+ 
+  for (j in 1:Nyear) {
+    pred_N[[j]] = pred_E[[j]] + obs_subsistence[[j]] + obs_catch[[j]] # resovled equation 2 so that it equals N, makes more sense to me to allow you to optimize that way??
+    # pred_E[[j]] = (pred_N[[j]] - obs_subsistence[[j]] - obs_catch[[j]])
+  }
+ 
 ###########################################################################3
  output <- list(pred_catch,pred_escape_pj,pred_N)
   # Return the predicted values based on parameter estimates in optimization script 
@@ -116,7 +119,7 @@ pre_outputs <- predict_NLL(par=estimated_parameters, # starting values for param
 pred_catch<-pre_outputs[[1]]
 pred_escape_pj<-pre_outputs[[2]]
 
-pred_N<-data.frame(Year = c(1976:2021), Pred_N = c(pre_outputs[[3]]))  
+pred_N<-data.frame(Year = c(1976:2007), Pred_N = c(pre_outputs[[3]]))  
 
 ### Plot predicted N
 ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
