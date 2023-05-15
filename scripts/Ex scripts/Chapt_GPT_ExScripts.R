@@ -10,11 +10,7 @@ weeks=weeks
 projects=projects
 Nyear=Nyear
 weights = weights
-
-
-
-
-
+ 
 # Load the Baranov catch equation function
 baranov <- function(q, Z, B, C) {
   C - q * B * (1 - exp(-Z))

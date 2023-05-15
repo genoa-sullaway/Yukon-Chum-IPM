@@ -8,6 +8,10 @@
 library(tidyverse)
 library(here)
  
+### Load Bue data
+## NOTE: genoa looked at figure 8 in bue and Molyneaux 2008 and guess-timated the estimated #'s per year because the paper doesnt provide a table with exact points 
+bue_estimated <- read_csv("data/Kusko_Reconstruction/Bue_Reconstruction_Dat.csv") 
+ 
 estimated_parameters<-optim_output$par
 
 par_names <- c(# baranov parameters
@@ -136,8 +140,8 @@ ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
   theme_classic() +
   ylab("Total Run (thousands of fish") +
   geom_vline(xintercept = 2007, linetype =2, color ="blue")  + #end of Bue study
-  geom_vline(xintercept = 1986, linetype =2, color ="blue")  # start of Bue study
-
+  geom_vline(xintercept = 1986, linetype =2, color ="blue") + # start of Bue study
+  geom_line(data = bue_estimated, aes(x=Year, y =Estimate_Thousands), color = "red")
 
 
 

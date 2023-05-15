@@ -12,18 +12,18 @@ library(here)
 
 # Load data =========================================================================================
 # Escapement - Weir estimates by project 
-escapement <- read_csv("data/Processed_Data/kusko_escapement.csv") %>%
-  filter(year < 2008) 
-catch<-read_csv("data/Processed_Data/catch.csv") %>%
-  filter(Year < 2008) 
+escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") #%>%
+  #filter(year < 2008) 
+catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") #%>%
+  #filter(Year < 2008) 
 # Effort 
-effort <- read_csv("data/Processed_Data/effort.csv") %>%
-  filter(year < 2008) 
+effort <- read_csv("data/Processed_Data/OLD/OLD_effort.csv") #%>%
+ # filter(year < 2008) 
 # proportions in each area/week/year - Pyj - right now, just fit for 2011
-prop<- read_csv("data/Processed_Data/Proportions_run_present_weekly.csv")[4:10] %>% # only select some weeks for now because proportion has less weeks than the effort data...  
-  mutate(year = 1976:2021) %>%
-  filter(year < 2008) %>%
-  select(-year)
+prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") #%>% # only select some weeks for now because proportion has less weeks than the effort data...  
+  # mutate(year = 1976:2021) %>%
+  # filter(year < 2008) %>%
+  # select(-year)
 
 years <-unique(escapement$year)  #1976:2021 #length of years in dataset
 Nyear <- length(years)
@@ -32,23 +32,23 @@ T =  Nyear*4 # "Total number of observations from all data sets" page 6 -here: n
 weeks = ncol(prop)
 
 # Set up data that are inputs to likelihood fxns =========================================================================================
-obs_escape_project <- as.matrix(escapement[,1:9])
-obs_escape <- as.matrix(rowSums(escapement[,1:9]))
+obs_escape_project <- as.matrix(escapement[,2:8])
+obs_escape <- as.matrix(rowSums(escapement[,2:8]))
 obs_catch <- as.matrix(rowSums(catch[,2:3]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
 #equation 6 in Bue paper 
-obs_N = as.matrix(obs_escape + obs_subsistence + obs_catch)# +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
+obs_N = as.matrix(obs_escape + obs_subsistence + obs_catch) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
 colnames(obs_N)<- NULL
  
 # Baranov Data Input =========================================================================================
-N_yi = as.matrix(obs_N*prop)  # number of chum present in commercial district by week/year
-B_yj = as.matrix(effort[,1:7]) # observed effort per week/year
+ 
+B_yj = as.matrix(effort[,1:13]) # observed effort per week/year
 
 # NLL Function =========================================================================================
 NLL <- function(pars,
                 #data
-                N_yi,
+                #N_yi,
                 B_yj,
                 obs_N,
                 obs_escape_project,
@@ -58,18 +58,18 @@ NLL <- function(pars,
                 Nyear,
                 weights) { 
   
-  # Step 1: Extract parameters, based on their location
   
+  # Step 1: Extract parameters, based on their location
   grep("ln_q_vec", par_names)
-  ln_q_vec <- pars_start[1] # 
+  ln_q_vec <- log(pars_start[1]) # 
   
   # baranov_sigma <- pars_start[2] # 
   # grep("baranov_sigma", par_names)
   grep("escapement_slope", par_names)  
-  escapement_slope <- pars_start[2:10] # 
+  escapement_slope <- pars_start[2:8] # 
   
   grep("pred_N", par_names)  
-  pred_N <- pars_start[11:42] 
+  pred_N <- pars_start[9:44] 
   
   # escapement_sigma <- pars_start[12]
   # grep("escapement_sigma", par_names)
@@ -80,21 +80,26 @@ NLL <- function(pars,
   # Step 2: Predict C, N, E
   
   # Predict C - Catch, using Baranov catch equation: =========================================================================================
-
-    pred_catch <- matrix(ncol = weeks, nrow = Nyear)
   
-    error <- matrix(0, ncol = weeks, nrow = Nyear)
+  N_yi <- matrix(nrow = Nyear, ncol = weeks)
+  for (j in 1:Nyear) {
+    N_yi[j,] =  as.matrix(pred_N[[j]]*prop[j,])  # number of chum present in commercial district by week/year
+  }
   
+  pred_catch <- matrix(ncol = weeks, nrow = Nyear)
+  
+  error <- matrix(0, ncol = weeks, nrow = Nyear)
+ 
     for (i in 1:weeks) {
       for (j in 1:Nyear) {
      # error[j,i] <- rnorm(0,baranov_sigma, n=1)
-      pred_catch[j,i] = N_yi[j,i]*(1-exp(-ln_q_vec*B_yj[j,i]))*exp(error[j,i])
+      pred_catch[j,i] = N_yi[j,i]*(1-(exp(-ln_q_vec*B_yj[j,i])))*exp(error[j,i])
       }
     }
     
     pred_catch[is.na(pred_catch)] <- 0
     
-    colnames(pred_catch) <- names(prop)
+    #colnames(pred_catch) <- names(prop)
 
     # Predict E - Escapement =========================================================================================
  
@@ -109,46 +114,52 @@ NLL <- function(pars,
        }
      }
      
-     pred_E <- rowSums(pred_escape_pj)
-     
      # Predict N - Observed Total Return =========================================================================================
-     
+# --- This is basically done above in the catch equation 
      # blank this out for now unless I decide to add in process variation?? 
      #lambda = rnorm(0,0, n=Nyear)
      #pred_N = pred_N*exp(lambda) # this is kind of useless but ill leave it in for now
-     
-     for (j in 1:Nyear) {
-       pred_N[[j]] = pred_E[[j]] + obs_subsistence[[j]] + obs_catch[[j]] # resovled equation 2 so that it equals N, makes more sense to me to allow you to optimize that way??
-       # pred_E[[j]] = (pred_N[[j]] - obs_subsistence[[j]] - obs_catch[[j]])
-     }
-     
+    pred_E <- rowSums(pred_escape_pj)
+     # 
+     # for (j in 1:Nyear) {
+     #   #pred_N[[j]] = pred_E[[j]] + obs_subsistence[[j]] + obs_catch[[j]] # resolved equation 2 so that it equals N, makes more sense to me to allow you to optimize that way??
+     #   #pred_E_two[[j]] = pred_N[[j]] - obs_subsistence[[j]] - obs_catch[[j]]
+     # }
+     # 
   # Step 3: Extract model-predicted quantities for comparison to our observed data
     # From paper re weights: "A maximum likelihood model that allowed for the weighting (wi , wc , and wN) of individual datasets was used"
-   
+    NLL_catch<-matrix(nrow = Nyear, ncol =1)
     sumpred_catch<-rowSums(pred_catch)
-    for (j in 1:Nyear) {
+     for (j in 1:Nyear) {
        if(sumpred_catch[j] > 0) { # Ensure we don't try to take the log of 0!
-     NLL_catch <- sum((log(obs_catch[j]) - log(sumpred_catch[j])))^2/(weights[1]^2) # catch is summed for the pred_catch, because it is estimated based on proportion of vessels in an area per week and we dont have that ifnormation for observed catch,
+     NLL_catch[j] <-((log(obs_catch[j]) - log(sumpred_catch[j]))^2)/(weights[1]^2) # catch is summed for the pred_catch, because it is estimated based on proportion of vessels in an area per week and we dont have that ifnormation for observed catch,
    # total annual observed catch is subtracted from total annual predicted catch, then squared, divided by weights, and finally, these differences are summed across all years. 
        }
     }
+    NLL_catch <- replace_na(NLL_catch,0)
+    NLL_catch_sum <- colSums(NLL_catch)
+    
+    
+    NLL_escapement<-matrix(nrow = Nyear, ncol =1)
 
-    sumpred_escape<-rowSums(pred_escape_pj)
     for (j in 1:Nyear) {
-      if(sumpred_escape[j] > 0) {
-    NLL_escapement <- sum((log(obs_escape[j]) - log(sumpred_escape[j])))^2/(weights[2]^2) 
+      if(pred_E[j] > 0) {
+    NLL_escapement[j] <- sum((log(obs_escape[j]) - log(pred_E[j])))^2/(weights[2]^2) 
         }
     }
-    
+    NLL_escapement <- replace_na(NLL_escapement,0)
+    NLL_escapement_sum <- colSums(NLL_escapement)
  
-    for (j in 1:Nyear) {
+ 
+    NLL_N_TotalRun<-matrix(nrow = Nyear, ncol =1)
+       for (j in 1:Nyear) {
       if(pred_N[j] > 0) {
-    NLL_N_TotalRun <- sum((log(obs_N) - log(pred_N))^2)/(weights[3]^2) 
+    NLL_N_TotalRun[j] <- sum((log(obs_N[j]) - log(pred_N[j]))^2)/(weights[3]^2) 
         }
     }
-    
+    NLL_N_TotalRun_sum <- colSums(NLL_N_TotalRun)
     # Calculate total objective function 
-   objFxn <- T/2*log(NLL_catch + NLL_escapement + NLL_N_TotalRun) # T is number of obs.... 
+   objFxn <- T/2*log(NLL_catch_sum + NLL_escapement_sum + NLL_N_TotalRun_sum) # T is number of obs.... 
   
   # Return the total objective function value
   return(objFxn)
@@ -157,12 +168,12 @@ NLL <- function(pars,
 # Parameters and parameter starting values ===================================================================
 
 # Baranov parameters:
-  ln_q_vec <- 0.25 #0.001 - 0.5 is standard 
+  ln_q_vec <- 0.001 #0.001 - 0.5 is standard 
   #baranov_sigma <- 0.1  
   
   escapement_slope <- rep(50, times = projects) # need to have its own list of slopes for each project 
  # escapement_sigma <- 0.1
-  pred_N <- obs_N #matrix(nrow = Nyear, ncol =1, obs_N) # starting values are just observed values?? 
+  pred_N <- obs_N #matrix(nrow = Nyear, ncol =1, 60000)  
  # N_sigma <- 0.1
   
   pars_start<- c(# Baranov 
@@ -200,7 +211,7 @@ par_names <- c(# baranov parameters
 optim_output  <- optim(par=pars_start, # starting values for parameter estimations 
                        fn=NLL, #NLL is function that you create above 
                        # data/fixed values go below
-                       N_yi=N_yi,
+                      # N_yi=N_yi,
                        B_yj=B_yj,
                        obs_N=obs_N,
                        obs_escape_project=obs_escape_project,
@@ -209,27 +220,17 @@ optim_output  <- optim(par=pars_start, # starting values for parameter estimatio
                        projects=projects,
                        Nyear=Nyear,
                        weights = weights,
-                      # method="BFGS",
-                       
+                       method="BFGS",
                        hessian=FALSE,
                        control=list(trace=TRUE, maxit=1e5))
   
-  
-  # 
-  # # Print the result
-  #  print(optim_output)
-  # 
   # # Access the estimated parameter values
    param_est <- optim_output$par
    param_est
    
+# check gradient 
+library(numDeriv)
    
-  # # Access the objective function value at the estimated parameters
-  # obj_fun_val <- optim_output$value
-  # print(obj_fun_val)
-  # 
-  # # Access the convergence code
-  # conv_code <- optim_output$conv
-  # print(conv_code)
-  # 
-  # 
+grad(NLL, pars_start)
+
+      
