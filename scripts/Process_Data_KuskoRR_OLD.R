@@ -27,11 +27,11 @@ P_yj <-  read.csv("data/Kusko_Reconstruction/OLD/P_yj_Data_V1.csv") %>%
   dplyr::mutate(year = 1976:2011) %>% 
   gather(1:15, key = "date", value = "proportion") %>%
   dplyr::mutate(proportion = as.numeric(gsub(",","",proportion))) %>%
-  replace(is.na(.), 0)  %>%
+ # replace(is.na(.), 0)  %>%
   #dates are out of order, need to arrange them in order
   spread(date, proportion)  %>%
-  dplyr::select(#`5/27 - 6/2`, # effort data doesnt have these first two columns and they are 0s
-    #`6/3 - 6/9`,
+  dplyr::select(`5/27 - 6/2`, # effort data doesnt have these first two columns and they are 0s
+     `6/3 - 6/9`,
     `6/10 - 6/16`,
     `6/17 - 6/23`,
     `6/24 - 6/30`,

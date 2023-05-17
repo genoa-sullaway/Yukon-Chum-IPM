@@ -11,9 +11,8 @@ library(here)
 ### Load Bue data
 ## NOTE: genoa looked at figure 8 in bue and Molyneaux 2008 and guess-timated the estimated #'s per year because the paper doesnt provide a table with exact points 
 bue_estimated <- read_csv("data/Kusko_Reconstruction/Bue_Reconstruction_Dat.csv") 
+estimated_parameters<- readRDS("output/optim_output_par.RDS")
  
-estimated_parameters<-optim_output$par
-
 par_names <- c(# baranov parameters
   "ln_q_vec",
   #"baranov_sigma",
@@ -29,13 +28,14 @@ par_names <- c(# baranov parameters
 names(estimated_parameters) <- par_names
 # I think to plot I need to recreate the NLL function without the LL components to then get pred N and compare it to obs N?
  # NLL Function =========================================================================================
-predict_NLL <- function(pars,
+predict_NLL <- function(par,
                 #data
-                N_yi,
+               # N_yi,
                 B_yj,
                 obs_N,
                 obs_escape_project,
                 #values
+                err_variance,
                 weeks,
                 projects,
                 Nyear,
@@ -44,15 +44,15 @@ predict_NLL <- function(pars,
   # Step 1: Extract parameters, based on their location
   
   grep("ln_q_vec", par_names)
-  ln_q_vec <- pars_start[1] # 
+  ln_q_vec <- exp(par[1]) # 
   
   # baranov_sigma <- pars_start[2] # 
   # grep("baranov_sigma", par_names)
   grep("escapement_slope", par_names)  
-  escapement_slope <- pars_start[2:10] # 
+  escapement_slope <- par[2:8] # 
   
   grep("pred_N", par_names)  
-  pred_N <- pars_start[11:42] 
+  pred_N <- par[9:40] 
   
   # escapement_sigma <- pars_start[12]
   # grep("escapement_sigma", par_names)
@@ -64,14 +64,20 @@ predict_NLL <- function(pars,
   
   # Predict C - Catch, using Baranov catch equation: =========================================================================================
   
+  N_yi <- matrix(nrow = Nyear, ncol = weeks)
+  for (j in 1:Nyear) {
+    N_yi[j,] =  as.matrix(pred_N[[j]]*prop[j,])# number of chum present in commercial district by week/year
+  }
+  
+
   pred_catch <- matrix(ncol = weeks, nrow = Nyear)
   
   error <- matrix(0, ncol = weeks, nrow = Nyear)
   
   for (i in 1:weeks) {
     for (j in 1:Nyear) {
-      # error[j,i] <- rnorm(0,baranov_sigma, n=1)
-      pred_catch[j,i] = N_yi[j,i]*(1-exp(-ln_q_vec*B_yj[j,i]))*exp(error[j,i])
+      #error[j,i] <- rnorm(0,err_variance, n=1)
+      pred_catch[j,i] = N_yi[j,i]*(1-(exp(-ln_q_vec*B_yj[j,i])))*exp(error[j,i])
     }
   }
   
@@ -109,12 +115,13 @@ predict_NLL <- function(pars,
 
 pre_outputs <- predict_NLL(par=estimated_parameters, # starting values for parameter estimations 
                            # data/fixed values go below
-                           N_yi=N_yi,
+                          # N_yi=N_yi,
                            B_yj=B_yj,
                            obs_N=obs_N,
                            obs_escape_project=obs_escape_project,
                            #values
                            weeks=weeks,
+                           err_variance = err_variance,
                            projects=projects,
                            Nyear=Nyear,
                            weights = weights)
@@ -141,7 +148,8 @@ ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
   ylab("Total Run (thousands of fish") +
   geom_vline(xintercept = 2007, linetype =2, color ="blue")  + #end of Bue study
   geom_vline(xintercept = 1986, linetype =2, color ="blue") + # start of Bue study
-  geom_line(data = bue_estimated, aes(x=Year, y =Estimate_Thousands), color = "red")
+  geom_line(data = bue_estimated, aes(x=Year, y =Estimate_Thousands), color = "red") +
+  labs(caption = "red is Bue estimate, black is my estimate")
 
 
 

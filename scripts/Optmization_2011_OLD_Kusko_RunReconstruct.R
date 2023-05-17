@@ -1,7 +1,7 @@
 # Start ==================================================================================================
-#Project Name: AYK Chum Salmon Model
-#Creator: Genoa Sullaway
-#Date: Start March 2023
+# Project Name: AYK Chum Salmon Model
+# Creator: Genoa Sullaway
+# Date: Start March 2023
 #
 # Purpose: Recreate ADFG Kuskokwim Chum Run reconstruction in R based on excel sheet
 # based on Bue and Molyneaux Kuskokwim chum salmon run reconstruction 
@@ -12,24 +12,26 @@ library(here)
 
 # Load data =========================================================================================
 # Escapement - Weir estimates by project 
-escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") #%>%
-  #filter(year < 2008) 
-catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") #%>%
-  #filter(Year < 2008) 
+escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
+  filter(year < 2008) 
+catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") %>%
+  filter(Year < 2008) 
 # Effort 
-effort <- read_csv("data/Processed_Data/OLD/OLD_effort.csv") #%>%
- # filter(year < 2008) 
+effort <- read_csv("data/Processed_Data/OLD/OLD_effort.csv") %>%
+  filter(year < 2008) 
 # proportions in each area/week/year - Pyj - right now, just fit for 2011
-prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") #%>% # only select some weeks for now because proportion has less weeks than the effort data...  
-  # mutate(year = 1976:2021) %>%
-  # filter(year < 2008) %>%
-  # select(-year)
+prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...  
+  mutate(year = 1976:(1976+nrow(.)-1)) %>%
+  filter(year < 2008) %>%
+  dplyr::select(-year) %>% 
+  dplyr::select(c(2:14)) #getting rid of first and last week because of 0's 
 
 years <-unique(escapement$year)  #1976:2021 #length of years in dataset
 Nyear <- length(years)
 projects = ncol(escapement)-1 # number of weir projects - the year column
 T =  Nyear*4 # "Total number of observations from all data sets" page 6 -here: number of years * 4 data sets. is this right? 
 weeks = ncol(prop)
+err_variance = 0 # error for catch equation... 
 
 # Set up data that are inputs to likelihood fxns =========================================================================================
 obs_escape_project <- as.matrix(escapement[,2:8])
@@ -54,6 +56,7 @@ NLL <- function(pars,
                 obs_escape_project,
                 #values
                 weeks,
+                err_variance,
                 projects,
                 Nyear,
                 weights) { 
@@ -61,7 +64,8 @@ NLL <- function(pars,
   
   # Step 1: Extract parameters, based on their location
   grep("ln_q_vec", par_names)
-  ln_q_vec <- log(pars_start[1]) # 
+  #ln_q_vec <- pars_start[1]) # 
+  ln_q_vec <- pars_start[1] 
   
   # baranov_sigma <- pars_start[2] # 
   # grep("baranov_sigma", par_names)
@@ -69,7 +73,7 @@ NLL <- function(pars,
   escapement_slope <- pars_start[2:8] # 
   
   grep("pred_N", par_names)  
-  pred_N <- pars_start[9:44] 
+  pred_N <- pars_start[9:40] 
   
   # escapement_sigma <- pars_start[12]
   # grep("escapement_sigma", par_names)
@@ -80,24 +84,23 @@ NLL <- function(pars,
   # Step 2: Predict C, N, E
   
   # Predict C - Catch, using Baranov catch equation: =========================================================================================
-  
+
   N_yi <- matrix(nrow = Nyear, ncol = weeks)
   for (j in 1:Nyear) {
-    N_yi[j,] =  as.matrix(pred_N[[j]]*prop[j,])  # number of chum present in commercial district by week/year
+    N_yi[j,] =  as.matrix(pred_N[j]*prop[j,])# number of chum present in commercial district by week/year
   }
   
   pred_catch <- matrix(ncol = weeks, nrow = Nyear)
   
   error <- matrix(0, ncol = weeks, nrow = Nyear)
- 
     for (i in 1:weeks) {
       for (j in 1:Nyear) {
-     # error[j,i] <- rnorm(0,baranov_sigma, n=1)
+      error[j,i] <- rnorm(0,err_variance, n=1)
       pred_catch[j,i] = N_yi[j,i]*(1-(exp(-ln_q_vec*B_yj[j,i])))*exp(error[j,i])
       }
     }
     
-    pred_catch[is.na(pred_catch)] <- 0
+   # pred_catch[is.na(pred_catch)] <- 0
     
     #colnames(pred_catch) <- names(prop)
 
@@ -115,15 +118,15 @@ NLL <- function(pars,
      }
      
      # Predict N - Observed Total Return =========================================================================================
-# --- This is basically done above in the catch equation 
+    #  This is basically done above in the catch equation 
      # blank this out for now unless I decide to add in process variation?? 
      #lambda = rnorm(0,0, n=Nyear)
      #pred_N = pred_N*exp(lambda) # this is kind of useless but ill leave it in for now
-    pred_E <- rowSums(pred_escape_pj)
-     # 
+    pred_E <- rowSums(pred_escape_pj %>% replace(is.na(.), 0)) # need to chagen na to 0 so it can add it up
+      
      # for (j in 1:Nyear) {
      #   #pred_N[[j]] = pred_E[[j]] + obs_subsistence[[j]] + obs_catch[[j]] # resolved equation 2 so that it equals N, makes more sense to me to allow you to optimize that way??
-     #   #pred_E_two[[j]] = pred_N[[j]] - obs_subsistence[[j]] - obs_catch[[j]]
+     #   #pred_E[[j]] = pred_N[[j]] - obs_subsistence[[j]] - obs_catch[[j]]
      # }
      # 
   # Step 3: Extract model-predicted quantities for comparison to our observed data
@@ -168,12 +171,12 @@ NLL <- function(pars,
 # Parameters and parameter starting values ===================================================================
 
 # Baranov parameters:
-  ln_q_vec <- 0.001 #0.001 - 0.5 is standard 
+  ln_q_vec <- 0.01 #0.001 - 0.5 is standard 
   #baranov_sigma <- 0.1  
   
-  escapement_slope <- rep(50, times = projects) # need to have its own list of slopes for each project 
+  escapement_slope <- rep(30, times = projects) # need to have its own list of slopes for each project 
  # escapement_sigma <- 0.1
-  pred_N <- obs_N #matrix(nrow = Nyear, ncol =1, 60000)  
+  pred_N <- matrix(nrow = Nyear, ncol =1, 600000)  
  # N_sigma <- 0.1
   
   pars_start<- c(# Baranov 
@@ -190,12 +193,12 @@ NLL <- function(pars,
 par_names <- c(# baranov parameters
                           "ln_q_vec",
                           #"baranov_sigma",
-                         #  escapement parameters 
+                          #escapement parameters 
                           paste0("escapement_slope", c(1:projects)),
                           paste0("pred_N", c(1:Nyear))
-                         #"escapement_sigma", 
-                         # total return parameters
-                         # "N_sigma"
+                          #"escapement_sigma", 
+                          #total return parameters
+                          #"N_sigma"
                          )  
   #assign weights 
 #The parameter weighting scheme used for the demonstration was 0.5 for the inriver component, 1.0 for the weir and sonar counts, and 2.0 for the catch-effort model. 
@@ -210,8 +213,7 @@ par_names <- c(# baranov parameters
   
 optim_output  <- optim(par=pars_start, # starting values for parameter estimations 
                        fn=NLL, #NLL is function that you create above 
-                       # data/fixed values go below
-                      # N_yi=N_yi,
+                       # data
                        B_yj=B_yj,
                        obs_N=obs_N,
                        obs_escape_project=obs_escape_project,
@@ -219,18 +221,22 @@ optim_output  <- optim(par=pars_start, # starting values for parameter estimatio
                        weeks=weeks,
                        projects=projects,
                        Nyear=Nyear,
+                       err_variance =err_variance,
                        weights = weights,
                        method="BFGS",
                        hessian=FALSE,
                        control=list(trace=TRUE, maxit=1e5))
+ 
   
   # # Access the estimated parameter values
    param_est <- optim_output$par
    param_est
    
-# check gradient 
-library(numDeriv)
+   saveRDS(param_est,"output/optim_output_par.RDS")
    
-grad(NLL, pars_start)
-
-      
+# # check gradient 
+# library(numDeriv)
+#    
+# grad(NLL, pars_start)
+# 
+#       

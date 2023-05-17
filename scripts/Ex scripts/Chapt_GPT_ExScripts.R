@@ -1,3 +1,4 @@
+# for model optim run
 par=pars_start # starting values for parameter estimations 
  #NLL is function that you create above 
 # data/fixed values go below
@@ -10,7 +11,30 @@ weeks=weeks
 projects=projects
 Nyear=Nyear
 weights = weights
- 
+err_variance=err_variance
+
+
+# for plotting
+par=estimated_parameters  # starting values for parameter estimations 
+# data/fixed values go below
+
+B_yj=B_yj
+obs_N=obs_N
+obs_escape_project=obs_escape_project
+#values
+weeks=weeks
+err_variance = err_variance
+projects=projects
+Nyear=Nyear
+weights = weights
+
+
+
+
+
+
+
+
 # Load the Baranov catch equation function
 baranov <- function(q, Z, B, C) {
   C - q * B * (1 - exp(-Z))
