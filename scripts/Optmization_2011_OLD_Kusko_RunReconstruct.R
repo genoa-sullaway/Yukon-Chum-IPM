@@ -26,6 +26,10 @@ prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv"
   dplyr::select(-year) %>% 
   dplyr::select(c(2:14)) #getting rid of first and last week because of 0's 
 
+# using observed catch/week in catch equation
+obs_catch_week <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>% 
+  dplyr::select(-year) 
+ 
 years <-unique(escapement$year)  #1976:2021 #length of years in dataset
 Nyear <- length(years)
 projects = ncol(escapement)-1 # number of weir projects - the year column
@@ -36,7 +40,7 @@ err_variance = 0 # error for catch equation...
 # Set up data that are inputs to likelihood fxns =========================================================================================
 obs_escape_project <- as.matrix(escapement[,2:8])
 obs_escape <- as.matrix(rowSums(escapement[,2:8]))
-obs_catch <- as.matrix(rowSums(catch[,2:3]))
+#obs_catch <- as.matrix(rowSums(catch[,2:3]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
 #equation 6 in Bue paper 
@@ -59,8 +63,7 @@ NLL <- function(pars,
                 err_variance,
                 projects,
                 Nyear,
-                weights) { 
-  
+                weights){ 
   
   # Step 1: Extract parameters, based on their location
   grep("ln_q_vec", par_names)
@@ -84,10 +87,11 @@ NLL <- function(pars,
   # Step 2: Predict C, N, E
   
   # Predict C - Catch, using Baranov catch equation: =========================================================================================
-
+  
+  # N_yi = number of chum present in commercial district by week/year (Eq 4)
   N_yi <- matrix(nrow = Nyear, ncol = weeks)
   for (j in 1:Nyear) {
-    N_yi[j,] =  as.matrix(pred_N[j]*prop[j,])# number of chum present in commercial district by week/year
+    N_yi[j,] =  as.matrix(pred_N[j]*prop[j,])
   }
   
   pred_catch <- matrix(ncol = weeks, nrow = Nyear)
@@ -105,7 +109,7 @@ NLL <- function(pars,
     #colnames(pred_catch) <- names(prop)
 
     # Predict E - Escapement =========================================================================================
- 
+ # eq 1
     #colnames(pred_escape_pj) <- colnames(obs_escape_project)
       pred_escape_pj <-matrix(NA, ncol = projects, nrow = Nyear) #obs_escape_project #"starting values" matrix(ncol = projects, nrow = Nyear)
      
@@ -131,23 +135,38 @@ NLL <- function(pars,
      # 
   # Step 3: Extract model-predicted quantities for comparison to our observed data
     # From paper re weights: "A maximum likelihood model that allowed for the weighting (wi , wc , and wN) of individual datasets was used"
-    NLL_catch<-matrix(nrow = Nyear, ncol =1)
-    sumpred_catch<-rowSums(pred_catch)
+    NLL_catch<-matrix(nrow = Nyear, ncol = projects)
+
+    #sumpred_catch<-rowSums(pred_catch)
      for (j in 1:Nyear) {
-       if(sumpred_catch[j] > 0) { # Ensure we don't try to take the log of 0!
-     NLL_catch[j] <-((log(obs_catch[j]) - log(sumpred_catch[j]))^2)/(weights[1]^2) # catch is summed for the pred_catch, because it is estimated based on proportion of vessels in an area per week and we dont have that ifnormation for observed catch,
+       for (p in 1:projects) {
+       if(pred_catch[j,p] > 0 & obs_catch_week[j,p]  > 0) { # Ensure we don't try to take the log of 0!
+     NLL_catch[j,p] <- dnorm(log(as.numeric(obs_catch_week[j,p])), log(pred_catch[j,p]), weights[1], log = TRUE)        
+    # NLL_catch[j] <-((log(obs_catch[j]) - log(sumpred_catch[j]))^2)/(weights[1]^2) # catch is summed for the pred_catch, because it is estimated based on proportion of vessels in an area per week and we dont have that ifnormation for observed catch,
    # total annual observed catch is subtracted from total annual predicted catch, then squared, divided by weights, and finally, these differences are summed across all years. 
+         }
        }
-    }
-    NLL_catch <- replace_na(NLL_catch,0)
-    NLL_catch_sum <- colSums(NLL_catch)
+     }
     
+    NLL_catch[is.na(NLL_catch)] = 0
+   # NLL_catch <- replace_na(NLL_catch,0)
+    NLL_catch_sum <- colSums(NLL_catch)
+    NLL_catch_sum <- sum(NLL_catch_sum)
+
+ ###### divide predicted escapement but the slopes to see if observed escapement matches the downscaled pred escapement    
+    temp<-matrix(nrow = Nyear, ncol =projects)
+    
+    for (p in 1:projects) { 
+      temp[,p] <- pred_escape_pj[,p]/escapement_slope[p]
+    }
+    pred_E <- rowSums(temp)
     
     NLL_escapement<-matrix(nrow = Nyear, ncol =1)
-
     for (j in 1:Nyear) {
       if(pred_E[j] > 0) {
-    NLL_escapement[j] <- sum((log(obs_escape[j]) - log(pred_E[j])))^2/(weights[2]^2) 
+     # NLL_escapement[j] <- dnorm(log(obs_escape[j]), log(pred_E[j]), weights[2], log = TRUE)    
+       NLL_escapement[j] <- dnorm(log(obs_escape[j]), log(pred_E[j]), weights[2], log = TRUE)    
+     # NLL_escapement[j] <- sum((log(obs_escape[j]) - log(pred_E[j])))^2/(weights[2]^2) 
         }
     }
     NLL_escapement <- replace_na(NLL_escapement,0)
@@ -157,12 +176,16 @@ NLL <- function(pars,
     NLL_N_TotalRun<-matrix(nrow = Nyear, ncol =1)
        for (j in 1:Nyear) {
       if(pred_N[j] > 0) {
-    NLL_N_TotalRun[j] <- sum((log(obs_N[j]) - log(pred_N[j]))^2)/(weights[3]^2) 
-        }
-    }
+       NLL_N_TotalRun[j] <- dnorm(log(obs_N[j]), log(pred_N[j]), weights[3], log = TRUE)    
+     # NLL_N_TotalRun[j] <- sum((log(obs_N[j]) - log(pred_N[j]))^2)/(weights[3]^2) 
+      }
+       }
     NLL_N_TotalRun_sum <- colSums(NLL_N_TotalRun)
-    # Calculate total objective function 
-   objFxn <- T/2*log(NLL_catch_sum + NLL_escapement_sum + NLL_N_TotalRun_sum) # T is number of obs.... 
+    
+    # Calculate total objective function  - if using dnorm remove log -- just sum NLL portions 
+     objFxn <-  NLL_catch_sum  + NLL_escapement_sum + NLL_N_TotalRun_sum # T is number of obs.... 
+    
+     #objFxn <- T/2*log(NLL_catch_sum + NLL_escapement_sum + NLL_N_TotalRun_sum) # T is number of obs.... 
   
   # Return the total objective function value
   return(objFxn)
@@ -173,10 +196,10 @@ NLL <- function(pars,
 # Baranov parameters:
   ln_q_vec <- 0.01 #0.001 - 0.5 is standard 
   #baranov_sigma <- 0.1  
-  
+  #30
   escapement_slope <- rep(30, times = projects) # need to have its own list of slopes for each project 
  # escapement_sigma <- 0.1
-  pred_N <- matrix(nrow = Nyear, ncol =1, 600000)  
+  pred_N <- matrix(nrow = Nyear, ncol =1, 600000) #600000 
  # N_sigma <- 0.1
   
   pars_start<- c(# Baranov 
@@ -200,7 +223,7 @@ par_names <- c(# baranov parameters
                           #total return parameters
                           #"N_sigma"
                          )  
-  #assign weights 
+# assign weights 
 #The parameter weighting scheme used for the demonstration was 0.5 for the inriver component, 1.0 for the weir and sonar counts, and 2.0 for the catch-effort model. 
 #These parameter weights are the opposite of what the casual reader might expect, with smaller numbers indicating more weight and larger values indicating less weight. 
   w_catch <- 2.0
@@ -225,18 +248,12 @@ optim_output  <- optim(par=pars_start, # starting values for parameter estimatio
                        weights = weights,
                        method="BFGS",
                        hessian=FALSE,
-                       control=list(trace=TRUE, maxit=1e5))
+                       control=list(trace=TRUE, maxit=1e6, #evalmax = 1e6,
+                                    pgtol = 0, factr=0))
  
-  
   # # Access the estimated parameter values
-   param_est <- optim_output$par
-   param_est
+    param_est <- optim_output$par
+    param_est
    
-   saveRDS(param_est,"output/optim_output_par.RDS")
-   
-# # check gradient 
-# library(numDeriv)
-#    
-# grad(NLL, pars_start)
-# 
-#       
+   # saveRDS(param_est,"output/optim_output_par.RDS")
+    

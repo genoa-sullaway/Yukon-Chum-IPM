@@ -69,3 +69,16 @@ commercial_effort_yi <- commercial_effort_df %>%
 #gather(1:13, key = "date", value = "effort")
 
 write_csv(commercial_effort_yi, "data/Processed_Data/OLD/OLD_effort.csv")
+
+################################################################################ 
+################################################################################ 
+
+catch_week<- data.frame(catch_effort[ , col_odd == 1])
+
+commercial_catch_yi <- catch_week %>%
+  dplyr::slice(-2) %>%
+  janitor::row_to_names(row_number = 1) %>%
+  dplyr::mutate(year = 1976:2011)  #%>%
+#gather(1:13, key = "date", value = "effort")
+
+write_csv(commercial_catch_yi, "data/Processed_Data/OLD/OLD_catch_week.csv")
