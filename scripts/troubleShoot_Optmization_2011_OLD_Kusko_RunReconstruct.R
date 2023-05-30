@@ -86,14 +86,30 @@ NLL <- function(pars,
   
   # Step 2: Predict C, N, E
   
-  # Predict C - Catch, using Baranov catch equation: =========================================================================================
+  # Predict E - Escapement =========================================================================================
+  # eq 1
+  #colnames(pred_escape_pj) <- colnames(obs_escape_project)
+  pred_escape_pj <-matrix(NA, ncol = projects, nrow = Nyear) #obs_escape_project #"starting values" matrix(ncol = projects, nrow = Nyear)
   
+  # pred_E <- matrix(ncol = projects, nrow = Nyear)
+  
+  for (p in 1:projects) {
+    for (j in 1:Nyear) {
+      pred_escape_pj[j,p] = escapement_slope[p]*obs_escape_project[j,p]
+    }
+  }
+ pred_E<- rowSums(pred_escape_pj)
+ 
+ # Predict N - Observed Total Return =========================================================================================
+ pred_N = pred_E + rowSums(pred_catch) 
+ 
   # N_yi = number of chum present in commercial district by week/year (Eq 4)
   N_yi <- matrix(nrow = Nyear, ncol = weeks)
   for (j in 1:Nyear) {
     N_yi[j,] =  as.matrix(pred_N[j]*prop[j,])
   }
-  
+ 
+ # Predict C - Catch, using Baranov catch equation: ============================================================================
   pred_catch <- matrix(ncol = weeks, nrow = Nyear)
   
   error <- matrix(0, ncol = weeks, nrow = Nyear)
@@ -104,30 +120,8 @@ NLL <- function(pars,
       }
     }
     
-   # pred_catch[is.na(pred_catch)] <- 0
-    
-    #colnames(pred_catch) <- names(prop)
-
-    # Predict E - Escapement =========================================================================================
- # eq 1
-    #colnames(pred_escape_pj) <- colnames(obs_escape_project)
-      pred_escape_pj <-matrix(NA, ncol = projects, nrow = Nyear) #obs_escape_project #"starting values" matrix(ncol = projects, nrow = Nyear)
-     
-     # pred_E <- matrix(ncol = projects, nrow = Nyear)
-     
-     for (p in 1:projects) {
-       for (j in 1:Nyear) {
-         pred_escape_pj[j,p] = escapement_slope[p]*obs_escape_project[j,p]
-       }
-     }
-     
-     # Predict N - Observed Total Return =========================================================================================
-    #  This is basically done above in the catch equation 
-     # blank this out for now unless I decide to add in process variation?? 
-     #lambda = rnorm(0,0, n=Nyear)
-     #pred_N = pred_N*exp(lambda) # this is kind of useless but ill leave it in for now
-    pred_E <- rowSums(pred_escape_pj %>% replace(is.na(.), 0)) # need to chagen na to 0 so it can add it up
-      
+  
+  
      # for (j in 1:Nyear) {
      #   #pred_N[[j]] = pred_E[[j]] + obs_subsistence[[j]] + obs_catch[[j]] # resolved equation 2 so that it equals N, makes more sense to me to allow you to optimize that way??
      #   #pred_E[[j]] = pred_N[[j]] - obs_subsistence[[j]] - obs_catch[[j]]
