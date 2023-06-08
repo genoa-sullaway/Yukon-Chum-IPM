@@ -12,116 +12,104 @@ library(here)
 ## NOTE: genoa looked at figure 8 in bue and Molyneaux 2008 and guess-timated the estimated #'s per year because the paper doesnt provide a table with exact points 
 bue_estimated <- read_csv("data/Kusko_Reconstruction/Bue_Reconstruction_Dat.csv") 
 estimated_parameters<- readRDS("output/optim_output_par.RDS")
- 
-par_names <- c(# baranov parameters
-  "ln_q_vec",
-  #"baranov_sigma",
-  #  escapement parameters 
-  paste0("escapement_slope", c(1:projects)),
-  paste0("pred_N", c(1:Nyear))
-  #"escapement_sigma", 
-  # total return parameters
-  # "N_sigma"
-)  
+  
 
 #assign weights 
 names(estimated_parameters) <- par_names
+
 # I think to plot I need to recreate the NLL function without the LL components to then get pred N and compare it to obs N?
  # NLL Function =========================================================================================
 predict_NLL <- function(par,
-                #data
-               # N_yi,
-                B_yj,
-                obs_N,
-                obs_escape_project,
-                #values
-                err_variance,
+                data,
                 weeks,
                 projects,
-                Nyear,
-                weights) { 
-  
-  # Step 1: Extract parameters, based on their location
-  
-  grep("ln_q_vec", par_names)
-  ln_q_vec <- exp(par[1]) # 
-  
-  # baranov_sigma <- pars_start[2] # 
-  # grep("baranov_sigma", par_names)
-  grep("escapement_slope", par_names)  
-  escapement_slope <- par[2:8] # 
-  
-  grep("pred_N", par_names)  
-  pred_N <- par[9:40] 
-  
-  # escapement_sigma <- pars_start[12]
-  # grep("escapement_sigma", par_names)
-  
-  # N_sigma <- pars_start[13]
-  # grep("N_sigma", par_names)
-  
-  # Step 2: Predict C, N, E
-  
-  # Predict C - Catch, using Baranov catch equation: =========================================================================================
-  
-  N_yi <- matrix(nrow = Nyear, ncol = weeks)
-  for (j in 1:Nyear) {
-    N_yi[j,] =  as.matrix(pred_N[[j]]*prop[j,])# number of chum present in commercial district by week/year
-  }
+                Nyear, 
+                weights){ 
   
 
+  
+  # Extract parameters and data: ============================================================================
+  
+  # grep("ln_q_vec", par_names)
+  ln_q_vec <- par[1] 
+  
+  #grep("pred_N", par_names)
+  ln_pred_N <- par[2:33]
+  
+  #grep("ln_pred_slope", par_names)  
+  ln_pred_slope <- par[34:40]
+  
+  q_vec <- exp(ln_q_vec)
+  pred_N <- exp(ln_pred_N)
+  pred_slope <- exp(ln_pred_slope)
+  
+  # Vectorize Data: ============================================================================
+  
+  B_yj=as.matrix(data$B_yj)
+  obs_catch_week=as.matrix(data$obs_catch_week)
+  obs_N=as.matrix(data$obs_N)
+  obs_escape_project = as.matrix(data$obs_escape_project)
+  
+  # 
+  # B_yj_vec <- as.vector(B_yj)
+  # obs_catch_week_vec <- as.vector(as.matrix(obs_catch_week))
+  # 
+  # N_yi_vec_prop <-as.vector(as.matrix(pred_N*prop))
+  # 
+  
+  # Predict N - Observed Total Return =========================================================================================
+  #pred_N = pred_E + rowSums(pred_catch) 
+  
+  # N_yi = number of chum present in commercial district by week/year (Eq 4)
+  N_yi <- matrix(nrow = Nyear, ncol = weeks)
+  for (j in 1:Nyear) {
+    N_yi[j,] =  as.matrix(pred_N[j]*prop[j,])
+  }
+  
+  # Predict C - Catch, using Baranov catch equation: ============================================================================
+  
+  # N is # of fish (week by year)
+  # B is effort (week by year)
+  # for right now estimate 1 q for whole data set
+  #pred_catch = N_yi_vec_prop*(1-(exp(-q_vec*B_yj_vec))) 
+  
   pred_catch <- matrix(ncol = weeks, nrow = Nyear)
   
-  error <- matrix(0, ncol = weeks, nrow = Nyear)
-  
   for (i in 1:weeks) {
-    for (j in 1:Nyear) {
-      #error[j,i] <- rnorm(0,err_variance, n=1)
-      pred_catch[j,i] = N_yi[j,i]*(1-(exp(-ln_q_vec*B_yj[j,i])))*exp(error[j,i])
+    for (j in 1:Nyear) { 
+      pred_catch[j,i] = N_yi[j,i]*(1-(exp(-q_vec*B_yj[j,i])))
     }
   }
   
-  pred_catch[is.na(pred_catch)] <- 0
-  
-  colnames(pred_catch) <- names(prop)
   
   # Predict E - Escapement =========================================================================================
-  
-  #colnames(pred_escape_pj) <- colnames(obs_escape_project)
-  pred_escape_pj <-matrix(NA, ncol = projects, nrow = Nyear) #obs_escape_project #"starting values" matrix(ncol = projects, nrow = Nyear)
-  
-  # pred_E <- matrix(ncol = projects, nrow = Nyear)
+  # eq 1
+  pred_escape_pj <-matrix(NA, ncol = projects, nrow = Nyear)  
   
   for (p in 1:projects) {
     for (j in 1:Nyear) {
-      pred_escape_pj[j,p] = escapement_slope[p]*obs_escape_project[j,p]
+      pred_escape_pj[j,p] = pred_slope[p]*obs_escape_project[j,p]
     }
   }
-  
-  pred_E <- rowSums(pred_escape_pj)
-  
-  # Predict N - Observed Total Return =========================================================================================
- 
-  for (j in 1:Nyear) {
-    pred_N[[j]] = pred_E[[j]] + obs_subsistence[[j]] + obs_catch[[j]] # resovled equation 2 so that it equals N, makes more sense to me to allow you to optimize that way??
-    # pred_E[[j]] = (pred_N[[j]] - obs_subsistence[[j]] - obs_catch[[j]])
-  }
- 
-###########################################################################3
- output <- list(pred_catch,pred_escape_pj,pred_N)
+  pred_E<- rowSums(pred_escape_pj)
+
+  output <- list(exp(pred_catch),exp(pred_escape_pj),exp(pred_N))
   # Return the predicted values based on parameter estimates in optimization script 
   return(output)
 }
 
+# List input data  ===================================================================
+data <- list(B_yj=B_yj, 
+             obs_catch_week=obs_catch_week,
+             obs_N=obs_N,
+             obs_escape_project=obs_escape_project)
+
+# Run function  ======================================================================
 pre_outputs <- predict_NLL(par=estimated_parameters, # starting values for parameter estimations 
                            # data/fixed values go below
-                          # N_yi=N_yi,
-                           B_yj=B_yj,
-                           obs_N=obs_N,
-                           obs_escape_project=obs_escape_project,
+                          data = data,
                            #values
                            weeks=weeks,
-                           err_variance = err_variance,
                            projects=projects,
                            Nyear=Nyear,
                            weights = weights)
@@ -133,7 +121,7 @@ pred_escape_pj<-pre_outputs[[2]]
 pred_N<-data.frame(Year = c(1976:2007), Pred_N = c(pre_outputs[[3]]))  
 
 ### Plot predicted N
-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
+ggplot(data = pred_N,aes(x=Year, y = Pred_N )) +
   geom_bar(stat= "identity") +
   theme_classic() +
   ylab("Total Run (thousands of fish") +

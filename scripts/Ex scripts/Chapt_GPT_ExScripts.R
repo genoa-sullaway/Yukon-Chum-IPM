@@ -6,12 +6,13 @@ N_yi=N_yi
 B_yj=B_yj
 obs_N=obs_N
 obs_escape_project=obs_escape_project
+obs_catch_week=obs_catch_week
 #values
 weeks=weeks
 projects=projects
 Nyear=Nyear
 weights = weights
-err_variance=err_variance
+#err_variance=err_variance
 
 
 # for plotting
@@ -101,3 +102,40 @@ cat("Optimized parameters:")
 cat("\nlambda =", fit$par[1])
 cat("\nsigma =", fit$par[2])
 cat("\nLog-likelihood =", -fit$value)
+
+
+
+
+
+
+####################
+# Define the negative log-likelihood function
+negative_log_likelihood <- function(x, observed_catch) {
+  b <- x[1]  # Growth rate parameter
+  k <- x[2]  # Carrying capacity parameter
+  
+  # Calculate the expected catch using the catch equation
+  expected_catch <- b * k * (1 - exp(-b)) - 0.1 * k
+  
+  # Calculate the negative log-likelihood
+  nll <- -sum(dnorm(observed_catch, mean = expected_catch, sd = 1, log = TRUE))
+  
+  return(nll)
+}
+
+# Observed catch data
+observed_catch <- c(5, 10, 15, 20)
+
+# Initial parameter values
+initial_values <- c(0.5, 100)
+
+# Call the optim function to optimize the negative log-likelihood
+result <- optim(initial_values, negative_log_likelihood, observed_catch = observed_catch)
+
+# Extract the optimized parameter values
+optimized_params <- result$par
+
+# Print the results
+cat("Optimized Parameters:\n")
+cat("b:", optimized_params[1], "\n")
+cat("k:", optimized_params[2], "\n")

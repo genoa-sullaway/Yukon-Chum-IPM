@@ -46,10 +46,13 @@ NLL <- function(par,
  
   # Step 1: Extract parameters and data  
  # grep("ln_q_vec", par_names)
-  ln_q_vec <- pars_start[1] 
+  ln_q_vec <- par[1] 
   
   #grep("pred_N", par_names)
-  pred_N <- pars_start[2:33]
+  ln_pred_N <- par[2:33]
+  
+  q_vec <- exp(ln_q_vec)
+  pred_N <- exp(ln_pred_N)
   
 #set up data in vectors 
     # I vectorized to see if that makes a difference (it doesnt)
@@ -68,31 +71,33 @@ NLL <- function(par,
   # N is # of fish (week by year)
   # B is effort (week by year)
   # for right now estimate 1 q for whole data set
- pred_catch = N_yi_vec_prop*(1-(exp(-ln_q_vec*B_yj_vec))) 
+ pred_catch = N_yi_vec_prop*(1-(exp(-q_vec*B_yj_vec))) 
      
  # calculate negative log liklihood
  # add a small constant to avoid log 0's
- NLL_catch  <- -sum(dnorm(x=log(obs_catch_week_vec+1e-6), mean=log(pred_catch+1e-6),
-                          sd = weights[1], # weights are taken from paper 
-                          log = TRUE))        
+ NLL_catch  <- dnorm(x=log(obs_catch_week_vec+1e-6), mean=log(pred_catch+1e-6),
+                          sd = 0.1, log = TRUE)     
  
-  # Return the total objective function value
-return(NLL_catch)
+ NLL <- -1 * (weights[1] * sum(NLL_catch, na.rm = TRUE))
+ 
+# Return the total objective function value
+return(NLL)
+ 
 }
 
 # Parameters and parameter starting values ===================================================================
 
 # Baranov parameters:
-ln_q_vec <- 0.0002  
-pred_N <- rep(941643,Nyear)
+ln_q_vec <- log(0.0002 ) 
+ln_pred_N <- rep(log(94832),Nyear)
 
 pars_start<- c( 
   ln_q_vec,
-  pred_N)
+  ln_pred_N)
   
 par_names <- c(
   "ln_q_vec",
-   paste0("pred_N", c(1:Nyear)))#,
+   paste0("ln_pred_N", c(1:Nyear)))#,
   
 w_catch <- 2.0
 w_escapement <- 1.0
@@ -110,22 +115,34 @@ NLL(par=pars_start,
      weights = weights)
 
 # Run Optim ============================================================================================================
-optim_output  <- stats::optim(par=pars_start, # starting values for parameter estimations 
-                       fn=NLL, #NLL is function that you create above 
-                       # data
-                       data =data,
-                       # values
-                       weeks=weeks,
-                       projects=projects,
-                       Nyear=Nyear,
-                       weights = weights,
-                       method="L-BFGS-B",
-                        lower = c(0.0000004, 60000),
-                        upper = c(0.5, 1e9), 
-                       control=list(trace=6, maxit=1e6, factr = 0 ))
+fit_nlm <- nlminb(
+  start = pars_start,
+  objective = NLL,
+  data =data,
+  weeks=weeks,
+  projects=projects,
+  Nyear=Nyear,
+  weights = weights,
+  control = list(iter.max = 1e6, eval.max = 1e6, trace = 1)
+)
 
 # Access the estimated parameter values
-param_est <- optim_output$par
-param_est
+param_est <- fit_nlm$par
+exp(param_est)
+
+# optim_output  <- stats::optim(par=pars_start, # starting values for parameter estimations
+#                               fn=NLL, #NLL is function that you create above
+#                               # data
+#                               data =data,
+#                               # values
+#                               weeks=weeks,
+#                               projects=projects,
+#                               Nyear=Nyear,
+#                               weights = weights,
+#                               method="BFGS",
+#                               # lower = c(0.0000004, 60000),
+#                               # upper = c(0.5, 1e9),
+#                               control = list(maxit = 1e4, pgtol = 0, factr=0, trace = 1))
 
 # saveRDS(param_est,"output/optim_output_par.RDS")
+
