@@ -11,7 +11,7 @@ library(here)
 ### Load Bue data
 ## NOTE: genoa looked at figure 8 in bue and Molyneaux 2008 and guess-timated the estimated #'s per year because the paper doesnt provide a table with exact points 
 bue_estimated <- read_csv("data/Kusko_Reconstruction/Bue_Reconstruction_Dat.csv") 
-estimated_parameters<- readRDS("output/optim_output_par.RDS")
+estimated_parameters<- readRDS("output/current_optim_output_par.RDS")
   
 
 #assign weights 
@@ -28,15 +28,13 @@ predict_NLL <- function(par,
    
   # Extract parameters and data: ============================================================================
   
-  # grep("ln_q_vec", par_names)
   q_vec <- par[1] 
   
-  #grep("pred_N", par_names)
-  pred_N <- par[2:33]
+  # grep("pred_N", par_names) 
+  pred_N <- par[2:47]
   
-  #grep("ln_pred_slope", par_names)  
-  pred_slope <- par[34:40]
-
+  # grep("ln_pred_slope", par_names) 
+  pred_slope <- par[48:56]
   
   # Vectorize Data: ============================================================================
   
@@ -45,12 +43,12 @@ predict_NLL <- function(par,
   obs_N=as.matrix(data$obs_N)
   obs_escape_project = as.matrix(data$obs_escape_project)
   
-  # 
+   
   # B_yj_vec <- as.vector(B_yj)
   # obs_catch_week_vec <- as.vector(as.matrix(obs_catch_week))
-  # 
+ 
   # N_yi_vec_prop <-as.vector(as.matrix(pred_N*prop))
-  # 
+ 
   
   # Predict N - Observed Total Return =========================================================================================
   #pred_N = pred_E + rowSums(pred_catch) 
@@ -119,18 +117,19 @@ pre_outputs <- predict_NLL(par=estimated_parameters, # starting values for param
 pred_catch<-pre_outputs[[1]]
 pred_escape_pj<-pre_outputs[[2]]
 
-pred_N<-data.frame(Year = c(1976:2007), Pred_N = c(pre_outputs[[3]]))  
+pred_N<-data.frame(Year = c(1976:2021), Pred_N = c(pre_outputs[[3]]))  
 
 ### Plot predicted N
-ggplot(data = pred_N,aes(x=Year, y = Pred_N )) +
+ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000 )) +
   geom_bar(stat= "identity") +
   theme_classic() +
   ylab("Total Run (thousands of fish") +
   geom_vline(xintercept = 2000) + 
   geom_vline(xintercept = 2007)  
 
+
 ### Plot predicted N
-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
+current_rr<-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
   geom_point() +
   geom_line() + 
   theme_classic() +
@@ -140,6 +139,7 @@ ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
   geom_line(data = bue_estimated, aes(x=Year, y =Estimate_Thousands), color = "red") +
   labs(caption = "red is Bue estimate, black is my estimate")
 
-
-
+pdf("output/Current_RR_1976_2021.pdf")
+print(current_rr)
+dev.off()
 

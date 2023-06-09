@@ -6,35 +6,33 @@
 # Purpose: Recreate ADFG Kuskokwim Chum Run reconstruction in R based on excel sheet
 # based on Bue and Molyneaux Kuskokwim chum salmon run reconstruction 
 #
+# Note: this script does the RR until 2007 to match the paper, see: Kusko_RunReconstruction_2021 for the current data! 
 # Load Packages =========================================================================================
 library(tidyverse)
 library(here)
 
 # Load data =========================================================================================
 # Escapement - Weir estimates by project 
-escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
-  filter(year < 2008) 
-# This is proportions in each area/week/year - Pyj - right now, just fit for 2008
-prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...  
-  mutate(year = 1976:(1976+nrow(.)-1)) %>%
-  filter(year < 2008) %>%
-  dplyr::select(-year) %>% 
-  dplyr::select(c(2:14)) #getting rid of first and last week because of 0's 
+escapement <- read_csv("data/Processed_Data/kusko_escapement.csv")
+
+# This is proportions in each area/week/year - Pyj - 
+prop<-read_csv("data/Processed_Data/Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...  
+ # mutate(year = 1976:(1976+nrow(.)-1)) %>%
+ # filter(year < 2008) %>%
+  dplyr::select(-Year) %>% 
+  dplyr::select(c(3:9))
 
 #  observed catch per week 
-obs_catch_week <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>% 
-  filter(year < 2008) %>%
-  dplyr::select(-year) 
+obs_catch_week <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv")  
 
 # Observed effort 
-effort <- read_csv("data/Processed_Data/OLD/OLD_effort.csv") %>%
-  filter(year < 2008) 
+effort <- read_csv("data/Processed_Data/effort.csv")  
 
 #obs Commercial subsitence catch
-catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") %>%
-  filter(Year < 2008)
+catch<-read_csv("data/Processed_Data/catch.csv") 
+
 # format effort for equation 
-B_yj = as.matrix(effort[,1:13])  
+B_yj = as.matrix(effort[,1:7])  
 
 #years <- c(1976:1976+nrow(obs_catch_week)-1)  #1976:2021 #length of years in dataset
 Nyear <- as.numeric(nrow(prop))
@@ -44,8 +42,8 @@ projects = ncol(escapement)-1 # number of weir projects - the year column
 err_variance = 0 # error for catch equation... 
 
 # Set up data that are inputs to likelihood fxns =========================================================================================
-obs_escape_project <- as.matrix(escapement[,2:8])
-obs_escape <- as.matrix(rowSums(escapement[,2:8]))
+obs_escape_project <- as.matrix(escapement[,1:9])
+obs_escape <- as.matrix(rowSums(escapement[,1:9]))
 #obs_catch <- as.matrix(rowSums(catch[,2:3]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
@@ -66,11 +64,11 @@ NLL <- function(par,
   # grep("ln_q_vec", par_names)
   ln_q_vec <- par[1] 
   
-  #grep("pred_N", par_names)
-  ln_pred_N <- par[2:33]
+  # grep("pred_N", par_names)
+  ln_pred_N <- par[2:47]
   
-  #grep("ln_pred_slope", par_names)  
-  ln_pred_slope <- par[34:40]
+  # grep("ln_pred_slope", par_names)  
+  ln_pred_slope <- par[48:56]
 
   q_vec <- exp(ln_q_vec)
   pred_N <- exp(ln_pred_N)
@@ -196,7 +194,7 @@ fit_nlm <- nlminb(
 param_est <- fit_nlm$par
 exp(param_est)
  
- saveRDS(exp(param_est),"output/optim_output_par.RDS")
+ saveRDS(exp(param_est),"output/current_optim_output_par.RDS")
 
 
 
