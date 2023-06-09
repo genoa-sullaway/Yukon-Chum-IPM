@@ -25,23 +25,18 @@ predict_NLL <- function(par,
                 projects,
                 Nyear, 
                 weights){ 
-  
-
-  
+   
   # Extract parameters and data: ============================================================================
   
   # grep("ln_q_vec", par_names)
-  ln_q_vec <- par[1] 
+  q_vec <- par[1] 
   
   #grep("pred_N", par_names)
-  ln_pred_N <- par[2:33]
+  pred_N <- par[2:33]
   
   #grep("ln_pred_slope", par_names)  
-  ln_pred_slope <- par[34:40]
-  
-  q_vec <- exp(ln_q_vec)
-  pred_N <- exp(ln_pred_N)
-  pred_slope <- exp(ln_pred_slope)
+  pred_slope <- par[34:40]
+
   
   # Vectorize Data: ============================================================================
   
@@ -83,27 +78,33 @@ predict_NLL <- function(par,
   
   
   # Predict E - Escapement =========================================================================================
-  # eq 1
-  pred_escape_pj <-matrix(NA, ncol = projects, nrow = Nyear)  
+  #Eq 1 expands the data and yield "observed escapement"
+  # this is equation 1 (trying to code it exactly as it is even though it seems super weird...)
+  obs_e_week <-matrix(NA, ncol = projects, nrow = Nyear)  
   
   for (p in 1:projects) {
     for (j in 1:Nyear) {
-      pred_escape_pj[j,p] = pred_slope[p]*obs_escape_project[j,p]
+      obs_e_week[j,p] = pred_slope[p]*obs_escape_project[j,p]
     }
   }
-  pred_E<- rowSums(pred_escape_pj)
-
-  output <- list(exp(pred_catch),exp(pred_escape_pj),exp(pred_N))
+  obs_escape<- rowSums(obs_e_week)
+  
+  # equation 2 yields predicted escapement 
+  pred_E = pred_N - obs_subsistence - obs_commercial
+  
+  output <- list(pred_catch, pred_E, pred_N)
   # Return the predicted values based on parameter estimates in optimization script 
   return(output)
 }
 
 # List input data  ===================================================================
 data <- list(B_yj=B_yj, 
-             obs_catch_week=obs_catch_week,
-             obs_N=obs_N,
-             obs_escape_project=obs_escape_project)
-
+                     obs_catch_week=obs_catch_week,
+                     obs_N=obs_N,
+                     obs_escape_project=obs_escape_project,
+                     obs_commercial = obs_commercial,
+                     obs_subsistence=obs_subsistence)
+ 
 # Run function  ======================================================================
 pre_outputs <- predict_NLL(par=estimated_parameters, # starting values for parameter estimations 
                            # data/fixed values go below

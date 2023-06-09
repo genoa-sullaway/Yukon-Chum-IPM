@@ -60,9 +60,7 @@ NLL <- function(par,
                 projects,
                 Nyear, 
                 weights){ 
-   
-
-   
+    
 # Extract parameters and data: ============================================================================
 
   # grep("ln_q_vec", par_names)
@@ -84,6 +82,8 @@ NLL <- function(par,
   obs_catch_week=as.matrix(data$obs_catch_week)
   obs_N=as.matrix(data$obs_N)
   obs_escape_project = as.matrix(data$obs_escape_project)
+  obs_subsistence = as.matrix(data$obs_subsistence)
+  obs_commercial = as.matrix(data$obs_commercial)
   
   # Predict N - Observed Total Return =========================================================================================
   #pred_N = pred_E + rowSums(pred_catch) 
@@ -112,16 +112,19 @@ NLL <- function(par,
   
   
   # Predict E - Escapement =========================================================================================
-  # Eq 1
- 
-  pred_escape_pj <-matrix(NA, ncol = projects, nrow = Nyear)  
+#Eq 1 expands the data and yield "observed escapement"
+  # this is equation 1 (trying to code it exactly as it is even though it seems super weird...)
+  obs_e_week <-matrix(NA, ncol = projects, nrow = Nyear)  
   
   for (p in 1:projects) {
     for (j in 1:Nyear) {
-      pred_escape_pj[j,p] = pred_slope[p]*obs_escape_project[j,p]
+      obs_e_week[j,p] = pred_slope[p]*obs_escape_project[j,p]
     }
   }
-  pred_E<- rowSums(pred_escape_pj)
+  obs_escape<- rowSums(obs_e_week)
+  
+  # equation 2 yields predicted escapement 
+  pred_E = pred_N - obs_subsistence - obs_commercial
    
   # Calculate NLLs ===================================================================
   
@@ -142,9 +145,9 @@ NLL <- function(par,
 }
 
 # Parameter starting values ===================================================================
-ln_q_vec <- log(0.002) 
-ln_pred_N <- rep(log(94832),Nyear)
-escapement_slope <- rep(log(90), times = projects) 
+ln_q_vec <- log(0.0000441) 
+ln_pred_N <- rep(log(2000000),Nyear)
+escapement_slope <- rep(log(104), times = projects) 
 
 pars_start<- c( 
   ln_q_vec,
@@ -165,7 +168,9 @@ weights <- c(w_catch,w_escapement,w_inriver)
 data <- list(B_yj=B_yj, 
              obs_catch_week=obs_catch_week,
              obs_N=obs_N,
-             obs_escape_project=obs_escape_project)
+             obs_escape_project=obs_escape_project,
+             obs_commercial = obs_commercial,
+             obs_subsistence=obs_subsistence)
 
 #check that NLL fxn works on its own, it does
 NLL(par=pars_start,
@@ -191,8 +196,6 @@ fit_nlm <- nlminb(
 param_est <- fit_nlm$par
 exp(param_est)
  
-
-
  saveRDS(exp(param_est),"output/optim_output_par.RDS")
 
 
