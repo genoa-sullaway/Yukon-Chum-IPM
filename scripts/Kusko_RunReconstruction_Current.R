@@ -23,7 +23,7 @@ prop<-read_csv("data/Processed_Data/Proportions_run_present_weekly.csv") %>% # o
   dplyr::select(c(3:9))
 
 #  observed catch per week 
-obs_catch_week <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv")  
+obs_catch_week <- read_csv("data/Processed_Data/catch_week.csv")  
 
 # Observed effort 
 effort <- read_csv("data/Processed_Data/effort.csv")  
@@ -48,7 +48,7 @@ obs_escape <- as.matrix(rowSums(escapement[,1:9]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
 #equation 6 in Bue paper 
-obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
+obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
 colnames(obs_N)<- NULL
 
 # NLL Function =========================================================================================

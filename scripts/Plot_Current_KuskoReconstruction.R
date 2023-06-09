@@ -138,8 +138,18 @@ current_rr<-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
   geom_vline(xintercept = 1986, linetype =2, color ="blue") + # start of Bue study
   geom_line(data = bue_estimated, aes(x=Year, y =Estimate_Thousands), color = "red") +
   labs(caption = "red is Bue estimate, black is my estimate")
+current_rr
+
+current_rr2<-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
+  geom_point() +
+  geom_line() + 
+  theme_classic() +
+  ylab("Total Run (thousands of fish") 
+
+current_rr2
 
 pdf("output/Current_RR_1976_2021.pdf")
 print(current_rr)
+print(current_rr2)
 dev.off()
 
