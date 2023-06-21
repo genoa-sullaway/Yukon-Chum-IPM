@@ -15,6 +15,10 @@ library(here)
 # Escapement - Weir estimates by project 
 escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
   filter(year < 2008 & year >1987) 
+inriver <- read_csv("data/Processed_Data/OLD/inriver.csv") %>%
+  filter(year < 2008 & year >1987) %>%
+  mutate(Reconstruction=replace_na(Reconstruction, 0))
+
 # This is proportions in each area/week/year - Pyj - right now, just fit for 2008
 prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...
   mutate(year = 1976:(1976+nrow(.)-1)) %>%
@@ -60,7 +64,7 @@ obs_escape <- as.matrix(rowSums(escapement[,2:8]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
 #equation 6 in Bue paper 
-obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
+obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial + inriver[2] ) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
 colnames(obs_N)<- NULL
 
 # NLL Function =========================================================================================
@@ -146,7 +150,7 @@ NLL <- function(par,
   NLL_N_TotalRun_sum  <- dnorm(x=log(obs_N+1e-6), mean=log(pred_N+1e-6),
                            sd = 0.1, log = TRUE)  
   
-  NLL <- T/2*(-1 * (weights[1] * sum(NLL_catch, na.rm = TRUE))* (weights[2] * sum(NLL_escapement, na.rm = TRUE))* (weights[3] * sum(NLL_N_TotalRun_sum, na.rm = TRUE)))
+  NLL <- (-1 * (weights[1] * sum(NLL_catch, na.rm = TRUE))* (weights[2] * sum(NLL_escapement, na.rm = TRUE))* (weights[3] * sum(NLL_N_TotalRun_sum, na.rm = TRUE)))
   
   # Return the total objective function value
   return(NLL)
