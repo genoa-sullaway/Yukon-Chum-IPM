@@ -65,8 +65,7 @@ commercial_effort_df<- data.frame(catch_effort[ , col_odd == 0])
 commercial_effort_yi <- commercial_effort_df %>%
   dplyr::slice(-2) %>%
   janitor::row_to_names(row_number = 1) %>%
-  dplyr::mutate(year = 1976:2011)  #%>%
-#gather(1:13, key = "date", value = "effort")
+  dplyr::mutate(year = 1976:2011) 
 
 write_csv(commercial_effort_yi, "data/Processed_Data/OLD/OLD_effort.csv")
 

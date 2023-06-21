@@ -14,26 +14,27 @@ library(here)
 # Load data =========================================================================================
 # Escapement - Weir estimates by project 
 escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
-  filter(year < 2008) 
+  filter(year < 2008 & year >1987) 
 # This is proportions in each area/week/year - Pyj - right now, just fit for 2008
 prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...  
   mutate(year = 1976:(1976+nrow(.)-1)) %>%
-  filter(year < 2008) %>%
+  filter(year < 2008 & year >1987) %>%
   dplyr::select(-year) %>% 
   dplyr::select(c(2:14)) #getting rid of first and last week because of 0's 
 
 #  observed catch per week 
 obs_catch_week <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>% 
-  filter(year < 2008) %>%
+  filter(year < 2008 & year >1987) %>%
   dplyr::select(-year) 
 
 # Observed effort 
 effort <- read_csv("data/Processed_Data/OLD/OLD_effort.csv") %>%
-  filter(year < 2008) 
+  filter(year < 2008 & year >1987) 
 
 #obs Commercial subsitence catch
 catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") %>%
-  filter(Year < 2008)
+  filter(Year < 2008 & Year >1987) 
+
 # format effort for equation 
 B_yj = as.matrix(effort[,1:13])  
 
@@ -67,18 +68,17 @@ NLL <- function(par,
   # grep("ln_q_vec", par_names)
   ln_q_vec <- par[1] 
   
-  #grep("pred_N", par_names)
-  ln_pred_N <- par[2:33]
+  # grep("pred_N", par_names)
+  ln_pred_N <- par[2:21]
   
-  #grep("ln_pred_slope", par_names)  
-  ln_pred_slope <- par[34:40]
+  # grep("ln_pred_slope", par_names)  
+  ln_pred_slope <- par[22:28]
 
   q_vec <- exp(ln_q_vec)
   pred_N <- exp(ln_pred_N)
   pred_slope <- exp(ln_pred_slope)
   
 # Extract Data: ============================================================================
-   
   B_yj=as.matrix(data$B_yj)
   obs_catch_week=as.matrix(data$obs_catch_week)
   obs_N=as.matrix(data$obs_N)
@@ -110,7 +110,6 @@ NLL <- function(par,
       pred_catch[j,i] = N_yi[j,i]*(1-(exp(-q_vec*B_yj[j,i])))
     }
   }
-  
   
   # Predict E - Escapement =========================================================================================
 #Eq 1 expands the data and yield "observed escapement"
@@ -146,9 +145,16 @@ NLL <- function(par,
 }
 
 # Parameter starting values ===================================================================
+bue_estimated <- read_csv("data/Processed_Data/OLD/Estimated_N_OldModel_XLS.csv") %>% # this is from the older excel sheet, columns Q,R,FW 
+  filter(param == "N", !year_or_project>2007) 
+bue_estimated_slope <- read_csv("data/Processed_Data/OLD/Estimated_N_OldModel_XLS.csv") %>% # this is from the older excel sheet, columns Q,R,FW 
+  filter(param == "Slope" ) %>%
+  arrange(year_or_project)
+
 ln_q_vec <- log(0.0000441) 
-ln_pred_N <- rep(log(2000000),Nyear)
-escapement_slope <- rep(log(104), times = projects) 
+#ln_pred_N <- rep(log(2000000),Nyear)
+ln_pred_N <- log(bue_estimated$value)# rep(log(2000000),Nyear)
+escapement_slope <-  log(bue_estimated_slope$value) #rep(log(350), times = projects) 
 
 pars_start<- c( 
   ln_q_vec,
@@ -197,8 +203,7 @@ fit_nlm <- nlminb(
 param_est <- fit_nlm$par
 exp(param_est)
  
- saveRDS(exp(param_est),"output/OLD_optim_output_par.RDS")
+saveRDS(exp(param_est),"output/OLD_optim_output_par.RDS")
 
-
-
+ 
 

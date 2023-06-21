@@ -6,7 +6,7 @@
 # Purpose: Recreate ADFG Kuskokwim Chum Run reconstruction in R based on excel sheet
 # based on Bue and Molyneaux Kuskokwim chum salmon run reconstruction 
 #
-# Note: this script does the RR until 2007 to match the paper, see: Kusko_RunReconstruction_2021 for the current data! 
+# Note: this script does the RR until 2007 to match the paper and excel sheet, see: Kusko_RunReconstruction_2021 for the current data! 
 # Load Packages =========================================================================================
 library(tidyverse)
 library(here)

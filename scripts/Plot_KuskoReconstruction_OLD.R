@@ -10,10 +10,14 @@ library(here)
  
 ### Load Bue data
 ## NOTE: genoa looked at figure 8 in bue and Molyneaux 2008 and guess-timated the estimated #'s per year because the paper doesnt provide a table with exact points 
-bue_estimated <- read_csv("data/Kusko_Reconstruction/Bue_Reconstruction_Dat.csv") 
-estimated_parameters<- readRDS("output/OLD_optim_output_par.RDS")
-  
+#bue_estimated <- read_csv("data/Kusko_Reconstruction/Bue_Reconstruction_Dat.csv") 
+bue_estimated <- read_csv("data/Processed_Data/OLD/Estimated_N_OldModel_XLS.csv") %>% # this is from the older excel sheet, columns Q,R,FW 
+  filter(param == "N") %>% 
+  dplyr::mutate(Year = as.numeric(year_or_project),
+                Estimate_Thousands = value/1000) %>%
+  dplyr::select(c(4:5))
 
+estimated_parameters<- readRDS("output/OLD_optim_output_par.RDS")  
 #assign weights 
 names(estimated_parameters) <- par_names
 
@@ -29,33 +33,32 @@ predict_NLL <- function(par,
   # Extract parameters and data: ============================================================================
   
   # grep("ln_q_vec", par_names)
-  q_vec <- par[1] 
+  ln_q_vec <- par[1] 
   
-  #grep("pred_N", par_names)
-  pred_N <- par[2:33]
+  #  grep("pred_N", par_names)
+  ln_pred_N <- par[2:21]
   
-  #grep("ln_pred_slope", par_names)  
-  pred_slope <- par[34:40]
+  #  grep("ln_pred_slope", par_names)  
+  ln_pred_slope <- par[22:28]
+  
+  q_vec <- ln_q_vec
+  pred_N <-ln_pred_N
+  pred_slope <- ln_pred_slope
 
-  
-  # Vectorize Data: ============================================================================
+  # Extract Data: ============================================================================
   
   B_yj=as.matrix(data$B_yj)
   obs_catch_week=as.matrix(data$obs_catch_week)
   obs_N=as.matrix(data$obs_N)
   obs_escape_project = as.matrix(data$obs_escape_project)
-  
-  # 
-  # B_yj_vec <- as.vector(B_yj)
-  # obs_catch_week_vec <- as.vector(as.matrix(obs_catch_week))
-  # 
-  # N_yi_vec_prop <-as.vector(as.matrix(pred_N*prop))
-  # 
+  obs_subsistence = as.matrix(data$obs_subsistence)
+  obs_commercial = as.matrix(data$obs_commercial)
   
   # Predict N - Observed Total Return =========================================================================================
   #pred_N = pred_E + rowSums(pred_catch) 
   
   # N_yi = number of chum present in commercial district by week/year (Eq 4)
+  #summing across weeks for Nyi is supposed to give Ny, total fish present across years 
   N_yi <- matrix(nrow = Nyear, ncol = weeks)
   for (j in 1:Nyear) {
     N_yi[j,] =  as.matrix(pred_N[j]*prop[j,])
@@ -119,8 +122,10 @@ pre_outputs <- predict_NLL(par=estimated_parameters, # starting values for param
 pred_catch<-pre_outputs[[1]]
 pred_escape_pj<-pre_outputs[[2]]
 
-pred_N<-data.frame(Year = c(1976:2007), Pred_N = c(pre_outputs[[3]]))  
-
+pred_N<-data.frame(Year = c(1988:2007), 
+                   Pred_N_fxn = c(pre_outputs[[3]]), 
+                   pred_N_est= as.vector(c(estimated_parameters[2:21])))  
+  
 ### Plot predicted N
 ggplot(data = pred_N,aes(x=Year, y = Pred_N )) +
   geom_bar(stat= "identity") +
@@ -140,10 +145,53 @@ old_rr<-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
   geom_line(data = bue_estimated, aes(x=Year, y =Estimate_Thousands), color = "red") +
   labs(caption = "red is Bue estimate, black is my estimate")
 
+# 
+# pdf("output/Old_RR_1976_2007.pdf")
+# print(old_rr)
+# dev.off()
 
-pdf("output/Old_RR_1976_2007.pdf")
-print(old_rr)
-dev.off()
+
+# Plot predicted catch  ======================================================================
+obs_catch <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>%  #Taken from Chum RR data.xlsx
+  dplyr::mutate(year = as.numeric(1976:2011)) %>%
+  gather(1:13, key = "week", value = "obs_catch") %>%
+  filter(!year < 1988 & !year >2007)
+
+prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% 
+  mutate(year = 1976:(1976+nrow(.)-1)) %>%
+  filter(year < 2008 & year >1987) %>%
+  dplyr::select(-year) %>% 
+  dplyr::select(c(2:14))  
+
+weeks_label <- as.vector(colnames(prop))
+ 
+pred_catch <- pred_catch %>% 
+  data.frame()  
+
+names(pred_catch) <- weeks_label
+
+pred_catch <- pred_catch %>%
+  mutate(year = 1988:2007) %>%
+  gather(1:13, key = "week", value = "pred_catch")  
+
+join <- left_join(obs_catch,pred_catch) %>%
+  gather(3:4, key = "id", value = "catch")
+
+ggplot(data = join, aes(x=week, y=catch/1000, group = id, color = id)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  facet_wrap(~year,scales="free")
+
+
+
+ggplot(data = join, aes(x=year, y=catch/1000, group = id, color = id)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  facet_wrap(~week,scales="free")
+
+
 
 
 

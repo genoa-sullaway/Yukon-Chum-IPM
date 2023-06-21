@@ -9,11 +9,16 @@ library(tidyverse)
 library(here)
  
 ### Load Bue data
-## NOTE: genoa looked at figure 8 in bue and Molyneaux 2008 and guess-timated the estimated #'s per year because the paper doesnt provide a table with exact points 
-bue_estimated <- read_csv("data/Kusko_Reconstruction/Bue_Reconstruction_Dat.csv") 
+## NOTE: genoa looked at figure 8 in bue and Molyneaux 2008 and guess-timated the estimated #'s per year because the paper doesn't provide a table with exact points 
+#bue_estimated <- read_csv("data/Kusko_Reconstruction/Bue_Reconstruction_Dat.csv") 
+bue_estimated <- read_csv("data/Processed_Data/OLD/Estimated_N_OldModel_XLS.csv") %>% # this is from the older excel sheet, columns Q,R,FW 
+  filter(param == "N") %>% 
+  dplyr::mutate(Year = as.numeric(year_or_project),
+                Estimate_Thousands = value/1000) %>%
+  dplyr::select(c(4:5))
+  
 estimated_parameters<- readRDS("output/current_optim_output_par.RDS")
   
-
 #assign weights 
 names(estimated_parameters) <- par_names
 
@@ -119,7 +124,7 @@ pred_escape_pj<-pre_outputs[[2]]
 
 pred_N<-data.frame(Year = c(1976:2021), Pred_N = c(pre_outputs[[3]]))  
 
-### Plot predicted N
+# Plot ======================================================================
 ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000 )) +
   geom_bar(stat= "identity") +
   theme_classic() +
@@ -128,7 +133,7 @@ ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000 )) +
   geom_vline(xintercept = 2007)  
 
 
-### Plot predicted N
+ 
 current_rr<-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
   geom_point() +
   geom_line() + 
