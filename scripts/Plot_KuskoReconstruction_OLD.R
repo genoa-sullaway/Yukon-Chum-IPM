@@ -154,17 +154,39 @@ old_rr<-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
 # Plot predicted catch  ======================================================================
 obs_catch <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>%  #Taken from Chum RR data.xlsx
   dplyr::mutate(year = as.numeric(1976:2011)) %>%
-  gather(1:13, key = "week", value = "obs_catch") %>%
+  select(-`9/2-9/8`) %>% 
+  gather(1:12, key = "week", value = "obs_catch") %>%
   filter(!year < 1988 & !year >2007)
-
-prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% 
+ 
+  # prop<-read_csv("data/Processed_Data/Prop_V2.csv") %>%
+  # filter(year < 2008 & year >1987) %>%
+  # dplyr::select(-year)
+prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...
   mutate(year = 1976:(1976+nrow(.)-1)) %>%
   filter(year < 2008 & year >1987) %>%
-  dplyr::select(-year) %>% 
-  dplyr::select(c(2:14))  
+  dplyr::select(-year) %>%
+  dplyr::select(c(3:14)) 
 
-weeks_label <- as.vector(colnames(prop))
+weeks_label<-colnames(prop)
+  # load pred catch from Bues estiamtes (csv sheet old) to also compare to obs and mine
+  #need to tidy them, done below. 
+Bue_pred <- read_csv("data/Processed_Data/OLD/Bue_pred_catch.csv") 
  
+col_odd <- seq_len(ncol(Bue_pred)) %% 2
+
+bue_pred_catch<- data.frame(Bue_pred[ , col_odd == 0])
+bue_pred_catch <- bue_pred_catch[1:12]
+names(bue_pred_catch) <- weeks_label 
+
+bue_pred_catch_df <- bue_pred_catch %>%
+  slice(-1) %>%
+  mutate(year =1976:2011) %>% 
+  filter(year>1987 & year<2008) %>% 
+  gather(1:12, key = "week", value = "bue_pred_catch")  %>%
+  mutate(bue_pred_catch = as.numeric(bue_pred_catch),
+         year = as.numeric(year))
+
+######## now predicted catch from my model
 pred_catch <- pred_catch %>% 
   data.frame()  
 
@@ -172,24 +194,35 @@ names(pred_catch) <- weeks_label
 
 pred_catch <- pred_catch %>%
   mutate(year = 1988:2007) %>%
-  gather(1:13, key = "week", value = "pred_catch")  
+  gather(1:12, key = "week", value = "pred_catch")  
 
 join <- left_join(obs_catch,pred_catch) %>%
-  gather(3:4, key = "id", value = "catch")
+  left_join(bue_pred_catch_df) %>% 
+  gather(3:5, key = "id", value = "catch")
 
-ggplot(data = join, aes(x=week, y=catch/1000, group = id, color = id)) +
+ggplot(data = join %>% filter(!id=="bue_pred_catch"), aes(x=week, y=catch/1000, group = id, color = id)) +
   geom_point() +
   geom_line() +
   theme_classic() +
-  facet_wrap(~year,scales="free")
+  facet_wrap(~year,scales="free")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
-
-ggplot(data = join, aes(x=year, y=catch/1000, group = id, color = id)) +
+ggplot(data = join %>% filter(!id=="bue_pred_catch"), aes(x=year, y=catch/1000, group = id, color = id)) +
   geom_point() +
   geom_line() +
   theme_classic() +
-  facet_wrap(~week,scales="free")
+  facet_wrap(~week,scales="free") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+#add bues in compare to mine 
+ggplot(data = join%>% filter(!id=="obs_catch"), aes(x=year, y=catch/1000, group = id, color = id)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  facet_wrap(~week,scales="free") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
 
 
 

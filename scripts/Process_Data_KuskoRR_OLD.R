@@ -81,3 +81,25 @@ commercial_catch_yi <- catch_week %>%
 #gather(1:13, key = "date", value = "effort")
 
 write_csv(commercial_catch_yi, "data/Processed_Data/OLD/OLD_catch_week.csv")
+
+################################################################################ 
+################################################################################ 
+# new Pyj
+catch <- commercial_catch_yi %>%
+  gather(1:13, key = "week", value = "catch")
+
+P_V2 <- commercial_effort_yi %>%
+  gather(1:13, key = "week", value = "effort") %>%
+  left_join(catch) %>%
+  mutate(cpue = as.numeric(catch)/as.numeric(effort),
+        # cpue = case_when( cpue== "NaN" ~ 0),
+         cpue = replace_na(cpue,0)) %>%   
+  group_by(year) %>%
+  mutate(Pyj = cpue/sum(cpue),
+         Pyj = replace_na(Pyj,0))  %>%
+  select(year,week,Pyj) %>%
+  spread(week,Pyj)
+
+write_csv(P_V2, "data/Processed_Data/Prop_V2.csv")
+ 
+

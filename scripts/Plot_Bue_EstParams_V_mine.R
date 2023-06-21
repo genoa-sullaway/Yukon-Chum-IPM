@@ -49,13 +49,22 @@ est_slope<- bue_estimated %>%
                 Bue_slope = value) %>%
   dplyr::select(c(4:5)) %>% 
   left_join(pred_slope) %>% 
-  gather(2:3, key = "id", value = "value")
+  gather(2:3, key = "id", value = "value") #%>%
+  # mutate(value = case_when(id == "pred_slope" ~ value*4.5,
+  #                          TRUE ~ value))
 
 ### Plot predicted slope
 slope_plot <- ggplot(data = est_slope,aes(x=project, y = value, group = id, fill = id)) +
   geom_bar(stat="identity", position = "dodge") +
   theme_classic() +
   ylab("Slope")  
+
+### Plot predicted slope
+slope_plot2 <- ggplot(data = est_slope,aes(x=project, y = value, group = id, fill = id)) +
+  geom_bar(stat="identity", position = "dodge") +
+  theme_classic() +
+  ylab("Slope")  +
+  facet_wrap(~id)
 
 # Plot Q =========================================================================================
 pred_Q<-data.frame(pred_Q= as.vector(c(estimated_parameters[1])))  
@@ -72,11 +81,10 @@ q_plot<-ggplot(data = est_Q,aes(x=id, y = value, group = id, fill = id)) +
   geom_bar(stat="identity", position = "dodge") +
   theme_classic() +
   ylab("Q")  
-
-
-N_plot
+ 
 slope_plot
+slope_plot2
 q_plot
-
+N_plot
 
 
