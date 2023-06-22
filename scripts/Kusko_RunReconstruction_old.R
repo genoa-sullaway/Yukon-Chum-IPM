@@ -64,7 +64,7 @@ obs_escape <- as.matrix(rowSums(escapement[,2:8]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
 #equation 6 in Bue paper 
-obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial + inriver[2] ) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
+obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial)# + inriver[2] ) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
 colnames(obs_N)<- NULL
 
 # NLL Function =========================================================================================
@@ -180,11 +180,17 @@ par_names <- c(
          "ln_q_vec",
   paste0("ln_pred_N", c(1:Nyear)),
   paste0("ln_pred_slope", c(1:projects))) 
-
+# #in paper
 w_catch <- 2.0
 w_escapement <- 1.0
 w_inriver <- 0.5
-weights <- c(w_catch,w_escapement,w_inriver) 
+weights <- c(w_catch,w_escapement,w_inriver)
+
+#in excel
+# w_catch <- 1.0
+# w_escapement <- 1.0
+# w_inriver <- 0.25
+# weights <- c(w_catch,w_escapement,w_inriver) 
 
 # List input data  ===================================================================
 data <- list(B_yj=B_yj, 

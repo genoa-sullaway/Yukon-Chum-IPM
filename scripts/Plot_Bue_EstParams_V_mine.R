@@ -33,7 +33,7 @@ est_N<- bue_estimated %>%
   gather(2:3, key = "id", value = "value")
 
 ### Plot predicted N
-N_plot<-ggplot(data = est_N,aes(x=Year, y = value/1000, group = id, color = id)) +
+N_plot<-ggplot(data = est_N,aes(x=Year, y = value, group = id, color = id)) +
   geom_line( ) +
   geom_point() + 
   theme_classic() +
