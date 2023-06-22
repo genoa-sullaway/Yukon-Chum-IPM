@@ -149,15 +149,26 @@ old_rr<-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
 # pdf("output/Old_RR_1976_2007.pdf")
 # print(old_rr)
 # dev.off()
-
-
+# Plot predicted catch 2 data sources  ======================================================================
+# 
+# obs_com_subs_catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") %>%  # from bethel csv
+#   dplyr::mutate(com_subs = Commercial,# +Subsistence, 
+#          year = Year) %>%
+#   left_join(obs_catch %>% 
+#               group_by(year) %>%
+#               dplyr::summarise(bethelobs_catch=sum(obs_catch))) %>%
+#   select(year, com_subs,bethelobs_catch) %>%
+#   gather(2:3,  key = "id", value = "value")
+# 
+#  
 # Plot predicted catch  ======================================================================
 obs_catch <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>%  #Taken from Chum RR data.xlsx
   dplyr::mutate(year = as.numeric(1976:2011)) %>%
   select(-`9/2-9/8`) %>% 
   gather(1:12, key = "week", value = "obs_catch") %>%
   filter(!year < 1988 & !year >2007)
- 
+
+
   # prop<-read_csv("data/Processed_Data/Prop_V2.csv") %>%
   # filter(year < 2008 & year >1987) %>%
   # dplyr::select(-year)

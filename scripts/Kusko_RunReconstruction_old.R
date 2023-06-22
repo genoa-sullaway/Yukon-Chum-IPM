@@ -33,18 +33,18 @@ prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv"
 #   dplyr::select(-year)
 
 #  observed catch per week 
-obs_catch_week <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>% 
-  filter(year < 2008 & year >1987) %>%
-  dplyr::select(-year) %>%
-  select(c(1:12))
+# obs_catch_week <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>% 
+#   filter(year < 2008 & year >1987) %>%
+#   dplyr::select(-year) %>%
+#   select(c(1:12))
 
 # Observed effort 
-effort <- read_csv("data/Processed_Data/OLD/OLD_effort.csv") %>%
+effort <- read_csv("data/Processed_Data/OLD/OLD_effort.csv") %>% # from bethel csv
   filter(year < 2008 & year >1987) %>%
   select(c(1:12))
 
 #obs Commercial subsitence catch
-  catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") %>%
+  catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") %>% # from bethel csv
   filter(Year < 2008 & Year >1987)  
   
 # format effort for equation 
@@ -66,6 +66,7 @@ obs_subsistence <- as.matrix(catch[,3])
 #equation 6 in Bue paper 
 obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial)# + inriver[2] ) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
 colnames(obs_N)<- NULL
+obs_catch <- as.matrix(obs_subsistence + obs_commercial)
 
 # NLL Function =========================================================================================
 NLL <- function(par,
@@ -93,7 +94,8 @@ NLL <- function(par,
   
 # Extract Data: ============================================================================
   B_yj=as.matrix(data$B_yj)
-  obs_catch_week=as.matrix(data$obs_catch_week)
+  obs_catch =as.matrix(data$obs_catch)
+  # obs_catch_week=as.matrix(data$obs_catch_week)
   obs_N=as.matrix(data$obs_N)
   obs_escape_project = as.matrix(data$obs_escape_project)
   obs_subsistence = as.matrix(data$obs_subsistence)
@@ -117,13 +119,13 @@ NLL <- function(par,
   #pred_catch = N_yi_vec_prop*(1-(exp(-q_vec*B_yj_vec))) 
    
   pred_catch <- matrix(ncol = weeks, nrow = Nyear)
-  
+   
   for (i in 1:weeks) {
     for (j in 1:Nyear) { 
       pred_catch[j,i] = N_yi[j,i]*(1-(exp(-q_vec*B_yj[j,i])))
     }
   }
-  
+  pred_catch_col <- rowSums(pred_catch)
   # Predict E - Escapement =========================================================================================
 #Eq 1 expands the data and yield "observed escapement"
   # this is equation 1 (trying to code it exactly as it is even though it seems super weird...)
@@ -141,7 +143,7 @@ NLL <- function(par,
    
   # Calculate NLLs ===================================================================
   
-  NLL_catch  <- dnorm(x=log(obs_catch_week+1e-6), mean=log(pred_catch+1e-6),
+  NLL_catch  <- dnorm(x=log(obs_catch+1e-6), mean=log(pred_catch_col+1e-6),
                       sd = 0.1, log = TRUE)     
   
   NLL_escapement  <- dnorm(x=log(obs_escape+1e-6), mean=log(pred_E+1e-6),
@@ -150,7 +152,7 @@ NLL <- function(par,
   NLL_N_TotalRun_sum  <- dnorm(x=log(obs_N+1e-6), mean=log(pred_N+1e-6),
                            sd = 0.1, log = TRUE)  
   
-  NLL <- (-1 * (weights[1] * sum(NLL_catch, na.rm = TRUE))* (weights[2] * sum(NLL_escapement, na.rm = TRUE))* (weights[3] * sum(NLL_N_TotalRun_sum, na.rm = TRUE)))
+  NLL <- (weights[1] * sum(NLL_catch, na.rm = TRUE))* (weights[2] * sum(NLL_escapement, na.rm = TRUE))* (weights[3] * sum(NLL_N_TotalRun_sum, na.rm = TRUE))
   
   # Return the total objective function value
   return(NLL)
@@ -194,7 +196,8 @@ weights <- c(w_catch,w_escapement,w_inriver)
 
 # List input data  ===================================================================
 data <- list(B_yj=B_yj, 
-             obs_catch_week=obs_catch_week,
+             obs_catch_week=obs_catch,
+            # obs_catch_week=obs_catch_week,
              obs_N=obs_N,
              obs_escape_project=obs_escape_project,
              obs_commercial = obs_commercial,
