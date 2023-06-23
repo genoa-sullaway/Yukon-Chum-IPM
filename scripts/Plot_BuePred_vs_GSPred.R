@@ -26,18 +26,19 @@ pred_N<-data.frame(Year = c(1988:2007),
 est_N<- bue_estimated %>% 
   filter(param == "N") %>% 
   dplyr::mutate(Year = as.numeric(year_or_project),
-                Bue_Estimate_Thousands = value) %>%
+                Bue_Estimate_Thousands = value ) %>%
   dplyr::select(c(4:5)) %>% 
   filter(Year < 2008) %>% 
   left_join(pred_N) %>% 
   gather(2:3, key = "id", value = "value")
 
 ### Plot predicted N
-N_plot<-ggplot(data = est_N,aes(x=Year, y = value, group = id, color = id)) +
+N_plot<-ggplot(data = est_N,aes(x=Year, y = value/1000, group = id, color = id)) +
   geom_line( ) +
   geom_point() + 
   theme_classic() +
-  ylab("Total Run (thousands of fish")  
+  ylab("Total Run (thousands of fish") 
+N_plot
 
 # Plot Slope =========================================================================================
 pred_slope<-data.frame(project = c(proj_names),
@@ -57,7 +58,9 @@ est_slope<- bue_estimated %>%
 slope_plot <- ggplot(data = est_slope,aes(x=project, y = value, group = id, fill = id)) +
   geom_bar(stat="identity", position = "dodge") +
   theme_classic() +
-  ylab("Slope")  
+  ylab("Slope")  +
+  labs(caption = "Pred Slope is from GS reconstruction model") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 ### Plot predicted slope
 slope_plot2 <- ggplot(data = est_slope,aes(x=project, y = value, group = id, fill = id)) +
@@ -87,4 +90,9 @@ slope_plot2
 q_plot
 N_plot
 
+pdf("output/Kusko_RR_Plots.pdf")
+slope_plot
+q_plot
+N_plot
+dev.off()
 

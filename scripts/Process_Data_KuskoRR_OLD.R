@@ -1,26 +1,15 @@
-## escapement 
-
+# Escapement ===========================================================================
 escapement <- read.csv("data/Kusko_Reconstruction/OLD/Kusko_DataV1_Escapement.csv") %>% 
   dplyr::mutate(year = 1976:2011) %>% 
   dplyr::select(-Reconstruction,-X) %>% 
   gather(1:7, key = "project", value = "escapement") %>% 
   dplyr::mutate(escapement = as.numeric(gsub(",","",escapement))) %>% 
-  # filter(!project == "Reconstruction") %>% # not sure what this category is .. filtering for now 
-  # dplyr::mutate(type = case_when(project %in% c("Kwethluk",
-  #                                               "Tuluksak",
-  #                                               "George",
-  #                                               "Kogrukluk",
-  #                                               "Tatlawiksuk",
-  #                                               "Takotna") ~ "Weir",
-  #                                               TRUE ~ "Sonar")) %>% 
-  # mutate_all(na_if,"")  %>%
   replace(is.na(.), 0) %>%
   spread(project, escapement)
 
 write_csv(escapement, "data/Processed_Data/OLD/OLD_kusko_escapement.csv")
 
-#############
-# these are the proportions of run present at each week 
+# Proportions from excel ===========================================================================
 P_yj <-  read.csv("data/Kusko_Reconstruction/OLD/P_yj_Data_V1.csv") %>%
   janitor::row_to_names(row_number = 1) %>%
   slice(1:36) %>% 
@@ -48,14 +37,17 @@ P_yj <-  read.csv("data/Kusko_Reconstruction/OLD/P_yj_Data_V1.csv") %>%
 
 write_csv(P_yj, "data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv")
 
-################ Catch 
+
+# Commercial and Subsistence catch ===========================================================================
+
 catch <- read.csv("data/Kusko_Reconstruction/OLD/Kusko_Data_V1_Catch.csv")  %>%
   dplyr::mutate(Commercial=as.numeric(gsub(",","",Commercial)),
                 Subsistence = as.numeric(gsub(",","",Subsistence)))
 
 write_csv(catch, "data/Processed_Data/OLD/OLD_catch.csv")
 
-################ Effort 
+# Bethel Effort per week ===========================================================================
+
 catch_effort <-read.csv("data/Kusko_Reconstruction/Bethel_Effort.csv", header = FALSE)  
 
 col_odd <- seq_len(ncol(catch_effort)) %% 2
@@ -69,36 +61,50 @@ commercial_effort_yi <- commercial_effort_df %>%
 
 write_csv(commercial_effort_yi, "data/Processed_Data/OLD/OLD_effort.csv")
 
-################################################################################ 
-################################################################################ 
+# Bethel Catch per week ===========================================================================
 
-catch_week<- data.frame(catch_effort[ , col_odd == 1])
+catch_week<- data.frame(catch_effort[ , col_odd == 1])[1:13]
 
 commercial_catch_yi <- catch_week %>%
   dplyr::slice(-2) %>%
   janitor::row_to_names(row_number = 1) %>%
-  dplyr::mutate(year = 1976:2011)  #%>%
-#gather(1:13, key = "date", value = "effort")
+  dplyr::mutate(year = 1976:2011) 
+ 
 
 write_csv(commercial_catch_yi, "data/Processed_Data/OLD/OLD_catch_week.csv")
 
-################################################################################ 
-################################################################################ 
-# new Pyj
+# Proportions from Bethel ===========================================================================
+
 catch <- commercial_catch_yi %>%
   gather(1:13, key = "week", value = "catch")
+unique(P_V2$week)
 
 P_V2 <- commercial_effort_yi %>%
   gather(1:13, key = "week", value = "effort") %>%
   left_join(catch) %>%
+  filter(!week %in% c("5/27 - 6/2", "6/3 - 6/9")) %>%
   mutate(cpue = as.numeric(catch)/as.numeric(effort),
-        # cpue = case_when( cpue== "NaN" ~ 0),
          cpue = replace_na(cpue,0)) %>%   
   group_by(year) %>%
   mutate(Pyj = cpue/sum(cpue),
          Pyj = replace_na(Pyj,0))  %>%
   select(year,week,Pyj) %>%
-  spread(week,Pyj)
+  spread(week,Pyj) %>%
+  dplyr::select(year,#`5/27 - 6/2`, # effort data doesnt have these first two columns and they are 0s
+                #`6/3 - 6/9`,
+                `6/10 - 6/16`,
+                `6/17 - 6/23`,
+                `6/24 - 6/30`,
+                `7/1 - 7/7`,
+                `7/8 - 7/14`,
+                `7/15 - 7/21`,
+                `7/22 - 7/28`,
+                `7/29-8/4`,
+                `8/5-8/11`,
+                `8/12-8/18`,
+                `8/19-8/25`,
+                `8/26-9/1`,
+                `9/2-9/8`)
 
 write_csv(P_V2, "data/Processed_Data/Prop_V2.csv")
  

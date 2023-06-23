@@ -33,18 +33,14 @@ predict_NLL <- function(par,
   # Extract parameters and data: ============================================================================
   
   # grep("ln_q_vec", par_names)
-  ln_q_vec <- par[1] 
+  q_vec <- par[1] 
   
   #  grep("pred_N", par_names)
-  ln_pred_N <- par[2:21]
+  pred_N <- par[2:21]
   
   #  grep("ln_pred_slope", par_names)  
-  ln_pred_slope <- par[22:28]
-  
-  q_vec <- ln_q_vec
-  pred_N <-ln_pred_N
-  pred_slope <- ln_pred_slope
-
+  pred_slope <- par[22:28]
+   
   # Extract Data: ============================================================================
   
   B_yj=as.matrix(data$B_yj)
@@ -78,8 +74,7 @@ predict_NLL <- function(par,
       pred_catch[j,i] = N_yi[j,i]*(1-(exp(-q_vec*B_yj[j,i])))
     }
   }
-  
-  
+   
   # Predict E - Escapement =========================================================================================
   #Eq 1 expands the data and yield "observed escapement"
   # this is equation 1 (trying to code it exactly as it is even though it seems super weird...)
@@ -95,7 +90,7 @@ predict_NLL <- function(par,
   # equation 2 yields predicted escapement 
   pred_E = pred_N - obs_subsistence - obs_commercial
   
-  output <- list(pred_catch, pred_E, pred_N)
+  output <- list(pred_catch, pred_E, pred_N,obs_e_week,N_yi)
   # Return the predicted values based on parameter estimates in optimization script 
   return(output)
 }
@@ -117,39 +112,9 @@ pre_outputs <- predict_NLL(par=estimated_parameters, # starting values for param
                            projects=projects,
                            Nyear=Nyear,
                            weights = weights)
-
-
-pred_catch<-pre_outputs[[1]]
-pred_escape_pj<-pre_outputs[[2]]
-
-pred_N<-data.frame(Year = c(1988:2007), 
-                   Pred_N_fxn = c(pre_outputs[[3]]), 
-                   pred_N_est= as.vector(c(estimated_parameters[2:21])))  
   
-### Plot predicted N
-ggplot(data = pred_N,aes(x=Year, y = Pred_N )) +
-  geom_bar(stat= "identity") +
-  theme_classic() +
-  ylab("Total Run (thousands of fish") +
-  geom_vline(xintercept = 2000) + 
-  geom_vline(xintercept = 2007)  
-
-### Plot predicted N
-old_rr<-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
-  geom_point() +
-  geom_line() + 
-  theme_classic() +
-  ylab("Total Run (thousands of fish") +
-  geom_vline(xintercept = 2007, linetype =2, color ="blue")  + #end of Bue study
-  geom_vline(xintercept = 1986, linetype =2, color ="blue") + # start of Bue study
-  geom_line(data = bue_estimated, aes(x=Year, y =Estimate_Thousands), color = "red") +
-  labs(caption = "red is Bue estimate, black is my estimate")
-
-# 
-# pdf("output/Old_RR_1976_2007.pdf")
-# print(old_rr)
-# dev.off()
-# Plot predicted catch 2 data sources  ======================================================================
+ 
+#   catch 2 data sources  ======================================================================
 # 
 # obs_com_subs_catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") %>%  # from bethel csv
 #   dplyr::mutate(com_subs = Commercial,# +Subsistence, 
@@ -161,6 +126,7 @@ old_rr<-ggplot(data = pred_N,aes(x=Year, y = Pred_N/1000)) +
 #   gather(2:3,  key = "id", value = "value")
 # 
 #  
+ 
 # Plot predicted catch  ======================================================================
 obs_catch <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>%  #Taken from Chum RR data.xlsx
   dplyr::mutate(year = as.numeric(1976:2011)) %>%
@@ -198,6 +164,8 @@ bue_pred_catch_df <- bue_pred_catch %>%
          year = as.numeric(year))
 
 ######## now predicted catch from my model
+pred_catch<-pre_outputs[[1]]
+ 
 pred_catch <- pred_catch %>% 
   data.frame()  
 
@@ -218,24 +186,108 @@ ggplot(data = join %>% filter(!id=="bue_pred_catch"), aes(x=week, y=catch/1000, 
   facet_wrap(~year,scales="free")+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-
-ggplot(data = join %>% filter(!id=="bue_pred_catch"), aes(x=year, y=catch/1000, group = id, color = id)) +
+pred_catch_bue_obs<- ggplot(data = join %>% filter(!id=="pred_catch"), aes(x=year, y=catch/1000, group = id, color = id)) +
   geom_point() +
   geom_line() +
   theme_classic() +
   facet_wrap(~week,scales="free") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  labs(caption = "Observed catch vs Bue predicted catch")
+
+pred_catch_obs_gs <- ggplot(data = join %>% filter(!id=="bue_pred_catch"), aes(x=year, y=catch/1000, group = id, color = id)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  facet_wrap(~week,scales="free") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  labs(caption = "Observed catch vs GS predicted catch")
 
 #add bues in compare to mine 
-ggplot(data = join%>% filter(!id=="obs_catch"), aes(x=year, y=catch/1000, group = id, color = id)) +
+pred_catch_gs_bue<-ggplot(data = join%>% filter(!id=="obs_catch"), aes(x=year, y=catch/1000, group = id, color = id)) +
   geom_point() +
   geom_line() +
   theme_classic() +
   facet_wrap(~week,scales="free") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  labs(caption = "Bue predicted catch vs GS predicted catch")
+
+pdf("output/predicted_catch_plots.pdf")
+pred_catch_obs_gs
+pred_catch_bue_obs
+pred_catch_gs_bue
+dev.off()
+
+# Plot predicted number per projects ======================================================================
+
+pred_escape <-pre_outputs[[2]]
+  
+# 
+# escape %>%
+#   gather(2:3, key = "id", value = "value")
+# 
+# #add bues in compare to mine 
+# ggplot(data = escape, aes(x=year, y=value, group = id, color = id)) +
+#   geom_point() +
+#   geom_line() +
+#   theme_classic() +
+#   facet_wrap(~week,scales="free") +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+#Plot predicted per project =============================================
+#from my model:
+proj_names<-colnames(read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv"))[2:8]
+expanded_per_proj <-data.frame(pre_outputs[[4]]) %>%
+  mutate(year = 1988:2007 )  
+  
+names(expanded_per_proj)[1:7] <- proj_names
+  
+expanded_per_proj<- expanded_per_proj %>%
+  gather(1:projects, key = "project", value = "value") %>%
+  dplyr::mutate(id = "expanded_N_GS_mod")
+
+# Bue's OBS values:
+ obs_escape_per_proj<-  read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
+   filter(year < 2008 & year >1987) %>%
+   gather(2:(projects+1), key = "project", value = "value")%>%
+   dplyr::mutate(id = "obs_escape_per_proj")
+
+# Bues predcited from excel
+ bue_pred_per_proj <- read_csv("data/Processed_Data/OLD/Bue_pred_escapement.csv")%>%
+   gather(2:(projects+1), key = "project", value = "value") %>%
+   rename(year = "Year") %>%
+   dplyr::mutate(id = "bue_pred_per_proj")
+ 
+per_proj <- rbind(obs_escape_per_proj,bue_pred_per_proj,expanded_per_proj) 
+per_proj[per_proj == 0] <- NA
+  
+#add bue's in compare to mine 
+ggplot(data = per_proj %>% filter(!id == "obs_escape_per_proj"), 
+       aes(x=year, y=value, group = id, color = id)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() +
+  facet_wrap(~project,scales="free") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
+# same as above but sum across projects to just get total index: 
+pred_e<-data.frame(pre_outputs[[2]]) %>%
+  rename(value = "Subsistence") %>%
+  mutate(year = 1988:2007,
+         id = "predicted_escapement")
+
+per_proj[is.na(per_proj)]<- 0
+
+totol_E_df<- per_proj %>% 
+  group_by(year, id) %>% 
+  summarise(value = sum(value))%>%
+  rbind(pred_e)
 
 
 
-
-
+#add bue's in compare to mine 
+ggplot(data = totol_E_df %>% filter(!id == "obs_escape_per_proj", year>1987, !year >2007), 
+       aes(x=year, y=value, group = id, color = id)) +
+  geom_point() +
+  geom_line() +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
