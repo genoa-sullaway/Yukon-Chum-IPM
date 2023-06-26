@@ -32,13 +32,31 @@ est_N<- bue_estimated %>%
   left_join(pred_N) %>% 
   gather(2:3, key = "id", value = "value")
 
-### Plot predicted N
+
 N_plot<-ggplot(data = est_N,aes(x=Year, y = value/1000, group = id, color = id)) +
   geom_line( ) +
   geom_point() + 
   theme_classic() +
   ylab("Total Run (thousands of fish") 
 N_plot
+
+# plot observed vs my predictions 
+escapement_sum <-  read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
+  filter(year < upper_year & year >1987) %>%
+  gather(2:8, key = "project", value = "value")  %>% 
+  group_by(year) %>%
+  dplyr::summarise(value = sum(value)) %>% 
+  rename(Year = "year") %>%
+  dplyr::mutate(id = "obs_E_sum") %>%
+  rbind(est_N) %>%
+  filter(id %in% c("obs_E_sum", "pred_N_est"))
+
+N_plot_observed<-ggplot(data = escapement_sum,aes(x=Year, y = value/1000, group = id, color = id)) +
+  geom_line( ) +
+  geom_point() + 
+  theme_classic() +
+  ylab("Total Run (thousands of fish") 
+N_plot_observed
 
 # Plot Slope =========================================================================================
 pred_slope<-data.frame(project = c(proj_names),

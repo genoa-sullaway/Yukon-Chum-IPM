@@ -45,7 +45,7 @@ predict_NLL <- function(par,
   
   B_yj=as.matrix(data$B_yj)
   obs_catch_week=as.matrix(data$obs_catch_week)
-  obs_N=as.matrix(data$obs_N)
+  #obs_N=as.matrix(data$obs_N)
   obs_escape_project = as.matrix(data$obs_escape_project)
   obs_subsistence = as.matrix(data$obs_subsistence)
   obs_commercial = as.matrix(data$obs_commercial)
@@ -87,6 +87,9 @@ predict_NLL <- function(par,
   }
   obs_escape<- rowSums(obs_e_week)
   
+  #equation 6 in Bue paper 
+  #obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial)# + inriver[2] ) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
+  
   # equation 2 yields predicted escapement 
   pred_E = pred_N - obs_subsistence - obs_commercial
   
@@ -98,7 +101,7 @@ predict_NLL <- function(par,
 # List input data  ===================================================================
 data <- list(B_yj=B_yj, 
                      obs_catch_week=obs_catch_week,
-                     obs_N=obs_N,
+                     #obs_N=obs_N,
                      obs_escape_project=obs_escape_project,
                      obs_commercial = obs_commercial,
                      obs_subsistence=obs_subsistence)
@@ -212,9 +215,10 @@ pred_catch_gs_bue<-ggplot(data = join%>% filter(!id=="obs_catch"), aes(x=year, y
   labs(caption = "Bue predicted catch vs GS predicted catch")
 
 pdf("output/predicted_catch_plots.pdf")
+pred_catch_gs_bue
 pred_catch_obs_gs
 pred_catch_bue_obs
-pred_catch_gs_bue
+ 
 dev.off()
 
 # Plot predicted number per projects ======================================================================
