@@ -18,6 +18,8 @@ upper_year = 2012 # for filtering datasets
 escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
  filter(year < upper_year & year >1987) 
 
+proj_names<-colnames(escapement)[2:8]
+
 inriver <- read_csv("data/Processed_Data/OLD/inriver.csv") %>%
  filter(year < upper_year & year >1987) %>%
   mutate(Reconstruction=replace_na(Reconstruction, 0))
@@ -54,7 +56,7 @@ B_yj = as.matrix(effort)
  
 #years <- c(1976:1976+nrow(obs_catch_week)-1)  #1976:2021 #length of years in dataset
 Nyear <- as.numeric(nrow(prop))
-T = 704 #Nyear*4 # "Total number of observations from all data sets" page 6 -here: number of years * 4 data sets. is this right? 
+T = 282 #Nyear*4 # "Total number of observations from all data sets" page 6 -here: number of years * 4 data sets. is this right? 
 weeks = as.numeric(ncol(prop))
 projects = ncol(escapement)-1 # number of weir projects - the year column
 #err_variance = 0 # error for catch equation... 
@@ -62,7 +64,7 @@ projects = ncol(escapement)-1 # number of weir projects - the year column
 # Set up data that are inputs to likelihood fxns =========================================================================================
 obs_escape_project <- as.matrix(escapement[,2:8])
 obs_escape <- as.matrix(rowSums(escapement[,2:8]))
-#obs_catch <- as.matrix(rowSums(catch[,2:3]))
+# obs_catch <- as.matrix(rowSums(catch[,2:3]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
 obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial + inriver[2] ) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
@@ -144,14 +146,14 @@ NLL <- function(par,
   # Predict E - Escapement =========================================================================================
 #Eq 1 expands the data and yield "observed escapement"
   # this is equation 1 (trying to code it exactly as it is even though it seems super weird...)
-  obs_e_week <-matrix(NA, ncol = projects, nrow = Nyear)  
+  obs_e_proj <-matrix(NA, ncol = projects, nrow = Nyear)  
   # fix week --> project title 
   for (p in 1:projects) {
     for (j in 1:Nyear) {
-      obs_e_week[j,p] = pred_slope[p]*obs_escape_project[j,p]
+      obs_e_proj[j,p] = pred_slope[p]*obs_escape_project[j,p]
     }
   }
-  obs_escape<- rowSums(obs_e_week)
+  obs_escape<- rowSums(obs_e_proj)
   
   #equation 6 in Bue paper 
   #obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial)# + inriver[2] ) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
@@ -160,9 +162,8 @@ NLL <- function(par,
   pred_E = pred_N - obs_subsistence - obs_commercial 
    
   # Calculate NLLs ===================================================================
- #need to loop these because  should skip 0s
-  ssq <- (log(obs_catch_week+1e-6)-log(pred_catch+1e-6))^2
-  sum(ifelse(!is.na(obs_catch_week), (log(obs_catch_week+1e-6)-log(pred_catch+1e-6))^2/(weights[1]^2),0))
+
+ SSQ_catch <- sum(ifelse(!is.na(pred_catch), (log(obs_catch_week+1e-6)-log(pred_catch+1e-6))^2/(weights[1]^2),0))
    
    # NLL_catch  <- dnorm(x=log(obs_catch_week+1e-6), mean=log(pred_catch+1e-6),
    #                               sd = 0.1, log = TRUE)     
@@ -175,15 +176,43 @@ NLL <- function(par,
 #       }
 #     }
 #   }
-   
-  NLL_escapement  <- dnorm(x=log(obs_escape+1e-6), mean=log(pred_E+1e-6),
-                      sd = 0.1, log = TRUE)  
+  SSQ_escapement <- matrix(NA, ncol = projects, nrow = Nyear)  
+ 
+  for (p in 1:projects) {
+    for (j in 1:Nyear) {
+          if(obs_e_proj[j,p]>0){
+  SSQ_escapement[j,p] <- (log(obs_e_proj[j,p])-log(pred_E[j]))^2/(weights[2]^2) 
+          } else{
+            SSQ_escapement[j,p] <- 0}
+    }
+  }
+
+  SSQ_escapement_sum<-sum(SSQ_escapement)
+  # excel only does SSQ for certain years... code that below: 2000,2003,2004,2006
+  # grep("2000", escapement$year)  
+  # grep("2003", escapement$year)  
+  # grep("2004", escapement$year)  
+  # grep("2006", escapement$year)
+  SSQ_TotalRun <- matrix(ncol = 1, nrow = Nyear)
   
-  NLL_N_TotalRun_sum  <- dnorm(x=log(obs_N+1e-6), mean=log(pred_N+1e-6),
-                           sd = 0.1, log = TRUE)  
+  for (i in 1:Nyear) {
+    if(i %in% c(13,16,17,19))  {
+      SSQ_TotalRun[i]  <-  (log(obs_N[i]+1e-6)-log(pred_N[i]+1e-6))^2/(weights[3]^2)
+    } else{
+      SSQ_TotalRun[i] <- 0 }
+  }
+  SSQ_TotalRun_sum<-sum(SSQ_TotalRun)
   
-  NLL <- (-1 * (weights[1] * sum(NLL_catch, na.rm = TRUE))* (weights[2] * sum(NLL_escapement, na.rm = TRUE))* (weights[3] * sum(NLL_N_TotalRun_sum, na.rm = TRUE))) * (273/2)
+#  SSQ_TotalRun_sum  <- sum(ifelse(!is.na(pred_N), (log(obs_N+1e-6)-log(pred_N+1e-6))^2/(weights[3]^2),0))
   
+  # NLL_escapement  <- dnorm(x=log(obs_escape+1e-6), mean=log(pred_E+1e-6),
+  #                     sd = 0.1, log = TRUE)  
+ 
+  # NLL_N_TotalRun_sum  <- dnorm(x=log(obs_N+1e-6), mean=log(pred_N+1e-6),
+  #                          sd = 0.1, log = TRUE)  
+  # 
+  #NLL <- (-1 * (weights[1] * sum(NLL_catch, na.rm = TRUE))* (weights[2] * sum(NLL_escapement, na.rm = TRUE))* (weights[3] * sum(NLL_N_TotalRun_sum, na.rm = TRUE))) * (273/2)
+  NLL <- log(SSQ_escapement_sum+SSQ_TotalRun_sum+SSQ_catch)*T/2
   # Return the total objective function value
   return(NLL)
   
@@ -221,15 +250,15 @@ par_names <- c(
 #in excel
 w_catch <- 1.0
 w_escapement <- 1.0
-w_inriver <- 1.0
+w_inriver <- 0.25
 weights <- c(w_catch,w_escapement,w_inriver)
 
 # List input data  ===================================================================
 data <- list(B_yj=B_yj, 
             # obs_catch_week=obs_catch,
              obs_catch_week=obs_catch_week,
-            inriver =inriver,
-            obs_N=obs_N,
+             inriver =inriver,
+             obs_N=obs_N,
              obs_escape_project=obs_escape_project,
              obs_commercial = obs_commercial,
              obs_subsistence=obs_subsistence)

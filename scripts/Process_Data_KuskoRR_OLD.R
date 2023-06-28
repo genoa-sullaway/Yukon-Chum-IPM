@@ -57,13 +57,14 @@ commercial_effort_df<- data.frame(catch_effort[ , col_odd == 0])
 commercial_effort_yi <- commercial_effort_df %>%
   dplyr::slice(-2) %>%
   janitor::row_to_names(row_number = 1) %>%
-  dplyr::mutate(year = 1976:2011) 
+  dplyr::mutate(year = 1976:2011) %>%
+  select(c(1:10,14))
 
 write_csv(commercial_effort_yi, "data/Processed_Data/OLD/OLD_effort.csv")
 
 # Bethel Catch per week ===========================================================================
 
-catch_week<- data.frame(catch_effort[ , col_odd == 1])[1:13]
+catch_week<- data.frame(catch_effort[ , col_odd == 1])[1:10]
 
 commercial_catch_yi <- catch_week %>%
   dplyr::slice(-2) %>%
@@ -76,11 +77,11 @@ write_csv(commercial_catch_yi, "data/Processed_Data/OLD/OLD_catch_week.csv")
 # Proportions from Bethel ===========================================================================
 
 catch <- commercial_catch_yi %>%
-  gather(1:13, key = "week", value = "catch")
-unique(P_V2$week)
+  gather(1:10, key = "week", value = "catch")
+#unique(P_V2$week)
 
 P_V2 <- commercial_effort_yi %>%
-  gather(1:13, key = "week", value = "effort") %>%
+  gather(1:10, key = "week", value = "effort") %>%
   left_join(catch) %>%
   filter(!week %in% c("5/27 - 6/2", "6/3 - 6/9")) %>%
   mutate(cpue = as.numeric(catch)/as.numeric(effort),
@@ -101,10 +102,11 @@ P_V2 <- commercial_effort_yi %>%
                 `7/22 - 7/28`,
                 `7/29-8/4`,
                 `8/5-8/11`,
-                `8/12-8/18`,
-                `8/19-8/25`,
-                `8/26-9/1`,
-                `9/2-9/8`)
+                `8/12-8/18`#,
+                #`8/19-8/25`,
+#                `8/26-9/1`,
+ #               `9/2-9/8`
+)
 
 write_csv(P_V2, "data/Processed_Data/Prop_V2.csv")
  

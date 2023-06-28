@@ -21,9 +21,50 @@ estimated_parameters<- readRDS("output/OLD_optim_output_par.RDS")
 #assign weights 
 names(estimated_parameters) <- par_names
 
+
+# Load data =========================================================================================
+upper_year = 2012 # for filtering datasets 
+
+# Escapement - Weir estimates by project 
+escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
+  filter(year < upper_year & year >1987) 
+
+proj_names<-colnames(escapement)[2:8]
+
+inriver <- read_csv("data/Processed_Data/OLD/inriver.csv") %>%
+  filter(year < upper_year & year >1987) %>%
+  mutate(Reconstruction=replace_na(Reconstruction, 0))
+
+# This is proportions in each area/week/year - Pyj - right now, just fit for 2008
+prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...
+  mutate(year = 1976:(1976+nrow(.)-1)) %>%
+  filter(year < upper_year & year >1987) %>%
+  dplyr::select(-year) %>%
+  select(c(3:12)) #getting rid of first two weeks bc that is what bue does ....
+
+# Calculate Pyj based on Bethel CPUE
+# Load bethel CPUE and calculate here
+
+# prop<-read_csv("data/Processed_Data/Prop_V2.csv") %>%
+#   filter(year < 2008 & year >1987) %>%
+#   dplyr::select(-year)
+
+#  observed catch per week 
+obs_catch_week <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>%
+  filter(year < upper_year & year >1987) %>%
+  dplyr::select(-year)  
+
+# Observed effort 
+effort <- read_csv("data/Processed_Data/OLD/OLD_effort.csv") %>% # from bethel csv
+  filter(year < upper_year & year >1987)  
+
+#obs Commercial subsitence catch
+catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") %>% # from bethel csv
+  filter(Year < upper_year & Year >1987)  
+
 # I think to plot I need to recreate the NLL function without the LL components to then get pred N and compare it to obs N?
  # NLL Function =========================================================================================
-predict_NLL <- function(par,
+predict_NLL_plot <- function(par,
                 data,
                 weeks,
                 projects,
@@ -35,11 +76,14 @@ predict_NLL <- function(par,
   # grep("ln_q_vec", par_names)
   q_vec <- par[1] 
   
-  #  grep("pred_N", par_names)
-  pred_N <- par[2:21]
+pred_N <- par[2:25]
+  #ln_pred_N <- par[2:21]
+  # ln_pred_N <- par[2:37]
   
-  #  grep("ln_pred_slope", par_names)  
-  pred_slope <- par[22:28]
+  # grep("ln_pred_slope", par_names)  
+  # ln_pred_slope <- par[38:44]
+  #ln_pred_slope <- par[22:28]
+pred_slope <- par[26:32]
    
   # Extract Data: ============================================================================
   
@@ -56,10 +100,15 @@ predict_NLL <- function(par,
   # N_yi = number of chum present in commercial district by week/year (Eq 4)
   #summing across weeks for Nyi is supposed to give Ny, total fish present across years 
   N_yi <- matrix(nrow = Nyear, ncol = weeks)
-  for (j in 1:Nyear) {
-    N_yi[j,] =  as.matrix(pred_N[j]*prop[j,])
-  }
   
+  for (j in 1:Nyear) {
+    for (i in 1:weeks) {
+      if(prop[j,i] > 0){
+        N_yi[j,i] =  as.matrix(pred_N[j]*prop[j,i])
+      }
+      else(N_yi[j,i] <-0)
+    }
+  }
   # Predict C - Catch, using Baranov catch equation: ============================================================================
   
   # N is # of fish (week by year)
@@ -71,21 +120,24 @@ predict_NLL <- function(par,
   
   for (i in 1:weeks) {
     for (j in 1:Nyear) { 
-      pred_catch[j,i] = N_yi[j,i]*(1-(exp(-q_vec*B_yj[j,i])))
+      if(is.na(N_yi[j,i])){
+        N_yi[j,i] <- 0
+      }
+      else( pred_catch[j,i] = N_yi[j,i]*(1-(exp(-q_vec*B_yj[j,i]))))
     }
   }
-   
+  
   # Predict E - Escapement =========================================================================================
   #Eq 1 expands the data and yield "observed escapement"
   # this is equation 1 (trying to code it exactly as it is even though it seems super weird...)
-  obs_e_week <-matrix(NA, ncol = projects, nrow = Nyear)  
-  
+  obs_e_proj <-matrix(NA, ncol = projects, nrow = Nyear)  
+  # fix week --> project title 
   for (p in 1:projects) {
     for (j in 1:Nyear) {
-      obs_e_week[j,p] = pred_slope[p]*obs_escape_project[j,p]
+      obs_e_proj[j,p] = pred_slope[p]*obs_escape_project[j,p]
     }
   }
-  obs_escape<- rowSums(obs_e_week)
+  obs_escape<- rowSums(obs_e_proj)
   
   #equation 6 in Bue paper 
   #obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial)# + inriver[2] ) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
@@ -93,7 +145,7 @@ predict_NLL <- function(par,
   # equation 2 yields predicted escapement 
   pred_E = pred_N - obs_subsistence - obs_commercial
   
-  output <- list(pred_catch, pred_E, pred_N,obs_e_week,N_yi)
+  output <- list(pred_catch, pred_E, pred_N,obs_e_proj,N_yi)
   # Return the predicted values based on parameter estimates in optimization script 
   return(output)
 }
@@ -107,9 +159,9 @@ data <- list(B_yj=B_yj,
                      obs_subsistence=obs_subsistence)
  
 # Run function  ======================================================================
-pre_outputs <- predict_NLL(par=estimated_parameters, # starting values for parameter estimations 
+pre_outputs <- predict_NLL_plot(par=estimated_parameters, # starting values for parameter estimations 
                            # data/fixed values go below
-                          data = data,
+                           data = data,
                            #values
                            weeks=weeks,
                            projects=projects,
@@ -132,10 +184,9 @@ pre_outputs <- predict_NLL(par=estimated_parameters, # starting values for param
  
 # Plot predicted catch  ======================================================================
 obs_catch <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>%  #Taken from Chum RR data.xlsx
-  dplyr::mutate(year = as.numeric(1976:2011)) %>%
-  select(-`9/2-9/8`) %>% 
-  gather(1:12, key = "week", value = "obs_catch") %>%
-  filter(!year < 1988 & !year >2007)
+ # dplyr::mutate(year = as.numeric(1988:(upper_year-1)) %>%
+#  select(-`9/2-9/8`) %>% 
+  gather(1:10, key = "week", value = "obs_catch") 
 
 
   # prop<-read_csv("data/Processed_Data/Prop_V2.csv") %>%
@@ -143,9 +194,9 @@ obs_catch <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>%  #Taken 
   # dplyr::select(-year)
 prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...
   mutate(year = 1976:(1976+nrow(.)-1)) %>%
-  filter(year < 2008 & year >1987) %>%
+  filter(year < upper_year & year >1987) %>%
   dplyr::select(-year) %>%
-  dplyr::select(c(3:14)) 
+  dplyr::select(c(2:12)) 
 
 weeks_label<-colnames(prop)
   # load pred catch from Bues estiamtes (csv sheet old) to also compare to obs and mine
@@ -155,14 +206,14 @@ Bue_pred <- read_csv("data/Processed_Data/OLD/Bue_pred_catch.csv")
 col_odd <- seq_len(ncol(Bue_pred)) %% 2
 
 bue_pred_catch<- data.frame(Bue_pred[ , col_odd == 0])
-bue_pred_catch <- bue_pred_catch[1:12]
-names(bue_pred_catch) <- weeks_label 
+bue_pred_catch <- bue_pred_catch[1:10]
+names(bue_pred_catch) <- weeks_label[2:11] 
 
 bue_pred_catch_df <- bue_pred_catch %>%
   slice(-1) %>%
   mutate(year =1976:2011) %>% 
-  filter(year>1987 & year<2008) %>% 
-  gather(1:12, key = "week", value = "bue_pred_catch")  %>%
+  filter(year>1987 & year<upper_year) %>% 
+  gather(1:10, key = "week", value = "bue_pred_catch")  %>%
   mutate(bue_pred_catch = as.numeric(bue_pred_catch),
          year = as.numeric(year))
 
@@ -172,11 +223,11 @@ pred_catch<-pre_outputs[[1]]
 pred_catch <- pred_catch %>% 
   data.frame()  
 
-names(pred_catch) <- weeks_label
-
+names(pred_catch) <- weeks_label[2:11]
+ 
 pred_catch <- pred_catch %>%
-  mutate(year = 1988:2007) %>%
-  gather(1:12, key = "week", value = "pred_catch")  
+  mutate(year = 1988:(upper_year-1)) %>%
+  gather(1:10, key = "week", value = "pred_catch")  
 
 join <- left_join(obs_catch,pred_catch) %>%
   left_join(bue_pred_catch_df) %>% 
@@ -241,7 +292,7 @@ pred_escape <-pre_outputs[[2]]
 #from my model:
 proj_names<-colnames(read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv"))[2:8]
 expanded_per_proj <-data.frame(pre_outputs[[4]]) %>%
-  mutate(year = 1988:2007 )  
+  mutate(year = 1988:(upper_year-1) )  
   
 names(expanded_per_proj)[1:7] <- proj_names
   
@@ -251,7 +302,7 @@ expanded_per_proj<- expanded_per_proj %>%
 
 # Bue's OBS values:
  obs_escape_per_proj<-  read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
-   filter(year < 2008 & year >1987) %>%
+   filter(year < upper_year & year >1987) %>%
    gather(2:(projects+1), key = "project", value = "value")%>%
    dplyr::mutate(id = "obs_escape_per_proj")
 
@@ -276,7 +327,7 @@ ggplot(data = per_proj %>% filter(!id == "obs_escape_per_proj"),
 # same as above but sum across projects to just get total index: 
 pred_e<-data.frame(pre_outputs[[2]]) %>%
   rename(value = "Subsistence") %>%
-  mutate(year = 1988:2007,
+  mutate(year = 1988:(upper_year-1),
          id = "predicted_escapement")
 
 per_proj[is.na(per_proj)]<- 0

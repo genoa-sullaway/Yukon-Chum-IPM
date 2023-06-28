@@ -9,6 +9,7 @@
 # Load Packages =========================================================================================
 library(tidyverse)
 library(here)
+upper_year = 2012 # for filtering datasets 
 
 # Load data =========================================================================================
 bue_estimated <- read_csv("data/Processed_Data/OLD/Estimated_N_OldModel_XLS.csv") # this is from the older excel sheet, columns Q,R,FW  
@@ -16,19 +17,19 @@ estimated_parameters<- readRDS("output/OLD_optim_output_par.RDS")
 
 # Load data (below just for plotting) =========================================================================================
 escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
-  filter(year < 2008 & year >1987) 
+  filter(year < upper_year & year >1987) 
 proj_names<-colnames(escapement)[2:8]
 
 # Plot N =========================================================================================
-pred_N<-data.frame(Year = c(1988:2007),   
-                   pred_N_est= as.vector(c(estimated_parameters[2:21])))  
+pred_N<-data.frame(Year = c(1988:(upper_year-1)),   
+                   pred_N_est= as.vector(c(estimated_parameters[2:25])))  
 
 est_N<- bue_estimated %>% 
   filter(param == "N") %>% 
   dplyr::mutate(Year = as.numeric(year_or_project),
                 Bue_Estimate_Thousands = value ) %>%
   dplyr::select(c(4:5)) %>% 
-  filter(Year < 2008) %>% 
+  filter(Year < upper_year) %>% 
   left_join(pred_N) %>% 
   gather(2:3, key = "id", value = "value")
 
@@ -60,7 +61,7 @@ N_plot_observed
 
 # Plot Slope =========================================================================================
 pred_slope<-data.frame(project = c(proj_names),
-                       pred_slope= as.vector(c(estimated_parameters[22:28])))  
+                       pred_slope= as.vector(c(estimated_parameters[26:32])))  
 
 est_slope<- bue_estimated %>% 
   filter(param == "Slope") %>% 
