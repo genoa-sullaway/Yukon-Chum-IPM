@@ -9,34 +9,38 @@
 # Load Packages =========================================================================================
 library(tidyverse)
 library(here)
-upper_year = 2012 # for filtering datasets 
 
 # Load data =========================================================================================
 bue_estimated <- read_csv("data/Processed_Data/OLD/Estimated_N_OldModel_XLS.csv") # this is from the older excel sheet, columns Q,R,FW  
 #SSQ
-estimated_parameters<- readRDS("output/OLD_optim_output_par.RDS") 
+estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS") 
 # estimated with dnorm
 #estimated_parameters<- readRDS("output/OLD_optim_output_pardnorm.RDS")  
 
+upper_year = 2022
+
 # Load data (below just for plotting) =========================================================================================
-escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
-  filter(year < upper_year & year >1987) 
-proj_names<-colnames(escapement)[2:8]
+escapement <- read_csv("data/Processed_Data/kusko_escapement.csv")  %>% 
+  filter(!year < 1988) 
+proj_names<-colnames(escapement)[1:9] 
 
 # Plot N =========================================================================================
 pred_N<-data.frame(Year = c(1988:(upper_year-1)),   
-                   pred_N_est= as.vector(c(estimated_parameters[2:25])))  
+                   pred_N_est= as.vector(c(estimated_parameters[2:35])))  
 
-est_N<- bue_estimated %>% 
+bueest_N<- bue_estimated %>% 
   filter(param == "N") %>% 
   dplyr::mutate(Year = as.numeric(year_or_project),
                 Bue_Estimate_Thousands = value ) %>%
   dplyr::select(c(4:5)) %>% 
-  filter(Year < upper_year) %>% 
-  left_join(pred_N) %>% 
+  filter(Year < upper_year) 
+
+
+est_N <- pred_N %>%
+   left_join(bueest_N) %>% 
   gather(2:3, key = "id", value = "value")
 
-N_plot<-ggplot(data = est_N %>% filter(!Year == 2011), aes(x=Year, y = value/1000, group = id, color = id)) +
+N_plot<-ggplot(data = est_N, aes(x=Year, y = value/1000, group = id, color = id)) +
   geom_line( ) +
   geom_point() + 
   theme_classic() +
@@ -63,14 +67,19 @@ N_plot_observed
 
 # Plot Slope =========================================================================================
 pred_slope<-data.frame(project = c(proj_names),
-                       pred_slope= as.vector(c(estimated_parameters[26:32])))  
+                       pred_slope= as.vector(c(estimated_parameters[36:44])))  
 
-est_slope<- bue_estimated %>% 
+estbue_slope<- bue_estimated %>% 
   filter(param == "Slope") %>% 
   dplyr::mutate(project = word(year_or_project, 1),
                 Bue_slope = value) %>%
-  dplyr::select(c(4:5)) %>% 
-  left_join(pred_slope) %>% 
+  dplyr::select(c(4:5))  %>%
+  mutate(project = case_when(project == "Aniak" ~ "Sonar",
+                             project == "Tatlawiksuk" ~ "Tatlawitsak",
+                             TRUE ~ project))
+
+est_slope <- pred_slope %>%
+    left_join(estbue_slope) %>% 
   gather(2:3, key = "id", value = "value") #%>%
   # mutate(value = case_when(id == "pred_slope" ~ value*4.5,
   #                          TRUE ~ value))

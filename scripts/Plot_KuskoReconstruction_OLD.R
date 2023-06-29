@@ -103,10 +103,10 @@ pred_slope <- par[26:32]
   
   for (j in 1:Nyear) {
     for (i in 1:weeks) {
-      if(prop[j,i] > 0){
+      if(prop[j,i] > 0 & obs_catch_week[j,i]>0){
         N_yi[j,i] =  as.matrix(pred_N[j]*prop[j,i])
       }
-      else(N_yi[j,i] <-0)
+      else(N_yi[j,i] <- NA)
     }
   }
   # Predict C - Catch, using Baranov catch equation: ============================================================================

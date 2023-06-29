@@ -139,7 +139,7 @@ NLL <- function(par,
   for (i in 1:weeks) {
     for (j in 1:Nyear) { 
       if(is.na(N_yi[j,i])){
-        pred_catch[j,i] <- NA 
+        N_yi[j,i] <- NA 
       }
       else( pred_catch[j,i] = N_yi[j,i]*(1-(exp(-q_vec*B_yj[j,i]))))
     }
@@ -166,10 +166,10 @@ NLL <- function(par,
    
   # Calculate NLLs ===================================================================
 
- SSQ_catch <- sum(ifelse(!is.na(pred_catch), (log(obs_catch_week)-log(pred_catch))^2/(weights[1]^2),0))
+ #SSQ_catch <- sum(ifelse(!is.na(pred_catch), (log(obs_catch_week)-log(pred_catch))^2/(weights[1]^2),0))
    
-   # NLL_catch  <- dnorm(x=log(obs_catch_week+1e-6), mean=log(pred_catch+1e-6),
-   #                               sd = 0.1, log = TRUE)     
+    NLL_catch  <- sum(ifelse(!is.na(pred_catch), dnorm(x=log(obs_catch_week+1e-6), mean=log(pred_catch+1e-6),
+                                  sd = weights[1], log = TRUE),0))
 
 #     for (i in 1:weeks) {
 #     for (j in 1:Nyear) { 
@@ -179,18 +179,20 @@ NLL <- function(par,
 #       }
 #     }
 #   }
-  SSQ_escapement <- matrix(NA, ncol = projects, nrow = Nyear)  
+ 
+  NLL_escapement <- matrix(NA, ncol = projects, nrow = Nyear)  
  
   for (p in 1:projects) {
     for (j in 1:Nyear) {
           if(obs_e_proj[j,p]>0){
-  SSQ_escapement[j,p] <- (log(obs_e_proj[j,p])-log(pred_E[j]))^2/(weights[2]^2) 
+  NLL_escapement[j,p] <-  dnorm(x=log(obs_e_proj[j,p]+1e-6), mean=log(pred_E[j]+1e-6),
+                                sd = weights[2], log = TRUE) 
           } else{
-            SSQ_escapement[j,p] <- 0}
+            NLL_escapement[j,p] <- 0}
     }
   }
 
-  SSQ_escapement_sum<-sum(SSQ_escapement)
+ # NLL_escapementsum<-sum(NLL_escapement)
   # excel only does SSQ for certain years... code that below: 2000,2003,2004,2006
   # grep("2000", escapement$year)  
   #  grep("2002", escapement$year)  
@@ -208,15 +210,17 @@ NLL <- function(par,
   # }
   # SSQ_TotalRun_sum<-sum(SSQ_TotalRun)
   
-  SSQ_TotalRun <- matrix(ncol = 1, nrow = Nyear)
+  NLL_TotalRun <- matrix(ncol = 1, nrow = Nyear)
  
   for (i in 1:Nyear) {
     if(i %in% c(13,15,16,19))  {
-      SSQ_TotalRun[i]  <-  (log(obs_inriver[i]+1e-6)-log(pred_N[i]+1e-6))^2/(weights[3]^2)
+      NLL_TotalRun[i]  <- dnorm(x=log(obs_inriver[i]+1e-6), mean=log(pred_N[i]+1e-6),
+                                sd = weights[3], log = TRUE) 
     } else{
-      SSQ_TotalRun[i] <- 0 }
+      NLL_TotalRun[i] <- 0 }
   }
-  SSQ_TotalRun_sum<- sum( SSQ_TotalRun)
+ # NLL_TotalRun_sum<- sum(NLL_TotalRun)
+  
 #  SSQ_TotalRun_sum  <- sum(ifelse(!is.na(pred_N), (log(obs_N+1e-6)-log(pred_N+1e-6))^2/(weights[3]^2),0))
   
   # NLL_escapement  <- dnorm(x=log(obs_escape+1e-6), mean=log(pred_E+1e-6),
@@ -225,8 +229,11 @@ NLL <- function(par,
   # NLL_N_TotalRun_sum  <- dnorm(x=log(obs_N+1e-6), mean=log(pred_N+1e-6),
   #                          sd = 0.1, log = TRUE)  
   # 
-  #NLL <- (-1 * (weights[1] * sum(NLL_catch, na.rm = TRUE))* (weights[2] * sum(NLL_escapement, na.rm = TRUE))* (weights[3] * sum(NLL_N_TotalRun_sum, na.rm = TRUE))) * (273/2)
-  NLL <- log(SSQ_escapement_sum+SSQ_TotalRun_sum+SSQ_catch)*T/2
+  NLL <- ( (sum(NLL_catch, na.rm = TRUE)+  sum(NLL_escapement, na.rm = TRUE) + sum(NLL_TotalRun, na.rm = TRUE)) * (T/2))
+  
+  #  NLL <- (-1 * (weights[1] * sum(NLL_catch, na.rm = TRUE))* (weights[2] * sum(NLL_escapement, na.rm = TRUE))* (weights[3] * sum(NLL_TotalRun, na.rm = TRUE))) * (T/2)
+  
+  #NLL <- log(SSQ_escapement_sum+SSQ_TotalRun_sum+SSQ_catch)*T/2
   # Return the total objective function value
   return(NLL)
   
@@ -243,9 +250,9 @@ bue_estimated_slope <- read_csv("data/Processed_Data/OLD/Estimated_N_OldModel_XL
 
 ln_q_vec <- log(0.0000441) 
 #ln_pred_N <- rep(log(2000000),Nyear)
-ln_pred_N <-log(bue_estimated$value) # rep(log(2000000),Nyear)
-escapement_slope <-  log(bue_estimated_slope$value) #rep(log(150), times = projects) 
- 
+ln_pred_N <-log(bue_estimated$value)# rep(log(2000000),Nyear)
+escapement_slope <-  log(bue_estimated_slope$value) #rep(log(350), times = projects) 
+
 pars_start<- c( 
   ln_q_vec,
   ln_pred_N,
@@ -305,7 +312,7 @@ exp(param_est)
 
 fit_nlm$objective
  
-saveRDS(exp(param_est),"output/OLD_optim_output_par.RDS")
+saveRDS(exp(param_est),"output/OLD_optim_output_pardnorm.RDS")
 
  
 

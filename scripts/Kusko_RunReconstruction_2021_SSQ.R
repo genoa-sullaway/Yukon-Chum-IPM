@@ -12,28 +12,30 @@ library(tidyverse)
 library(here)
 
 # Load data =========================================================================================
-upper_year = 2012 # for filtering datasets 
+upper_year = 2021 # for filtering datasets 
  
 # Escapement - Weir estimates by project 
-escapement <- read_csv("data/Processed_Data/OLD/OLD_kusko_escapement.csv") %>%
- filter(year < upper_year & year >1987) 
+escapement <- read_csv("data/Processed_Data/kusko_escapement.csv")  %>% 
+  filter(!year < 1988) 
 
 proj_names<-colnames(escapement)[2:8]
 
 inriver <- read_csv("data/Processed_Data/OLD/inriver.csv") %>%
- filter(year < upper_year & year >1987) %>%
-  mutate(Reconstruction=replace_na(Reconstruction, 0))
-
+  filter(!year < 1988) %>% 
+  rbind(data.frame(year = c(2012:2021), Reconstruction = c(NA))) %>%
+  dplyr::mutate(Reconstruction=replace_na(Reconstruction, 0))
 
 inriver_na <- read_csv("data/Processed_Data/OLD/inriver.csv") %>%
-  filter(year < upper_year & year >1987) 
+  filter(!year < 1988) %>% 
+  rbind(data.frame(year = c(2012:2021), Reconstruction = c(NA)))
 
 # This is proportions in each area/week/year - Pyj - right now, just fit for 2008
-prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...
-  mutate(year = 1976:(1976+nrow(.)-1)) %>%
-  filter(year < upper_year & year >1987) %>%
-  dplyr::select(-year) %>%
-  select(c(3:12)) #getting rid of first two weeks bc that is what bue does ....
+prop<-read_csv("data/Processed_Data/Proportions_run_present_weekly.csv") %>% # only select some weeks for now because proportion has less weeks than the effort data...  
+  # mutate(year = 1976:(1976+nrow(.)-1)) %>%
+  # filter(year < 2008) %>%
+  filter(!Year < 1988) %>% 
+  dplyr::select(-Year) %>% 
+  dplyr::select(c(4:9))
 
 # Calculate Pyj based on Bethel CPUE
 # Load bethel CPUE and calculate here
@@ -43,32 +45,29 @@ prop<- read_csv("data/Processed_Data/OLD/OLD_Proportions_run_present_weekly.csv"
 #   dplyr::select(-year)
 
 #  observed catch per week 
-obs_catch_week <- read_csv("data/Processed_Data/OLD/OLD_catch_week.csv") %>%
-  filter(year < upper_year & year >1987) %>%
-  dplyr::select(-year)  
+obs_catch_week <- read_csv("data/Processed_Data/catch_week.csv") %>%
+  filter(!year < 1988) 
  
 # Observed effort 
-effort <- read_csv("data/Processed_Data/OLD/OLD_effort.csv") %>% # from bethel csv
-  filter(year < upper_year & year >1987)  
- 
+effort <- read_csv("data/Processed_Data/effort.csv") %>%
+  filter(!year < 1988) 
+
 #obs Commercial subsitence catch
-  catch<-read_csv("data/Processed_Data/OLD/OLD_catch.csv") %>% # from bethel csv
-  filter(Year < upper_year & Year >1987)  
-  
+catch<-read_csv("data/Processed_Data/catch.csv")%>%
+  filter(!Year < 1988)  
+
 # format effort for equation 
-B_yj = as.matrix(effort)  
- 
+B_yj = as.matrix(effort[,1:7])  
+
 #years <- c(1976:1976+nrow(obs_catch_week)-1)  #1976:2021 #length of years in dataset
 Nyear <- as.numeric(nrow(prop))
-T = 282 #Nyear*4 # "Total number of observations from all data sets" page 6 -here: number of years * 4 data sets. is this right? 
 weeks = as.numeric(ncol(prop))
 projects = ncol(escapement)-1 # number of weir projects - the year column
-#err_variance = 0 # error for catch equation... 
+T = Nyear*weeks*projects #Nyear*4 # "Total number of observations from all data sets" page 6 -here: number of years * 4 data sets. is this right? 
 
 # Set up data that are inputs to likelihood fxns =========================================================================================
-obs_escape_project <- as.matrix(escapement[,2:8])
-obs_escape <- as.matrix(rowSums(escapement[,2:8]))
-# obs_catch <- as.matrix(rowSums(catch[,2:3]))
+obs_escape_project <- as.matrix(escapement[,1:9])
+obs_escape <- as.matrix(rowSums(escapement[,1:9]))
 obs_commercial <- as.matrix(catch[,2])
 obs_subsistence <- as.matrix(catch[,3])
 obs_N = as.matrix(obs_escape + obs_subsistence + obs_commercial + inriver[2] ) # +catch[,4] + catch[,5]) # on Page 5 of model paper this is N_y, in excel this is "# of fish accounted for"
@@ -88,24 +87,25 @@ NLL <- function(par,
   # grep("ln_q_vec", par_names)
   ln_q_vec <- par[1] 
   
-  #  grep("pred_N", par_names)
-   ln_pred_N <- par[2:25]
-  #ln_pred_N <- par[2:21]
+  #   grep("pred_N", par_names)
+  ln_pred_N <- par[2:35]
+  # ln_pred_N <- par[2:21]
   # ln_pred_N <- par[2:37]
   
- # grep("ln_pred_slope", par_names)  
- # ln_pred_slope <- par[38:44]
-  #ln_pred_slope <- par[22:28]
- ln_pred_slope <- par[26:32]
+  # grep("ln_pred_slope", par_names)  
+  # ln_pred_slope <- par[38:44]
+  # ln_pred_slope <- par[22:28]
+  ln_pred_slope <- par[36:44]
 
   q_vec <- exp(ln_q_vec)
   pred_N <- exp(ln_pred_N)
   pred_slope <- exp(ln_pred_slope)
   
 # Extract Data: ============================================================================
-  B_yj=as.matrix(data$B_yj)[,1:10]
+  B_yj=as.matrix(data$B_yj) 
   #obs_catch =as.matrix(data$obs_catch)
-  obs_catch_week=as.matrix(data$obs_catch_week) 
+  obs_catch_week=as.matrix(data$obs_catch_week)[,2:7] 
+  obs_catch_week[is.na(obs_catch_week)] <- 0
   obs_N=as.matrix(data$obs_N)
   obs_escape_project = as.matrix(data$obs_escape_project)
   obs_subsistence = as.matrix(data$obs_subsistence)
@@ -114,17 +114,16 @@ NLL <- function(par,
   # Predict N - Observed Total Return =========================================================================================
 
   # N_yi = number of chum present in commercial district by week/year (Eq 4)
-  #summing across weeks for Nyi is supposed to give Ny, total fish present across years 
-  
+  # summing across weeks for Nyi is supposed to give Ny, total fish present across years 
+
   N_yi <- matrix(nrow = Nyear, ncol = weeks)
  
   for (j in 1:Nyear) {
     for (i in 1:weeks) {
     if(prop[j,i] > 0 & obs_catch_week[j,i]>0){
-    N_yi[j,i] =  as.matrix(pred_N[j]*prop[j,i])
-      }
-    else(N_yi[j,i] <- NA)
-    }
+             N_yi[j,i] =  as.matrix(pred_N[j]*prop[j,i])
+      } else(N_yi[j,i] <- NA)
+          }
       }
 
   # Predict C - Catch, using Baranov catch equation: ============================================================================
@@ -132,7 +131,7 @@ NLL <- function(par,
   # N is # of fish (week by year)
   # B is effort (week by year)
   # for right now estimate 1 q for whole data set
-  #pred_catch = N_yi_vec_prop*(1-(exp(-q_vec*B_yj_vec))) 
+  # pred_catch = N_yi_vec_prop*(1-(exp(-q_vec*B_yj_vec))) 
    
   pred_catch <- matrix(ncol = weeks, nrow = Nyear)
    
@@ -165,11 +164,20 @@ NLL <- function(par,
   pred_E = pred_N - obs_subsistence - obs_commercial #+ inriver[2]
    
   # Calculate NLLs ===================================================================
+  SSQ_catch <- matrix(NA, ncol = weeks, nrow = Nyear)  
+  
+  for (i in 1:weeks) {
+    for (j in 1:Nyear) {
+      if(pred_catch[j,i]>0 & !any(is.na(pred_catch[j,i]))){
+ SSQ_catch[j,i] <- sum((log(obs_catch_week[j,i])-log(pred_catch[j,i]))^2/(weights[1]^2))
+      }
+    }
+  }
+  
+SSQ_catch_sum  <- sum(SSQ_catch, na.rm = TRUE)
 
- SSQ_catch <- sum(ifelse(!is.na(pred_catch), (log(obs_catch_week)-log(pred_catch))^2/(weights[1]^2),0))
-   
-   # NLL_catch  <- dnorm(x=log(obs_catch_week+1e-6), mean=log(pred_catch+1e-6),
-   #                               sd = 0.1, log = TRUE)     
+# NLL_catch  <- dnorm(x=log(obs_catch_week+1e-6), mean=log(pred_catch+1e-6),
+#                               sd = 0.1, log = TRUE)     
 
 #     for (i in 1:weeks) {
 #     for (j in 1:Nyear) { 
@@ -226,7 +234,7 @@ NLL <- function(par,
   #                          sd = 0.1, log = TRUE)  
   # 
   #NLL <- (-1 * (weights[1] * sum(NLL_catch, na.rm = TRUE))* (weights[2] * sum(NLL_escapement, na.rm = TRUE))* (weights[3] * sum(NLL_N_TotalRun_sum, na.rm = TRUE))) * (273/2)
-  NLL <- log(SSQ_escapement_sum+SSQ_TotalRun_sum+SSQ_catch)*T/2
+  NLL <- log(SSQ_escapement_sum+SSQ_TotalRun_sum+SSQ_catch_sum)*T/2
   # Return the total objective function value
   return(NLL)
   
@@ -234,18 +242,17 @@ NLL <- function(par,
 
 # Parameter starting values ===================================================================
 bue_estimated <- read_csv("data/Processed_Data/OLD/Estimated_N_OldModel_XLS.csv") %>% # this is from the older excel sheet, columns Q,R,FW 
-  filter(param == "N", year_or_project < upper_year) %>%
+  filter(param == "N" ) %>%
   arrange(year_or_project)
 
 bue_estimated_slope <- read_csv("data/Processed_Data/OLD/Estimated_N_OldModel_XLS.csv") %>% # this is from the older excel sheet, columns Q,R,FW 
   filter(param == "Slope" ) %>%
   arrange(year_or_project)
 
-ln_q_vec <- log(0.0000441) 
-#ln_pred_N <- rep(log(2000000),Nyear)
-ln_pred_N <-log(bue_estimated$value) # rep(log(2000000),Nyear)
-escapement_slope <-  log(bue_estimated_slope$value) #rep(log(150), times = projects) 
- 
+ln_q_vec <- log(0.0000441)  
+ln_pred_N <- rep(log(2000000),times = Nyear) # log(bue_estimated$value)
+escapement_slope <- rep(log(150), times = projects) # log(bue_estimated_slope$value) #
+
 pars_start<- c( 
   ln_q_vec,
   ln_pred_N,
@@ -305,7 +312,7 @@ exp(param_est)
 
 fit_nlm$objective
  
-saveRDS(exp(param_est),"output/OLD_optim_output_par.RDS")
+saveRDS(exp(param_est),"output/optim_output_par_data2021.RDS")
 
  
 
