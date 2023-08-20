@@ -64,8 +64,8 @@ Chum are known to distribute to in the EBS - stock specific distributions are in
 check <- data.frame(unique(df[c("LAT", "LON")]))
 
 ggplot(data = check) +
-  geom_point(aes(x=LON, y = LAT)) +
-  geom_sf(data = ak)
+  geom_point(aes(x=LON, y = LAT)) #+
+  #geom_sf(data = ak)
 
 ```
 

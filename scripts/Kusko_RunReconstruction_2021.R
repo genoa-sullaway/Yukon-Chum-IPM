@@ -4,9 +4,8 @@
 # Date: Start March 2023
 #
 # Purpose: Recreate ADFG Kuskokwim Chum Run reconstruction in R based on excel sheet
-# based on Bue and Molyneaux Kuskokwim chum salmon run reconstruction 
-#
-# Note: this script does the RR until 2007 to match the paper and excel sheet, see: Kusko_RunReconstruction_2021 for the current data! 
+# based on Bue and Molyneaux Kuskokwim chum salmon run reconstruction which has data unitl 2011, here I use the same
+# structure but add in 2021 data provided by ADFG. 
 # Load Packages =========================================================================================
 library(tidyverse)
 library(here)

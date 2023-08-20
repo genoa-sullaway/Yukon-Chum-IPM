@@ -62,6 +62,36 @@ asl_chum <- chum_tidy %>%
 
 ```
  
+```{r}
+chum_kusko <- asl_dat %>%
+    filter(Species == "chum",
+         !sampleYear < 1980, 
+         SASAP.Region %in% c( "Kuskokwim"), 
+         !Fresh.Water.Age == "NA") %>%
+    dplyr::select(sampleYear, LocationID, ASLProjectType, Fresh.Water.Age, Salt.Water.Age, mean, sd,n)  
+
+ggplot(data = chum_kusko) +
+  geom_point(aes(x=as.numeric(sampleYear), y = mean)) +
+  geom_errorbar(aes(x =sampleYear, ymin = mean-sd, ymax=mean+sd)) +
+  facet_grid(LocationID~Salt.Water.Age, scales = "free_y") +
+  theme_classic()
+
+```
+
+ 
+```{r geom violin}
+ggplot(chum_kusko) +
+  geom_violin(aes(x=sampleYear, y = mean, group = sampleYear)) +
+  facet_wrap(~Salt.Water.Age)
+
+```
+ 
+
+```{r how many locations are there?}
+unique(chum_kusko$LocationID)
+```
+
+ 
 # Plot Chum data 
 
 ```{r Plot Time Series for Chum}
