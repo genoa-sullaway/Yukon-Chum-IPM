@@ -22,7 +22,7 @@ log_r = log(r);
 
 parameters{
 
-real<lower = 0.2, upper = 1> h; //steepness
+// real<lower = 0.2, upper = 1> h; //steepness
 
 real<lower = 0> alpha; // max recruitment
 
@@ -40,7 +40,7 @@ vector[n] rhat;
 
 vector[n] log_rhat;
 
-rhat = (0.8 * alpha * h * ssb) ./ (0.2 * beta * (1 - h) +(h - 0.2) * ssb); // beverton holt model
+rhat = (alpha * ssb) ./ (1 + beta * ssb);
 
 log_rhat = log(rhat);
 

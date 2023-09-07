@@ -1,7 +1,11 @@
 library(rstan)
- 
-df <- read_csv("data/input_dat_stan.csv")
- 
+
+# to start, use simulated data from "scripts/simulate_data.R"
+# first try with 1 stock, then will build heirarchical to 3 stocks
+
+#df <- read_csv("data/input_dat_stan.csv")
+sim_yukon_fall
+
 warmups <- 1000
 
 total_iterations <- 2000
@@ -14,14 +18,10 @@ n_cores <- 4
 
 adapt_delta <- 0.95
 
-data <- list(n = nrow(df),
-             r = df$r,
-             ssb = df$ssb,
-             max_r = max(df$r)
-)
-
-
-
+data <- list(n = nrow(sim_yukon_fall),
+             r = sim_yukon_fall$recruits,
+             ssb = sim_yukon_fall$spawners,
+             max_r = max(sim_yukon_fall$recruits))
 
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_V1.stan"),
@@ -33,22 +33,18 @@ bh_fit <- stan(
   refresh = 250,
   init = list(
     list(
-      h = 0.4,
       log_alpha = log(1 * data$max_r),
       log_beta = log(2* max(df$ssb))
     ),
     list(
-      h = 0.21,
       log_alpha = log(3 * data$max_r),
       log_beta = log(.5 *max(df$ssb))
     ),
     list(
-      h = 0.8,
       log_alpha = log(1 * data$max_r),
       log_beta = log(1.1*max(df$ssb))
     ),
     list(
-      h = 0.3,
       log_alpha = log(.8 * data$max_r),
       log_beta = log(5*max(df$ssb))
     )
