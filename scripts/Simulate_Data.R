@@ -15,7 +15,7 @@ yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv")
 yukon_spring <- read_excel("data/Yukon_Escapement_ADFG/Yukon Summer Chum Total Run 1978-2022 Run Rec.xlsx")
 
 kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS") 
-kusko<-data.frame(Year = c(1988:(upper_year-1)),   
+kusko<-data.frame(Year = c(1988:(2022-1)),   
                    pred_N_est= as.vector(c(kusko_estimated_parameters[2:35])))  
 
 sim_spawners<-function(initial_population){
@@ -62,7 +62,7 @@ bev_holt_sim_function <- function(spawners, alpha, beta){ # Initial population s
   }
   
   # Create a time vector
-  sr<-data_frame("time" = c(1:num_time_steps),
+  sr<-tibble("time" = c(1:num_time_steps),
                  "recruits" = recruits, "spawners"=spawners) %>%
     filter(!recruits == 0)
   
