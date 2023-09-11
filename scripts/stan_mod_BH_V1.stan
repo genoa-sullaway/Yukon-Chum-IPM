@@ -1,54 +1,69 @@
-// old stan model on log scale 
-
 data {
-  int<lower=0> N ; // observations 
-  vector[N] ssb ; 
-  vector[N] rec ;
-}
-transformed data {
-vector[N] log_rec; // log recruitment
-log_rec = log(rec); // transform recruitment to log space
+  int<lower=0> N ; // total observations 
+  int<lower=0> K; // number of stocks
+  
+  // stock specific data 
+  int<lower=0> N_stock[K];  // Number of data points for each stock
+  vector[N_stock[K]] ssb[K];  // Spawners for each stock
+  vector[N_stock[K]] rec[K];  // Recruitment for each stock
+  }
+// transformed data { my code 
+// vector[N_stock[K]] log_rec[K]; // log recruitment
+// log_rec[K] = log(rec[K]); // transform recruitment to log space
+// }
+transformed parameters { // chat gpt code
+vector[K] beta; 
+vector[N_stock[K]] log_rec[K]; // log recruitment
+
+  for (k in 1:K) {
+    log_rec[k] = log(rec[k]);
+    beta[k] = exp(log_beta[k]);
+  }
 }
 parameters {
   real<lower=0> sigma_y;
-  real<lower = 0> alpha; // max recruitment
-  // real log_alpha;
-  real log_beta;
-}
-// transformed parameters {
-//   real alpha;
-//   real beta;
-//   alpha = exp(log_alpha);
-//   beta = exp(log_beta);
-// } 
+  // Stock specific parameters
+  real<lower = 0> alpha[K]; // max recruitment
+  real log_beta[K]; 
+  
+  // Population-level parameters -- from Chatgpt, do i need/want population level?? 
+  // real<lower=0> mu_alpha;
+  // real<lower=0> mu_beta;
+  // real<lower=0> sigma_alpha;
+  // real<lower=0> sigma_beta;
+
+} 
 transformed parameters {
 
-real beta = exp(log_beta);
+real beta[K] = exp(log_beta[K]); // Beta for each stock
 
-vector[N] rhat;
+vector[N_stock[K]] rhat[K]; // predicted recruitment for each stock
 
-vector[N] log_rhat;
-
-rhat =  (ssb * alpha) ./ (1 + (beta * ssb)); // beverton holt model
-
-log_rhat = log(rhat);
+vector[N_stock[K]] log_rhat[K]; // predicted log recruitment for each stock
+ 
+for (k in 1:K) {
+rhat[k] =  (ssb[k] * alpha[k]) ./ (1 + (beta[k] * ssb[k])); // beverton holt model
+}
+log_rhat[K] = log(rhat[K]);
 
 }
 
 model {
-  log_rec ~ normal(log_rhat, sigma_y); //account for retransformation bias
-
+  //priors
   sigma_y ~ cauchy(0, 2.5);
-  alpha ~ normal(10,10);
-  log_beta ~ normal(1,5);
- 
+  
+for(k in 1:K) {
+  log_rec[k] ~ normal(log_rhat[k], sigma_y); //account for retransformation bias, recruits
+  alpha[k] ~ normal(10,10); // Stan specific loop to assign priors across stocks
+  log_beta[k] ~ normal(1,5);
+  }
 }
 generated quantities {
- vector[N] pp_rhat;
+vector[N_stock[K]] pp_rhat[K];
 
-  for (i in 1:N) {
+  for (k in 1:K) {
 
-   pp_rhat[i] = exp(normal_rng(log_rhat[i] - 0.5 * sigma_y^2, sigma_y)); // generate posterior predictives with backtransform? 
+   pp_rhat[k] = exp(normal_rng(log_rhat[k] - 0.5 * sigma_y^2, sigma_y)); // generate posterior predictives with backtransform? 
 
   }
 }
