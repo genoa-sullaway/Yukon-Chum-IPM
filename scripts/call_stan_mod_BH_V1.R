@@ -18,10 +18,10 @@ n_cores <- 4
 
 adapt_delta <- 0.95
  
-data <- list(N = nrow(sim_yukon_fall),
-             rec = as.integer(sim_yukon_fall$recruits),
-             ssb = as.integer(sim_yukon_fall$spawners),
-             max_r = max(sim_yukon_fall$recruits))
+data <- list(N = nrow(sim_yukon_spring),
+             rec = as.integer(sim_yukon_spring$recruits),
+             ssb = as.integer(sim_yukon_spring$spawners),
+             max_r = max(sim_yukon_spring$recruits))
 
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_V1.stan"),
@@ -31,24 +31,25 @@ bh_fit <- stan(
   iter = total_iterations,
   cores = n_cores,
   refresh = 250,
-  # init = list(
-  #   list(
-  #     log_alpha = log(1 * data$max_r),
-  #     log_beta = log(2* max(data$ssb))
-  #   ),
-  #   list(
-  #     log_alpha = log(3 * data$max_r),
-  #     log_beta = log(.5 *max(data$ssb))
-  #   ),
-  #   list(
-  #     log_alpha = log(1 * data$max_r),
-  #     log_beta = log(1.1*max(data$ssb))
-  #   ),
-  #   list(
-  #     log_alpha = log(.8 * data$max_r),
-  #     log_beta = log(5*max(data$ssb))
-  #   )
-  # ),
+  init = list(
+    #  alpha = 0.02, beta = 7*10^-6)
+    list(
+      log_alpha = log(0.02),
+      log_beta = log(7*10^-6)
+    ),
+    list(
+      log_alpha = log(0.025),
+      log_beta = log(7.3*10^-6)
+    ),
+    list(
+      log_alpha = log(0.04),
+      log_beta = log(7.1*10^-6)
+    ),
+    list(
+      log_alpha = log(0.011),
+      log_beta = log(7.13*10^-6)
+    )
+  ),
   control = list(max_treedepth = max_treedepth,
                  adapt_delta = adapt_delta)
 )

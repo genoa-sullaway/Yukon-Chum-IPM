@@ -1,5 +1,6 @@
 
- 
+stan_trace(bh_fit, pars=c("alpha","beta","sigma_y"))
+
 mack_diagnostics <- rstan::get_sampler_params(bh_fit) %>% 
   set_names(1:n_chains) %>% 
   map_df(as_data_frame,.id = 'chain') %>% 

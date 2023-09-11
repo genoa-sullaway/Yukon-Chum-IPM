@@ -21,19 +21,18 @@ kusko<-data.frame(Year = c(1988:(2022-1)),
 sim_spawners<-function(initial_population){
 # Set parameters for the exponential growth model
 num_time_steps <- 100    # Number of time steps
-r <- rnorm(mean=0.01, sd=0.5, n=num_time_steps)  # Intrinsic growth rate
+r <- rnorm(mean=0.03, sd=0.5, n=num_time_steps)  # Intrinsic growth rate
  
 # Create an empty vector to store the population data
 population <- numeric(num_time_steps)
 
 # Initialize the first time step with the initial population size
 population[1] <- initial_population
-
+ 
 # Simulate the population dynamics using growth model
 for (t in 2:num_time_steps) {
-  population[t] <- population[t - 1] * exp(r[t])
+  population[t] <- population[t - 1] * exp(r[t])  
 }
- 
 return(population)
 }
 
@@ -42,9 +41,9 @@ spawners_kusko <- sim_spawners(initial_population = mean(kusko$pred_N_est))
 spawners_yukon_spring <- sim_spawners(initial_population = mean(yukon_spring$Escapement))
 
 # Plot the simulated time series
-plot(1:100, spawners_yukon_fall , type = "l", xlab = "Time", ylab = "S")
-plot(1:100, spawners_kusko , type = "l", xlab = "Time", ylab = "S")
-plot(1:100, spawners_yukon_spring , type = "l", xlab = "Time", ylab = "S")
+plot(1:100, log(spawners_yukon_fall), type = "l", xlab = "Time", ylab = "S")
+plot(1:100, log(spawners_kusko), type = "l", xlab = "Time", ylab = "S")
+plot(1:100, log(spawners_yukon_spring), type = "l", xlab = "Time", ylab = "S")
 
 # now that I have a spawner population, assign alpha and beta and calculate recruits? 
 # Bev Holt Function  ====================================================================================
@@ -58,7 +57,7 @@ bev_holt_sim_function <- function(spawners, alpha, beta){ # Initial population s
   
   # Simulate the population dynamics using the Beverton-Holt model with alpha and beta
   for (t in 2:num_time_steps) {
-    recruits[t] <- (alpha * spawners[t]) / (1 + beta * spawners[t])
+    recruits[t] <- (alpha * spawners[t]) / (1+ (beta * spawners[t]))
   }
   
   # Create a time vector
@@ -83,8 +82,9 @@ plot(sim_kusko$spawners, sim_kusko$recruits, type = "p", xlab = "S", ylab = "R",
      main = "Simulated Kusko")
 
 sim_yukon_spring <- bev_holt_sim_function(spawners = spawners_yukon_spring, 
-                                          alpha = 0.02, beta = 7*10^-6)
+                                           alpha = 0.02, beta = 7*10^-6)
 
 plot(sim_yukon_spring$spawners, sim_yukon_spring$recruits, type = "p", xlab = "S", ylab = "R", 
      main = "Simulated Spring Yukon")
- 
+
+dev.off() 

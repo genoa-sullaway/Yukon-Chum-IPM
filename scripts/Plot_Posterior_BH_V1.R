@@ -3,13 +3,13 @@ library(tidybayes)
 
 # sim_yukon_fall alpha = 0.02, beta = 9.3*10^-6
 # sim_kusko   alpha = 0.05, beta = 7*10^-6
-# sim_yukon_spring alpha = 0.02, beta = 7*10^-6
+# sim_yukon_spring alpha = 0.02, beta = 7*10^-6 [used initially!]
 
-# test with sim yukon fall 
+# test with sim yukon spring 
 # Observed ======================  
 obs_df <- data.frame(id = c("observed","observed"), 
                      variable = c("alpha", "beta"),
-                     mean =c(0.02, 9.3*10^-6),
+                     mean =c(0.02, 7*10^-6),
                      se_mean = c(0,0))
 
 # Predicted ======================  
