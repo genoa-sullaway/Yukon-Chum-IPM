@@ -88,3 +88,7 @@ plot(sim_yukon_spring$spawners, sim_yukon_spring$recruits, type = "p", xlab = "S
      main = "Simulated Spring Yukon")
 
 dev.off() 
+
+write_csv(sim_yukon_spring, "data/Simulated_Yukon_Spring.csv")
+write_csv(sim_yukon_fall, "data/Simulated_Yukon_Fall.csv")
+write_csv(sim_kusko, "data/Simulated_Kusko.csv")

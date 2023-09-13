@@ -107,7 +107,7 @@ model {
   }
   
 generated quantities {
-   real mu_coef_rep[ncovars];
+  real mu_coef_rep[ncovars];
   real ln_rec_new[N];
   //real spawn_new[N];
   // use current estimate of mu_coef to generate new sample

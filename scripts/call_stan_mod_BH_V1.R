@@ -30,16 +30,14 @@ K = 3 # number of stocks involved
 N = sum(N_stock)
 N_stock <- c(nrow(sim_yukon_spring), nrow(sim_yukon_fall), nrow(sim_kusko))# N_Stock is the length of each timeseries for each stock
 
-rec_list <- list(as.integer(sim_yukon_spring$recruits), 
+rec_list <- c(as.integer(sim_yukon_spring$recruits), 
                  as.integer(sim_yukon_fall$recruits),
                  as.integer(sim_kusko$recruits))
 
-ssb_list <- list(as.integer(sim_yukon_spring$spawners),
+ssb_list <- c(as.integer(sim_yukon_spring$spawners),
                  as.integer(sim_yukon_fall$spawners),
                  as.integer(sim_kusko$spawners))
-
-
-
+ 
 data_list <- list(N = N, 
                   K = K, 
                   N_stock = N_stock, 
@@ -53,31 +51,32 @@ data_list <- list(N = N,
 
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_V1.stan"),
-  data = data,
+  data = data_list,
   chains = n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores,
   refresh = 250,
-  init = list(
-    #  alpha = 0.02, beta = 7*10^-6)
-    list(
-      log_alpha = log(0.02),
-      log_beta = log(7*10^-6)
-    ),
-    list(
-      log_alpha = log(0.025),
-      log_beta = log(7.3*10^-6)
-    ),
-    list(
-      log_alpha = log(0.04),
-      log_beta = log(7.1*10^-6)
-    ),
-    list(
-      log_alpha = log(0.011),
-      log_beta = log(7.13*10^-6)
-    )
-  ),
+  # init = list(
+  #   #  alpha = 0.02, beta = 7*10^-6)
+  #   list(
+  #     log_alpha = log(0.02),
+  #     log_beta = log(7*10^-6)
+  #   ),
+  #   list(
+  #     log_alpha = log(0.025),
+  #     log_beta = log(7.3*10^-6)
+  #   ),
+  #   list(
+  #     log_alpha = log(0.04),
+  #     log_beta = log(7.1*10^-6)
+  #   ),
+  #   list(
+  #     log_alpha = log(0.011),
+  #     log_beta = log(7.13*10^-6)
+  #   )
+  # ),
+  
   control = list(max_treedepth = max_treedepth,
                  adapt_delta = adapt_delta)
 )
