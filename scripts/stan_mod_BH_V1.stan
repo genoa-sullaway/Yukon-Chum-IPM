@@ -6,8 +6,7 @@ data {
   int<lower=0> N_stock[K];  // Number of data points for each stock
   vector[N] ssb; // Spawners for each stock, stacked
   vector[N] rec; // recruits for each stock, stacked. 
-  // vector[N_stock[K]] ssb[K];  // Spawners for each stock
-  // vector[N_stock[K]] rec[K];  // Recruitment for each stock
+  int<lower = 1, upper = K> g[N]; // Vector of group assignments so STAN knows which group it is dealing with in the set of N observations 
   }
   transformed data {
   vector[N] log_rec; // log recruitment
@@ -18,7 +17,7 @@ data {
  }
 }
 parameters {
-  real<lower=0> sigma_y; // error on group level
+  real<lower=0> sigma_y ; // error for each stock
   // Stock specific parameters
   real<lower = 0> alpha[K]; // productivity for each stock
   real log_beta[K]; // log beta for each stock
@@ -38,11 +37,11 @@ real beta[K];
     beta[k] = exp(log_beta[k]); // Beta for each stock
   }
   
-for(k in 1:K){
+ 
   for (y in 1:N) {
-    rhat[y] =  (ssb[y] * alpha[k]) ./ (1 + (beta[k] * ssb[y])); // beverton holt model
+    rhat[y] =  (ssb[y] * alpha[g[y]]) ./ (1 + (beta[g[y]] * ssb[y])); // beverton holt model
   }
-}
+ 
 
 for (y in 1:N) {
   log_rhat[y] = log(rhat[y]); // predicted recruitment
@@ -51,30 +50,33 @@ for (y in 1:N) {
 
 model {
   //priors
-  sigma_y ~ cauchy(0, 2.5);
+  //sigma_y ~ cauchy(0, 2.5);
   
   // for (k in 1:N) {
   //   // Likelihood for log_rec[k] with adjustment for the transformation
   //   target += -0.5 * ((log_rec[k] - log_rhat[k]) / sigma_y)^2;
   // }
- 
+   sigma_y ~ cauchy(0, 2.5);
+   
 for(k in 1:K) {
   alpha[k] ~ normal(10,10); // Stan specific loop to assign priors across stocks
   log_beta[k] ~ normal(1,5);
 }
   
-  for(k in 1:N) {
-   log_rec[k] ~ normal(log_rhat[k], sigma_y); //account for retransformation bias, recruits
+ 
+  for (i in 1:N) {
+   log_rec[i] ~ normal(log_rhat[i], sigma_y); //account for retransformation bias, recruits
   }
+ 
   
 }
 generated quantities {
 	real<lower=0> pp_rhat[N]; // predicted recruits 
 
-  for (k in 1:N) {
-
-   pp_rhat[k] = exp(normal_rng(log_rhat[k] - 0.5 * sigma_y^2, sigma_y)); // generate posterior predictives with backtransform? 
-
+ 
+  for (i in 1:N) {
+   pp_rhat[i] = exp(normal_rng(log_rhat[i] - 0.5 * sigma_y^2, sigma_y)); // generate posterior predictives with backtransform? 
+    }
   }
-}
+ 
 

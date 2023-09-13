@@ -8,7 +8,6 @@ sim_kusko <- read_csv("data/Simulated_Kusko.csv") %>%
 
 sim_obs<- rbind(sim_yukon_spring,sim_yukon_fall,sim_kusko)
    
-
 params <- bh_summary %>% 
   filter(variable %in% c('alpha[1]','alpha[2]','alpha[3]',
                          'beta[1]','beta[2]','beta[3]')) 
@@ -16,7 +15,8 @@ params <- bh_summary %>%
 stock_list = c( "yukon_spring",
                 "yukon_fall",
                 "kusko")
-# calculate recruits based on estiamted alpha beta =============
+
+# calculate recruits based on estimated alpha beta =============
 list <- list()
 for (k in 1:length(stock_list)) {
   
@@ -34,10 +34,10 @@ for (k in 1:length(stock_list)) {
 sim_obs_pred<-do.call(rbind, list)
  
 ggplot(data = sim_obs_pred) +
-  geom_point(aes(x=spawners, y = recruits), alpha = 0.5) +
-  geom_point(aes(x=spawners, y = pred_recruit), color = "red",alpha = 0.5) +
-  facet_wrap(~id)
-#  
+  geom_point(aes(x=spawners, y = recruits), alpha = 0.2) +
+  geom_point(aes(x=spawners, y = pred_recruit), color = "red",alpha = 0.2) +
+  facet_wrap(~id, scales = "free")
+  
 # plot(sim_yukon_fall$spawners, sim_yukon_fall$recruits, type = "p", xlab = "S", ylab = "R", 
 #      main = "Simulated Fall Yukon")
 #  

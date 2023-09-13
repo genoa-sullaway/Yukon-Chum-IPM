@@ -29,7 +29,10 @@ adapt_delta <- 0.95
 K = 3 # number of stocks involved
 N = sum(N_stock)
 N_stock <- c(nrow(sim_yukon_spring), nrow(sim_yukon_fall), nrow(sim_kusko))# N_Stock is the length of each timeseries for each stock
-
+g = c(rep(1, times = N_stock[1]),  # Vector of group assignments.
+      rep(2, times = N_stock[2]),
+      rep(3, times = N_stock[3]))
+      
 rec_list <- c(as.integer(sim_yukon_spring$recruits), 
                  as.integer(sim_yukon_fall$recruits),
                  as.integer(sim_kusko$recruits))
@@ -40,6 +43,7 @@ ssb_list <- c(as.integer(sim_yukon_spring$spawners),
  
 data_list <- list(N = N, 
                   K = K, 
+                  g=g,
                   N_stock = N_stock, 
                   rec = rec_list, 
                   ssb = ssb_list)
@@ -80,5 +84,4 @@ bh_fit <- stan(
   control = list(max_treedepth = max_treedepth,
                  adapt_delta = adapt_delta)
 )
-
-#rstanarm::launch_shinystan(bh_fit)
+ 
