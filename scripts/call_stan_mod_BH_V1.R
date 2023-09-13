@@ -1,34 +1,25 @@
 library(rstan)
+library(tidyverse)
+library(here)
 
-# to start, use simulated data from "scripts/simulate_data.R"
-# first try with 1 stock, then will build heirarchical to 3 stocks
+# load simulated data =======================================================
+# to start, use simulated data from "scripts/simulate_data.R" 
+sim_yukon_spring_df <- read_csv("data/Simulated_Yukon_Spring.csv")
+sim_yukon_fall_df <- read_csv("data/Simulated_Yukon_Fall.csv")
+sim_kusko_df <- read_csv("data/Simulated_Kusko.csv")
 
-#df <- read_csv("data/input_dat_stan.csv")
-#sim_yukon_fall
-
+# setup inputs ==============================================================
 warmups <- 1000
-
 total_iterations <- 4000
-
 max_treedepth <-  15
-
 n_chains <-  4
-
 n_cores <- 4
-
 adapt_delta <- 0.95
 
-# List data for multiple stocks ================
-# these are the files: 
-# sim_yukon_spring
-# sim_yukon_fall
-# sim_kusko
-# currently all the same length but probably wont be with real data
-
-
+# Organize data call inputs ================================================
 K = 3 # number of stocks involved
 N = sum(N_stock)
-N_stock <- c(nrow(sim_yukon_spring), nrow(sim_yukon_fall), nrow(sim_kusko))# N_Stock is the length of each timeseries for each stock
+N_stock <- c(nrow(sim_yukon_spring_df), nrow(sim_yukon_fall_df), nrow(sim_kusko_df))  
 g = c(rep(1, times = N_stock[1]),  # Vector of group assignments.
       rep(2, times = N_stock[2]),
       rep(3, times = N_stock[3]))

@@ -19,8 +19,10 @@ data {
 parameters {
   real<lower=0> sigma_y ; // error for each stock
   // Stock specific parameters
-  real<lower = 0> alpha[K]; // productivity for each stock
-  real log_beta[K]; // log beta for each stock
+  real<lower = 0> alpha_a[K]; // productivity for each stock
+  real log_beta_a[K]; // log beta for each stock
+   real<lower = 0> alpha_b[K]; // productivity for each stock
+  real log_beta_b[K]; // log beta for each stock
   
   // Population-level parameters -- from Chatgpt, do i need/want population level?? 
   // real<lower=0> mu_alpha;
