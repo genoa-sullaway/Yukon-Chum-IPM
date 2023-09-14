@@ -24,20 +24,25 @@ g = c(rep(1, times = N_stock[1]),  # Vector of group assignments.
       rep(2, times = N_stock[2]),
       rep(3, times = N_stock[3]))
       
-rec_list <- c(as.integer(sim_yukon_spring$recruits), 
-                 as.integer(sim_yukon_fall$recruits),
-                 as.integer(sim_kusko$recruits))
+stage_a <- c(as.integer(sim_yukon_spring_df$a), 
+                 as.integer(sim_yukon_fall_df$a),
+                 as.integer(sim_kusko_df$a))
 
-ssb_list <- c(as.integer(sim_yukon_spring$spawners),
-                 as.integer(sim_yukon_fall$spawners),
-                 as.integer(sim_kusko$spawners))
- 
+stage_b <- c(as.integer(sim_yukon_spring_df$b), 
+                as.integer(sim_yukon_fall_df$b),
+                as.integer(sim_kusko_df$b))
+
+stage_c <- c(as.integer(sim_yukon_spring_df$c), 
+                as.integer(sim_yukon_fall_df$c),
+                as.integer(sim_kusko_df$c))
+
 data_list <- list(N = N, 
                   K = K, 
                   g=g,
                   N_stock = N_stock, 
-                  rec = rec_list, 
-                  ssb = ssb_list)
+                  stage_a = stage_a, 
+                  stage_b = stage_b,
+                  stage_c = stage_c)
 
 # data <- list(N = nrow(sim_yukon_spring),
 #              rec = as.integer(sim_yukon_spring$recruits),
