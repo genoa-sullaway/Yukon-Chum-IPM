@@ -45,7 +45,7 @@ parameters {
 transformed parameters {
 	//PREDICTIONS
 	 real cov_eff[N, ncovars]; // overall covariate effect (sum of all covariates for one population)
-	real<lower=0> pred[N]; // predicted recruits 
+	 real<lower=0> pred[N]; // predicted recruits 
 	//real ln_pred[N]; // predicted recruits 
 			 for(y in 1:N){
 			 	for(c in 1:ncovars){

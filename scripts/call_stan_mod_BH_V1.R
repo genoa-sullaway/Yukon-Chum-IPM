@@ -8,6 +8,9 @@ sim_yukon_spring_df <- read_csv("data/Simulated_Yukon_Spring.csv")
 sim_yukon_fall_df <- read_csv("data/Simulated_Yukon_Fall.csv")
 sim_kusko_df <- read_csv("data/Simulated_Kusko.csv")
 
+# load Covariates  ==========================================================
+covar_temp <- data.frame(temp = c(readRDS("output/covar_temp_sim.RDS")))
+covar_1 <- rep(covar_temp$temp, times = 3)
 # setup inputs ==============================================================
 warmups <- 1000
 total_iterations <- 4000
@@ -23,7 +26,8 @@ N_stock <- c(nrow(sim_yukon_spring_df), nrow(sim_yukon_fall_df), nrow(sim_kusko_
 g = c(rep(1, times = N_stock[1]),  # Vector of group assignments.
       rep(2, times = N_stock[2]),
       rep(3, times = N_stock[3]))
-      
+ncovars = 1 # right now just trying with temperature for stage 1      
+
 stage_a <- c(as.integer(sim_yukon_spring_df$a), 
                  as.integer(sim_yukon_fall_df$a),
                  as.integer(sim_kusko_df$a))
@@ -38,11 +42,13 @@ stage_c <- c(as.integer(sim_yukon_spring_df$c),
 
 data_list <- list(N = N, 
                   K = K, 
-                  g=g,
+                  g = g,
                   N_stock = N_stock, 
                   stage_a = stage_a, 
                   stage_b = stage_b,
-                  stage_c = stage_c)
+                  stage_c = stage_c,
+                  ncovars = ncovars,
+                  covar_1 = covar_1)
 
 # data <- list(N = nrow(sim_yukon_spring),
 #              rec = as.integer(sim_yukon_spring$recruits),

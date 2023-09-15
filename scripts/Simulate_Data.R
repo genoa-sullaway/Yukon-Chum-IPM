@@ -2,6 +2,9 @@ library(here)
 library(tidyverse)
 library(readxl)
 library(ggpubr)
+library(stats)
+
+set.seed(123)  # Set a seed for reproducibility
 
 # Purpose =============================================================================
 # per advice of Megan, simulate data with known parameters so you can make sure your code is running correctly
@@ -26,9 +29,23 @@ sim_data<-function(min_ssb,max_ssb,true_alpha1,
   # Simulated spawners-per-recruit data
   num_points <- 100
   
+  # make covariate =============
+  theta_1 <- -0.5
+
+  # Set the parameters for the ARMA process
+  phi <- 0.3  # Autoregressive coefficient (controls autocorrelation)
+  sigma <- 1  # Standard deviation of the white noise (controls variability)
+
+  # Simulate the AR(1) time series with mean 0
+  # right now no matrix just do one covariate... 
+  covar_mat_1 <- arima.sim(model = list(ar = c(phi), order = c(1, 0, 0)), n = num_points, sd = sigma)
+  
+  # Plot the simulated time series
+  # plot(temperature, type = "l", col = "blue", xlab = "Time", ylab = "Temperature")
+  
   # Population across multiple stages
   N_stage_a <- runif(num_points, min_ssb, max_ssb / 2)
-  N_stage_b <- (true_alpha1* N_stage_a) /  (1+ (true_beta1 * N_stage_a))
+  N_stage_b <- (true_alpha1* N_stage_a) /  (1+ (true_beta1 * N_stage_a)) + (theta_1*covar_mat_1)
   N_stage_c <- (true_alpha2* N_stage_b) / (1+ (true_beta2 * N_stage_b))
   #r <- c(N_stage_c,N_stage_b,N_stage_a)
   r <- c(N_stage_a,N_stage_b,N_stage_c)  
@@ -63,7 +80,10 @@ sim_data<-function(min_ssb,max_ssb,true_alpha1,
 # # Simulate the population dynamics using growth model
 # for (t in 2:num_time_steps) {
 #   population[t] <- population[t - 1] * exp(r[t])  
-
+  
+# save covariate, right now same for each river so just saving one... this will change
+  saveRDS(covar_mat_1, "output/covar_temp_sim.RDS")
+  
 return(list(plot,simulated_data ))
 }
 
