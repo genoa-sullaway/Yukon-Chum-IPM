@@ -65,7 +65,7 @@ model {
   //   // Likelihood for log_rec[k] with adjustment for the transformation
   //   target += -0.5 * ((log_rec[k] - log_rhat[k]) / sigma_y)^2;
   // }
-   sigma_y ~ cauchy(0, 2.5);
+   sigma_y ~ normal(10,10); //cauchy(0, 2.5);
    
 for(k in 1:K) {
   alpha_1[k] ~ normal(10,10); // Stan specific loop to assign priors across stocks
