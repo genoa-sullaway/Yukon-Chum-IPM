@@ -1,4 +1,4 @@
-//Ricker Model For Calculating Pacific Salmon Productivity
+//Ricker Model For Calculating Pacific Salmon Productivity - From M Feddern
 //Notes:
   //  matrix[3, 3] m[6, 7] - m to be a two-dimensional array of size 6 x 7,
 //    containing values that are 3 x 3 matrices. 
