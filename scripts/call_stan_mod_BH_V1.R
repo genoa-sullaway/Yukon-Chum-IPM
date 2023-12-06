@@ -9,8 +9,9 @@ sim_yukon_fall_df <- read_csv("data/Simulated_Yukon_Fall.csv")
 sim_kusko_df <- read_csv("data/Simulated_Kusko.csv")
 
 # load Covariates  ==========================================================
-covar_temp <- data.frame(temp = c(readRDS("output/covar_temp_sim.RDS")))
-covar_1 <- rep(covar_temp$temp, times = 3)
+#covar_temp <- data.frame(temp = c(readRDS("output/covar_temp_sim.RDS")))
+#covar_1 <- rep(covar_temp$temp, times = 3)
+
 # setup inputs ==============================================================
 warmups <- 1000
 total_iterations <- 4000
@@ -19,42 +20,38 @@ n_chains <-  4
 n_cores <- 4
 adapt_delta <- 0.95
 
+Ps <- 0.5 # proportion of females - assumption, need to lit check
+fs <- 500 # fecundity - random assumption that worked in simulation, need to lit check
+
 # Organize data call inputs ================================================
+
 K = 3 # number of stocks involved
-N = sum(N_stock)
 N_stock <- c(nrow(sim_yukon_spring_df), nrow(sim_yukon_fall_df), nrow(sim_kusko_df))  
+N = sum(N_stock)
 g = c(rep(1, times = N_stock[1]),  # Vector of group assignments.
       rep(2, times = N_stock[2]),
       rep(3, times = N_stock[3]))
-ncovars = 1 # right now just trying with temperature for stage 1      
+#ncovars = 1 # right now just trying with temperature for stage 1      
 
-stage_a <- c(as.integer(sim_yukon_spring_df$a), 
-                 as.integer(sim_yukon_fall_df$a),
-                 as.integer(sim_kusko_df$a))
+stage_j <- c(as.integer(sim_yukon_spring_df$N_j), 
+                 as.integer(sim_yukon_fall_df$N_j),
+                 as.integer(sim_kusko_df$N_j))
 
-stage_b <- c(as.integer(sim_yukon_spring_df$b), 
-                as.integer(sim_yukon_fall_df$b),
-                as.integer(sim_kusko_df$b))
-
-stage_c <- c(as.integer(sim_yukon_spring_df$c), 
-                as.integer(sim_yukon_fall_df$c),
-                as.integer(sim_kusko_df$c))
-
-data_list <- list(N = N, 
+stage_sp <- c(as.integer(sim_yukon_spring_df$N_sp), 
+                as.integer(sim_yukon_fall_df$N_sp),
+                as.integer(sim_kusko_df$N_sp))
+ 
+data_list <- list(Ps = Ps,
+                  fs=fs,
+                  N = N, 
                   K = K, 
                   g = g,
                   N_stock = N_stock, 
-                  stage_a = stage_a, 
-                  stage_b = stage_b,
-                  stage_c = stage_c,
-                  ncovars = ncovars,
-                  covar_1 = covar_1)
-
-# data <- list(N = nrow(sim_yukon_spring),
-#              rec = as.integer(sim_yukon_spring$recruits),
-#              ssb = as.integer(sim_yukon_spring$spawners),
-#              max_r = max(sim_yukon_spring$recruits))
-
+                  stage_j = stage_j, 
+                  stage_sp = stage_sp) 
+                  # ncovars = ncovars,
+                  # covar_1 = covar_1)
+ 
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_V1.stan"),
   data = data_list,

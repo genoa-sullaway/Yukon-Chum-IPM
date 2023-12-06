@@ -58,7 +58,6 @@ transformed parameters {
             //pred[y] = spawn_pred[y]*exp(alpha[S[y]] - spawn_pred[y]*beta[S[y]])*exp(phi[S[y]]); // generating predicted recruits
           pred[y] = spawn_pred[y]*exp(alpha[S[y]] - spawn_pred[y]*beta[S[y]]+sum(cov_eff[y,1:ncovars]))+1; // generating predicted recruits
 
-
         }// next y
     //ln_pred = log(pred); 
 }
@@ -82,10 +81,10 @@ model {
     alpha[s] ~ normal(mu_alpha,sigma_alpha);
     beta[s] ~ normal(0.00001,0.01); // magic number 0.00001, and 0.01
     sigma_oe[s] ~ normal(0,0.2);
-    for(y in 1:N) {
+   for(y in 1:N) {
     spawn_pred[y] ~ lognormal(log(spawn[y]), error_spawn[y]); // vague lognormal prior
-   // sigma_oe[S[y]] ~ normal(0,1);
-    //sigma_oe[y] ~ normal(0,1);
+  // sigma_oe[S[y]] ~ normal(0,1);
+  // sigma_oe[y] ~ normal(0,1);
 
     //spawn_pred[y] ~ normal(10000,10000); // vague normal prior
    //  spawn_pred[y] ~lognormal(9,0.75);
@@ -96,14 +95,13 @@ model {
    }
  }
   
-  
 // LIKELIHOODS
     for(y in 1:N) {
       //ln_rec[y] ~ normal(log(pred[y]), error_rec[y]+sigma_oe[y]);
         //ln_rec[y] ~ normal(log(pred[y]), sigma_oe[S[y]]);
         ln_rec[y] ~ normal(log(pred[y]), error_rec[y]+sigma_oe[S[y]]);
 
-    }//next y
+    } //next y
   }
   
 generated quantities {
