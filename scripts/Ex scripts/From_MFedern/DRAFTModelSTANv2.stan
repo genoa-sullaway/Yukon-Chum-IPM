@@ -50,8 +50,8 @@ transformed parameters {
 			 for(y in 1:N){
 			 	for(c in 1:ncovars){
 			  cov_eff[y,c]= theta[S[y],c]*covars[y, c]; // S[y] is the population pointer vector so theta is estimated for each population for each covariate, not every year. See ragged and missing data structure in stan manual for structure
-	 }// next c
-	}//next y
+	 } // next c
+	} //next y
         for(y in 1:N) {
             //pred[y] = spawn_pred[y]*exp(alpha[S[y]] - spawn_pred[y]*beta[S[y]]+sum(cov_eff[y,1:ncovars]))*exp(phi[S[y]]); // generating predicted recruits
             //  pred[y] = spawn_pred[y]*exp(alpha[S[y]] - spawn_pred[y]*beta[S[y]]); // generating predicted recruits
@@ -74,7 +74,7 @@ model {
  // covariate hyper priors 
   for(c in 1:ncovars){
   	 mu_coef[c] ~ normal(0, 10); // 0 - 1 or 0.1 would be a penalized version as a test case - drive it to 0
-    sigma_coef[c] ~ normal(0, 5); //0 - 1 or 0.1 would be a penalized version
+     sigma_coef[c] ~ normal(0, 5); //0 - 1 or 0.1 would be a penalized version
   	 }
  // alpha, beta, and predicted spawner priors
   for(s in 1:NS) {
@@ -100,7 +100,6 @@ model {
       //ln_rec[y] ~ normal(log(pred[y]), error_rec[y]+sigma_oe[y]);
         //ln_rec[y] ~ normal(log(pred[y]), sigma_oe[S[y]]);
         ln_rec[y] ~ normal(log(pred[y]), error_rec[y]+sigma_oe[S[y]]);
-
     } //next y
   }
   
