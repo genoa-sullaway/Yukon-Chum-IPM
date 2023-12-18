@@ -22,7 +22,8 @@ kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS")
 kusko<-data.frame(Year = c(1988:(2022-1)),   
                    pred_N_est= as.vector(c(kusko_estimated_parameters[2:35])))  
 
-fs = 500
+#fs = 500 #
+fs = 2440
 Ps = 0.5
 num_points <- 101
 
@@ -130,6 +131,7 @@ sim_yukon_spring <- sim_data(min_ssb = min(yukon_spring$Escapement),#10 ,
                           true_c_2 = 1000000000,
                           true_sigma_y = 0.01)
 sim_yukon_spring[[1]]
+test<-data.frame(sim_yukon_spring[[2]])
 
 sim_yukon_fall <- sim_data(min_ssb = min(yukon_fall$Estimated_Run), 
                              max_ssb = max(yukon_fall$Estimated_Run), 
