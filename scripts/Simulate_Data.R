@@ -53,7 +53,8 @@ sim_data<-function(min_ssb,max_ssb,true_p_1,true_p_2,
   N_sp = matrix(nrow=num_points, ncol=1, NA)
   N_sp[1,] <- min_ssb
   
-  obs_error  <- rnorm( num_points, 0, true_sigma_y)
+  obs_error_j  <- rnorm( num_points, 0, true_sigma_y)
+  obs_error_sp  <- rnorm( num_points, 0, true_sigma_y)
   N_eggs = matrix(nrow=num_points,ncol=1,NA)
   kappa_fw =  matrix(nrow=num_points,ncol=1,NA)
   N_j =  matrix(nrow=num_points,ncol=1,NA)
@@ -62,16 +63,16 @@ sim_data<-function(min_ssb,max_ssb,true_p_1,true_p_2,
   for (i in 2:num_points) {
  
   N_eggs[i,] = fs*Ps*N_sp[i-1,]
-  kappa_fw[i,] <- (true_p_1)/(1 + ((true_p_1*N_eggs[i,])/true_c_1)) + obs_error[[i]] 
+  kappa_fw[i,] <- (true_p_1)/(1 + ((true_p_1*N_eggs[i,])/true_c_1)) # + obs_error_j[[i]] 
   if(  kappa_fw[i,] < 0){
     kappa_fw[i,] = kappa_fw[i,] * -1
   }
-  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) + obs_error[[i]]
-  kappa_sp[i,] <- (true_p_2)/(1 + ((true_p_2*N_j[i,])/true_c_2)) + obs_error[[i]] 
+  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) + obs_error_j[[i]] 
+  kappa_sp[i,] <- (true_p_2)/(1 + ((true_p_2*N_j[i,])/true_c_2))  
   if(  kappa_sp[i,] < 0){
     kappa_sp[i,] = kappa_sp[i,] * -1
   }
-  N_sp[i,] = (N_j[i,]*kappa_sp[i,])  
+  N_sp[i,] = (N_j[i,]*kappa_sp[i,]) + obs_error_sp[[i]]  
   }
   
   # N_eggs[2:8]
@@ -92,13 +93,13 @@ sim_data<-function(min_ssb,max_ssb,true_p_1,true_p_2,
                     spread(stage, kappa_stage)
      
    
-  plota <- ggplot(data = simulated_data, aes(x=time, y = kappa_j)) +
+  plota <- ggplot(data = simulated_data[2:101,], aes(x=time, y = kappa_j)) +
     geom_point()
-  plotb <- ggplot(data = simulated_data, aes(x=time, y = kappa_sp)) +
+  plotb <- ggplot(data = simulated_data[2:101,], aes(x=time, y = kappa_sp)) +
     geom_point()
-  plotc <- ggplot(data = simulated_data, aes(x=time, y = N_j)) +
+  plotc <- ggplot(data = simulated_data[2:101,], aes(x=time, y = N_j)) +
     geom_point()
-  plotd <- ggplot(data = simulated_data, aes(x=time, y = N_sp)) +
+  plotd <- ggplot(data = simulated_data[2:101,], aes(x=time, y = N_sp)) +
     geom_point()
   
  plot <- ggarrange(plota,plotb,plotc,plotd)
@@ -127,9 +128,9 @@ sim_yukon_spring <- sim_data(min_ssb = min(yukon_spring$Escapement),#10 ,
                           max_ssb = max(yukon_spring$Escapement),#1000,
                           true_p_1 = 0.05, # egg to juvenile just taking this from mousalli and hilborn paper
                           true_p_2 = 0.15, # juvenile to adult
-                          true_c_1 = 1000000,
-                          true_c_2 = 1000000000,
-                          true_sigma_y = 0.01)
+                          true_c_1 = 100000,
+                          true_c_2 = 100000000,
+                          true_sigma_y = 1000)
 sim_yukon_spring[[1]]
 test<-data.frame(sim_yukon_spring[[2]])
 
@@ -139,7 +140,7 @@ sim_yukon_fall <- sim_data(min_ssb = min(yukon_fall$Estimated_Run),
                            true_p_2 = 0.18,
                            true_c_1 = 1000000,
                            true_c_2 = 1000000000,
-                             true_sigma_y = 0.01)
+                             true_sigma_y = 0.1)
 sim_yukon_fall[[1]]
 
 sim_kusko <- sim_data(min_ssb = min(kusko$pred_N_est),#10 ,
@@ -148,7 +149,7 @@ sim_kusko <- sim_data(min_ssb = min(kusko$pred_N_est),#10 ,
                             true_p_2 = 0.14,
                             true_c_1 = 1000000,
                             true_c_2 = 1000000000,
-                            true_sigma_y = 0.01)
+                            true_sigma_y = 0.1)
 
 sim_kusko[[1]]
  

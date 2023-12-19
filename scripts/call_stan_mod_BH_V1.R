@@ -32,7 +32,7 @@ g = c(rep(1, times = N_stock[1]))#, # Vector of group assignments.
       # rep(2, times = N_stock[2]),
       # rep(3, times = N_stock[3]))
 #ncovars = 1 # right now just trying with temperature for stage 1      
-
+ 
 data_stage_j <- c(as.integer(sim_yukon_spring_df$N_j))#, 
                  # as.integer(sim_yukon_fall_df$N_j),
                  # as.integer(sim_kusko_df$N_j))
@@ -114,7 +114,10 @@ bh_fit <- stan(
   # control = list(max_treedepth = max_treedepth,
   #                adapt_delta = adapt_delta))
 
+stan_trace(bh_fit)
+
+hist(runif(1000,250,2000))
 
 
-stan_trace(bh_fit) 
 
+ 

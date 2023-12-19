@@ -9,6 +9,7 @@ data { // all equation references are from proposal numbering
  // int<lower=0> N_stock[K];  // Number of data points for each stock
   real data_stage_j[N]; // vector of number of juveniles for each group
   real data_stage_sp[N];// vector of number of spawners for each group
+  
   real <lower=0>kappa_sp_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
   real <lower=0>kappa_j_start;
  // int<lower=0> g[N];
@@ -127,7 +128,6 @@ N_j[1] = N_j_start;
    }
 }
 
-
 	// 		 for(y in 1:N){
 	// 		 	for(c in 1:ncovars){
 	// 		  cov_eff[y,c]= theta[g[y],c]*covars[y, c]; // g[y] is the population pointer vector so theta is estimated for each population for each covariate, not every year. See ragged and missing data structure in stan manual for structure
@@ -139,13 +139,13 @@ N_j[1] = N_j_start;
 
 model {
   // PRIORS
-   sigma_y_j ~  normal(0.001, 0.1); //cauchy(0,1);
-   sigma_y_sp ~  normal(0.001, 0.1); //cauchy(0,1); 
+   sigma_y_j ~  uniform(0,2000);// normal(0.001, 0.1); //cauchy(0,1);
+   sigma_y_sp ~  uniform(0,2000);// normal(0.001, 0.1); //cauchy(0,1); 
    // log_N_j ~ uniform(1,1e6); //8.0, 13.0); // log juvenile prior
    // log_N_sp ~ uniform(1,1e6); // log spawner prior 
-   log_N_sp_start ~ normal(15,0.1); // 12-15
-   log_N_egg_start ~ normal(18,0.1); // 12-15 
-   log_N_j_start ~ normal(16,0.1); // 12-15  
+   log_N_sp_start ~ normal(15,10); // 12-15
+   log_N_egg_start ~ normal(18,10); // 12-15 
+   log_N_j_start ~ normal(16,10); // 12-15  
    
  // kappa_j_start ~ uniform(1,0.001); //  
  // kappa_sp_start ~ uniform(1,0.001); //  
@@ -153,10 +153,10 @@ model {
 //for(k in 1:K){
   //avg_B1[k] ~ normal(10,10); // Stan specific loop to assign priors across stocks
    p_1 ~ uniform(-10,10); // uniform(0.0001,1.5); //10,10);
-   p_2 ~uniform(-10,10); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
-   
-   c_1 ~ uniform(-10,10); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values. 
-   c_2 ~ uniform(-10,10); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);
+   p_2 ~ uniform(-10,10); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
+ 
+   c_1 ~ uniform(0, 200000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values. 
+   c_2 ~ uniform(0, 200000000); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);
 //}
 
 // Liklilihoods -- 
