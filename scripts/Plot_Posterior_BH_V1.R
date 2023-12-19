@@ -14,7 +14,7 @@ obs_df <- data.frame(id = c("observed","observed",
                                   "c_1", "c_2"), 
                      mean =c(1000, 1000,
                              0.05, 0.15, 
-                             100000,100000000),
+                             10000000,1000000),
                      se_mean=c(0,0,0,0,0,0))
 
 # Predicted ======================  
@@ -28,12 +28,6 @@ obs_df <- data.frame(id = c("observed","observed",
 # extract(bh_fit)
 
 
-bh_summary <- summary(bh_fit)$summary %>% 
-  as.data.frame() %>% 
-  mutate(variable = rownames(.)) %>% 
-  select(variable, everything()) %>% 
-  as_data_frame()
-# 
 # summary_df <- summary(bh_fit)$summary %>%
 #   data.frame() %>%
 #   tibble::rownames_to_column("row_names")  %>%
@@ -41,6 +35,23 @@ bh_summary <- summary(bh_fit)$summary %>%
 #   dplyr::mutate(id = "predicted") %>%
 #   dplyr::select(id, row_names, mean, se_mean) %>%
 #   rbind(obs_df )
+
+bh_summary <- summary(bh_fit)$summary %>% 
+  as.data.frame() %>% 
+  mutate(variable = rownames(.)) %>% 
+  select(variable, everything()) %>% 
+  as_data_frame()
+# 
+# posterior with out simulated data points =============
+bh_summary %>% 
+  slice(1:6) %>%
+  # filter(variable %in% c('alpha[1]','alpha[2]','alpha[3]',
+  #                        'beta[1]','beta[2]','beta[3]')) %>% 
+  ggplot() + 
+  geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
+  geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
+  facet_wrap(~variable, scales = 'free') 
+
 
 bh_summary %>% 
   slice(1:6) %>%
@@ -52,12 +63,4 @@ bh_summary %>%
   facet_wrap(~variable, scales = 'free') +
   geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
  
-# posterior with out simulated data points =============
-bh_summary %>% 
-  slice(1:6) %>%
-  # filter(variable %in% c('alpha[1]','alpha[2]','alpha[3]',
-  #                        'beta[1]','beta[2]','beta[3]')) %>% 
-  ggplot() + 
-  geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
-  geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
-  facet_wrap(~variable, scales = 'free') 
+

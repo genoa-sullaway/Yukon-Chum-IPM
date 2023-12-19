@@ -39,13 +39,13 @@ p_1 <- c(rnorm(n, 0.05, 0)) #simulating a unique beta for each population
 p_2 <-c(rnorm(n, 0.15, 0)) #simulating a unique beta for each population
 # rnorm(n, 0.00013, 0), 
 #rnorm(n, 0.000047, 0))
-c_1 <- c(rnorm(n, 100000, 0)) #, #simulating a unique alpha for each population
+c_1 <- c(rnorm(n, 10000000, 0)) #, #simulating a unique alpha for each population
        # rnorm(n, 2.5, 0),
        # rnorm(n, 1.77, 0))
-c_2 <- c(rnorm(n, 100000000, 0)) #, #simulating a unique alpha for each population
+c_2 <- c(rnorm(n, 1000000, 0)) #, #simulating a unique alpha for each population
 # rnorm(n, 2.5, 0),
 # rnorm(n, 1.77, 0))
-
+ 
 #covariate data ===================
 # not worrying about this yet
 # cov1 <- rnorm(n*n.pop, 0, 2) #Cov 1 data
@@ -53,163 +53,188 @@ c_2 <- c(rnorm(n, 100000000, 0)) #, #simulating a unique alpha for each populati
 # theta1 <- c(rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
 # theta2 <- c(rep(-0.2,n), rep(0.1,n), rep(-0.1,n)) #relationship for simulated data
 
-# simulate popualtions  ===================
-mean.spawn <- c(mean(yukon_spring$Escapement)) #c(1200 , 2000, 2500) #mean spawners for each population
-N_sp = matrix(nrow=n, ncol=1, NA)
-N_sp[1,] <- mean.spawn # seed inital 
+# simulate populations  ===================
+
+# N_sp = matrix(nrow=n, ncol=1, NA)
+# N_sp[1,] <- mean.spawn # seed inital 
 
 # spawn.sim <- c(rnorm(n, mean.spawn[1],mean(error.spawn)), #simulating a unique number of spawners for each population
 #                rnorm(n, mean.spawn[2],mean(error.spawn)),
 #                rnorm(n, mean.spawn[3],mean(error.spawn)))
 
+obs_error_j  <- rnorm(n*n.pop, 1,.3)
+obs_error_sp  <- rnorm(n*n.pop, 5000, 5)
 
-obs_error_j  <- rnorm(n*n.pop, 1000, 5)
-obs_error_sp  <- rnorm(n*n.pop, 1000, 5)
 N_eggs = matrix(nrow=n,ncol=1,NA)
 kappa_fw =  matrix(nrow=n,ncol=1,NA)
 N_j =  matrix(nrow=n,ncol=1,NA)
 kappa_sp =  matrix(nrow=n,ncol=1,NA)
  
+mean.spawn <- c(mean(yukon_spring$Escapement)) #c(1200 , 2000, 2500) #mean spawners for each population
+N_sp<-c(rnorm(n, mean.spawn, mean(obs_error_sp)))
+ 
 for (i in 2:n) {
   
-  N_eggs[i,] = fs*Ps*N_sp[i-1,]
-  kappa_fw[i,] <- (p_1[i])/(1 + ((p_1[i]*N_eggs[i,])/c_1[i])) # + obs_error_j[[i]] 
+  N_eggs[i,] = fs*Ps*N_sp[i-1]
+  
+  kappa_fw[i,] <-  (p_1[i])/(1 + ((p_1[i]*N_eggs[i,])/c_1[i])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
   # if(  kappa_fw[i,] < 0){
   #   kappa_fw[i,] = kappa_fw[i,] * -1
   # }
-  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) + obs_error_j[i] 
+  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) #+ obs_error_j[i] 
   kappa_sp[i,] <- (p_2[i])/(1 + ((p_2[i]*N_j[i,])/c_2[i]))  
   # if(  kappa_sp[i,] < 0){
   #   kappa_sp[i,] = kappa_sp[i,] * -1
   # }
-  N_sp[i,] = (N_j[i,]*kappa_sp[i,]) + obs_error_sp[i]  
+ # N_sp[i,] = (N_j[i,]*kappa_sp[i,]) #+ obs_error_sp[i]  
 }
 
-dat_sim <- cbind(Population = population, Year = year, N_eggs = N_eggs[1:n,], 
-                 N_j = N_j[1:n,], N_sp = N_sp[1:n,], obs_error_sp = obs_error_sp, 
-                 obs_error_j=obs_error_j,#cov1=cov1, cov2=cov2,
-                p_1 = p_1, p_2=p_1, c_1=c_1, c_2=c_2) #setting up single data file so that you can replace it with the real data
+N_j_sim = rnorm(n, N_j, obs_error_j)
+#N_sp_sim = rnorm(n, N_sp, obs_error_sp)
+ 
+sd(N_j_sim[6:n])
+sd(N_sp_sim)
+
+dat_sim <- cbind(Population = population, Year = year, 
+                 N_eggs = N_eggs[1:n,], N_j = N_j_sim , N_sp = N_sp_sim ,
+                 obs_error_sp = obs_error_sp, obs_error_j=obs_error_j,#cov1=cov1, cov2=cov2,
+                p_1 = p_1, p_2=p_1, 
+                c_1=c_1, c_2=c_2,
+                kappa_sp=kappa_sp[1:n,],
+                kappa_fw=kappa_fw[1:n,]) #setting up single data file so that you can replace it with the real data
 
 dat_sim <- data.frame(dat_sim)[6:105,]  
 dat_sim_plot <- dat_sim %>% 
-  gather(c(3:11), key = "id", value = "value") 
+  gather(c(3:13), key = "id", value = "value") 
   
-
-plot <- ggplot(data = dat_sim_plot, aes(x=Year, y = log(value))) +
+plota <- ggplot(data = dat_sim_plot, aes(x=Year, y = log(value))) +
   geom_point() +
   facet_wrap(~id, scales = "free")
  
+plota
 
-plot
+plotb <- ggplot(data = dat_sim_plot, aes(x=Year, y = value)) +
+  geom_point() +
+  facet_wrap(~id, scales = "free")
+
+plotb
 
 write_csv(dat_sim , "data/Simulated_DatBH.csv")
-#<- ggarrange(plota,plotb,plotc,plotd)
 
-#### Setting up structure for using the data file ####
-#creating references for number of years of data for each population
-n.years <- vector(length=n.pop)
-years <- matrix(nrow=n.pop,ncol=n)
-p <- 1
-for(p in 1:n.pop) {
-  n.years[p] <- length(unique(dat.sim$Year[dat.sim$Population==pops[p]]))
-  years[p,1:n.years[p]] <- sort(unique(dat.sim$Year[dat.sim$Population==pops[p]]))
-}#next p
+sd(dat_sim$N_j)
+sd(dat_sim$N_sp)
+
+mean(dat_sim$N_j)
+mean(dat_sim$N_sp)
 
 
-# Spawners and Recruits data
-spawn <- matrix(nrow=n.pop,ncol=max(n.years))
-rec <- matrix(nrow=n.pop,ncol=max(n.years))
-ln.rec <- matrix(nrow=n.pop,ncol=max(n.years))
 
-error.spawn <-  matrix(nrow=n.pop,ncol=max(n.years))
-error.rec <- matrix(nrow=n.pop,ncol=max(n.years))
-
-p <- 1
-for(p in 1:n.pop) {
-  y <- 1
-  for(y in 1:n.years[p]) {
-    year <- years[p,y]
-    
-    #Spawners
-    spawn[p,y] <- dat.sim$Spawners[dat.sim$Population==pops[p] & dat.sim$Year==year]
-    error.spawn[p,y] <- dat.sim$error.spawn[dat.sim$Population==pops[p] & dat.sim$Year==year]
-    #Recruits
-    rec[p,y] <- dat.sim$ObsRecruits[dat.sim$Population==pops[p] & dat.sim$Year==year]
-    ln.rec[p,y] <- log(dat.sim$ObsRecruits[dat.sim$Population==pops[p] & dat.sim$Year==year])
-    error.rec[p,y] <- dat.sim$error.rec[dat.sim$Population==pops[p] & dat.sim$Year==year]
-  }#next y
-}#next p
-
-##### Setting up Covars data ####
-n.covars <- 2
-covars <- array(data=NA,dim=c(n.pop, max(n.years), n.covars))
-
-p <- 1
-for(p in 1:n.pop) {
-  y <- 1
-  for(y in 1:n.years[p]) {
-    year <- years[p,y]
-    c <- 1
-    #COVARIATE 1 ========
-    covar1 <- dat.sim$cov1[dat.sim$Population==pops[p] & dat.sim$Year==year]
-    covars[p,y,c] <- ifelse(is.na(covar1),0,covar1) # Fill in with zero if unavailable
-    c <- c+1
-    
-    #COVARIATE 2 ========
-    covar2 <- dat.sim$cov2[dat.sim$Population==pops[p] & dat.sim$Year==year]
-    covars[p,y,c] <- ifelse(is.na(covar2),0,covar2) # Fill in with zero if unavailable
-    c <- c+1
-    
-  }#next y
-}#next p
-
-#### Running STAN Model ####
-
-##### Assigning data to the STAN data list ####
-##### Setting up Covars data ####
-
-years[is.na(years)] <- -999 # years without data are assined -999 (Stan can't use NAs) - but NAs are important for indexing covars so needs to be after
-data <- list(S = n.pop, #number of populations
-             N = n.years,# number of years
-             ncovars=n.covars, #number of covariates
-             spawn = spawn, #spawner data
-             ln_rec = ln.rec,#recruit data
-             covars = covars, # covariate data
-             error_rec = error.rec, # error for recruits
-             error_spawn = error.spawn, #error for spawenrs
-             maxN = 100,
-             n_iter=2000
-)
-
-
-#####Assinging Stan Conditions ####
-
-warmups <- 1000
-total_iterations <- 3000
-max_treedepth <-  12
-n_chains <-  3
-n_cores <- 4
-adapt_delta <- 0.95
-
-####Fitting the Model ####
-bh_fit <- stan(
-  file = here::here("Chinook/Src/DRAFTModelSimSTAN.stan"),
-  data = data,
-  chains = n_chains,
-  warmup = warmups,
-  iter = total_iterations,
-  cores = n_cores,
-  refresh = 250,
-  control = list(max_treedepth = max_treedepth,
-                 adapt_delta = adapt_delta)
-)
-
-MCMCsummary(bh_fit,params = c("alpha", "beta",
-                              "mu_coef",
-                              "sigma_coef", "theta"))
-
-
-MCMCtrace(bh_fit, params = c("alpha"), pdf = FALSE)
-MCMCtrace(bh_fit, params = c("beta"), pdf = FALSE)
-MCMCtrace(bh_fit, params = c("theta"), pdf = FALSE)
- 
+# 
+# #### Setting up structure for using the data file ####
+# #creating references for number of years of data for each population
+# n.years <- vector(length=n.pop)
+# years <- matrix(nrow=n.pop,ncol=n)
+# p <- 1
+# for(p in 1:n.pop) {
+#   n.years[p] <- length(unique(dat.sim$Year[dat.sim$Population==pops[p]]))
+#   years[p,1:n.years[p]] <- sort(unique(dat.sim$Year[dat.sim$Population==pops[p]]))
+# }#next p
+# 
+# 
+# # Spawners and Recruits data
+# spawn <- matrix(nrow=n.pop,ncol=max(n.years))
+# rec <- matrix(nrow=n.pop,ncol=max(n.years))
+# ln.rec <- matrix(nrow=n.pop,ncol=max(n.years))
+# 
+# error.spawn <-  matrix(nrow=n.pop,ncol=max(n.years))
+# error.rec <- matrix(nrow=n.pop,ncol=max(n.years))
+# 
+# p <- 1
+# for(p in 1:n.pop) {
+#   y <- 1
+#   for(y in 1:n.years[p]) {
+#     year <- years[p,y]
+#     
+#     #Spawners
+#     spawn[p,y] <- dat.sim$Spawners[dat.sim$Population==pops[p] & dat.sim$Year==year]
+#     error.spawn[p,y] <- dat.sim$error.spawn[dat.sim$Population==pops[p] & dat.sim$Year==year]
+#     #Recruits
+#     rec[p,y] <- dat.sim$ObsRecruits[dat.sim$Population==pops[p] & dat.sim$Year==year]
+#     ln.rec[p,y] <- log(dat.sim$ObsRecruits[dat.sim$Population==pops[p] & dat.sim$Year==year])
+#     error.rec[p,y] <- dat.sim$error.rec[dat.sim$Population==pops[p] & dat.sim$Year==year]
+#   }#next y
+# }#next p
+# 
+# ##### Setting up Covars data ####
+# n.covars <- 2
+# covars <- array(data=NA,dim=c(n.pop, max(n.years), n.covars))
+# 
+# p <- 1
+# for(p in 1:n.pop) {
+#   y <- 1
+#   for(y in 1:n.years[p]) {
+#     year <- years[p,y]
+#     c <- 1
+#     #COVARIATE 1 ========
+#     covar1 <- dat.sim$cov1[dat.sim$Population==pops[p] & dat.sim$Year==year]
+#     covars[p,y,c] <- ifelse(is.na(covar1),0,covar1) # Fill in with zero if unavailable
+#     c <- c+1
+#     
+#     #COVARIATE 2 ========
+#     covar2 <- dat.sim$cov2[dat.sim$Population==pops[p] & dat.sim$Year==year]
+#     covars[p,y,c] <- ifelse(is.na(covar2),0,covar2) # Fill in with zero if unavailable
+#     c <- c+1
+#     
+#   }#next y
+# }#next p
+# 
+# #### Running STAN Model ####
+# 
+# ##### Assigning data to the STAN data list ####
+# ##### Setting up Covars data ####
+# 
+# years[is.na(years)] <- -999 # years without data are assined -999 (Stan can't use NAs) - but NAs are important for indexing covars so needs to be after
+# data <- list(S = n.pop, #number of populations
+#              N = n.years,# number of years
+#              ncovars=n.covars, #number of covariates
+#              spawn = spawn, #spawner data
+#              ln_rec = ln.rec,#recruit data
+#              covars = covars, # covariate data
+#              error_rec = error.rec, # error for recruits
+#              error_spawn = error.spawn, #error for spawenrs
+#              maxN = 100,
+#              n_iter=2000
+# )
+# 
+# 
+# #####Assinging Stan Conditions ####
+# 
+# warmups <- 1000
+# total_iterations <- 3000
+# max_treedepth <-  12
+# n_chains <-  3
+# n_cores <- 4
+# adapt_delta <- 0.95
+# 
+# ####Fitting the Model ####
+# bh_fit <- stan(
+#   file = here::here("Chinook/Src/DRAFTModelSimSTAN.stan"),
+#   data = data,
+#   chains = n_chains,
+#   warmup = warmups,
+#   iter = total_iterations,
+#   cores = n_cores,
+#   refresh = 250,
+#   control = list(max_treedepth = max_treedepth,
+#                  adapt_delta = adapt_delta)
+# )
+# 
+# MCMCsummary(bh_fit,params = c("alpha", "beta",
+#                               "mu_coef",
+#                               "sigma_coef", "theta"))
+# 
+# 
+# MCMCtrace(bh_fit, params = c("alpha"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("beta"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("theta"), pdf = FALSE)
+#  

@@ -50,8 +50,9 @@ parameters {
   real <lower=0> c_1;//[K]; // carrying capacity 
   real <lower=0> c_2;//[K]; // carrying capacity 
   
+  real<lower=0> N_sp[N]; 
   // real <lower=1>log_N_j;
-  real <lower=1>log_N_sp_start;
+  // real <lower=1>log_N_sp_start;
   real <lower=1>log_N_egg_start;
   real <lower=1>log_N_j_start;
   // real <lower=0>kappa_sp_start;
@@ -71,10 +72,12 @@ parameters {
 transformed parameters { 
 real<lower=0> N_e[N]; // predicted eggs, basically a dummy step. 
 real<lower=0> N_j[N]; // predicted juveniles - this goes into the liklihood, data involved 
-real<lower=0> N_sp[N]; // predicted spawners - this goes into the liklihood, data involved 
-real<lower=0> N_sp_start; 
+//real<lower=0> N_sp[N]; // predicted spawners - this goes into the liklihood, data involved 
+
+//real<lower=0> N_sp_start; 
 real<lower=0> N_egg_start;
 real<lower=0> N_j_start;
+
 // real<lower=0> kappa_sp_start;
 // real<lower=0> kappa_j_start;
  
@@ -87,8 +90,8 @@ real kappa_sp[N]; // predicted survival for each stock
 //kappa_j_start = exp(log_kappa_j_start);
   kappa_j[1]= kappa_j_start; 
 
-N_sp_start = exp(log_N_sp_start); // transform predicted spawners
-N_sp[1] = N_sp_start;
+// N_sp_start = exp(log_N_sp_start); // transform predicted spawners
+// N_sp[1] = N_sp_start;
 
 N_egg_start = exp(log_N_egg_start); // transform predicted eggs
 N_e[1] = N_egg_start;
@@ -124,7 +127,7 @@ N_j[1] = N_j_start;
  
    // kappa_sp[i] =  p_2[g[i]]/ (1 + ((p_2[g[i]]*N_j[i])/c_2[g[i]])); // Eq 4.1   
  
-    N_sp[i] = kappa_sp[i]*N_j[i]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
+    //N_sp[i] = kappa_sp[i]*N_j[i]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
    }
 }
 
@@ -143,27 +146,31 @@ model {
    sigma_y_sp ~  uniform(0,2000);// normal(0.001, 0.1); //cauchy(0,1); 
    // log_N_j ~ uniform(1,1e6); //8.0, 13.0); // log juvenile prior
    // log_N_sp ~ uniform(1,1e6); // log spawner prior 
-   log_N_sp_start ~ normal(15,10); // 12-15
+   // 
+      for(i in 1:N) {
+   N_sp[i] ~ normal(data_stage_sp[i], sigma_y_sp); // 12-15
+      }
+      
    log_N_egg_start ~ normal(18,10); // 12-15 
-   log_N_j_start ~ normal(16,10); // 12-15  
+   log_N_j_start ~ normal(11,10); // 12-15  
    
  // kappa_j_start ~ uniform(1,0.001); //  
  // kappa_sp_start ~ uniform(1,0.001); //  
 
 //for(k in 1:K){
   //avg_B1[k] ~ normal(10,10); // Stan specific loop to assign priors across stocks
-   p_1 ~ uniform(-10,10); // uniform(0.0001,1.5); //10,10);
-   p_2 ~ uniform(-10,10); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
+   p_1 ~ uniform(0,0.5); // uniform(0.0001,1.5); //10,10);
+   p_2 ~ uniform(0,0.5); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
  
-   c_1 ~ uniform(0, 200000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values. 
-   c_2 ~ uniform(0, 200000000); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);
+   c_1 ~ uniform(0, 20000000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values. 
+   c_2 ~ uniform(0, 2000000); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);
 //}
 
 // Liklilihoods -- 
   for (i in 1:N) {
-    data_log_stage_j[i] ~ normal(log(N_j[i]), sigma_y_j); 
-    data_log_stage_sp[i] ~ normal(log(N_sp[i]), sigma_y_sp); 
-  }
+    data_log_stage_j[i] ~ normal(log(N_j[i]), sigma_y_j);
+    data_log_stage_sp[i] ~ normal(log(N_sp[i]), sigma_y_sp);
+  } 
 }  
   //  for(c in 1:ncovars){
   // 	// mu_coef[c] ~ normal(0, 10); // 0 - 1 or 0.1 would be a penalized version as a test case - drive it to 0
@@ -175,7 +182,17 @@ model {
   // 		 theta[s,c] ~ normal(mu_coef[c],sigma_coef[c]); //  s is the number of stocks ....
   //    }
 
-//generated quantities {
+generated quantities {
+   
+  real pp_log_N_j[N]; // predicted recruits 
+  real pp_log_N_sp[N]; // predicted recruits 
+ 
+  for (i in 1:N) {
+   pp_log_N_j[i] = (normal_rng(log(N_j[i]) - 0.5 * sigma_y_j^2, sigma_y_j)); // generate posterior predictives with backtransform? 
+   pp_log_N_sp[i] = (normal_rng(log(N_sp[i]) - 0.5 * sigma_y_sp^2, sigma_y_sp)); // generate posterior predictives with backtransform? 
+    }
+}
+
 // 	real<lower=0> pp_kappa_j[N]; // predicted survival stage fw to juvenile
 // 	real<lower=0> pp_kappa_sp[N]; // predicted survival stage spawner
 // 	// real<lower=0> E[N]; // Eggs	

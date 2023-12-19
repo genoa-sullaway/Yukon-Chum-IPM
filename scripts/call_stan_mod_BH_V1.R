@@ -4,9 +4,9 @@ library(here)
 
 # load simulated data =======================================================
 # to start, use simulated data from "scripts/simulate_data.R" 
-sim_yukon_spring_df <- read_csv("data/Simulated_Yukon_Spring.csv")
-sim_yukon_fall_df <- read_csv("data/Simulated_Yukon_Fall.csv")
-sim_kusko_df <- read_csv("data/Simulated_Kusko.csv")
+sim_dat <- read_csv("data/Simulated_DatBH.csv")
+# sim_yukon_fall_df <- read_csv("data/Simulated_Yukon_Fall.csv")
+# sim_kusko_df <- read_csv("data/Simulated_Kusko.csv")
 
 # load Covariates  ==========================================================
 #covar_temp <- data.frame(temp = c(readRDS("output/covar_temp_sim.RDS")))
@@ -25,7 +25,7 @@ fs <- 2440 # fecundity - Gilk and Baumer 2009 estimate for Kusko Chum
 
 # Organize data call inputs ================================================
 K = 1 # number of stocks involved
-N_stock <- c(nrow(sim_yukon_spring_df))
+N_stock <- c(nrow(sim_dat))
 #N_stock <- c(nrow(sim_yukon_spring_df), nrow(sim_yukon_fall_df), nrow(sim_kusko_df))  
 N = sum(N_stock)
 g = c(rep(1, times = N_stock[1]))#, # Vector of group assignments.
@@ -33,11 +33,11 @@ g = c(rep(1, times = N_stock[1]))#, # Vector of group assignments.
       # rep(3, times = N_stock[3]))
 #ncovars = 1 # right now just trying with temperature for stage 1      
  
-data_stage_j <- c(as.integer(sim_yukon_spring_df$N_j))#, 
+data_stage_j <- c(as.integer(sim_dat$N_j))#, 
                  # as.integer(sim_yukon_fall_df$N_j),
                  # as.integer(sim_kusko_df$N_j))
  
-data_stage_sp <- c(as.integer(sim_yukon_spring_df$N_sp))#, 
+data_stage_sp <- c(as.integer(sim_dat$N_sp))#, 
                 # as.integer(sim_yukon_fall_df$N_sp),
                 # as.integer(sim_kusko_df$N_sp))
 
@@ -109,14 +109,16 @@ bh_fit <- stan(
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores)
+
+stan_trace(bh_fit)
+
   # refresh = 250,
   #init = init_list,
   # control = list(max_treedepth = max_treedepth,
   #                adapt_delta = adapt_delta))
 
-stan_trace(bh_fit)
+ 
 
-hist(runif(1000,250,2000))
 
 
 
