@@ -14,7 +14,7 @@ sim_dat <- read_csv("data/Simulated_DatBH.csv")
 
 # setup inputs ==============================================================
 warmups <- 1000
-total_iterations <- 6000
+total_iterations <- 4000
 max_treedepth <-  15
 n_chains <- 1
 n_cores <- 4
@@ -41,8 +41,8 @@ data_stage_sp <- c(as.integer(sim_dat$N_sp))#,
                 # as.integer(sim_yukon_fall_df$N_sp),
                 # as.integer(sim_kusko_df$N_sp))
 
- kappa_j_start =  runif(1, 0.0065, 0.0075)
- kappa_sp_start =  runif(1, 0.145, 0.155)
+kappa_j_start =  runif(1, 0.05, 0.155) # starting values for kappa so there arent NAs, this doesnt really do anything. 
+kappa_sp_start =  runif(1, 0.145, 0.155)
  
  
 data_list <- list(Ps = Ps,
@@ -109,10 +109,16 @@ bh_fit <- stan(
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores)
+ 
+MCMCsummary(bh_fit,params = c("log_c_1", "log_c_2",
+                              "p_1", "p_2"))
 
-stan_trace(bh_fit)
-
-  # refresh = 250,
+MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
+MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
+MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
+MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+  
+# refresh = 250,
   #init = init_list,
   # control = list(max_treedepth = max_treedepth,
   #                adapt_delta = adapt_delta))

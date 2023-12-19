@@ -45,9 +45,11 @@ spawn.sim <- c(rnorm(n, mean.spawn[1],mean(error.spawn)), #simulating a unique n
 mu.rec.sim <- spawn.sim * exp(a - spawn.sim * b + theta1*cov1 + theta2*cov2) #calculating mean recruits with covariates from spawner, a, and b
 
 rec.sim <- rlnorm(length(spawn.sim), log(mu.rec.sim),mean(error.rec)) #simulating recruits from log normal distribution
-sd(rec.sim) #sd of recruits with error propagated across pops
+sd(rec.sim) # 49158.38 sd of recruits with error propagated across pops
+sd(spawn.sim) # 540
 plot(spawn.sim,rec.sim) #plotting spawener recruit relationship for the simulated data
-
+plot(spawn.sim) #plotting spawener recruit relationship for the simulated data
+plot(rec.sim)
 
 
 dat.sim <- cbind(Population = population, Year = year, ObsRecruits = rec.sim,

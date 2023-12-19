@@ -1,6 +1,7 @@
 
 library(actuaryr)
 # library(rjags)
+library(readxl)
 library(ggplot2)
 library(ggthemes)
 library(gridExtra)
@@ -14,12 +15,12 @@ set.seed(20)
 
 #### Simulating data 
 # Load data for baseline ============== 
-yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv")  
+#yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv")  
 yukon_spring <- read_excel("data/Yukon_Escapement_ADFG/Yukon Summer Chum Total Run 1978-2022 Run Rec.xlsx")
 
-kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS") 
-kusko<-data.frame(Year = c(1988:(2022-1)),   
-                  pred_N_est= as.vector(c(kusko_estimated_parameters[2:35])))  
+#kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS") 
+#kusko<-data.frame(Year = c(1988:(2022-1)),   
+ #                 pred_N_est= as.vector(c(kusko_estimated_parameters[2:35])))  
 
 # Init ===================
 n<-105 #number of samples per population
@@ -62,48 +63,46 @@ c_2 <- c(rnorm(n, 1000000, 0)) #, #simulating a unique alpha for each population
 #                rnorm(n, mean.spawn[2],mean(error.spawn)),
 #                rnorm(n, mean.spawn[3],mean(error.spawn)))
 
-obs_error_j  <- rnorm(n*n.pop, 1,.3)
-obs_error_sp  <- rnorm(n*n.pop, 5000, 5)
+obs_error_j  <- rnorm(n*n.pop, 50, 5)
+obs_error_sp  <- rnorm(n*n.pop, 50, 5)
 
 N_eggs = matrix(nrow=n,ncol=1,NA)
 kappa_fw =  matrix(nrow=n,ncol=1,NA)
 N_j =  matrix(nrow=n,ncol=1,NA)
+N_j[1] = 10000 # just so i dont get yelled at about NAs later down the road 
 kappa_sp =  matrix(nrow=n,ncol=1,NA)
- 
+
+N_sp = matrix(nrow=n, ncol=1, NA)
 mean.spawn <- c(mean(yukon_spring$Escapement)) #c(1200 , 2000, 2500) #mean spawners for each population
-N_sp<-c(rnorm(n, mean.spawn, mean(obs_error_sp)))
- 
+N_sp[1] <-mean.spawn
+
+#N_sp<-c(rnorm(n, mean.spawn, mean(obs_error_sp)))
+
 for (i in 2:n) {
-  
   N_eggs[i,] = fs*Ps*N_sp[i-1]
-  
   kappa_fw[i,] <-  (p_1[i])/(1 + ((p_1[i]*N_eggs[i,])/c_1[i])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
-  # if(  kappa_fw[i,] < 0){
-  #   kappa_fw[i,] = kappa_fw[i,] * -1
-  # }
-  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) #+ obs_error_j[i] 
+  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) + obs_error_j[i] 
   kappa_sp[i,] <- (p_2[i])/(1 + ((p_2[i]*N_j[i,])/c_2[i]))  
-  # if(  kappa_sp[i,] < 0){
-  #   kappa_sp[i,] = kappa_sp[i,] * -1
-  # }
- # N_sp[i,] = (N_j[i,]*kappa_sp[i,]) #+ obs_error_sp[i]  
+  N_sp[i,] = (N_j[i,]*kappa_sp[i,]) + obs_error_sp[i]  
 }
 
-N_j_sim = rnorm(n, N_j, obs_error_j)
-#N_sp_sim = rnorm(n, N_sp, obs_error_sp)
+# N_j_sim = rnorm(n, N_j, obs_error_j)
+# N_sp_sim = rnorm(n, N_sp, obs_error_sp)
  
-sd(N_j_sim[6:n])
-sd(N_sp_sim)
+sd(N_j[6:n]) #[6:n])
+sd(N_sp[6:n])
+plot(N_j) 
+plot(N_sp) 
 
 dat_sim <- cbind(Population = population, Year = year, 
-                 N_eggs = N_eggs[1:n,], N_j = N_j_sim , N_sp = N_sp_sim ,
+                 N_eggs = N_eggs[1:n,], N_j = N_j[1:n,] , N_sp = N_sp[1:n,] ,
                  obs_error_sp = obs_error_sp, obs_error_j=obs_error_j,#cov1=cov1, cov2=cov2,
                 p_1 = p_1, p_2=p_1, 
                 c_1=c_1, c_2=c_2,
                 kappa_sp=kappa_sp[1:n,],
                 kappa_fw=kappa_fw[1:n,]) #setting up single data file so that you can replace it with the real data
 
-dat_sim <- data.frame(dat_sim)[6:105,]  
+dat_sim <- data.frame(dat_sim)[6:n,]  
 dat_sim_plot <- dat_sim %>% 
   gather(c(3:13), key = "id", value = "value") 
   
@@ -124,8 +123,9 @@ write_csv(dat_sim , "data/Simulated_DatBH.csv")
 sd(dat_sim$N_j)
 sd(dat_sim$N_sp)
 
-mean(dat_sim$N_j)
-mean(dat_sim$N_sp)
+log(mean(dat_sim$N_j))
+log(mean(dat_sim$N_sp))
+log(mean(dat_sim$N_eggs))
 
 
 
