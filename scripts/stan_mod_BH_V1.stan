@@ -140,8 +140,7 @@ model {
    // 
    //    for(i in 1:N) {
    // N_sp[i] ~ normal(data_stage_sp[i], sigma_y_sp); //  
-   //    }
-      
+   //    }   
    log_N_egg_start ~ normal(21,10); //  
    log_N_j_start ~ normal(16,10); //  
    log_N_sp_start ~ normal(14,10); //  
@@ -151,8 +150,8 @@ model {
 
 //for(k in 1:K){
   //avg_B1[k] ~ normal(10,10); // Stan specific loop to assign priors across stocks
-   p_1 ~ normal(0.08,0.1); // uniform(0.0001,1.5); //10,10);
-   p_2 ~ normal(0.2,0.1); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
+   p_1 ~ normal(0.05,1); // uniform(0.0001,1.5); //10,10);
+   p_2 ~ normal(0.15,0.1); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
  
    log_c_1 ~ normal(16,20);//uniform(0, 20000000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values. 
    log_c_2 ~ normal(14,20);//uniform(0, 2000000); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);

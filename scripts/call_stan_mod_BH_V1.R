@@ -112,6 +112,19 @@ bh_fit <- stan(
  
  MCMCsummary(bh_fit,params = c("log_c_1", "log_c_2",
                               "p_1", "p_2"))
+ 
+ 
+ MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
+ MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
+ MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
+ MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+ 
+ MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
+ MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
+ 
+ 
+ 
+ # save plots ==============
 
 pdf("output/trace.pdf")
 MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
@@ -120,10 +133,13 @@ MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
 MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
 dev.off()
 
-# MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
+MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
+MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
+MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+
+MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
+MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
   
 # refresh = 250,
   #init = init_list,

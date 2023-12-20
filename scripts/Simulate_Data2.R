@@ -77,17 +77,20 @@ mean.spawn <- c(mean(yukon_spring$Escapement)) #c(1200 , 2000, 2500) #mean spawn
 N_sp[1] <-mean.spawn
 
 #N_sp<-c(rnorm(n, mean.spawn, mean(obs_error_sp)))
+process_error_j <- rnorm(n*n.pop, 500, 5)
+process_error_sp <- rnorm(n*n.pop, 500, 5)
 
 for (i in 2:n) {
   N_eggs[i,] = fs*Ps*N_sp[i-1]
   kappa_fw[i,] <-  (p_1[i])/(1 + ((p_1[i]*N_eggs[i,])/c_1[i])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
-  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) + obs_error_j[i] 
+  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) + obs_error_j[i]
+  
   kappa_sp[i,] <- (p_2[i])/(1 + ((p_2[i]*N_j[i,])/c_2[i]))  
   N_sp[i,] = (N_j[i,]*kappa_sp[i,]) + obs_error_sp[i]  
 }
 
-# N_j_sim = rnorm(n, N_j, obs_error_j)
-# N_sp_sim = rnorm(n, N_sp, obs_error_sp)
+N_j_sim = rnorm(n, N_j, process_error_j)
+N_sp_sim = rnorm(n, N_sp, process_error_sp)
  
 sd(N_j[6:n]) #[6:n])
 sd(N_sp[6:n])
@@ -95,12 +98,15 @@ plot(N_j)
 plot(N_sp) 
 
 dat_sim <- cbind(Population = population, Year = year, 
-                 N_eggs = N_eggs[1:n,], N_j = N_j[1:n,] , N_sp = N_sp[1:n,] ,
+                 N_eggs = N_eggs[1:n,], N_j = N_j_sim, #[1:n,] , 
+                 N_sp = N_sp_sim,#[1:n,] ,
                  obs_error_sp = obs_error_sp, obs_error_j=obs_error_j,#cov1=cov1, cov2=cov2,
-                p_1 = p_1, p_2=p_1, 
-                c_1=c_1, c_2=c_2,
-                kappa_sp=kappa_sp[1:n,],
-                kappa_fw=kappa_fw[1:n,]) #setting up single data file so that you can replace it with the real data
+                 p_1 = p_1, p_2=p_1, 
+                 c_1=c_1, c_2=c_2,
+                 process_error_j=process_error_j,
+                 process_error_sp=process_error_sp,
+                 kappa_sp=kappa_sp[1:n,],
+                 kappa_fw=kappa_fw[1:n,]) #setting up single data file so that you can replace it with the real data
 
 dat_sim <- data.frame(dat_sim)[6:n,]  
 dat_sim_plot <- dat_sim %>% 

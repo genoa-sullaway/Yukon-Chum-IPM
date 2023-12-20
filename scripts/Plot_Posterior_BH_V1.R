@@ -34,7 +34,7 @@ bh_summary %>%
       geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
       facet_wrap(~variable, scales = 'free') 
 
-posterior <- bh_summary %>% 
+ bh_summary %>% 
   slice(3:6) %>%
   ggplot() + 
   geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
