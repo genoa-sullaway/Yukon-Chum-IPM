@@ -6,16 +6,16 @@ library(tidybayes)
 # sim_kusko   alpha = 0.05, beta = 7*10^-6
 
 # Observed ======================  
-obs_df <- data.frame(id = c(#"observed","observed",
+obs_df <- data.frame(id = c("observed","observed",
                             "observed","observed",
                             "observed","observed"), 
-                     variable = c(#"sigma_y_j", "sigma_y_sp",
+                     variable = c("sigma_y_j", "sigma_y_sp",
                                   "p_1", "p_2",
                                   "log_c_1", "log_c_2"), 
-                     mean =c(#1000, 1000,
+                     mean =c(2,2,
                              0.05, 0.15, 
                              log(10000000),log(1000000)),
-                     se_mean=c(#0,0,
+                     se_mean=c(0,0,
                                0,0,0,0))
 
 sim_dat <- read_csv("data/Simulated_DatBH.csv")
@@ -27,25 +27,26 @@ bh_summary <- summary(bh_fit)$summary %>%
   as_data_frame()
  
 # posterior without simulated data points =============
-bh_summary %>% 
-  slice(3:6) %>% 
-    ggplot() + 
-      geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
-      geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
-      facet_wrap(~variable, scales = 'free') 
 
- bh_summary %>% 
-  slice(3:6) %>%
+bh_summary %>% 
+  slice(1:6) %>%
   ggplot() + 
   geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
   geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
   facet_wrap(~variable, scales = 'free') +
   geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
 
- pdf("output/posterior_simulation_plot.pdf")
- posterior
- dev.off()
- 
+bh_summary %>% 
+  slice(1:6) %>% 
+    ggplot() + 
+      geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
+      geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
+      facet_wrap(~variable, scales = 'free') 
+  
+#  pdf("output/posterior_simulation_plot.pdf")
+#  posterior
+#  dev.off()
+#  
 # Plot posterior generated quantities
 sim_dat_plot<- sim_dat %>%
   dplyr::rename(pp_log_N_j = "N_j",

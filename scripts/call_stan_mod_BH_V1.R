@@ -109,11 +109,11 @@ bh_fit <- stan(
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores)
- 
- MCMCsummary(bh_fit,params = c("log_c_1", "log_c_2",
-                              "p_1", "p_2"))
- 
- 
+
+MCMCtrace(bh_fit) #, params = c("log_c_1", "log_c_2",
+                             #"p_1", "p_2","sigma_y_j","sigma_y_sp"), pdf = FALSE)
+
+
  MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
  MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
  MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
@@ -121,6 +121,10 @@ bh_fit <- stan(
  
  MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
  MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
+ 
+ MCMCsummary(bh_fit,params = c("log_c_1", "log_c_2",
+                               "p_1", "p_2","sigma_y_j","sigma_y_sp"))
+ 
  
  
  

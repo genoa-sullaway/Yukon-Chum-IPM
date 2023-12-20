@@ -133,8 +133,8 @@ N_j[1] = N_j_start;
 
 model {
   // PRIORS
-   sigma_y_j ~  normal(0, 10);//uniform(0,2000);// normal(0.001, 0.1); //cauchy(0,1);
-   sigma_y_sp ~ normal(0, 10);// uniform(0,2000);// normal(0.001, 0.1); //cauchy(0,1); 
+   sigma_y_j ~  normal(2, 5);//uniform(0,2000);// normal(0.001, 0.1); //cauchy(0,1);
+   sigma_y_sp ~ normal(2, 5);// uniform(0,2000);// normal(0.001, 0.1); //cauchy(0,1); 
    // log_N_j ~ uniform(1,1e6); //8.0, 13.0); // log juvenile prior
    // log_N_sp ~ uniform(1,1e6); // log spawner prior 
    // 
@@ -150,11 +150,11 @@ model {
 
 //for(k in 1:K){
   //avg_B1[k] ~ normal(10,10); // Stan specific loop to assign priors across stocks
-   p_1 ~ normal(0.05,1); // uniform(0.0001,1.5); //10,10);
-   p_2 ~ normal(0.15,0.1); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
+   p_1 ~ normal(0.05,0.1); // uniform(0.0001,1.5); //10,10);
+   p_2 ~ normal(0.15,1); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
  
-   log_c_1 ~ normal(16,20);//uniform(0, 20000000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values. 
-   log_c_2 ~ normal(14,20);//uniform(0, 2000000); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);
+   log_c_1 ~ normal(16.1,10);//uniform(0, 20000000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values. 
+   log_c_2 ~ normal(13.8,20);//uniform(0, 2000000); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);
 //}
 
 // Liklilihoods -- 

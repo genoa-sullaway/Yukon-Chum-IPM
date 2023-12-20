@@ -40,10 +40,10 @@ p_1 <- c(rnorm(n, 0.05, 0)) #simulating a unique beta for each population
 p_2 <-c(rnorm(n, 0.15, 0)) #simulating a unique beta for each population
 # rnorm(n, 0.00013, 0), 
 #rnorm(n, 0.000047, 0))
-c_1 <- c(rnorm(n, 10000000, 0)) #, #simulating a unique alpha for each population
+c_1 <- c(rnorm(n, 10000000, 0)) #16.11, #simulating a unique alpha for each population
        # rnorm(n, 2.5, 0),
        # rnorm(n, 1.77, 0))
-c_2 <- c(rnorm(n, 1000000, 0)) #, #simulating a unique alpha for each population
+c_2 <- c(rnorm(n, 1000000, 0)) #13.8 , #simulating a unique alpha for each population
 # rnorm(n, 2.5, 0),
 # rnorm(n, 1.77, 0))
  
@@ -63,8 +63,8 @@ c_2 <- c(rnorm(n, 1000000, 0)) #, #simulating a unique alpha for each population
 #                rnorm(n, mean.spawn[2],mean(error.spawn)),
 #                rnorm(n, mean.spawn[3],mean(error.spawn)))
 
-obs_error_j  <- rnorm(n*n.pop, 50, 5)
-obs_error_sp  <- rnorm(n*n.pop, 50, 5)
+# obs_error_j  <- rnorm(n*n.pop, 50, 5)
+# obs_error_sp  <- rnorm(n*n.pop, 50, 5)
 
 N_eggs = matrix(nrow=n,ncol=1,NA)
 kappa_fw =  matrix(nrow=n,ncol=1,NA)
@@ -77,23 +77,27 @@ mean.spawn <- c(mean(yukon_spring$Escapement)) #c(1200 , 2000, 2500) #mean spawn
 N_sp[1] <-mean.spawn
 
 #N_sp<-c(rnorm(n, mean.spawn, mean(obs_error_sp)))
-process_error_j <- rnorm(n*n.pop, 500, 5)
-process_error_sp <- rnorm(n*n.pop, 500, 5)
+process_error_j <- rnorm(n*n.pop,2 , 0.3)
+process_error_sp <- rnorm(n*n.pop,2, 0.3)
 
 for (i in 2:n) {
   N_eggs[i,] = fs*Ps*N_sp[i-1]
   kappa_fw[i,] <-  (p_1[i])/(1 + ((p_1[i]*N_eggs[i,])/c_1[i])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
-  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) + obs_error_j[i]
+  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) #+ obs_error_j[i]
   
   kappa_sp[i,] <- (p_2[i])/(1 + ((p_2[i]*N_j[i,])/c_2[i]))  
-  N_sp[i,] = (N_j[i,]*kappa_sp[i,]) + obs_error_sp[i]  
+  N_sp[i,] = (N_j[i,]*kappa_sp[i,])# + obs_error_sp[i]  
 }
 
-N_j_sim = rnorm(n, N_j, process_error_j)
-N_sp_sim = rnorm(n, N_sp, process_error_sp)
+N_j_sim = rlnorm(n, log(N_j), process_error_j)
+N_sp_sim = rlnorm(n, log(N_sp), process_error_sp)
+
+hist(log(N_j_sim[6:n]))
+hist(log(N_sp_sim[6:n]))
  
-sd(N_j[6:n]) #[6:n])
-sd(N_sp[6:n])
+sd(log(N_j_sim[6:n])) #[6:n])
+sd(log(N_sp_sim[6:n]))
+
 plot(N_j) 
 plot(N_sp) 
 
