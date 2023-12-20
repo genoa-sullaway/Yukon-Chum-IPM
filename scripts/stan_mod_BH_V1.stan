@@ -35,8 +35,8 @@ parameters {
   real <lower=0> p_1;//[K]; // productivity for each stock, calculated based on parameter: average survivial, and later, covariates
   real <lower=0> p_2;//[K]; // productivity for each stock, calculated based on parameter: average survivial, and later, covariates
 
-  real log_c_1;//[K]; // carrying capacity 
-  real log_c_2;//[K]; // carrying capacity 
+  real<lower=0>c_1;//[K]; // carrying capacity 
+  real<lower=0>c_2;//[K]; // carrying capacity 
   
   // real<lower=0> N_sp[N]; // spawners
   // real <lower=1>log_N_j;
@@ -65,9 +65,9 @@ real<lower=0> N_sp[N]; // predicted spawners - this goes into the liklihood, dat
 real<lower=0> N_sp_start; 
 real<lower=0> N_egg_start;
 real<lower=0> N_j_start;
-
-real <lower=0> c_1;//[K]; // carrying capacity 
-real <lower=0> c_2;//[K]; // carrying capacity 
+// 
+// real <lower=0> c_1;//[K]; // carrying capacity 
+// real <lower=0> c_2;//[K]; // carrying capacity 
   
 // real<lower=0> kappa_sp_start;
 // real<lower=0> kappa_j_start;
@@ -75,9 +75,9 @@ real <lower=0> c_2;//[K]; // carrying capacity
 real kappa_j[N]; // predicted survival for each stock
 real kappa_sp[N]; // predicted survival for each stock
 
-c_1 = exp(log_c_1);//[K]; // carrying capacity 
-c_2 = exp(log_c_2);//[K]; // carrying capacity 
-  
+// c_1 = exp(log_c_1);//[K]; // carrying capacity 
+// c_2 = exp(log_c_2);//[K]; // carrying capacity 
+//   
 //kappa_sp_start = exp(log_kappa_sp_start);
   kappa_sp[1] = kappa_sp_start;
 
@@ -151,10 +151,13 @@ model {
 //for(k in 1:K){
   //avg_B1[k] ~ normal(10,10); // Stan specific loop to assign priors across stocks
    p_1 ~ normal(0.05,0.1); // uniform(0.0001,1.5); //10,10);
-   p_2 ~ normal(0.15,1); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
+   p_2 ~ normal(0.15,0.1); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
  
-   log_c_1 ~ normal(16.1,10);//uniform(0, 20000000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values. 
-   log_c_2 ~ normal(13.8,20);//uniform(0, 2000000); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);
+  c_1 ~ normal(0,1e7);//16.1,5);//uniform(0, 20000000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values.
+  c_2 ~ normal(0,1e6);//13.8,3);
+  
+  // log_c_1 ~ lognormal(16.1,5);//uniform(0, 20000000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values.
+  // log_c_2 ~ lognormal(13.8,3);//uniform(0, 2000000); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);
 //}
 
 // Liklilihoods -- 

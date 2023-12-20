@@ -11,10 +11,11 @@ obs_df <- data.frame(id = c("observed","observed",
                             "observed","observed"), 
                      variable = c("sigma_y_j", "sigma_y_sp",
                                   "p_1", "p_2",
-                                  "log_c_1", "log_c_2"), 
+                                  "c_1", "c_2"), 
                      mean =c(2,2,
                              0.05, 0.15, 
-                             log(10000000),log(1000000)),
+                             10000000,1000000),
+                           #  log(10000000),log(1000000)),
                      se_mean=c(0,0,
                                0,0,0,0))
 

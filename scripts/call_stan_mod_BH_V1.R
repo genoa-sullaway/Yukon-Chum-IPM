@@ -109,13 +109,23 @@ bh_fit <- stan(
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores)
+ 
+bh_summary <- summary(bh_fit)$summary %>% 
+  as.data.frame() %>% 
+  mutate(variable = rownames(.)) %>% 
+  select(variable, everything()) %>% 
+  as_data_frame()
+ 
+bh_summary %>% 
+  slice(1:6) %>%
+  ggplot() + 
+  geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
+  geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
+  facet_wrap(~variable, scales = 'free') +
+  geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
 
-MCMCtrace(bh_fit) #, params = c("log_c_1", "log_c_2",
-                             #"p_1", "p_2","sigma_y_j","sigma_y_sp"), pdf = FALSE)
-
-
- MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
- MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
+ MCMCtrace(bh_fit, params = c("c_1"), pdf = FALSE)
+ MCMCtrace(bh_fit, params = c("c_2"), pdf = FALSE)
  MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
  MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
  
