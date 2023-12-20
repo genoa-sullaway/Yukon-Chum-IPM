@@ -132,7 +132,7 @@ bh_summary %>%
  MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
  MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
  
- MCMCsummary(bh_fit,params = c("log_c_1", "log_c_2",
+ MCMCsummary(bh_fit,params = c("c_1", "c_2",
                                "p_1", "p_2","sigma_y_j","sigma_y_sp"))
  
  
