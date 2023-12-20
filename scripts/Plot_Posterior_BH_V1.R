@@ -34,14 +34,17 @@ bh_summary %>%
       geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
       facet_wrap(~variable, scales = 'free') 
 
-
-bh_summary %>% 
+posterior <- bh_summary %>% 
   slice(3:6) %>%
   ggplot() + 
   geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
   geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
   facet_wrap(~variable, scales = 'free') +
   geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
+
+ pdf("output/posterior_simulation_plot.pdf")
+ posterior
+ dev.off()
  
 # Plot posterior generated quantities
 sim_dat_plot<- sim_dat %>%

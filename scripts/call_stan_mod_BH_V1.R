@@ -110,13 +110,20 @@ bh_fit <- stan(
   iter = total_iterations,
   cores = n_cores)
  
-MCMCsummary(bh_fit,params = c("log_c_1", "log_c_2",
+ MCMCsummary(bh_fit,params = c("log_c_1", "log_c_2",
                               "p_1", "p_2"))
 
+pdf("output/trace.pdf")
 MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
 MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
 MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
 MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+dev.off()
+
+# MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
   
 # refresh = 250,
   #init = init_list,
