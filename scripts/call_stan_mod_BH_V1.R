@@ -44,7 +44,8 @@ data_stage_sp <- c(as.integer(sim_dat$N_sp))#,
 kappa_j_start =  runif(1, 0.05, 0.155) # starting values for kappa so there arent NAs, this doesnt really do anything. 
 kappa_sp_start =  runif(1, 0.145, 0.155)
  
- 
+basal_p_1 = 0.05 # straight from simulation 
+cov1 = sim_dat$cov1
 data_list <- list(Ps = Ps,
                   fs=fs,
                   # n_init_years=n_init_years,
@@ -55,11 +56,13 @@ data_list <- list(Ps = Ps,
                   data_stage_j = data_stage_j, 
                   data_stage_sp = data_stage_sp,
                   kappa_sp_start = kappa_sp_start,
-                  kappa_j_start = kappa_j_start) 
+                  kappa_j_start = kappa_j_start,
+                  basal_p_1=basal_p_1,
+                  cov1 = cov1) 
                   # ncovars = ncovars,
                   # covar_1 = covar_1)
   
-
+ 
 # init_list <- list(
 #   list(p_1= 0.05 , 
 #        p_2 =0.10,
@@ -128,6 +131,7 @@ bh_summary %>%
  MCMCtrace(bh_fit, params = c("c_2"), pdf = FALSE)
  MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
  MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+ MCMCtrace(bh_fit, params = c("theta1"), pdf = FALSE)
  
  MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
  MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
@@ -136,6 +140,7 @@ bh_summary %>%
                                "p_1", "p_2","sigma_y_j","sigma_y_sp"))
  
  
+ MCMCtrace(bh_fit)
  
  
  # save plots ==============

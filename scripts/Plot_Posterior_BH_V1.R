@@ -10,14 +10,17 @@ obs_df <- data.frame(id = c("observed","observed",
                             "observed","observed",
                             "observed","observed"), 
                      variable = c("sigma_y_j", "sigma_y_sp",
-                                  "p_1", "p_2",
-                                  "c_1", "c_2"), 
+                                 # "p_1", 
+                                  "p_2",
+                                  "c_1", "c_2",
+                                  "theta1"), 
                      mean =c(2,2,
-                             0.05, 0.15, 
-                             10000000,1000000),
+                             #0.05, 
+                             0.15, 
+                             10000000,750000,0.1),
                            #  log(10000000),log(1000000)),
-                     se_mean=c(0,0,
-                               0,0,0,0))
+                     se_mean=c(0,#0,
+                               0,0,0,0,0))
 
 sim_dat <- read_csv("data/Simulated_DatBH.csv")
 

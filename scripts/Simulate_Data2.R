@@ -34,25 +34,26 @@ Ps = 0.5 # proportion of females. supported by Gilk Baumer
 
 #Bev Holt parameters ===================
 # p for alpha, and c for carrying capacity 
-p_1 <- c(rnorm(n, 0.05, 0)) #simulating a unique beta for each population
+basal_p_1 <- c(rnorm(n, 0.05, 0)) #simulating a unique beta for each population
       # rnorm(n, 0.00013, 0), 
-       #rnorm(n, 0.000047, 0))
-p_2 <-c(rnorm(n, 0.15, 0)) #simulating a unique beta for each population
+      # rnorm(n, 0.000047, 0))
+p_2 <-c(rnorm(n, 0.15, 0))
+# basal_p_2 <-c(rnorm(n, 0.15, 0)) #simulating a unique beta for each population
 # rnorm(n, 0.00013, 0), 
-#rnorm(n, 0.000047, 0))
+# rnorm(n, 0.000047, 0))
 c_1 <- c(rnorm(n, 10000000, 0)) #16.11, #simulating a unique alpha for each population
        # rnorm(n, 2.5, 0),
        # rnorm(n, 1.77, 0))
-c_2 <- c(rnorm(n, 1000000, 0)) #13.8 , #simulating a unique alpha for each population
+c_2 <- c(rnorm(n, 750000, 0)) #13.8 , #simulating a unique alpha for each population
 # rnorm(n, 2.5, 0),
 # rnorm(n, 1.77, 0))
  
 #covariate data ===================
-# not worrying about this yet
-# cov1 <- rnorm(n*n.pop, 0, 2) #Cov 1 data
-# cov2 <- rnorm(n*n.pop, 0, 2) #Cov2 data
-# theta1 <- c(rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
-# theta2 <- c(rep(-0.2,n), rep(0.1,n), rep(-0.1,n)) #relationship for simulated data
+
+cov1 <- rnorm(n*n.pop, 0, 2) #Cov 1 data
+cov2 <- rnorm(n*n.pop, 0, 2) #Cov2 data
+theta1 <- c(rep(0.1,n)) #, rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+theta2 <- c(rep(-0.2,n)) #, rep(0.1,n), rep(-0.1,n)) #relationship for simulated data
 
 # simulate populations  ===================
 
@@ -69,7 +70,6 @@ c_2 <- c(rnorm(n, 1000000, 0)) #13.8 , #simulating a unique alpha for each popul
 N_eggs = matrix(nrow=n,ncol=1,NA)
 kappa_fw =  matrix(nrow=n,ncol=1,NA)
 N_j =  matrix(nrow=n,ncol=1,NA)
-N_j[1] = 10000 # just so i dont get yelled at about NAs later down the road 
 kappa_sp =  matrix(nrow=n,ncol=1,NA)
 
 N_sp = matrix(nrow=n, ncol=1, NA)
@@ -80,6 +80,10 @@ N_sp[1] <-mean.spawn
 process_error_j <- rnorm(n*n.pop,2 , 0.3)
 process_error_sp <- rnorm(n*n.pop,2, 0.3)
 
+# simulate p first, 
+p_1  = 1 / exp(-basal_p_1 - (theta1*cov1)) # covariate impacts survivial, impact is measured through theta
+#p_2  = 1 + exp(basal_p_2 + (theta2*cov2))
+ 
 for (i in 2:n) {
   N_eggs[i,] = fs*Ps*N_sp[i-1]
   kappa_fw[i,] <-  (p_1[i])/(1 + ((p_1[i]*N_eggs[i,])/c_1[i])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
@@ -89,32 +93,38 @@ for (i in 2:n) {
   N_sp[i,] = (N_j[i,]*kappa_sp[i,])# + obs_error_sp[i]  
 }
 
+N_j[1,] = mean(N_j[2:n,1]) # just so i don't get yelled at about NA's later down the road 
 N_j_sim = rlnorm(n, log(N_j), process_error_j)
 N_sp_sim = rlnorm(n, log(N_sp), process_error_sp)
 
+ 
 hist(log(N_j_sim[6:n]))
 hist(log(N_sp_sim[6:n]))
  
+hist( N_j_sim[6:n])
+hist( N_sp_sim[6:n])
+
 sd(log(N_j_sim[6:n])) #[6:n])
 sd(log(N_sp_sim[6:n]))
 
-plot(N_j) 
-plot(N_sp) 
+plot(N_j_sim) 
+plot(N_sp_sim) 
 
 dat_sim <- cbind(Population = population, Year = year, 
                  N_eggs = N_eggs[1:n,], N_j = N_j_sim, #[1:n,] , 
                  N_sp = N_sp_sim,#[1:n,] ,
-                 obs_error_sp = obs_error_sp, obs_error_j=obs_error_j,#cov1=cov1, cov2=cov2,
+                 #obs_error_sp = obs_error_sp, obs_error_j=obs_error_j,#cov1=cov1, cov2=cov2,
                  p_1 = p_1, p_2=p_1, 
                  c_1=c_1, c_2=c_2,
                  process_error_j=process_error_j,
                  process_error_sp=process_error_sp,
                  kappa_sp=kappa_sp[1:n,],
-                 kappa_fw=kappa_fw[1:n,]) #setting up single data file so that you can replace it with the real data
+                 kappa_fw=kappa_fw[1:n,],
+                 cov1=cov1) #setting up single data file so that you can replace it with the real data
 
 dat_sim <- data.frame(dat_sim)[6:n,]  
 dat_sim_plot <- dat_sim %>% 
-  gather(c(3:13), key = "id", value = "value") 
+  gather(c(3:14), key = "id", value = "value") 
   
 plota <- ggplot(data = dat_sim_plot, aes(x=Year, y = log(value))) +
   geom_point() +
