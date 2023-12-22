@@ -1,6 +1,5 @@
 
 library(actuaryr)
-# library(rjags)
 library(readxl)
 library(ggplot2)
 library(ggthemes)
@@ -37,7 +36,7 @@ Ps = 0.5 # proportion of females. supported by Gilk Baumer
 basal_p_1 <- c(rnorm(n, 0.05, 0)) #simulating a unique beta for each population
       # rnorm(n, 0.00013, 0), 
       # rnorm(n, 0.000047, 0))
-p_2 <-c(rnorm(n, 0.15, 0))
+basal_p_2 <-c(rnorm(n, 0.15, 0))
 # basal_p_2 <-c(rnorm(n, 0.15, 0)) #simulating a unique beta for each population
 # rnorm(n, 0.00013, 0), 
 # rnorm(n, 0.000047, 0))
@@ -82,8 +81,8 @@ process_error_sp <- rnorm(n*n.pop,2, 0.3)
 
 # simulate p first, 
 p_1  = 1 / exp(-basal_p_1 - (theta1*cov1)) # covariate impacts survivial, impact is measured through theta
-#p_2  = 1 + exp(basal_p_2 + (theta2*cov2))
- 
+p_2  = 1 / exp(-basal_p_2 - (theta2*cov2)) 
+
 for (i in 2:n) {
   N_eggs[i,] = fs*Ps*N_sp[i-1]
   kappa_fw[i,] <-  (p_1[i])/(1 + ((p_1[i]*N_eggs[i,])/c_1[i])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
@@ -104,8 +103,8 @@ hist(log(N_sp_sim[6:n]))
 hist( N_j_sim[6:n])
 hist( N_sp_sim[6:n])
 
-sd(log(N_j_sim[6:n])) #[6:n])
-sd(log(N_sp_sim[6:n]))
+sigma_j_obs<-sd(log(N_j_sim[6:n])) #[6:n])
+sigma_sp_obs<-sd(log(N_sp_sim[6:n]))
 
 plot(N_j_sim) 
 plot(N_sp_sim) 
@@ -114,13 +113,13 @@ dat_sim <- cbind(Population = population, Year = year,
                  N_eggs = N_eggs[1:n,], N_j = N_j_sim, #[1:n,] , 
                  N_sp = N_sp_sim,#[1:n,] ,
                  #obs_error_sp = obs_error_sp, obs_error_j=obs_error_j,#cov1=cov1, cov2=cov2,
-                 p_1 = p_1, p_2=p_1, 
+                 p_1 = p_1, p_2=p_2, 
                  c_1=c_1, c_2=c_2,
                  process_error_j=process_error_j,
                  process_error_sp=process_error_sp,
                  kappa_sp=kappa_sp[1:n,],
                  kappa_fw=kappa_fw[1:n,],
-                 cov1=cov1) #setting up single data file so that you can replace it with the real data
+                 cov1=cov1,cov2=cov2) #setting up single data file so that you can replace it with the real data
 
 dat_sim <- data.frame(dat_sim)[6:n,]  
 dat_sim_plot <- dat_sim %>% 
@@ -142,6 +141,7 @@ write_csv(dat_sim , "data/Simulated_DatBH.csv")
 
 sd(dat_sim$N_j)
 sd(dat_sim$N_sp)
+sd(dat_sim$N_eggs)
 
 log(mean(dat_sim$N_j))
 log(mean(dat_sim$N_sp))

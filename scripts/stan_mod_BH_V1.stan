@@ -15,8 +15,10 @@ data { // all equation references are from proposal numbering
   
   // related to covariates: 
   real cov1[N];
+  real cov2[N];
+  
   real <lower=0> basal_p_1; // mean survival absent of density dependence - for now just add it in dont estimate it. 
- 
+  real <lower=0> basal_p_2;
  // int<lower=0> g[N];
  // int<lower = 1, upper = K> g[N]; // Vector of group assignments so STAN knows which group it is dealing with in the set of N observations 
  // real covar_1[N, ncovars]; // covariate data note: cannot be coded as matrix 
@@ -38,21 +40,21 @@ parameters {
   
   // Stock specific parameters
   // real <lower=0> p_1;//[K]; // productivity for each stock, calculated based on parameter: average survivial, and later, covariates
-  real <lower=0> p_2;//[K]; // productivity for each stock, calculated based on parameter: average survivial, and later, covariates
+  //real <lower=0> p_2;//[K]; // productivity for each stock, calculated based on parameter: average survivial, and later, covariates
 
   real<lower=0>c_1;//[K]; // carrying capacity 
   real<lower=0>c_2;//[K]; // carrying capacity 
   
     
   // covariate parameters 
-  real theta1; 
+  real theta1;
+  real theta2;
   // real<lower=0> N_sp[N]; // spawners
   // real <lower=1>log_N_j;
   real log_N_sp_start;
   real log_N_egg_start;
   real log_N_j_start;
  
-  
   // real <lower=0>kappa_sp_start;
   // real <lower=0>kappa_j_start;
 }
@@ -76,6 +78,7 @@ real<lower=0> N_sp_start;
 real<lower=0> N_egg_start;
 real<lower=0> N_j_start;
 real<lower=0> p_1[N];
+real<lower=0> p_2[N];
 // 
 // real <lower=0> c_1;//[K]; // carrying capacity 
 // real <lower=0> c_2;//[K]; // carrying capacity 
@@ -106,6 +109,7 @@ real kappa_sp[N]; // predicted survival for each stock
   
   for (i in 1:N) {
   p_1[i]  = 1 / exp(-basal_p_1 - (theta1*cov1[i]));
+  p_2[i]  = 1 / exp(-basal_p_2 - (theta2*cov2[i]));
   }
   
   for (i in 2:N) { //will need to add a loop in here for stocks too..
@@ -115,7 +119,7 @@ real kappa_sp[N]; // predicted survival for each stock
     
     N_j[i] = kappa_j[i]*N_e[i]; // Eq 4.4  generated estiamte for the amount of fish each year and stock that survive to a juvenile stage
    
-    kappa_sp[i] =  p_2/ (1 + ((p_2*N_j[i])/c_2)); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+    kappa_sp[i] =  p_2[i]/ (1 + ((p_2[i]*N_j[i])/c_2)); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
    
     N_sp[i] = kappa_sp[i]*N_j[i]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
    }
@@ -144,14 +148,15 @@ model {
    log_N_j_start ~ normal(16,10); //  
    log_N_sp_start ~ normal(14,10); //  
    
-   theta1~normal(0,10);
+   theta1~normal(0.1,10);
+   theta2~normal(-0.2,10);
  // kappa_j_start ~ uniform(1,0.001); //  
  // kappa_sp_start ~ uniform(1,0.001); //  
 
 //for(k in 1:K){
   //avg_B1[k] ~ normal(10,10); // Stan specific loop to assign priors across stocks
    // p_1 ~ normal(0.05,0.01); // uniform(0.0001,1.5); //10,10);
-   p_2 ~ normal(0.15,0.01); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
+  // p_2 ~ normal(0.15,0.01); // uniform(0.0001,1.5);//normal(0,1.5^2); //10,10);
   // c_1 ~ uniform(10e5, 10e9); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values.
   // c_2 ~ uniform(10e3,10e6);
   // 
@@ -161,6 +166,8 @@ model {
   // log_c_1 ~ lognormal(16.1,5);//uniform(0, 20000000); // uniform(1,1e6);// uniform(1000,100000); // normal(1,5); <- these are my old prior values, cc are the uniform values.
   // log_c_2 ~ lognormal(13.8,3);//uniform(0, 2000000); //uniform(1,1e6);// uniform(1000,100000); // normal(1,5);
 //}
+
+// target += normal_lpdf(log(N_e)|N_e,20);
 
 // Liklilihoods -- 
   for (i in 1:N) {

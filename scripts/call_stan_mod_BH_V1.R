@@ -1,6 +1,8 @@
 library(rstan)
 library(tidyverse)
 library(here)
+library(bayesplot)
+library(rstanarm) 
 
 # load simulated data =======================================================
 # to start, use simulated data from "scripts/simulate_data.R" 
@@ -45,7 +47,9 @@ kappa_j_start =  runif(1, 0.05, 0.155) # starting values for kappa so there aren
 kappa_sp_start =  runif(1, 0.145, 0.155)
  
 basal_p_1 = 0.05 # straight from simulation 
+basal_p_2 = 0.15 # straight from simulation 
 cov1 = sim_dat$cov1
+cov2 = sim_dat$cov2
 data_list <- list(Ps = Ps,
                   fs=fs,
                   # n_init_years=n_init_years,
@@ -57,8 +61,9 @@ data_list <- list(Ps = Ps,
                   data_stage_sp = data_stage_sp,
                   kappa_sp_start = kappa_sp_start,
                   kappa_j_start = kappa_j_start,
-                  basal_p_1=basal_p_1,
-                  cov1 = cov1) 
+                  basal_p_1=basal_p_1,basal_p_2=basal_p_2,
+                  cov1 = cov1,
+                  cov2 = cov2) 
                   # ncovars = ncovars,
                   # covar_1 = covar_1)
   
@@ -126,48 +131,42 @@ bh_summary %>%
   geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
   facet_wrap(~variable, scales = 'free') +
   geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
+ 
+ mcmc_trace(bh_fit, pars = c("c_1"))#, pdf = FALSE)
+ mcmc_trace(bh_fit, pars = c("c_2"))
+ mcmc_trace(bh_fit, pars = c("theta1"))
+ mcmc_trace(bh_fit, pars = c("theta2")) 
+ 
+ mcmc_trace(bh_fit, pars = c("sigma_y_j"))
+ mcmc_trace(bh_fit, pars = c("sigma_y_sp"))
+ 
+ 
 
- MCMCtrace(bh_fit, params = c("c_1"), pdf = FALSE)
- MCMCtrace(bh_fit, params = c("c_2"), pdf = FALSE)
- MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
- MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
- MCMCtrace(bh_fit, params = c("theta1"), pdf = FALSE)
- 
- MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
- MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
- 
- MCMCsummary(bh_fit,params = c("c_1", "c_2",
-                               "p_1", "p_2","sigma_y_j","sigma_y_sp"))
- 
- 
- MCMCtrace(bh_fit)
- 
- 
  # save plots ==============
-
-pdf("output/trace.pdf")
-MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
-MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
-MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
-MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
-dev.off()
-
-MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
-MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
-MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
-MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
-
-MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
-MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
-  
-# refresh = 250,
-  #init = init_list,
-  # control = list(max_treedepth = max_treedepth,
-  #                adapt_delta = adapt_delta))
-
- 
-
-
-
-
- 
+# 
+# pdf("output/trace.pdf")
+# MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+# dev.off()
+# 
+# MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+# 
+# MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
+# MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
+#   
+# # refresh = 250,
+#   #init = init_list,
+#   # control = list(max_treedepth = max_treedepth,
+#   #                adapt_delta = adapt_delta))
+# 
+#  
+# 
+# 
+# 
+# 
+#  
