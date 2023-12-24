@@ -14,17 +14,16 @@ set.seed(20)
 
 #### Simulating data 
 # Load data for baseline ============== 
-#yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv")  
+yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv")  
 yukon_spring <- read_excel("data/Yukon_Escapement_ADFG/Yukon Summer Chum Total Run 1978-2022 Run Rec.xlsx")
-
-#kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS") 
-#kusko<-data.frame(Year = c(1988:(2022-1)),   
- #                 pred_N_est= as.vector(c(kusko_estimated_parameters[2:35])))  
+kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS") 
+ kusko<-data.frame(Year = c(1988:(2022-1)),   
+                 pred_N_est= as.vector(c(kusko_estimated_parameters[2:35])))  
 
 # Init ===================
 n<-105 #number of samples per population
-pops<- 1 #seq(1,3,1) #population pointer vector
-population<- c(rep(1,n)) #, rep(2,n), rep(3,n)) #population pointer vector
+pops <- 3 #seq(1,3,1) #population pointer vector
+population<- c(rep(1,n), rep(2,n), rep(3,n)) #population pointer vector
 n.pop <-length(unique(population)) #number of population
 year <- rep(seq(1,n), n.pop) #creating a year pointer
 
@@ -33,28 +32,33 @@ Ps = 0.5 # proportion of females. supported by Gilk Baumer
 
 #Bev Holt parameters ===================
 # p for alpha, and c for carrying capacity 
-basal_p_1 <- c(rnorm(n, 0.05, 0)) #simulating a unique beta for each population
-      # rnorm(n, 0.00013, 0), 
-      # rnorm(n, 0.000047, 0))
-basal_p_2 <-c(rnorm(n, 0.15, 0))
-# basal_p_2 <-c(rnorm(n, 0.15, 0)) #simulating a unique beta for each population
-# rnorm(n, 0.00013, 0), 
-# rnorm(n, 0.000047, 0))
-c_1 <- c(rnorm(n, 10000000, 0)) #16.11, #simulating a unique alpha for each population
-       # rnorm(n, 2.5, 0),
-       # rnorm(n, 1.77, 0))
-c_2 <- c(rnorm(n, 750000, 0)) #13.8 , #simulating a unique alpha for each population
-# rnorm(n, 2.5, 0),
-# rnorm(n, 1.77, 0))
+basal_p_1 <- matrix(nrow=n,ncol=n.pop,
+                    c(rnorm(n, 0.05, 0), #simulating a unique beta for each population
+                       rnorm(n, 0.013, 0), 
+                       rnorm(n, 0.047, 0)))
+basal_p_2 <-matrix(nrow=n,ncol=n.pop,
+                   c(rnorm(n, 0.15, 0),
+                     rnorm(n, 0.13, 0), 
+                     rnorm(n, 0.47, 0)))
+
+c_1 <- matrix(nrow=n,ncol=n.pop,
+              c(rnorm(n, 10000000, 0), #16.11, #simulating a unique alpha for each population
+                rnorm(n, 25000000, 0),
+                rnorm(n, 17700000, 0)))
+
+c_2 <- matrix(nrow=n,ncol=n.pop,
+              c(rnorm(n, 750000, 0), #13.8 , #simulating a unique alpha for each population
+                rnorm(n, 250000, 0),
+                rnorm(n, 177000, 0)))
  
-#covariate data ===================
+# Covariate data ===================
 
-cov1 <- rnorm(n*n.pop, 0, 2) #Cov 1 data
-cov2 <- rnorm(n*n.pop, 0, 2) #Cov2 data
-theta1 <- c(rep(0.1,n)) #, rep(0.3,n), rep(0.4,n)) #relationship for simulated data
-theta2 <- c(rep(-0.2,n)) #, rep(0.1,n), rep(-0.1,n)) #relationship for simulated data
+cov1 <- matrix(nrow=n,ncol=n.pop, c(rnorm(n*n.pop, 0, 2)))  #Cov 1 data
+cov2 <- matrix(nrow=n,ncol=n.pop, c(rnorm(n*n.pop, 0, 2))) #Cov2 data
+theta1 <- matrix(nrow=n,ncol=n.pop, c(rep(0.1,n), rep(0.1,n), rep(0.1,n))) # c(rep(0.1,n), rep(0.1,n), rep(0.1,n)) #relationship for simulated data
+theta2 <- matrix(nrow=n,ncol=n.pop, c(rep(-0.2,n), rep(-0.2,n), rep(-0.2,n))) #relationship for simulated data
 
-# simulate populations  ===================
+# Simulate populations  ===================
 
 # N_sp = matrix(nrow=n, ncol=1, NA)
 # N_sp[1,] <- mean.spawn # seed inital 
@@ -66,36 +70,44 @@ theta2 <- c(rep(-0.2,n)) #, rep(0.1,n), rep(-0.1,n)) #relationship for simulated
 # obs_error_j  <- rnorm(n*n.pop, 50, 5)
 # obs_error_sp  <- rnorm(n*n.pop, 50, 5)
 
-N_eggs = matrix(nrow=n,ncol=1,NA)
-kappa_fw =  matrix(nrow=n,ncol=1,NA)
-N_j =  matrix(nrow=n,ncol=1,NA)
-kappa_sp =  matrix(nrow=n,ncol=1,NA)
+N_eggs = matrix(nrow=n,ncol=n.pop,NA)
+kappa_fw =  matrix(nrow=n,ncol=n.pop,NA)
+N_j =  matrix(nrow=n,ncol=n.pop,NA)
+kappa_sp =  matrix(nrow=n,ncol=n.pop,NA)
 
-N_sp = matrix(nrow=n, ncol=1, NA)
-mean.spawn <- c(mean(yukon_spring$Escapement)) #c(1200 , 2000, 2500) #mean spawners for each population
-N_sp[1] <-mean.spawn
+N_sp = matrix(nrow=n, ncol=pops, NA)
+mean.spawn <- c(mean(yukon_spring$Escapement), mean(yukon_fall$Estimated_Run), mean(kusko$pred_N_est)) #mean spawners for each population
+N_sp[1,] <- mean.spawn
 
 #N_sp<-c(rnorm(n, mean.spawn, mean(obs_error_sp)))
-process_error_j <- rnorm(n*n.pop,2 , 0.3)
-process_error_sp <- rnorm(n*n.pop,2, 0.3)
+process_error_j <- matrix(nrow=n,ncol=n.pop,rnorm(n*n.pop, 2 , 0.3))
+process_error_sp <- matrix(nrow=n,ncol=n.pop,rnorm(n*n.pop,2, 0.3))
 
 # simulate p first, 
 p_1  = 1 / exp(-basal_p_1 - (theta1*cov1)) # covariate impacts survivial, impact is measured through theta
 p_2  = 1 / exp(-basal_p_2 - (theta2*cov2)) 
 
-for (i in 2:n) {
-  N_eggs[i,] = fs*Ps*N_sp[i-1]
-  kappa_fw[i,] <-  (p_1[i])/(1 + ((p_1[i]*N_eggs[i,])/c_1[i])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
-  N_j[i,] = (N_eggs[i,]*kappa_fw[i,]) #+ obs_error_j[i]
+
+for(p in 1:n.pop){
+ for (i in 2:n) {
+  N_eggs[i,p] = fs*Ps*N_sp[i-1,p]
+  kappa_fw[i,p] <-  (p_1[i,p])/(1 + ((p_1[i,p]*N_eggs[i,p])/c_1[i,p])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
+  N_j[i,p] = (N_eggs[i,p]*kappa_fw[i,p]) #+ obs_error_j[i]
   
-  kappa_sp[i,] <- (p_2[i])/(1 + ((p_2[i]*N_j[i,])/c_2[i]))  
-  N_sp[i,] = (N_j[i,]*kappa_sp[i,])# + obs_error_sp[i]  
+  kappa_sp[i,p] <- (p_2[i,p])/(1 + ((p_2[i,p]*N_j[i,p])/c_2[i,p]))  
+  N_sp[i,p] = (N_j[i,p]*kappa_sp[i,p])# + obs_error_sp[i]  
 }
+  }
 
-N_j[1,] = mean(N_j[2:n,1]) # just so i don't get yelled at about NA's later down the road 
-N_j_sim = rlnorm(n, log(N_j), process_error_j)
-N_sp_sim = rlnorm(n, log(N_sp), process_error_sp)
+N_j[1,] = colMeans(N_j[2:n,])# mean(N_j[2:n,1:n.pop]) # just so i don't get yelled at about NA's later down the road 
 
+N_j_sim <-  matrix(nrow=n,ncol=n.pop,NA)
+N_sp_sim <-  matrix(nrow=n,ncol=n.pop,NA)
+
+for (p in 1:n.pop) {
+N_j_sim[,p] = rlnorm(n, log(N_j[2:n,p]), process_error_j[2:n,p])
+N_sp_sim[,p] = rlnorm(n, log(N_sp[2:n,p]), process_error_sp[2:n,p])
+}
  
 hist(log(N_j_sim[6:n]))
 hist(log(N_sp_sim[6:n]))
@@ -103,8 +115,8 @@ hist(log(N_sp_sim[6:n]))
 hist( N_j_sim[6:n])
 hist( N_sp_sim[6:n])
 
-sigma_j_obs<-sd(log(N_j_sim[6:n])) #[6:n])
-sigma_sp_obs<-sd(log(N_sp_sim[6:n]))
+sigma_j_obs<-c(sd(log(N_j_sim)[6:n,1]),sd(log(N_j_sim)[6:n,2]),sd(log(N_j_sim)[6:n,3]))  #[6:n])
+sigma_sp_obs<-c(sd(log(N_sp_sim)[6:n,1]),sd(log(N_sp_sim)[6:n,2]),sd(log(N_sp_sim)[6:n,3]))
 
 plot(N_j_sim) 
 plot(N_sp_sim) 
