@@ -6,7 +6,10 @@ library(rstanarm)
 
 # load simulated data =======================================================
 # to start, use simulated data from "scripts/simulate_data.R" 
-sim_dat <- read_csv("data/Simulated_DatBH.csv")
+#sim_dat <- read_csv("data/Simulated_DatBH.csv")
+
+sim_dat <- readRDS("data/Simulated_DatBH.RDS")
+
 # sim_yukon_fall_df <- read_csv("data/Simulated_Yukon_Fall.csv")
 # sim_kusko_df <- read_csv("data/Simulated_Kusko.csv")
 
@@ -26,37 +29,40 @@ Ps <- 0.5 # proportion of females - assumption, need to lit check
 fs <- 2440 # fecundity - Gilk and Baumer 2009 estimate for Kusko Chum
 
 # Organize data call inputs ================================================
-K = 1 # number of stocks involved
-N_stock <- c(nrow(sim_dat))
-#N_stock <- c(nrow(sim_yukon_spring_df), nrow(sim_yukon_fall_df), nrow(sim_kusko_df))  
-N = sum(N_stock)
-g = c(rep(1, times = N_stock[1]))#, # Vector of group assignments.
-      # rep(2, times = N_stock[2]),
-      # rep(3, times = N_stock[3]))
+K = 3 # number of stocks involved
+#N_stock <- c(length(sim_dat$Population))
+N_stock <- c(nrow(sim_dat$N_sp), nrow(sim_dat$N_sp), nrow(sim_dat$N_sp))  
+N = N_stock[1]
+g = c(rep(1, times = N_stock[1]), # Vector of group assignments.
+      rep(2, times = N_stock[2]),
+      rep(3, times = N_stock[3]))
 #ncovars = 1 # right now just trying with temperature for stage 1      
  
-data_stage_j <- c(as.integer(sim_dat$N_j))#, 
+data_stage_j <- sim_dat$N_j #c(as.integer(sim_dat$N_j))#, 
                  # as.integer(sim_yukon_fall_df$N_j),
                  # as.integer(sim_kusko_df$N_j))
  
-data_stage_sp <- c(as.integer(sim_dat$N_sp))#, 
+data_stage_sp <- sim_dat$N_sp #c(as.integer(sim_dat$N_sp))#, 
                 # as.integer(sim_yukon_fall_df$N_sp),
                 # as.integer(sim_kusko_df$N_sp))
 
-kappa_j_start =  runif(1, 0.05, 0.155) # starting values for kappa so there arent NAs, this doesnt really do anything. 
-kappa_sp_start =  runif(1, 0.145, 0.155)
+kappa_j_start =  c(runif(1, 0.05, 0.155),
+                   runif(1, 0.05, 0.155),
+                   runif(1, 0.05, 0.155))
+kappa_sp_start =  c(runif(1, 0.145, 0.155),
+                    runif(1, 0.145, 0.155),
+                    runif(1, 0.145, 0.155))
  
-basal_p_1 = 0.05 # straight from simulation 
-basal_p_2 = 0.15 # straight from simulation 
+basal_p_1 = c(0.05,0.05,0.05) # straight from simulation 
+basal_p_2 = c(0.15,0.15,0.15) # straight from simulation 
+  
 cov1 = sim_dat$cov1
 cov2 = sim_dat$cov2
+
 data_list <- list(Ps = Ps,
                   fs=fs,
-                  # n_init_years=n_init_years,
                   N = N, 
-                  K = K, 
-                  # g = g,
-                  # N_stock = N_stock, 
+                  K = K,  
                   data_stage_j = data_stage_j, 
                   data_stage_sp = data_stage_sp,
                   kappa_sp_start = kappa_sp_start,
@@ -64,10 +70,7 @@ data_list <- list(Ps = Ps,
                   basal_p_1=basal_p_1,basal_p_2=basal_p_2,
                   cov1 = cov1,
                   cov2 = cov2) 
-                  # ncovars = ncovars,
-                  # covar_1 = covar_1)
-  
- 
+
 # init_list <- list(
 #   list(p_1= 0.05 , 
 #        p_2 =0.10,
@@ -125,7 +128,7 @@ bh_summary <- summary(bh_fit)$summary %>%
   as_data_frame()
  
 bh_summary %>% 
-  slice(1:6) %>%
+  slice(1:16) %>%
   ggplot() + 
   geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
   geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 

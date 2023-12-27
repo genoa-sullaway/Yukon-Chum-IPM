@@ -34,19 +34,21 @@ Ps = 0.5 # proportion of females. supported by Gilk Baumer
 # p for alpha, and c for carrying capacity 
 basal_p_1 <- matrix(nrow=n,ncol=n.pop,
                     c(rnorm(n, 0.05, 0), #simulating a unique beta for each population
-                       rnorm(n, 0.013, 0), 
-                       rnorm(n, 0.047, 0)))
+                       rnorm(n, 0.05, 0), 
+                       rnorm(n, 0.05, 0)))
 basal_p_2 <-matrix(nrow=n,ncol=n.pop,
                    c(rnorm(n, 0.15, 0),
-                     rnorm(n, 0.13, 0), 
-                     rnorm(n, 0.47, 0)))
+                     rnorm(n, 0.15, 0), 
+                     rnorm(n, 0.15, 0)))
 
-c_1 <- matrix(nrow=n,ncol=n.pop,
-              c(rnorm(n, 10000000, 0), #16.11, #simulating a unique alpha for each population
-                rnorm(n, 25000000, 0),
-                rnorm(n, 17700000, 0)))
+# c_1 <- matrix(nrow=1,ncol=n.pop,
+#               c(rnorm(n, 10000000, 0), #16.11, #simulating a unique alpha for each population
+#                 rnorm(n, 25000000, 0),
+#                 rnorm(n, 17700000, 0)))
 
-c_2 <- matrix(nrow=n,ncol=n.pop,
+c_1 <- rnorm(1,10000000, 0)
+
+c_2 <- matrix(nrow=1,ncol=n.pop,
               c(rnorm(n, 750000, 0), #13.8 , #simulating a unique alpha for each population
                 rnorm(n, 250000, 0),
                 rnorm(n, 177000, 0)))
@@ -55,11 +57,14 @@ c_2 <- matrix(nrow=n,ncol=n.pop,
 
 cov1 <- matrix(nrow=n,ncol=n.pop, c(rnorm(n*n.pop, 0, 2)))  #Cov 1 data
 cov2 <- matrix(nrow=n,ncol=n.pop, c(rnorm(n*n.pop, 0, 2))) #Cov2 data
-theta1 <- matrix(nrow=n,ncol=n.pop, c(rep(0.1,n), rep(0.1,n), rep(0.1,n))) # c(rep(0.1,n), rep(0.1,n), rep(0.1,n)) #relationship for simulated data
-theta2 <- matrix(nrow=n,ncol=n.pop, c(rep(-0.2,n), rep(-0.2,n), rep(-0.2,n))) #relationship for simulated data
+
+theta1 <- c(0.1,0.3,0.4) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+theta2 <- c(-0.2,0.1,-0.1) #relationship for simulated data
+
+# theta1 <- matrix(nrow=1,ncol=n.pop, c(rep(0.1,n))) # matrix(nrow=n,ncol=n.pop, c(rep(0.1,n), rep(0.1,n), rep(0.1,n))) # c(rep(0.1,n), rep(0.1,n), rep(0.1,n)) #relationship for simulated data
+# theta2 <- matrix(nrow=1,ncol=n.pop, c(rep(-0.2,n)))#matrix(nrow=n,ncol=n.pop, c(rep(-0.2,n), rep(-0.2,n), rep(-0.2,n))) #relationship for simulated data
 
 # Simulate populations  ===================
-
 # N_sp = matrix(nrow=n, ncol=1, NA)
 # N_sp[1,] <- mean.spawn # seed inital 
 
@@ -80,21 +85,26 @@ mean.spawn <- c(mean(yukon_spring$Escapement), mean(yukon_fall$Estimated_Run), m
 N_sp[1,] <- mean.spawn
 
 #N_sp<-c(rnorm(n, mean.spawn, mean(obs_error_sp)))
-process_error_j <- matrix(nrow=n,ncol=n.pop,rnorm(n*n.pop, 2 , 0.3))
-process_error_sp <- matrix(nrow=n,ncol=n.pop,rnorm(n*n.pop,2, 0.3))
+process_error_j <- matrix(nrow=n,ncol=1,rnorm(n*1,2, 0.3))
+process_error_sp <- matrix(nrow=n,ncol=1,rnorm(n*1,2, 0.3))
+
+p_1 =  matrix(nrow=n,ncol=n.pop,NA)
+p_2 =  matrix(nrow=n,ncol=n.pop,NA)
 
 # simulate p first, 
-p_1  = 1 / exp(-basal_p_1 - (theta1*cov1)) # covariate impacts survivial, impact is measured through theta
-p_2  = 1 / exp(-basal_p_2 - (theta2*cov2)) 
+for (p in 1:n.pop) {
+p_1[,p]  = 1 / exp(-basal_p_1[p] - (theta1[p]*cov1[,p])) # covariate impacts survivial, impact is measured through theta
+p_2[,p]  = 1 / exp(-basal_p_2[p] - (theta2[p]*cov2[,p])) 
 
+} 
 
 for(p in 1:n.pop){
  for (i in 2:n) {
   N_eggs[i,p] = fs*Ps*N_sp[i-1,p]
-  kappa_fw[i,p] <-  (p_1[i,p])/(1 + ((p_1[i,p]*N_eggs[i,p])/c_1[i,p])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
+  kappa_fw[i,p] <-  (p_1[i,p])/(1 + ((p_1[i,p]*N_eggs[i,p])/c_1)) # + obs_error_j[[i]] # SR formula from cunnigham 2018
   N_j[i,p] = (N_eggs[i,p]*kappa_fw[i,p]) #+ obs_error_j[i]
   
-  kappa_sp[i,p] <- (p_2[i,p])/(1 + ((p_2[i,p]*N_j[i,p])/c_2[i,p]))  
+  kappa_sp[i,p] <- (p_2[i,p])/(1 + ((p_2[i,p]*N_j[i,p])/c_2[p]))  
   N_sp[i,p] = (N_j[i,p]*kappa_sp[i,p])# + obs_error_sp[i]  
 }
   }
@@ -105,23 +115,14 @@ N_j_sim <-  matrix(nrow=n,ncol=n.pop,NA)
 N_sp_sim <-  matrix(nrow=n,ncol=n.pop,NA)
 
 for (p in 1:n.pop) {
-N_j_sim[,p] = rlnorm(n, log(N_j[2:n,p]), process_error_j[2:n,p])
-N_sp_sim[,p] = rlnorm(n, log(N_sp[2:n,p]), process_error_sp[2:n,p])
+N_j_sim[,p] = rlnorm(n, log(N_j[2:n,p]), process_error_j[2:n])
+N_sp_sim[,p] = rlnorm(n, log(N_sp[2:n,p]), process_error_sp[2:n])
 }
  
-hist(log(N_j_sim[6:n]))
-hist(log(N_sp_sim[6:n]))
- 
-hist( N_j_sim[6:n])
-hist( N_sp_sim[6:n])
-
 sigma_j_obs<-c(sd(log(N_j_sim)[6:n,1]),sd(log(N_j_sim)[6:n,2]),sd(log(N_j_sim)[6:n,3]))  #[6:n])
 sigma_sp_obs<-c(sd(log(N_sp_sim)[6:n,1]),sd(log(N_sp_sim)[6:n,2]),sd(log(N_sp_sim)[6:n,3]))
-
-plot(N_j_sim) 
-plot(N_sp_sim) 
-
-dat_sim <- cbind(Population = population, Year = year, 
+ 
+dat_sim <- list(Population = population, Year = year, 
                  N_eggs = N_eggs[1:n,], N_j = N_j_sim, #[1:n,] , 
                  N_sp = N_sp_sim,#[1:n,] ,
                  #obs_error_sp = obs_error_sp, obs_error_j=obs_error_j,#cov1=cov1, cov2=cov2,
@@ -133,32 +134,55 @@ dat_sim <- cbind(Population = population, Year = year,
                  kappa_fw=kappa_fw[1:n,],
                  cov1=cov1,cov2=cov2) #setting up single data file so that you can replace it with the real data
 
-dat_sim <- data.frame(dat_sim)[6:n,]  
-dat_sim_plot <- dat_sim %>% 
-  gather(c(3:14), key = "id", value = "value") 
-  
-plota <- ggplot(data = dat_sim_plot, aes(x=Year, y = log(value))) +
-  geom_point() +
-  facet_wrap(~id, scales = "free")
- 
-plota
+saveRDS(dat_sim , "data/Simulated_DatBH.RDS")
 
-plotb <- ggplot(data = dat_sim_plot, aes(x=Year, y = value)) +
-  geom_point() +
-  facet_wrap(~id, scales = "free")
+plot(N_j_sim) 
+plot(N_sp_sim) 
 
-plotb
+hist(log(N_j_sim[6:n]))
+hist(log(N_sp_sim[6:n]))
 
-write_csv(dat_sim , "data/Simulated_DatBH.csv")
+hist( N_j_sim[6:n])
+hist( N_sp_sim[6:n])
 
-sd(dat_sim$N_j)
-sd(dat_sim$N_sp)
-sd(dat_sim$N_eggs)
-
-log(mean(dat_sim$N_j))
-log(mean(dat_sim$N_sp))
-log(mean(dat_sim$N_eggs))
-
+##### Below doesnt work since I added more populations ========== 
+# dat_sim <- cbind(Population = population, Year = year, 
+#                 N_eggs = N_eggs[1:n,], N_j = N_j_sim, #[1:n,] , 
+#                 N_sp = N_sp_sim,#[1:n,] ,
+#                 #obs_error_sp = obs_error_sp, obs_error_j=obs_error_j,#cov1=cov1, cov2=cov2,
+#                 p_1 = p_1, p_2=p_2, 
+#                 c_1=c_1, c_2=c_2,
+#                 process_error_j=process_error_j,
+#                 process_error_sp=process_error_sp,
+#                 kappa_sp=kappa_sp[1:n,],
+#                 kappa_fw=kappa_fw[1:n,],
+#                 cov1=cov1,cov2=cov2) 
+# dat_sim <- data.frame(dat_sim)[6:n,]  
+# dat_sim_plot <- dat_sim %>% 
+#   gather(c(3:14), key = "id", value = "value") 
+#   
+# plota <- ggplot(data = dat_sim_plot, aes(x=Year, y = log(value))) +
+#   geom_point() +
+#   facet_wrap(~id, scales = "free")
+#  
+# plota
+# 
+# plotb <- ggplot(data = dat_sim_plot, aes(x=Year, y = value)) +
+#   geom_point() +
+#   facet_wrap(~id, scales = "free")
+# 
+# plotb
+# 
+# write_csv(dat_sim , "data/Simulated_DatBH.csv")
+# 
+# sd(dat_sim$N_j)
+# sd(dat_sim$N_sp)
+# sd(dat_sim$N_eggs)
+# 
+# log(mean(dat_sim$N_j))
+# log(mean(dat_sim$N_sp))
+# log(mean(dat_sim$N_eggs))
+# 
 
 
 # 

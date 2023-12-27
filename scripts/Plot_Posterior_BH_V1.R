@@ -6,22 +6,30 @@ library(tidybayes)
 # sim_kusko   alpha = 0.05, beta = 7*10^-6
 
 # Observed ======================  
-obs_df <- data.frame(id = c("observed","observed",
-                            "observed","observed",
-                            "observed","observed"), 
-                     variable = c("sigma_y_j", "sigma_y_sp",
-                                 # "p_1", 
-                                  #"p_2",
-                                  "c_1", "c_2",
-                                  "theta1", "theta2"), 
-                     mean =c(sigma_j_obs,sigma_sp_obs,
-                             #0.05, 
-                            # 0.15, 
-                             10000000,750000,
-                            0.1, -0.2),
-                           #  log(10000000),log(1000000)),
-                     se_mean=c(0,#0,
-                               0,0,0,0,0))
+obs_df <- data.frame(id = c("observed", "observed","observed",
+                            "observed", #"observed","observed",
+                            "observed","observed","observed",
+                            "observed","observed","observed",
+                            "observed", "observed","observed",
+                            "observed", "observed","observed"), 
+                     variable = c("sigma_y_j[1]","sigma_y_j[2]","sigma_y_j[3]", 
+                                  "sigma_y_sp[1]","sigma_y_sp[2]","sigma_y_sp[3]",  
+                                  "c_1",  #"c_1[2]", "c_1[3]",
+                                  "c_2[1]", "c_2[2]","c_2[3]",
+                                  "theta1[1]", "theta1[2]","theta1[3]", 
+                                  "theta2[1]", "theta2[2]", "theta2[3]"), 
+                     mean =c(sigma_j_obs[1],sigma_j_obs[2],sigma_j_obs[3],
+                             sigma_sp_obs[1],sigma_sp_obs[2],sigma_sp_obs[3],
+                             10000000,#25000000,17700000,
+                             750000, 250000, 177000,  
+                             theta1[1], theta1[2], theta1[3], 
+                             theta2[1], theta2[2], theta2[3]), 
+                     se_mean=c(0,0,0,
+                               0,0,0,
+                               0,#0,0,
+                               0,0,0,
+                               0,0,0,
+                               0,0,0))
 
 sim_dat <- read_csv("data/Simulated_DatBH.csv")
 
