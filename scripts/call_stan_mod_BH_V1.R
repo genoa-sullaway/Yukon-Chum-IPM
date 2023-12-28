@@ -90,25 +90,24 @@ bh_summary <- summary(bh_fit)$summary %>%
   as_data_frame()
  
 bh_summary %>% 
-  slice(1:16) %>%
+  slice(1:18) %>%
   ggplot() + 
   geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
   geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
   facet_wrap(~variable, scales = 'free') +
   geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
  
+ mcmc_trace(bh_fit)#, pars = c("c_1"))
+ mcmc_trace(bh_fit, pars = c("c_2[1]","c_2[2]","c_2[3]"))
+ mcmc_trace(bh_fit, pars = c("theta1"))
+ mcmc_trace(bh_fit, pars = c("theta2"))
+
+ mcmc_trace(bh_fit, pars = c("sigma_y_j"))
+ mcmc_trace(bh_fit, pars = c("sigma_y_sp"))
+
  
+#hist(rnorm(1000, 750000, 1e5))
  
-#  mcmc_trace(bh_fit)#, pars = c("c_1"))
-#  mcmc_trace(bh_fit, pars = c("c_2"))
-#  mcmc_trace(bh_fit, pars = c("theta1"))
-#  mcmc_trace(bh_fit, pars = c("theta2")) 
-#  
-#  mcmc_trace(bh_fit, pars = c("sigma_y_j"))
-#  mcmc_trace(bh_fit, pars = c("sigma_y_sp"))
-#  
-#  
-# 
 #  # save plots ==============
 # # 
 # # pdf("output/trace.pdf")

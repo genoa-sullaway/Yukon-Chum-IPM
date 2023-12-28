@@ -36,12 +36,16 @@ basal_p_1 <- matrix(nrow=n,ncol=n.pop,
                     c(rnorm(n, 0.05, 0), #simulating a unique beta for each population
                        rnorm(n, 0.05, 0), 
                        rnorm(n, 0.05, 0)))
+
 basal_p_2 <-matrix(nrow=n,ncol=n.pop,
                    c(rnorm(n, 0.15, 0),
                      rnorm(n, 0.15, 0), 
                      rnorm(n, 0.15, 0)))
 
-c_1 <- rnorm(1,1e8, 0)
+c_1 <- matrix(nrow=1, ncol=n.pop,
+       c(rnorm(1,1e8, 0), #13.8 , #simulating a unique alpha for each population
+         rnorm(1,1e8, 0),
+         rnorm(1,1e8, 0)))
 
 c_2 <- matrix(nrow=1,ncol=n.pop,
               c(rnorm(n, 750000, 0), #13.8 , #simulating a unique alpha for each population
@@ -57,9 +61,9 @@ theta1 <- c(0.1,0.3,0.4) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for 
 theta2 <- c(-0.2,0.1,-0.1) #relationship for simulated data
 
 # Simulate populations  ===================
-process_error_j <- matrix(nrow=n,ncol=1,rnorm(n*1,2, 0.1))
-process_error_sp <- matrix(nrow=n,ncol=1,rnorm(n*1,10000, 0.1))
-process_error_r <- matrix(nrow=n,ncol=1,rnorm(n*1,2, 0.1))
+process_error_j <- matrix(nrow=n,ncol=1,rnorm(n*1,1,0.2))
+process_error_sp <- matrix(nrow=n,ncol=1,rnorm(n*1,50, 5))
+process_error_r <- matrix(nrow=n,ncol=1,rnorm(n*1,1,0.2))
 
 N_eggs = matrix(nrow=n,ncol=n.pop,NA)
 kappa_fw =  matrix(nrow=n,ncol=n.pop,NA)
@@ -73,7 +77,7 @@ mean.spawn <- c(mean(yukon_spring$Escapement),
                 mean(kusko$pred_N_est)) #mean spawners for each population
  
 N_sp <- matrix(nrow=n, ncol=pops, 
-        data= c(rnorm(n, mean.spawn[1], mean(process_error_sp)), #simulating a unique number of spawners for each population
+        data= c(rnorm(n, mean.spawn[1], process_error_sp), #simulating a unique number of spawners for each population
                 rnorm(n, mean.spawn[2], mean(process_error_sp)),
                 rnorm(n, mean.spawn[3], mean(process_error_sp))))
 plot(N_sp[,1])
@@ -92,7 +96,7 @@ p_2[,p]  = 1 / exp(-basal_p_2[p] - (theta2[p]*cov2))
 for(p in 1:n.pop) {
  for (i in 2:n) {
   N_eggs[i,p] = fs*Ps*N_sp[i-1,p]
-  kappa_fw[i,p] <-  (p_1[i,p])/(1 + ((p_1[i,p]*N_eggs[i,p])/c_1)) # + obs_error_j[[i]] # SR formula from cunnigham 2018
+  kappa_fw[i,p] <-  (p_1[i,p])/(1 + ((p_1[i,p]*N_eggs[i,p])/c_1[p])) # + obs_error_j[[i]] # SR formula from cunnigham 2018
   N_j[i,p] = (N_eggs[i,p]*kappa_fw[i,p]) #+ obs_error_j[i]
   
   kappa_sp[i,p] <- (p_2[i,p])/(1 + ((p_2[i,p]*N_j[i,p])/c_2[p]))  
@@ -127,6 +131,8 @@ dat_sim <- list(Population = population, Year = year,
 
 saveRDS(dat_sim , "data/Simulated_DatBH.RDS")
  
+plot(log(N_r[,1]))
+plot(N_j[,1])
 
 plot(N_sp[,1])
 plot(N_sp[,2])
