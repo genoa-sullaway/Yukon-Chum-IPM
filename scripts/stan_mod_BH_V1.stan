@@ -18,8 +18,7 @@ data { // all equation references are from proposal numbering
 }
   
 transformed data {
-// seed initial population dynamics for N_sp for each stock. 
-//real N_sp_seed[N]; // predicted spawneres - this goes into the liklihood,  data involved 
+// seed initial population dynamics 
   matrix[N,K] data_log_stage_j;
   matrix[N,K] data_log_stage_sp;
  // matrix[N,K] data_log_stage_r;
@@ -94,7 +93,7 @@ for(k in 1:K){  // loop for each population
   for (i in 2:N){ //will need to add a loop in here for stocks too..
     N_e[i,k] = fs*Ps*N_sp[i-1,k]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
     
-    kappa_j[i,k] =  p_1[i,k]/ (1 + ((p_1[i,k]*N_e[i,k])/c_1[k]));// [k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+    kappa_j[i,k] =  p_1[i,k]/ (1 + ((p_1[i,k]*N_e[i,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
     
     N_j[i,k] = kappa_j[i,k]*N_e[i,k]; // Eq 4.4  generated estiamte for the amount of fish each year and stock that survive to a juvenile stage
    
@@ -128,9 +127,9 @@ model {
    sigma_y_sp[2] ~ normal(50,10);
    sigma_y_sp[3] ~ normal(48,10);
  
-   theta1[1]~normal(0.1,5);
-   theta1[2]~normal(0.3,5);
-   theta1[3]~normal(0.4,5);
+   theta1[1]~normal(0.1,1);
+   theta1[2]~normal(0.3,1);
+   theta1[3]~normal(0.4,1);
       
    theta2[1]~normal(-0.2,10);
    theta2[2]~normal(0.1,10);   
@@ -143,9 +142,9 @@ model {
    log_N_sp_start[k] ~ normal(14,10); 
  } 
      
-    c_1[1] ~ normal(1e8, 1e8);
-    c_1[2] ~ normal(1e8, 1e8);
-    c_1[3] ~ normal(1e8, 1e8);
+    c_1[1] ~ normal(1.1e8, 1e8);
+    c_1[2] ~ normal(1.25e8, 1e8);
+    c_1[3] ~ normal(1.6e8, 1e8);
     
     c_2[1] ~ normal(750000, 1e5); 
     c_2[2] ~ normal(250000, 1e5);

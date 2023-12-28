@@ -96,43 +96,13 @@ bh_summary %>%
   geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
   facet_wrap(~variable, scales = 'free') +
   geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
- 
- mcmc_trace(bh_fit)#, pars = c("c_1"))
+
+ pairs(bh_fit)
+
+  mcmc_trace(bh_fit)#, pars = c("c_1"))
  mcmc_trace(bh_fit, pars = c("c_2[1]","c_2[2]","c_2[3]"))
- mcmc_trace(bh_fit, pars = c("theta1"))
+ mcmc_trace(bh_fit, pars = c("theta1[1]","theta1[2]","theta1[3]"))
  mcmc_trace(bh_fit, pars = c("theta2"))
 
  mcmc_trace(bh_fit, pars = c("sigma_y_j"))
  mcmc_trace(bh_fit, pars = c("sigma_y_sp"))
-
- 
-#hist(rnorm(1000, 750000, 1e5))
- 
-#  # save plots ==============
-# # 
-# # pdf("output/trace.pdf")
-# # MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
-# # MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
-# # MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
-# # MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
-# # dev.off()
-# # 
-# # MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
-# # MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
-# # MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
-# # MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
-# # 
-# # MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
-# # MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
-# #   
-# # # refresh = 250,
-# #   #init = init_list,
-# #   # control = list(max_treedepth = max_treedepth,
-# #   #                adapt_delta = adapt_delta))
-# # 
-#  
-# 
-# 
-# 
-# 
-#  

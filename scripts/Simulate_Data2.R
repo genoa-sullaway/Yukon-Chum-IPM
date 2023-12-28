@@ -43,9 +43,9 @@ basal_p_2 <-matrix(nrow=n,ncol=n.pop,
                      rnorm(n, 0.15, 0)))
 
 c_1 <- matrix(nrow=1, ncol=n.pop,
-       c(rnorm(1,1e8, 0), #13.8 , #simulating a unique alpha for each population
-         rnorm(1,1e8, 0),
-         rnorm(1,1e8, 0)))
+       c(rnorm(1,1.1e8, 0), #13.8 , #simulating a unique alpha for each population
+         rnorm(1,1.25e8, 0),
+         rnorm(1,1.6e8, 0)))
 
 c_2 <- matrix(nrow=1,ncol=n.pop,
               c(rnorm(n, 750000, 0), #13.8 , #simulating a unique alpha for each population
