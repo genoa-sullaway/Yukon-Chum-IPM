@@ -127,9 +127,9 @@ model {
    sigma_y_sp[2] ~ normal(50,10);
    sigma_y_sp[3] ~ normal(48,10);
  
-   theta1[1]~normal(0.1,1);
-   theta1[2]~normal(0.3,1);
-   theta1[3]~normal(0.4,1);
+   theta1[1]~normal(0.1,10);
+   theta1[2]~normal(0.3,10);
+   theta1[3]~normal(0.4,10);
       
    theta2[1]~normal(-0.2,10);
    theta2[2]~normal(0.1,10);   
@@ -146,9 +146,9 @@ model {
     c_1[2] ~ normal(1.25e8, 1e8);
     c_1[3] ~ normal(1.6e8, 1e8);
     
-    c_2[1] ~ normal(750000, 1e5); 
-    c_2[2] ~ normal(250000, 1e5);
-    c_2[3] ~ normal(177000, 1e5);
+    c_2[1] ~ normal(750000, 1e6); 
+    c_2[2] ~ normal(250000, 1e6);
+    c_2[3] ~ normal(177000, 1e6);
              
 // Liklilihoods -- 
 for(k in 1:K){
