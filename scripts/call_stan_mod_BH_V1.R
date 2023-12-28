@@ -14,8 +14,6 @@ sim_dat <- readRDS("data/Simulated_DatBH.RDS")
 # sim_kusko_df <- read_csv("data/Simulated_Kusko.csv")
 
 # load Covariates  ==========================================================
-#covar_temp <- data.frame(temp = c(readRDS("output/covar_temp_sim.RDS")))
-#covar_1 <- rep(covar_temp$temp, times = 3)
 
 # setup inputs ==============================================================
 warmups <- 1000
@@ -30,7 +28,6 @@ fs <- 2440 # fecundity - Gilk and Baumer 2009 estimate for Kusko Chum
 
 # Organize data call inputs ================================================
 K = 3 # number of stocks involved
-#N_stock <- c(length(sim_dat$Population))
 N_stock <- c(nrow(sim_dat$N_sp), nrow(sim_dat$N_sp), nrow(sim_dat$N_sp))  
 N = N_stock[1]
 g = c(rep(1, times = N_stock[1]), # Vector of group assignments.
@@ -41,17 +38,19 @@ g = c(rep(1, times = N_stock[1]), # Vector of group assignments.
 data_stage_j <- sim_dat$N_j #c(as.integer(sim_dat$N_j))#, 
                  # as.integer(sim_yukon_fall_df$N_j),
                  # as.integer(sim_kusko_df$N_j))
+
+data_stage_r <- sim_dat$N_r
  
 data_stage_sp <- sim_dat$N_sp #c(as.integer(sim_dat$N_sp))#, 
                 # as.integer(sim_yukon_fall_df$N_sp),
                 # as.integer(sim_kusko_df$N_sp))
 
-kappa_j_start =  c(runif(1, 0.05, 0.155),
-                   runif(1, 0.05, 0.155),
-                   runif(1, 0.05, 0.155))
-kappa_sp_start =  c(runif(1, 0.145, 0.155),
-                    runif(1, 0.145, 0.155),
-                    runif(1, 0.145, 0.155))
+kappa_j_start =  c(runif(1, 0.03, 0.07),
+                   runif(1, 0.03, 0.07),
+                   runif(1, 0.03, 0.07))
+kappa_sp_start =  c(runif(1, 0.12, 0.2),
+                    runif(1, 0.12, 0.2),
+                    runif(1, 0.12, 0.2))
  
 basal_p_1 = c(0.05,0.05,0.05) # straight from simulation 
 basal_p_2 = c(0.15,0.15,0.15) # straight from simulation 
@@ -66,52 +65,11 @@ data_list <- list(Ps = Ps,
                   data_stage_j = data_stage_j, 
                   data_stage_sp = data_stage_sp,
                   kappa_sp_start = kappa_sp_start,
+                  data_stage_r =data_stage_r,
                   kappa_j_start = kappa_j_start,
                   basal_p_1=basal_p_1,basal_p_2=basal_p_2,
                   cov1 = cov1,
                   cov2 = cov2) 
-
-# init_list <- list(
-#   list(p_1= 0.05 , 
-#        p_2 =0.10,
-#        c_1 = 1500000,
-#        c_2 = 1800000000,
-#        log_N_sp_start= 12.5,
-#        log_N_j_start = 15.3,
-#        log_N_egg_start= 17,
-#        sigma_y_j = 0.02, 
-#        sigma_y_sp = 0.03)#,
-  # list(
-  #   p_1= 0.04 , 
-  #   p_2 =0.11,
-  #   c_1 = 1600000,
-  #   c_2 = 1700000000,
-  #   log_N_sp_start= 13,
-  #   log_N_j_start = 15.6,
-  #   log_N_egg_start= 18.5,
-  #   sigma_y_j = 0.015, 
-  #   sigma_y_sp = 0.034),
-  # list(
-  #   p_1= 0.041 , 
-  #   p_2 =0.13,
-  #   c_1 = 1700000,
-  #   c_2 = 1900000000,
-  #   log_N_sp_start= 13.25,
-  #   log_N_j_start = 15.4,
-  #   log_N_egg_start= 18.75,
-  #   sigma_y_j = 0.015, 
-  #   sigma_y_sp = 0.034),
-  # list(
-  #   p_1= 0.022, 
-  #   p_2 =0.14,
-  #   c_1 = 1800000,
-  #   c_2 = 1600000000,
-  #   log_N_sp_start= 13.6,
-  #   log_N_j_start = 15,
-  #   log_N_egg_start= 17.7,
-  #   sigma_y_j = 0.014, 
-  #   sigma_y_sp = 0.033)
-  #)
 
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_V1.stan"),
@@ -121,6 +79,10 @@ bh_fit <- stan(
   iter = total_iterations,
   cores = n_cores)
  
+# rlnorm(log(data_stage_sp[,3]), 10);
+# rlnorm( data_stage_sp[,3], 10);
+# rnorm( data_stage_sp[,3], 10);
+
 bh_summary <- summary(bh_fit)$summary %>% 
   as.data.frame() %>% 
   mutate(variable = rownames(.)) %>% 
@@ -135,38 +97,40 @@ bh_summary %>%
   facet_wrap(~variable, scales = 'free') +
   geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
  
- mcmc_trace(bh_fit, pars = c("c_1"))#, pdf = FALSE)
- mcmc_trace(bh_fit, pars = c("c_2"))
- mcmc_trace(bh_fit, pars = c("theta1"))
- mcmc_trace(bh_fit, pars = c("theta2")) 
- 
- mcmc_trace(bh_fit, pars = c("sigma_y_j"))
- mcmc_trace(bh_fit, pars = c("sigma_y_sp"))
  
  
-
- # save plots ==============
+#  mcmc_trace(bh_fit)#, pars = c("c_1"))
+#  mcmc_trace(bh_fit, pars = c("c_2"))
+#  mcmc_trace(bh_fit, pars = c("theta1"))
+#  mcmc_trace(bh_fit, pars = c("theta2")) 
+#  
+#  mcmc_trace(bh_fit, pars = c("sigma_y_j"))
+#  mcmc_trace(bh_fit, pars = c("sigma_y_sp"))
+#  
+#  
 # 
-# pdf("output/trace.pdf")
-# MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
-# dev.off()
-# 
-# MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
-# 
-# MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
-# MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
-#   
-# # refresh = 250,
-#   #init = init_list,
-#   # control = list(max_treedepth = max_treedepth,
-#   #                adapt_delta = adapt_delta))
-# 
+#  # save plots ==============
+# # 
+# # pdf("output/trace.pdf")
+# # MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
+# # MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
+# # MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
+# # MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+# # dev.off()
+# # 
+# # MCMCtrace(bh_fit, params = c("log_c_1"), pdf = FALSE)
+# # MCMCtrace(bh_fit, params = c("log_c_2"), pdf = FALSE)
+# # MCMCtrace(bh_fit, params = c("p_1"), pdf = FALSE)
+# # MCMCtrace(bh_fit, params = c("p_2"), pdf = FALSE)
+# # 
+# # MCMCtrace(bh_fit, params = c("sigma_y_j"), pdf = FALSE)
+# # MCMCtrace(bh_fit, params = c("sigma_y_sp"), pdf = FALSE)
+# #   
+# # # refresh = 250,
+# #   #init = init_list,
+# #   # control = list(max_treedepth = max_treedepth,
+# #   #                adapt_delta = adapt_delta))
+# # 
 #  
 # 
 # 
