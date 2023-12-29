@@ -50,7 +50,7 @@ juv_prop_ayk <- expand_grid(juv, mean_prop) %>%
 
 juv_prop_ayk[19,2]<- colMeans(juv_prop_ayk[-19,])[2] # get means of all columns except 2020, fill that in for 2020
 juv_prop_ayk[19,3]<- colMeans(juv_prop_ayk[-19,])[3] # get means of all columns except 2020, fill that in for 2020
-
+juv_prop_ayk[19,4]<- colMeans(juv_prop_ayk[-19,])[4]
 # load Covariates  ==========================================================
       # skip for now...... 
 # setup inputs ==============================================================
@@ -136,11 +136,11 @@ bh_summary <- summary(bh_fit)$summary %>%
   as_data_frame()
  
 bh_summary %>% 
-  slice(1:12) %>%
+  slice(1:18) %>%
   ggplot() + 
   geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
   geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
-  facet_wrap(~variable, scales = 'free')# +
+  facet_wrap(~variable, scales = 'free') # +
  # geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
 
  pairs(bh_fit)

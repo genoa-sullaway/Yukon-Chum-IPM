@@ -135,8 +135,8 @@ model {
 //   }
 
 for(k in 1:K){
-   p_1[k] ~ normal(0,10);
-   p_2[k] ~ normal(0,10); 
+   p_1[k] ~ normal(0,20);
+   p_2[k] ~ normal(0,20); 
 }
   
    sigma_y_j[1] ~  normal(0,10);
@@ -166,9 +166,9 @@ for(k in 1:K){
    log_N_sp_start[k] ~ normal(14,10); 
  } 
      
-    c_1[1] ~ normal( 1e7, 1e6);//uniform(10e3, 10e7); //normal( 1e5, 1e6);
-    c_1[2] ~ normal( 1e7, 1e6);//uniform(10e3, 10e7);//normal( 1e5, 1e6);
-    c_1[3] ~ normal(1e7, 1e6);
+    c_1[1] ~ normal(1e7, 1e6);//uniform(10e3, 10e7); //normal( 1e5, 1e6);
+    c_1[2] ~ normal(1e7, 1e6);//uniform(10e3, 10e7);//normal( 1e5, 1e6);
+    c_1[3] ~ normal(1e7, 1e7);
     
     c_2[1] ~ normal(1e5, 1e5); //uniform(10e4, 10e8);//normal(1e7, 1e6); 
     c_2[2] ~ normal(1e5, 1e5); //uniform(10e4, 10e8);//normal(1e7 1e6);
