@@ -127,9 +127,9 @@ model {
    sigma_y_sp[2] ~ normal(50,10);
    sigma_y_sp[3] ~ normal(48,10);
  
-   theta1[1]~normal(0.1,10);
-   theta1[2]~normal(0.3,10);
-   theta1[3]~normal(0.4,10);
+   theta1[1]~normal(0.1,5);
+   theta1[2]~normal(0.3,5);
+   theta1[3]~normal(0.4,5);
       
    theta2[1]~normal(-0.2,10);
    theta2[2]~normal(0.1,10);   
