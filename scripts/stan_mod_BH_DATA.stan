@@ -149,21 +149,20 @@ for(k in 1:K) {
    log_N_sp_start[k] ~ normal(14,10); 
  } 
      
-    c_1[1] ~ normal(1e6, 1e7);//uniform(10e3, 10e7); //normal( 1e5, 1e6);
-    c_1[2] ~ normal(1e6, 1e7);//uniform(10e3, 10e7);//normal( 1e5, 1e6);
+    c_1[1] ~ normal(1e6, 1e7); // magic number right now: 1e6, 1e7  
+    c_1[2] ~ normal(1e6, 1e7); 
     c_1[3] ~ normal(1e6, 1e7);
     
-    c_2[1] ~ normal(1e4, 1e5); //uniform(10e4, 10e8);//normal(1e7, 1e6); 
-    c_2[2] ~ normal(1e4, 1e5); //uniform(10e4, 10e8);//normal(1e7 1e6);
+    c_2[1] ~ normal(1e4, 1e5); // magic number right now: 1e4, 1e5  
+    c_2[2] ~ normal(1e4, 1e5); 
     c_2[3] ~ normal(1e4, 1e5);
              
 // Liklilihoods -- 
 for(k in 1:K){
   for (i in 2:N) {
     data_log_stage_j[i,k] ~ normal(log(N_j[i,k]), sigma_y_j[k]);
-    //data_log_stage_r[i,k] ~ normal(log(N_r[i,k]), sigma_y_r[k]);
     data_log_stage_sp[i,k] ~ normal(log(N_sp[i,k]), sigma_y_sp[k]);
-   } 
+    } 
   }
 }  
 

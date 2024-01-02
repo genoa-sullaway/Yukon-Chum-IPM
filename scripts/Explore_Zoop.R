@@ -46,13 +46,12 @@ zoop_multiple_space <- zoop_multiple %>%
   filter(!YEAR <1999) %>% 
   group_by(YEAR, LAT, LON) %>%
   dplyr::summarise(mean = mean(EST_NUM_PERM3),
-                   sd = sd(EST_NUM_PERM3)) %>% 
-  dplyr::mutate(mean_scale = as.numeric(scale(mean)),
-                sd = as.numeric(scale(sd)))  
+                   sd = sd(EST_NUM_PERM3))  
 
-ggplot(data = zoop_multiple_space, aes(x=LAT, y = LON, fill = mean_scale)) +
+ggplot(data = zoop_multiple_space, aes(x=LON, y = LAT,
+                                       fill = log(mean), color = log(mean))) +
   geom_point() +
-  facet_wrap()
+  facet_wrap(~YEAR)
 
 
 
