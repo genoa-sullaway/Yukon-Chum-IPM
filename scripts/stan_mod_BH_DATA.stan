@@ -11,10 +11,12 @@ data { // all equation references are from proposal numbering
   real <lower=0>kappa_j_start[K];
   
   // real  cov1[N]; // covariate string, matrix if we have mulitple covariates, how does this work if i have different covariates by stock?
-   real  cov2[N,1];
+  //matrix[N,1] cov2;
+  real cov2[N, 1];
+  //real  cov2[N,1];
   
   // real <lower=0> basal_p_1[K]; // mean survival absent of density dependence - for now just add it in dont estimate it. 
-     real <lower=0> basal_p_2[K];
+  real <lower=0> basal_p_2[K];
 }
   
 transformed data {
@@ -89,7 +91,7 @@ real kappa_sp[N,K]; // predicted survival for each stock
   for (k in 1:K){
     for (i in 1:N) {
 //   p_1[i,k]  = 1 / exp(-basal_p_1[k] - (theta1[k]*cov1[i]));
-     p_2[i,k]  = 1 / exp(-basal_p_2[k] - (theta2[k]*cov2[i]));
+     p_2[i,k]  = 1 / exp(-basal_p_2[k] - (theta2[k]*cov2[i,1]));
        }
   }
 
@@ -137,28 +139,31 @@ model {
 
 for(k in 1:K){
    p_1[k] ~ normal(0,20);
+   sigma_y_j[k] ~  normal(0,10);
+   sigma_y_sp[k] ~ normal(0,10);
+   theta2[k]~normal(0,10);
    //p_2[k] ~ normal(0,20); 
 }
   
-   sigma_y_j[1] ~  normal(0,10);
-   sigma_y_j[2] ~  normal(0,10);
-   sigma_y_j[3] ~  normal(0,10);
+   // sigma_y_j[1] ~  normal(0,10);
+   // sigma_y_j[2] ~  normal(0,10);
+   // sigma_y_j[3] ~  normal(0,10);
 
    // sigma_y_r[1] ~ normal(1.83,10);
    // sigma_y_r[2] ~ normal(2.09,10);
    // sigma_y_r[3] ~ normal(2.19,10);
    
-   sigma_y_sp[1] ~ normal(0,10); // normal(52,10);
-   sigma_y_sp[2] ~ normal(0,10);//normal(50,10);
-   sigma_y_sp[3] ~ normal(0,10);
- 
+   // sigma_y_sp[1] ~ normal(0,10); // normal(52,10);
+   // sigma_y_sp[2] ~ normal(0,10);//normal(50,10);
+   // sigma_y_sp[3] ~ normal(0,10);
+   // 
    // theta1[1]~normal(0.1,5);
    // theta1[2]~normal(0.3,5);
    // theta1[3]~normal(0.4,5);
    //    
-   theta2[1]~normal(-0.2,10);
-   theta2[2]~normal(0.1,10);
-   theta2[3]~normal(-0.1,10);
+   // theta2[1]~normal(0,10);
+   // theta2[2]~normal(0,10);
+   // theta2[3]~normal(0,10);
    
   for(k in 1:K){
    log_N_egg_start[k] ~ normal(18,10);
@@ -167,8 +172,8 @@ for(k in 1:K){
    log_N_sp_start[k] ~ normal(14,10); 
  } 
      
-    c_1[1] ~ normal(1e7, 1e6);//uniform(10e3, 10e7); //normal( 1e5, 1e6);
-    c_1[2] ~ normal(1e7, 1e6);//uniform(10e3, 10e7);//normal( 1e5, 1e6);
+    c_1[1] ~ normal(1e7, 1e7);//uniform(10e3, 10e7); //normal( 1e5, 1e6);
+    c_1[2] ~ normal(1e7, 1e7);//uniform(10e3, 10e7);//normal( 1e5, 1e6);
     c_1[3] ~ normal(1e7, 1e7);
     
     c_2[1] ~ normal(1e5, 1e5); //uniform(10e4, 10e8);//normal(1e7, 1e6); 

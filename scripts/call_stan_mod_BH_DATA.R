@@ -62,7 +62,9 @@ m2_cov<-read_csv("data/M2_df.csv") %>% # this was created in "MAPP/sceripts_02/p
   group_by(Year) %>%
   dplyr::summarise(degree_days = sum(temperature)) %>%
   filter(Year>2001) %>%
-  dplyr::select(degree_days)
+  dplyr::select(degree_days) %>%
+  mutate(degree_days = scale(degree_days)) # mean scale 
+
 
 # setup inputs ==============================================================
 warmups <- 2000
@@ -108,7 +110,7 @@ basal_p_2 = c(0.15,
               0.15) # straight from simulation
 #   
 # cov1 = sim_dat$cov1
-  cov2 =  m2_cov
+  cov2 =  as.matrix(m2_cov)
 
 data_list <- list(Ps = Ps,
                   fs=fs,
