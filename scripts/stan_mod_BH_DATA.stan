@@ -12,10 +12,11 @@ data { // all equation references are from proposal numbering
   
   // real  cov1[N]; // covariate string, matrix if we have mulitple covariates, how does this work if i have different covariates by stock?
   //matrix[N,1] cov2;
+  real cov1[N, 1];
   real cov2[N, 1];
   //real  cov2[N,1];
   
-  // real <lower=0> basal_p_1[K]; // mean survival absent of density dependence - for now just add it in dont estimate it. 
+  real <lower=0> basal_p_1[K]; // mean survival absent of density dependence - for now just add it in dont estimate it. 
   real <lower=0> basal_p_2[K];
 }
   
@@ -39,14 +40,14 @@ parameters {
   real<lower=0>c_1[K];// carrying capacity 
   real<lower=0>c_2[K];  // carrying capacity 
   
-  real<lower=0> p_1[K];
+  //real<lower=0> p_1[K];
  // real<lower=0> p_2[K];
  
   // matrix[N,K] p_1;
   // matrix[N,K] p_2;
   
   // covariate parameters 
-  // real theta1[K];
+     real theta1[K];
      real theta2[K];
   
   real log_N_sp_start[K];
@@ -62,6 +63,7 @@ matrix[N,K] N_e; // predicted eggs, basically a dummy step.
 matrix[N,K] N_j; // predicted juveniles - this goes into the liklihood, data involved 
 //matrix[N,K] N_r; // predicted spawners - this goes into the liklihood, data involved 
 matrix[N,K] N_sp;
+matrix[N,K] p_1;
 matrix[N,K] p_2;
 
 real N_sp_start[K];
@@ -90,7 +92,7 @@ real kappa_sp[N,K]; // predicted survival for each stock
     }
   for (k in 1:K){
     for (i in 1:N) {
-//   p_1[i,k]  = 1 / exp(-basal_p_1[k] - (theta1[k]*cov1[i]));
+     p_1[i,k]  = 1 / exp(-basal_p_1[k] - (theta1[k]*cov1[i,1]));
      p_2[i,k]  = 1 / exp(-basal_p_2[k] - (theta2[k]*cov2[i,1]));
        }
   }
@@ -100,7 +102,7 @@ for(k in 1:K){  // loop for each population
   for (i in 2:N){ //will need to add a loop in here for stocks too..
     N_e[i,k] = fs*Ps*N_sp[i-1,k]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
     
-    kappa_j[i,k] =  p_1[k]/ (1 + ((p_1[k]*N_e[i,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+    kappa_j[i,k] =  p_1[i,k]/ (1 + ((p_1[i,k]*N_e[i,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
     
     N_j[i,k] = kappa_j[i,k]*N_e[i,k]; // Eq 4.4  generated estiamte for the amount of fish each year and stock that survive to a juvenile stage
    
@@ -137,12 +139,11 @@ model {
 //    }
 //   }
 
-for(k in 1:K){
-   p_1[k] ~ normal(0,20);
-   sigma_y_j[k] ~  normal(0,10);
-   sigma_y_sp[k] ~ normal(0,10);
-   theta2[k]~normal(0,10);
-   //p_2[k] ~ normal(0,20); 
+for(k in 1:K) { 
+   sigma_y_j[k] ~  normal(0,5);
+   sigma_y_sp[k] ~ normal(0,5);
+   theta1[k] ~ normal(0,10);
+   theta2[k] ~ normal(0,10); 
 }
   
    // sigma_y_j[1] ~  normal(0,10);
@@ -176,9 +177,9 @@ for(k in 1:K){
     c_1[2] ~ normal(1e7, 1e7);//uniform(10e3, 10e7);//normal( 1e5, 1e6);
     c_1[3] ~ normal(1e7, 1e7);
     
-    c_2[1] ~ normal(1e5, 1e5); //uniform(10e4, 10e8);//normal(1e7, 1e6); 
-    c_2[2] ~ normal(1e5, 1e5); //uniform(10e4, 10e8);//normal(1e7 1e6);
-    c_2[3] ~ normal(1e5, 1e5);
+    c_2[1] ~ normal(1e4, 1e5); //uniform(10e4, 10e8);//normal(1e7, 1e6); 
+    c_2[2] ~ normal(1e4, 1e5); //uniform(10e4, 10e8);//normal(1e7 1e6);
+    c_2[3] ~ normal(1e4, 1e5);
              
 // Liklilihoods -- 
 for(k in 1:K){

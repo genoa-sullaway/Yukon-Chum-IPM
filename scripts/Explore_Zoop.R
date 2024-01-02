@@ -3,14 +3,43 @@
 library(here)
 library(tidyverse)
 
-zoop <- read_csv(here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv"))
-
+zoop <- read_csv(here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv")) %>% 
+  group_by(CRUISE,HAUL_ID,YEAR,MONTH,DAY,LAT,LON, TAXON_NAME,TAXA_COARSE) %>% # sum across life stages 
+  dplyr::summarise(EST_NUM_PERM3 = sum(EST_NUM_PERM3))
 
 themisto<- zoop %>% filter(stringr::str_detect(TAXA_COARSE, 'Themisto') )
 
-unique(themisto$YEAR)
+themisto_summ <- themisto %>% 
+  group_by(YEAR) %>%
+  dplyr::summarise(mean = mean(EST_NUM_PERM3),
+         sd = sd(EST_NUM_PERM3)) %>% 
+  dplyr::mutate(mean_scale = scale(mean),
+         sd = scale(sd))
+
+ggplot(data = themisto_summ, aes(x=YEAR, y = mean_scale)) +
+  geom_point()+
+  geom_line() +
+  geom_errorbar(aes(ymin = mean_scale-sd, ymax = mean_scale+sd))
+
+zoop_multiple<- zoop %>% 
+  filter(stringr::str_detect(TAXA_COARSE, paste(c('Themisto', 'Calanus'), collapse = '|')))
+
+zoop_multiple_summ <- zoop_multiple %>% 
+  filter(!YEAR <1999) %>% 
+  group_by(YEAR) %>%
+  dplyr::summarise(mean = mean(EST_NUM_PERM3),
+                   sd = sd(EST_NUM_PERM3)) %>% 
+  dplyr::mutate(mean_scale = as.numeric(scale(mean)),
+                sd = as.numeric(scale(sd)))  
 
 
-unique(themisto$GEAR_NAME)
-unique(themisto$MESH)
-unique(themisto$EST_NUM_PERM3)
+ggplot(data = zoop_multiple_summ, aes(x=YEAR, y = mean_scale)) +
+  geom_point()+
+  geom_line() +
+  geom_errorbar(aes(ymin = mean_scale-sd, ymax = mean_scale+sd))
+
+write_csv(zoop_multiple_summ, "data/zoop_covariate.csv")
+
+
+
+

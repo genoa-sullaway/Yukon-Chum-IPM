@@ -53,9 +53,15 @@ juv_prop_ayk <- expand_grid(juv, mean_prop) %>%
 juv_prop_ayk[19,2]<- colMeans(juv_prop_ayk[-19,])[2] # get means of all columns except 2020, fill that in for 2020
 juv_prop_ayk[19,3]<- colMeans(juv_prop_ayk[-19,])[3] # get means of all columns except 2020, fill that in for 2020
 juv_prop_ayk[19,4]<- colMeans(juv_prop_ayk[-19,])[4]
+
 # load Covariates  ==========================================================
-# temporary... use M2
-m2_cov<-read_csv("data/M2_df.csv") %>% # this was created in "MAPP/sceripts_02/process_M2_degreedays.R" and the M2 file was copied to this datafile
+# theta 1 -- Zoop
+zoop <- read_csv("data/zoop_covariate.csv") %>% # this was created in "scripts/Explore_Zoop.R" 
+# currently this is a themisto and calanus mean scaled index. 
+ dplyr::mutate(YEAR = YEAR +3)
+
+# theta 2 -- M2
+m2_cov<-read_csv("data/M2_df.csv") %>% # this was created in "MAPP/scripts_02/process_M2_degreedays.R" and the M2 file was copied to this datafile
   dplyr::mutate(DOY = lubridate::yday(dates),
                 Year = lubridate::year(dates)) %>% 
  # filter(!DOY>300) %>% 
@@ -64,7 +70,6 @@ m2_cov<-read_csv("data/M2_df.csv") %>% # this was created in "MAPP/sceripts_02/p
   filter(Year>2001) %>%
   dplyr::select(degree_days) %>%
   mutate(degree_days = scale(degree_days)) # mean scale 
-
 
 # setup inputs ==============================================================
 warmups <- 2000
@@ -89,8 +94,6 @@ N <- c(nrow(sp)) #, nrow(sim_dat$N_sp), nrow(sim_dat$N_sp))
 data_stage_j <- as.matrix(juv_prop_ayk[,2:4]) #c(as.integer(sim_dat$N_j))#, 
                  # as.integer(sim_yukon_fall_df$N_j),
                  # as.integer(sim_kusko_df$N_j))
-
-#data_stage_r <- sp[,2:3]
  
 data_stage_sp <-as.matrix(sp[,2:4])#c(as.integer(sim_dat$N_sp))#, 
                 # as.integer(sim_yukon_fall_df$N_sp),
@@ -102,14 +105,15 @@ kappa_j_start =  c(runif(1, 0.03, 0.07),
 kappa_sp_start =  c(runif(1, 0.12, 0.2),
                    runif(1, 0.12, 0.2),
                     runif(1, 0.12, 0.2))
-#  
-# basal_p_1 = c(0.05,#0.05,
-#               0.05) # straight from simulation 
+
+# I think this will actually need to be estimated... 
+basal_p_1 = c(0.05,0.05,
+              0.05) # straight from simulation
 basal_p_2 = c(0.15,
               0.15,
               0.15) # straight from simulation
 #   
-# cov1 = sim_dat$cov1
+  cov1 = as.matrix(zoop$mean)
   cov2 =  as.matrix(m2_cov)
 
 data_list <- list(Ps = Ps,
@@ -121,9 +125,9 @@ data_list <- list(Ps = Ps,
                   kappa_sp_start = kappa_sp_start,
                   #data_stage_r =data_stage_r,
                   kappa_j_start = kappa_j_start,
-                  # basal_p_1=basal_p_1,
-                   basal_p_2=basal_p_2 ,
-                  #cov1 = cov1,
+                  basal_p_1=basal_p_1,
+                  basal_p_2=basal_p_2 ,
+                  cov1 = cov1,
                   cov2 = cov2
                   ) 
 
@@ -136,12 +140,10 @@ bh_fit <- stan(
   cores = n_cores)
 
 mcmc_trace(bh_fit, pars = c("c_1[1]","c_1[2]","c_1[3]"))
-mcmc_trace(bh_fit, pars = c("p_1[1]","p_1[2]","p_1[3]"))
 mcmc_trace(bh_fit, pars = c("c_2[1]","c_2[2]","c_2[3]"))
 mcmc_trace(bh_fit, pars = c("sigma_y_j[1]","sigma_y_j[2]","sigma_y_j[3]"))
 mcmc_trace(bh_fit, pars = c("sigma_y_sp[1]","sigma_y_sp[2]","sigma_y_sp[3]"))
 
- 
 bh_summary <- summary(bh_fit)$summary %>% 
   as.data.frame() %>% 
   mutate(variable = rownames(.)) %>% 
@@ -156,6 +158,6 @@ bh_summary %>%
   facet_wrap(~variable, scales = 'free') # +
  # geom_point(data = obs_df, aes(variable, mean), color = "red" ) #observed
 
- pairs(bh_fit)
+
  
  
