@@ -3,6 +3,10 @@ library(tidyverse)
 library(here)
 library(bayesplot)
 library(rstanarm) 
+ 
+library(RNetCDF)
+library(tidync)
+library(lubridate) 
 
 # Load data =======================================================
 # Spawners =======
@@ -28,8 +32,6 @@ sp <- rbind(yukon_summer, yukon_fall, kusko) %>%
   filter(Year > 2001) %>%
   spread(id, Estimated_Run)
  
- 
-
 # Juveniles ========================================================
 juv <- read_csv("data/Juv_Index_CC_aug2023/Index2.csv") %>%
       dplyr::select(Time, Estimate) %>%
@@ -52,7 +54,16 @@ juv_prop_ayk[19,2]<- colMeans(juv_prop_ayk[-19,])[2] # get means of all columns 
 juv_prop_ayk[19,3]<- colMeans(juv_prop_ayk[-19,])[3] # get means of all columns except 2020, fill that in for 2020
 juv_prop_ayk[19,4]<- colMeans(juv_prop_ayk[-19,])[4]
 # load Covariates  ==========================================================
-      # skip for now...... 
+# temporary... use M2
+m2_cov<-read_csv("data/M2_df.csv") %>% # this was created in "MAPP/sceripts_02/process_M2_degreedays.R" and the M2 file was copied to this datafile
+  dplyr::mutate(DOY = lubridate::yday(dates),
+                Year = lubridate::year(dates)) %>% 
+ # filter(!DOY>300) %>% 
+  group_by(Year) %>%
+  dplyr::summarise(degree_days = sum(temperature)) %>%
+  filter(Year>2001) %>%
+  dplyr::select(degree_days)
+
 # setup inputs ==============================================================
 warmups <- 2000
 total_iterations <- 4000
@@ -92,12 +103,12 @@ kappa_sp_start =  c(runif(1, 0.12, 0.2),
 #  
 # basal_p_1 = c(0.05,#0.05,
 #               0.05) # straight from simulation 
-# basal_p_2 = c(0.15,
-#               #0.15,
-#               0.15) # straight from simulation 
+basal_p_2 = c(0.15,
+              0.15,
+              0.15) # straight from simulation
 #   
 # cov1 = sim_dat$cov1
-# cov2 = sim_dat$cov2
+  cov2 =  m2_cov
 
 data_list <- list(Ps = Ps,
                   fs=fs,
@@ -107,11 +118,11 @@ data_list <- list(Ps = Ps,
                   data_stage_sp = data_stage_sp,
                   kappa_sp_start = kappa_sp_start,
                   #data_stage_r =data_stage_r,
-                  kappa_j_start = kappa_j_start#,
+                  kappa_j_start = kappa_j_start,
                   # basal_p_1=basal_p_1,
-                  # basal_p_2=basal_p_2 #,
+                   basal_p_2=basal_p_2 ,
                   #cov1 = cov1,
-                  #cov2 = cov2
+                  cov2 = cov2
                   ) 
 
 bh_fit <- stan(
