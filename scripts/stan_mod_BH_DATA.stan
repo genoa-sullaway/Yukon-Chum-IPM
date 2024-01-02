@@ -111,37 +111,13 @@ for(k in 1:K){  // loop for each population
     N_sp[i,k] = kappa_sp[i,k]*N_j[i,k]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
    }
  }
-
-// 
-// for(k in 1:K){  // loop for each population
-//   for (i in 2:N){ //will need to add a loop in here for stocks too..
-//     N_e[i,k] = fs*Ps*N_sp[i-1,k]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
-//     
-//     kappa_j[i,k] =  p_1[i,k]/ (1 + ((p_1[i,k]*N_e[i,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
-//     
-//     N_j[i,k] = kappa_j[i,k]*N_e[i,k]; // Eq 4.4  generated estiamte for the amount of fish each year and stock that survive to a juvenile stage
-//    
-//     kappa_sp[i,k] =  p_2[i,k]/ (1 + ((p_2[i,k]*N_j[i,k])/c_2[k])); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
-//    
-//     N_sp[i,k] = kappa_sp[i,k]*N_j[i,k]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
-//    }
-//  }
 }
-
 
 model {
   // PRIORS
-//   for(k in 1:K){
-//    for(i in 1:N) {
-// //    N_sp[i,k] ~ lognormal(log(data_stage_sp[i,k]), 10); 
-//     N_sp[i,k] ~ normal(data_stage_sp[i,k], 10); // vague lognormal prior
-//      //target += normal_lpdf(data_stage_sp[i,k] | N_sp[i,k], 10); //Was current version
-//    }
-//   }
-
 for(k in 1:K) { 
-   sigma_y_j[k] ~  normal(0,5);
-   sigma_y_sp[k] ~ normal(0,5);
+   sigma_y_j[k] ~  normal(1,10);
+   sigma_y_sp[k] ~ normal(0,10);
    theta1[k] ~ normal(0,10);
    theta2[k] ~ normal(0,10); 
 }
@@ -173,9 +149,9 @@ for(k in 1:K) {
    log_N_sp_start[k] ~ normal(14,10); 
  } 
      
-    c_1[1] ~ normal(1e7, 1e7);//uniform(10e3, 10e7); //normal( 1e5, 1e6);
-    c_1[2] ~ normal(1e7, 1e7);//uniform(10e3, 10e7);//normal( 1e5, 1e6);
-    c_1[3] ~ normal(1e7, 1e7);
+    c_1[1] ~ normal(1e6, 1e7);//uniform(10e3, 10e7); //normal( 1e5, 1e6);
+    c_1[2] ~ normal(1e6, 1e7);//uniform(10e3, 10e7);//normal( 1e5, 1e6);
+    c_1[3] ~ normal(1e6, 1e7);
     
     c_2[1] ~ normal(1e4, 1e5); //uniform(10e4, 10e8);//normal(1e7, 1e6); 
     c_2[2] ~ normal(1e4, 1e5); //uniform(10e4, 10e8);//normal(1e7 1e6);
@@ -199,7 +175,6 @@ generated quantities {
  for (k in 1:K){
    for (i in 1:N) {
    pp_log_N_j[i,k] = (normal_rng(log(N_j[i,k]) - 0.5 * sigma_y_j[k]^2, sigma_y_j[k])); // generate posterior predictives with backtransform?
-   //pp_log_N_r[i,k] = (normal_rng(log(N_r[i,k]) - 0.5 * sigma_y_r[k]^2, sigma_y_r[k])); // generate posterior predictives with backtransform?
    pp_log_N_sp[i,k] = (normal_rng(log(N_sp[i,k]) - 0.5 * sigma_y_sp[k]^2, sigma_y_sp[k])); // generate posterior predictives with backtransform?
     }
  }

@@ -40,6 +40,20 @@ ggplot(data = zoop_multiple_summ, aes(x=YEAR, y = mean_scale)) +
 
 write_csv(zoop_multiple_summ, "data/zoop_covariate.csv")
 
+### Plot where there is data annually 
+
+zoop_multiple_space <- zoop_multiple %>% 
+  filter(!YEAR <1999) %>% 
+  group_by(YEAR, LAT, LON) %>%
+  dplyr::summarise(mean = mean(EST_NUM_PERM3),
+                   sd = sd(EST_NUM_PERM3)) %>% 
+  dplyr::mutate(mean_scale = as.numeric(scale(mean)),
+                sd = as.numeric(scale(sd)))  
+
+ggplot(data = zoop_multiple_space, aes(x=LAT, y = LON, fill = mean_scale)) +
+  geom_point() +
+  facet_wrap()
+
 
 
 

@@ -123,10 +123,9 @@ data_list <- list(Ps = Ps,
                   data_stage_j = data_stage_j, 
                   data_stage_sp = data_stage_sp,
                   kappa_sp_start = kappa_sp_start,
-                  #data_stage_r =data_stage_r,
                   kappa_j_start = kappa_j_start,
                   basal_p_1=basal_p_1,
-                  basal_p_2=basal_p_2 ,
+                  basal_p_2=basal_p_2,
                   cov1 = cov1,
                   cov2 = cov2
                   ) 
@@ -141,6 +140,8 @@ bh_fit <- stan(
 
 mcmc_trace(bh_fit, pars = c("c_1[1]","c_1[2]","c_1[3]"))
 mcmc_trace(bh_fit, pars = c("c_2[1]","c_2[2]","c_2[3]"))
+mcmc_trace(bh_fit, pars = c("theta1[1]","theta1[2]","theta1[3]"))
+mcmc_trace(bh_fit, pars = c("theta2[1]","theta2[2]","theta2[3]"))
 mcmc_trace(bh_fit, pars = c("sigma_y_j[1]","sigma_y_j[2]","sigma_y_j[3]"))
 mcmc_trace(bh_fit, pars = c("sigma_y_sp[1]","sigma_y_sp[2]","sigma_y_sp[3]"))
 
