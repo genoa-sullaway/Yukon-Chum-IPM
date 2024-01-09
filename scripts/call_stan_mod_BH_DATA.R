@@ -55,16 +55,28 @@ juv_prop_ayk[19,3]<- colMeans(juv_prop_ayk[-19,])[3] # get means of all columns 
 juv_prop_ayk[19,4]<- colMeans(juv_prop_ayk[-19,])[4]
 
 # load Covariates  ==========================================================
+# covariates for stage 1 =======================
 # theta 1 -- Zoop
 zoop <- read_csv("data/zoop_covariate.csv") %>% # this was created in "scripts/Explore_Zoop.R" 
 # currently this is a themisto and calanus mean scaled index. 
- dplyr::mutate(YEAR = YEAR +3)
+ dplyr::mutate(YEAR = YEAR +3) # this is currently BS just to get enough years... need to ask for an expanded dataset 
 
-# theta 2 -- M2
+# covariates for stage 2 =======================
+# hatchery pink =============
+pink_cov <- read_csv("output/hatchery_Pink_Covariate_AKandAsia.csv")%>%
+  filter(Year>2001) %>%
+  mutate(scale = scale(sum))
+
+# hatchery chum ============
+chum_cov <- read_csv("output/hatchery_Chum_Covariate_AKandAsia.csv") %>%
+  filter(Year>2001) %>%
+  mutate(scale = scale(sum))
+
+# theta 2 -- M2 ============
 m2_cov<-read_csv("data/M2_df.csv") %>% # this was created in "MAPP/scripts_02/process_M2_degreedays.R" and the M2 file was copied to this datafile
   dplyr::mutate(DOY = lubridate::yday(dates),
                 Year = lubridate::year(dates)) %>% 
- # filter(!DOY>300) %>% 
+  filter(!DOY>300) %>% 
   group_by(Year) %>%
   dplyr::summarise(degree_days = sum(temperature)) %>%
   filter(Year>2001) %>%
@@ -112,9 +124,9 @@ basal_p_1 = c(0.05,0.05,
 basal_p_2 = c(0.15,
               0.15,
               0.15) # straight from simulation
-#   
+ 
   cov1 = as.matrix(zoop$mean)
-  cov2 =  as.matrix(m2_cov)
+  cov2 =  as.matrix(cbind(m2_cov, chum_cov$scale))
 
 data_list <- list(Ps = Ps,
                   fs=fs,
@@ -127,7 +139,9 @@ data_list <- list(Ps = Ps,
                   basal_p_1=basal_p_1,
                   basal_p_2=basal_p_2,
                   cov1 = cov1,
-                  cov2 = cov2
+                  cov2 = cov2,
+                  ncovars1 = 1,
+                  ncovars2 = 2
                   ) 
 
 bh_fit <- stan(

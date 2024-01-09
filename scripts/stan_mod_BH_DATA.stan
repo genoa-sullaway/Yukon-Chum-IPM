@@ -10,11 +10,11 @@ data { // all equation references are from proposal numbering
   real <lower=0>kappa_sp_start[K]; // adding starting values for kappa so there arent NAs..not sure if this is necessary
   real <lower=0>kappa_j_start[K];
   
-  // real  cov1[N]; // covariate string, matrix if we have mulitple covariates, how does this work if i have different covariates by stock?
-  //matrix[N,1] cov2;
-  real cov1[N, 1];
-  real cov2[N, 1];
-  //real  cov2[N,1];
+  int<lower=0> ncovars1; //number of covariates for first lifestage
+  int<lower=0> ncovars2; //number of covariates for second lifestage 
+
+  real cov1[N, ncovars1]; // covariate data in a matrix format 
+  real cov2[N, ncovars2]; 
   
   real <lower=0> basal_p_1[K]; // mean survival absent of density dependence - for now just add it in dont estimate it. 
   real <lower=0> basal_p_2[K];
@@ -40,62 +40,68 @@ parameters {
   real<lower=0>c_1[K];// carrying capacity 
   real<lower=0>c_2[K];  // carrying capacity 
   
-  //real<lower=0> p_1[K];
- // real<lower=0> p_2[K];
- 
-  // matrix[N,K] p_1;
-  // matrix[N,K] p_2;
-  
   // covariate parameters 
-     real theta1[K];
-     real theta2[K];
+  real theta1[K, ncovars1];
+  real theta2[K,ncovars2];
   
   real log_N_sp_start[K];
   real log_N_egg_start[K];
-  //real log_N_r_start[K];
   real log_N_j_start[K];
-  
-  //matrix[N,K] N_sp; 
 }
 
 transformed parameters { 
 matrix[N,K] N_e; // predicted eggs, basically a dummy step. 
 matrix[N,K] N_j; // predicted juveniles - this goes into the liklihood, data involved 
-//matrix[N,K] N_r; // predicted spawners - this goes into the liklihood, data involved 
 matrix[N,K] N_sp;
 matrix[N,K] p_1;
 matrix[N,K] p_2;
 
 real N_sp_start[K];
 real N_egg_start[K];
-real N_j_start[K];
-//real N_r_start[K];
+real N_j_start[K]; 
   
 real kappa_j[N,K]; // predicted survival for each stock
 real kappa_sp[N,K]; // predicted survival for each stock
+// 
+real cov_eff1[N, ncovars1];
+real cov_eff2[N, ncovars2];
 
   for (k in 1:K) {
-  kappa_sp[1,k] = kappa_sp_start[k];
-//kappa_j_start = exp(log_kappa_j_start);
+  kappa_sp[1,k] = kappa_sp_start[k]; 
   kappa_j[1,k]= kappa_j_start[k]; 
  
   N_sp_start[k] = exp(log_N_sp_start[k]); // transform predicted spawners
-  N_egg_start[k] = exp(log_N_egg_start[k]); // transform predicted eggs
-  //N_r_start[k] = exp(log_N_r_start[k]);
+  N_egg_start[k] = exp(log_N_egg_start[k]); // transform predicted eggs 
   N_j_start[k] = exp(log_N_j_start[k]); // transform predicted juveniles
 
   N_sp[1,k] = N_sp_start[k];
   N_e[1,k] = N_egg_start[k];
-  N_j[1,k] = N_j_start[k];
- // N_r[1,k] = N_r_start[k];
-  //   
+  N_j[1,k] = N_j_start[k]; 
     }
+   
+    for(c in 1:ncovars1){
   for (k in 1:K){
-    for (i in 1:N) {
-     p_1[i,k]  = 1 / exp(-basal_p_1[k] - (theta1[k]*cov1[i,1]));
-     p_2[i,k]  = 1 / exp(-basal_p_2[k] - (theta2[k]*cov2[i,1]));
-       }
+   // for (i in 1:N) {
+  cov_eff1= sum(theta1[k,]*cov1[i,]))
   }
+}
+   
+   
+ //for(c in 1:ncovars1){
+  for (k in 1:K){
+   // for (i in 1:N) {
+     p_1[k]  = 1 / exp(-basal_p_1[k]- cov_eff1[k] )// sum(theta1[k,]*cov1[i,])); # estimate theta for each popualtion and each covariate, not every year 
+  // }
+  }
+ //}
+ 
+for(c in 1:ncovars2){
+  for (k in 1:K){
+    for (i in 1:N) { 
+     p_2[i,k]  = 1 / exp(-basal_p_2[k] -sum(theta2[k,]*col(cov2[i,])));
+   }
+  }
+ }
 
 
 for(k in 1:K){  // loop for each population

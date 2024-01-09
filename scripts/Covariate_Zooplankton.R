@@ -40,7 +40,7 @@ ggplot(data = zoop_multiple_summ, aes(x=YEAR, y = mean_scale)) +
 
 write_csv(zoop_multiple_summ, "data/zoop_covariate.csv")
 
-### Plot where there is data annually 
+### Plot where there is data annually ============
 
 zoop_multiple_space <- zoop_multiple %>% 
   filter(!YEAR <1999) %>% 
@@ -52,6 +52,37 @@ ggplot(data = zoop_multiple_space, aes(x=LON, y = LAT,
                                        fill = log(mean), color = log(mean))) +
   geom_point() +
   facet_wrap(~YEAR)
+
+# Cnideria ===============
+
+zoop_cnideria<- zoop %>% 
+  filter(stringr::str_detect(TAXA_COARSE, paste(c('Cnidaria_small', 'Cnidaria_large'), collapse = '|')))
+
+names <- data.frame(unique(zoop$TAXA_COARSE))
+
+zoop_cnideria_summ <- zoop_cnideria %>% 
+  filter(!YEAR <1999) %>% 
+  group_by(YEAR,TAXA_COARSE) %>%
+  dplyr::summarise(mean = mean(EST_NUM_PERM3),
+                   n= nrow(.), 
+                   sd = sd(EST_NUM_PERM3)/sqrt(n)) #%>% 
+  # dplyr::mutate(mean_scale = as.numeric(scale(mean)),
+  #               sd = as.numeric(scale(sd)))  
+
+
+ggplot(data = zoop_cnideria_summ, 
+       aes(x=YEAR, y = mean, group = TAXA_COARSE, color =TAXA_COARSE)) +
+  geom_point()+
+  geom_line() +
+  geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd)) +
+  facet_wrap(~TAXA_COARSE, scales = "free")
+
+
+ggplot(data = zoop_cnideria_summ, aes(x=YEAR, y = mean_scale, group = TAXA_COARSE, color =TAXA_COARSE)) +
+  geom_point()+
+  geom_line() +
+  geom_errorbar(aes(ymin = mean_scale-sd, ymax = mean_scale+sd))
+
 
 
 
