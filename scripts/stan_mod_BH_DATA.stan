@@ -34,19 +34,25 @@ data_log_stage_sp = log(data_stage_sp);
 
 parameters {
   real<lower=0>sigma_y_j[K];
-  //real<lower=0>sigma_y_r[K];
   real<lower=0>sigma_y_sp[K];
     
-  real<lower=0>c_1[K];// carrying capacity 
-  real<lower=0>c_2[K];  // carrying capacity 
+  real<lower=0>c_1[K]; // carrying capacity 
+  real<lower=0>c_2[K]; // carrying capacity 
   
   // covariate parameters 
-  real theta1[K, ncovars1];
+  real theta1[K, ncovars1]; // covariate estimated for each covariate and each population 
   real theta2[K,ncovars2];
+  
+  real mu_coef1[ncovars1]; // mean covariate effect across populations (group level hierarchical effect)
+  real mu_coef2[ncovars2];
+  
+  real sigma_coef1[ncovars1]; // error of the covariate effect across populations (group level hierarchical effect)
+  real sigma_coef2[ncovars2]; 
   
   real log_N_sp_start[K];
   real log_N_egg_start[K];
   real log_N_j_start[K];
+  
 }
 
 transformed parameters { 
@@ -133,41 +139,30 @@ model {
 for(k in 1:K) { 
    sigma_y_j[k] ~  normal(1,10);
    sigma_y_sp[k] ~ normal(0,10);
-}
-
-for(k in 1:K) { 
-   for (c in 1:ncovars1) {
-      theta1[k,c] ~ normal(0,10);
-      theta2[k,c] ~ normal(0,10); 
-   }
-}
-  
-   // sigma_y_j[1] ~  normal(0,10);
-   // sigma_y_j[2] ~  normal(0,10);
-   // sigma_y_j[3] ~  normal(0,10);
-
-   // sigma_y_r[1] ~ normal(1.83,10);
-   // sigma_y_r[2] ~ normal(2.09,10);
-   // sigma_y_r[3] ~ normal(2.19,10);
    
-   // sigma_y_sp[1] ~ normal(0,10); // normal(52,10);
-   // sigma_y_sp[2] ~ normal(0,10);//normal(50,10);
-   // sigma_y_sp[3] ~ normal(0,10);
-   // 
-   // theta1[1]~normal(0.1,5);
-   // theta1[2]~normal(0.3,5);
-   // theta1[3]~normal(0.4,5);
-   //    
-   // theta2[1]~normal(0,10);
-   // theta2[2]~normal(0,10);
-   // theta2[3]~normal(0,10);
-   
-  for(k in 1:K){
    log_N_egg_start[k] ~ normal(18,10);
    log_N_j_start[k] ~ normal(10,10);
-   //log_N_r_start[k] ~ normal(13.5,10);
    log_N_sp_start[k] ~ normal(14,10); 
- } 
+}
+
+ for(c in 1:ncovars1){
+  	 mu_coef1[c] ~ normal(0, 10);  
+     sigma_coef1[c] ~ normal(0, 10);  
+   }
+for(c in 1:ncovars2){
+  	 mu_coef2[c] ~ normal(0, 10); // 0 - 1 or 0.1 would be a penalized version as a test case - drive it to 0
+     sigma_coef2[c] ~ normal(0, 10); //0 - 1 or 0.1 would be a penalized version
+   }
+  	 
+for(k in 1:K) { 
+   for (c in 1:ncovars1) {
+      theta1[k,c] ~ normal(mu_coef1[c],sigma_coef1[c]);
+  }
+   for (c in 1:ncovars1) {
+   theta2[k,c] ~ normal(mu_coef2[c],sigma_coef2[c]);
+  }
+}
+  
      
     c_1[1] ~ normal(1e6, 1e7); // magic number right now: 1e6, 1e7  
     c_1[2] ~ normal(1e6, 1e7); 

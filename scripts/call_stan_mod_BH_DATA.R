@@ -56,10 +56,21 @@ juv_prop_ayk[19,4]<- colMeans(juv_prop_ayk[-19,])[4]
 
 # load Covariates  ==========================================================
 # covariates for stage 1 =======================
-# theta 1 -- Zoop
-zoop <- read_csv("data/zoop_covariate.csv") %>% # this was created in "scripts/Explore_Zoop.R" 
-# currently this is a themisto and calanus mean scaled index. 
- dplyr::mutate(YEAR = YEAR +3) # this is currently BS just to get enough years... need to ask for an expanded dataset 
+# theta 1 -- Zooplankton 
+# this was created in "scripts/Explore_Zoop.R" 
+# currently this is a themisto and calanus large copepod sum mean abundance for Fall, not a true index. 
+# I also have a gelatinous zoop abundnce i could add in
+zoop_temp <- read_csv("data/covariate_large_zooplankton.csv") %>% 
+        dplyr::select(YEAR, mean) 
+
+# this is currently BS just to get enough years... need to ask for an expanded dataset 
+insert <- data.frame(YEAR = c(2020,2021,2022), 
+                     mean = rep(rnorm(3, mean(zoop_temp$mean), sd(zoop_temp$mean))))
+
+zoop <- zoop_temp %>%
+          rbind(insert) %>% 
+          filter(!YEAR<2002) %>%
+          mutate(scale = scale(mean))
 
 # covariates for stage 2 =======================
 # hatchery pink =============
@@ -125,7 +136,7 @@ basal_p_2 = c(0.15,
               0.15,
               0.15) # straight from simulation
  
-  cov1 = as.matrix(zoop$mean)
+  cov1 = as.matrix(as.numeric(zoop$scale))
   cov2 =  as.matrix(cbind(m2_cov, chum_cov$scale))
 
 data_list <- list(Ps = Ps,
@@ -166,7 +177,7 @@ bh_summary <- summary(bh_fit)$summary %>%
   as_data_frame()
  
 bh_summary %>% 
-  slice(1:18) %>%
+  slice(1:27) %>%
   ggplot() + 
   geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
   geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
