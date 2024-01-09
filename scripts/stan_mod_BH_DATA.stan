@@ -163,14 +163,13 @@ for(k in 1:K) {
   }
 }
   
-     
     c_1[1] ~ normal(1e6, 1e7); // magic number right now: 1e6, 1e7  
     c_1[2] ~ normal(1e6, 1e7); 
     c_1[3] ~ normal(1e6, 1e7);
     
-    c_2[1] ~ normal(1e4, 1e5); // magic number right now: 1e4, 1e5  
-    c_2[2] ~ normal(1e4, 1e5); 
-    c_2[3] ~ normal(1e4, 1e5);
+    c_2[1] ~ normal(1e7, 1e4); // magic number right now: 1e4, 1e5, but this cant be right because yukon reutrns are on scale of 1e6 rogjt  
+    c_2[2] ~ normal(1e7, 1e4); 
+    c_2[3] ~ normal(1e7, 1e4);
              
 // Liklilihoods -- 
 for(k in 1:K){

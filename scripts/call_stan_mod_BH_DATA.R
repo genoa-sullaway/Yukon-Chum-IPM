@@ -13,24 +13,29 @@ library(lubridate)
 yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/Yukon Summer Chum Total Run 1978-2022 Run Rec.xlsx") %>%
   dplyr::select(Year, `Total Run`) %>%
   dplyr::rename(Estimated_Run = `Total Run`) %>%
-  dplyr::mutate(id = 1)
+  filter(Year > 2001) %>%
+  dplyr::mutate(id = 1)#,
+                #Estimated_Run = as.numeric(scale(Estimated_Run)))
+
 yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv")  %>%
   select(Year, Estimated_Run) %>%
-  dplyr::mutate(id = 2)
+  filter(Year > 2001) %>%
+  dplyr::mutate(id = 2)#,
+               #Estimated_Run = as.numeric(scale(Estimated_Run)))
 
 kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS")
 kusko<-data.frame(Year = c(1988:(2022-1)),
                   Estimated_Run= as.vector(c(kusko_estimated_parameters[2:35])),
                   id =3) %>% 
-  filter(Year > 2001) 
+  filter(Year > 2001) #%>%
+  #mutate(Estimated_Run = as.numeric(scale(Estimated_Run)))
 
 mean<-mean(kusko$Estimated_Run)
 kusko<-kusko %>%
   rbind(df=data.frame(Year = c(2022), Estimated_Run = c(mean), id=c(3)))
 
 sp <- rbind(yukon_summer, yukon_fall, kusko) %>%
-  filter(Year > 2001) %>%
-  spread(id, Estimated_Run)
+      spread(id, Estimated_Run)
  
 # Juveniles ========================================================
 juv <- read_csv("data/Juv_Index_CC_aug2023/Index2.csv") %>%
@@ -46,9 +51,12 @@ juv_prop_ayk <- expand_grid(juv, mean_prop) %>%
                 #filter(!reporting_group == "Kusko_Bristol") %>%
                 dplyr::mutate(id = case_when(reporting_group == "Yukon_Summer" ~ 1,
                                              reporting_group == "Yukon_Fall" ~ 2,
-                                             TRUE ~ 3)) %>% 
+                                             TRUE ~ 3)) %>%
+                # group_by(reporting_group) %>% 
+                # dplyr::mutate(juv_index = as.numeric(scale(juv_index))) %>% 
+                ungroup() %>%
                 dplyr::select(-reporting_group) %>% 
-                spread(id, juv_index)
+                spread(id, juv_index) 
 
 juv_prop_ayk[19,2]<- colMeans(juv_prop_ayk[-19,])[2] # get means of all columns except 2020, fill that in for 2020
 juv_prop_ayk[19,3]<- colMeans(juv_prop_ayk[-19,])[3] # get means of all columns except 2020, fill that in for 2020
@@ -64,24 +72,24 @@ zoop_temp <- read_csv("data/covariate_large_zooplankton.csv") %>%
         dplyr::select(YEAR, mean) 
 
 # this is currently BS just to get enough years... need to ask for an expanded dataset 
-insert <- data.frame(YEAR = c(2020,2021,2022), 
-                     mean = rep(rnorm(3, mean(zoop_temp$mean), sd(zoop_temp$mean))))
+insert <- data.frame(YEAR = c(2001,2020,2021,2022), 
+                     mean = rep(rnorm(4, mean(zoop_temp$mean), sd(zoop_temp$mean))))
 
 zoop <- zoop_temp %>%
           rbind(insert) %>% 
-          filter(!YEAR<2002) %>%
+          filter(!YEAR<2001) %>%
           mutate(scale = scale(mean))
 
 # covariates for stage 2 =======================
 # hatchery pink =============
 pink_cov <- read_csv("output/hatchery_Pink_Covariate_AKandAsia.csv")%>%
   filter(Year>2001) %>%
-  mutate(scale = scale(sum))
+  mutate(scale = as.numeric(scale(sum)))
 
 # hatchery chum ============
 chum_cov <- read_csv("output/hatchery_Chum_Covariate_AKandAsia.csv") %>%
   filter(Year>2001) %>%
-  mutate(scale = scale(sum))
+  mutate(scale = as.numeric(scale(sum)))
 
 # theta 2 -- M2 ============
 m2_cov<-read_csv("data/M2_df.csv") %>% # this was created in "MAPP/scripts_02/process_M2_degreedays.R" and the M2 file was copied to this datafile
@@ -92,7 +100,7 @@ m2_cov<-read_csv("data/M2_df.csv") %>% # this was created in "MAPP/scripts_02/pr
   dplyr::summarise(degree_days = sum(temperature)) %>%
   filter(Year>2001) %>%
   dplyr::select(degree_days) %>%
-  mutate(degree_days = scale(degree_days)) # mean scale 
+  mutate(degree_days = as.numeric(scale(degree_days))) # mean scale 
 
 # setup inputs ==============================================================
 warmups <- 2000
@@ -136,8 +144,8 @@ basal_p_2 = c(0.15,
               0.15,
               0.15) # straight from simulation
  
-  cov1 = as.matrix(as.numeric(zoop$scale))
-  cov2 =  as.matrix(cbind(m2_cov, chum_cov$scale))
+cov1 = as.matrix(as.numeric(zoop$scale))
+cov2 =  as.matrix(cbind(m2_cov, chum_cov$scale))
 
 data_list <- list(Ps = Ps,
                   fs=fs,
@@ -162,6 +170,8 @@ bh_fit <- stan(
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores)
+
+write_rds(bh_fit, "output/stan_fit.RDS")
 
 mcmc_trace(bh_fit, pars = c("c_1[1]","c_1[2]","c_1[3]"))
 mcmc_trace(bh_fit, pars = c("c_2[1]","c_2[2]","c_2[3]"))
