@@ -63,8 +63,8 @@ real N_j_start[K];
 real kappa_j[N,K]; // predicted survival for each stock
 real kappa_sp[N,K]; // predicted survival for each stock
 // 
-real cov_eff1[N, ncovars1];
-real cov_eff2[N, ncovars2];
+real cov_eff1[N, K, ncovars1];
+real cov_eff2[N, K, ncovars2];
 
   for (k in 1:K) {
   kappa_sp[1,k] = kappa_sp_start[k]; 
@@ -79,26 +79,35 @@ real cov_eff2[N, ncovars2];
   N_j[1,k] = N_j_start[k]; 
     }
    
-    for(c in 1:ncovars1){
-  for (k in 1:K){
-   // for (i in 1:N) {
-  cov_eff1= sum(theta1[k,]*cov1[i,]))
+   // the cov effects need seperate loop because number of covariates varies between lifestage
+   for (k in 1:K){
+   for(i in 1:N){
+   for (c in 1:ncovars1) {
+  cov_eff1[i,k,c] = theta1[k,c]*cov1[i,c];
+   }
+  }
+}
+
+for (k in 1:K){
+    for(i in 1:N){
+     for (c in 1:ncovars2) {
+  cov_eff2[i,k,c] = theta2[k,c]*cov2[i,c];
+   }
   }
 }
    
-   
- //for(c in 1:ncovars1){
+ for(c in 1:ncovars1){
   for (k in 1:K){
-   // for (i in 1:N) {
-     p_1[k]  = 1 / exp(-basal_p_1[k]- cov_eff1[k] )// sum(theta1[k,]*cov1[i,])); # estimate theta for each popualtion and each covariate, not every year 
-  // }
+    for (i in 1:N) {
+     p_1[i,k]  = 1 / exp(-basal_p_1[k]-sum(cov_eff1[i,k,1:c]));// sum(theta1[k,]*cov1[i,])); # estimate theta for each popualtion and each covariate, not every year 
+   }
   }
- //}
+ }
  
 for(c in 1:ncovars2){
   for (k in 1:K){
     for (i in 1:N) { 
-     p_2[i,k]  = 1 / exp(-basal_p_2[k] -sum(theta2[k,]*col(cov2[i,])));
+     p_2[i,k]  = 1 / exp(-basal_p_2[k] -sum(cov_eff2[i,k,1:c]));
    }
   }
  }
@@ -124,8 +133,13 @@ model {
 for(k in 1:K) { 
    sigma_y_j[k] ~  normal(1,10);
    sigma_y_sp[k] ~ normal(0,10);
-   theta1[k] ~ normal(0,10);
-   theta2[k] ~ normal(0,10); 
+}
+
+for(k in 1:K) { 
+   for (c in 1:ncovars1) {
+      theta1[k,c] ~ normal(0,10);
+      theta2[k,c] ~ normal(0,10); 
+   }
 }
   
    // sigma_y_j[1] ~  normal(0,10);
