@@ -26,4 +26,4 @@ ggplot(data = sst_b) +
   xlab("Year")
 
 
-write_csv(sst_a,"data/processed_covariates/Stage_A_CDD.csv")
+write_csv(sst_b,"data/processed_covariates/Stage_B_CDD.csv")

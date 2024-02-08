@@ -39,7 +39,7 @@ ggplot(data = large_zoopsumm, aes(x=YEAR, y = mean)) +
   geom_line() +
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se))
 
- write_csv(large_zoopsumm, "data/covariate_large_zooplankton.csv")
+ write_csv(large_zoopsumm, "data/processed_covariates/covariate_large_zooplankton.csv")
 
  # Gelatinous Zoop - Cnideria ===============
  zoop_cnideria<- zoop %>% 
@@ -58,7 +58,7 @@ ggplot(data = large_zoopsumm, aes(x=YEAR, y = mean)) +
    geom_line() +
    geom_errorbar(aes(ymin = mean-se, ymax = mean+se))  
    
- write_csv(zoop_cnideria_summ, "data/covariate_gelatinous_zooplankton.csv")
+ write_csv(zoop_cnideria_summ, "data/processed_covariates/covariate_gelatinous_zooplankton.csv")
  
  # plot both zoop and gelatinous on the same plot ===========
  ggplot( ) + 
