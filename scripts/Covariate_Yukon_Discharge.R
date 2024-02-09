@@ -48,7 +48,6 @@ yukon_b <- yukon_discharge %>%
             min_discharge = min(discharge_cubic_ft_sec),
             mean_discharge = mean(discharge_cubic_ft_sec))
    
- 
 
 
 write_csv(yukon_a,"data/processed_covariates/Stage_a_Yukon_drainage.csv")

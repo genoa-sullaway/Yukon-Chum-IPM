@@ -24,6 +24,13 @@ gelatinous_zoop_a <- read_csv("data/processed_covariates/covariate_gelatinous_zo
          Year = "YEAR") %>%
   dplyr::select(Year, value, site,id,type)
 
+
+river_discharge_a <- read_csv("data/processed_covariates/Stage_A_YK_Discharge.csv")
+
+
+
+
+
 air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
   dplyr::mutate(type = case_when(type == "average"  ~ "average_airtemp",
                           type == "min"  ~ "min_airtemp",
@@ -45,7 +52,8 @@ plota <- ggplot(data = stage_a_cov, aes(x=Year, y = value, color = type, group =
   geom_line( ) +
   scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Starfish",n=3)) + 
   facet_wrap(~type, scales = "free",ncol=1) +
-  theme_classic()  
+  theme_classic()  +
+  ggtitle("Stage A Covariates")
   
 plota
 
@@ -74,11 +82,33 @@ a
 dev.off()
 
 # Stage B - Load data ============= 
-hatchery_chum_b<-read_csv("output/hatchery_Chum_Covariate_AKandAsia.csv")
-hatchery_pink_b <- read_csv("output/hatchery_Pink_Covariate_AKandAsia.csv")
-sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv")
+hatchery_chum_b<-read_csv("output/hatchery_Chum_Covariate_AKandAsia.csv") %>%
+  dplyr::mutate(id="Chum_hatchery") %>%
+  rename(value = "sum")
+hatchery_pink_b <- read_csv("output/hatchery_Pink_Covariate_AKandAsia.csv") %>%
+  dplyr::mutate(id="Pink_hatchery") %>%
+  rename(value = "sum")
+sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv") %>%
+  dplyr::rename(value = "CDD",
+                Year = "year") %>%
+  dplyr::mutate(id= "CDD_SEBS")
+  
+stage_b_cov <- rbind(hatchery_chum_b,hatchery_pink_b,sst_b)
 
 # Stage B - Plots ============= 
  
+plotb <- ggplot(data = stage_b_cov, aes(x=Year, y = value, color = id, group = id)) +
+  geom_point( ) +
+  geom_line( ) +
+  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Starfish",n=3)) + 
+  facet_wrap(~id, scales = "free",ncol=1) +
+  theme_classic()  +
+  ggtitle("Stage B Covariates")
+
+plotb
+
+pdf("output/plot_covariates_b.pdf", width = 9, height =9)
+plotb
+dev.off()
 
 
