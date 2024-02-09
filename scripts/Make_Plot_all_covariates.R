@@ -4,111 +4,313 @@ library(here)
 
 # Stage A - Load data ============= 
 sst_a <- read_csv("data/processed_covariates/Stage_A_CDD.csv") %>%
-  dplyr::mutate(site = "NBS_akfin",
-         id="cummulative_degree_days",
-         type = "SST_CDD") %>%
-  dplyr::rename(value = "CDD",
+  dplyr::rename(SST_CDD_NBS = "CDD",
                 Year = "year")
+
 large_zoop_a <- read_csv("data/processed_covariates/covariate_large_zooplankton.csv") %>%
-  dplyr::mutate(site = "NBS",
-         id="mean_abundance",
-         type = "large_zoop") %>%
-  dplyr::rename(value = "mean",
-         Year = "YEAR") %>%
-  dplyr::select(Year, value, site,id,type)
+  dplyr::rename(large_zoop_NBS = "mean",
+         Year = "YEAR")  %>%
+  dplyr::select(Year, large_zoop_NBS)
+
 gelatinous_zoop_a <- read_csv("data/processed_covariates/covariate_gelatinous_zooplankton.csv") %>%
-  mutate(site = "NBS",
-         id="mean_abundance",
-         type = "gelatinous_zoop") %>%
-  dplyr::rename(value = "mean",
-         Year = "YEAR") %>%
-  dplyr::select(Year, value, site,id,type)
+  dplyr::rename(gelatinous_zoop_NBS = "mean",
+                Year = "YEAR")  %>%
+  dplyr::select(Year, gelatinous_zoop_NBS)
 
-
-river_discharge_a <- read_csv("data/processed_covariates/Stage_A_YK_Discharge.csv")
-
-
-
-
-
+river_discharge_a <- read_csv("data/processed_covariates/Stage_A_YK_Discharge.csv") %>%
+  dplyr::select(Year, mean_discharge,id) %>%
+  spread(id, mean_discharge) %>%
+  rename(kusko_mean_discharge = "Kusko",
+         yukon_mean_discharge = "Yukon")
+ 
 air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
-  dplyr::mutate(type = case_when(type == "average"  ~ "average_airtemp",
-                          type == "min"  ~ "min_airtemp",
-                          type == "max"  ~ "max_airtemp")) %>%
-  # mutate(type = case_when(type == "average" & site == "aniak" ~ "aniak_average_airtemp",
-  #                         type == "min" & site == "aniak" ~ "aniak_min_airtemp",
-  #                         type == "max" & site == "aniak" ~ "aniak_max_airtemp",
-  #                         type == "average" & site == "chena" ~ "chena_average_airtemp",
-  #                         type == "min" & site == "chena" ~ "chena_min_airtemp",
-  #                         type == "max" & site == "chena" ~ "chena_max_airtemp")) %>%
-  dplyr::select(Year, value, site,id,type)
+  filter(type =="average", id == "spring") %>%
+  dplyr::rename(mean_air_temp = "value") %>%
+  dplyr::select(Year, mean_air_temp,site) %>%
+  spread(site,mean_air_temp) %>%
+  rename(kusko_aniak_mean_airtemp = "aniak",
+         yukon_chena_mean_airtemp = "chena")
 
-# Stage A - One DF ============= 
-stage_a_cov<- rbind(sst_a,large_zoop_a,gelatinous_zoop_a) #,air_temp_a)
+# Stage A - One DF for model ============= 
+stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
+              left_join(air_temp_a) %>%
+              left_join(gelatinous_zoop_a) %>%
+              left_join(large_zoop_a)
 
-# Stage A - Plot =============
-plota <- ggplot(data = stage_a_cov, aes(x=Year, y = value, color = type, group = id)) +
+# Stage A - Save DF ============= 
+write_csv(stage_a_cov, "data/processed_covariates/stage_a_all.csv")
+
+# Stage A - Plot values =============
+stage_a_cov_plot<-stage_a_cov %>%
+  gather(2:7, key = "id", value = "value") %>%
+  dplyr::mutate(id = factor(id, levels = c("kusko_mean_discharge", "yukon_mean_discharge",
+                                           "kusko_aniak_mean_airtemp", "yukon_chena_mean_airtemp",
+                                           "SST_CDD_NBS", "gelatinous_zoop_NBS", "large_zoop_NBS")))
+
+plota <- ggplot(data = stage_a_cov_plot, aes(x=Year, y = value, color = id, group = id)) +
   geom_point( ) +
   geom_line( ) +
-  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Starfish",n=3)) + 
-  facet_wrap(~type, scales = "free",ncol=1) +
+  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Starfish",n=7)) + 
+  facet_wrap(~id, scales = "free",ncol=1) +
   theme_classic()  +
   ggtitle("Stage A Covariates")
   
 plota
+  
+  
+pdf("output/plot_covariates_a.pdf", width = 7, height = 12)
+plota
+dev.off()
 
-plot_airtemp_a <- ggplot(data = air_temp_a,aes(x=Year, y = value, 
-                                               color = site, 
-                                               group = type, 
-                                               linetype = type)) +
+# Stage A - Plot, scaled =============
+stage_a_cov_plot_scale<-stage_a_cov_plot %>%
+  group_by(id) %>% 
+  mutate(scale = scale(value))
+  
+plota <- ggplot(data = stage_a_cov_plot_scale, aes(x=Year, y = scale, color = id, group = id)) +
   geom_point( ) +
   geom_line( ) +
-  theme_classic() +
-  facet_grid(id~site, scales = "free") +
-  scale_linetype_manual(name = " ", values =c(1,2,2)) + 
-  ylab("Temperature F") + 
-  theme(legend.position = "bottom") + 
-  #theme(legend.position = "none") + 
-  scale_color_manual(guide = "none", 
-                     values = PNWColors::pnw_palette(name="Bay", n=2))  
-  
+  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Starfish",n=7)) + 
+  facet_wrap(~id, scales = "free",ncol=1) +
+  theme_classic()  +
+  ggtitle("Stage A Covariates - Scaled") +
+  geom_hline(yintercept =0, linetype =2)
 
-plot_airtemp_a
- 
-a<-ggpubr::ggarrange(plota, plot_airtemp_a, ncol = 2)
+plota
 
-pdf("output/plot_covariates_a.pdf", width = 12, height = 5)
-a
+
+pdf("output/plot_scaled_covariates_a.pdf", width = 7, height = 12)
+plota
 dev.off()
 
 # Stage B - Load data ============= 
 hatchery_chum_b<-read_csv("output/hatchery_Chum_Covariate_AKandAsia.csv") %>%
-  dplyr::mutate(id="Chum_hatchery") %>%
-  rename(value = "sum")
+  dplyr::rename(Chum_hatchery="sum") %>%
+  dplyr::select(Year, Chum_hatchery)
+
 hatchery_pink_b <- read_csv("output/hatchery_Pink_Covariate_AKandAsia.csv") %>%
-  dplyr::mutate(id="Pink_hatchery") %>%
-  rename(value = "sum")
+  dplyr::rename(Pink_hatchery="sum") %>%
+  dplyr::select(Year, Pink_hatchery)
+
 sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv") %>%
-  dplyr::rename(value = "CDD",
+  dplyr::rename(SST_CDD_SEBS = "CDD",
                 Year = "year") %>%
-  dplyr::mutate(id= "CDD_SEBS")
+  dplyr::select(Year, SST_CDD_SEBS)
   
-stage_b_cov <- rbind(hatchery_chum_b,hatchery_pink_b,sst_b)
+river_discharge_b <- read_csv("data/processed_covariates/Stage_B_YK_Discharge.csv") %>%
+  dplyr::select(Year, mean_discharge,id) %>%
+  spread(id, mean_discharge) %>%
+  rename(kusko_mean_discharge_summer = "Kusko",
+         yukon_mean_discharge_summer = "Yukon")
+  
+stage_b_cov<- left_join(river_discharge_b,sst_b)  %>%
+  left_join(hatchery_pink_b) %>%
+  left_join(hatchery_chum_b)  
+
+# Stage B - Save DF ============= 
+write_csv(stage_b_cov, "data/processed_covariates/stage_b_all.csv")
 
 # Stage B - Plots ============= 
- 
-plotb <- ggplot(data = stage_b_cov, aes(x=Year, y = value, color = id, group = id)) +
+
+stage_b_cov_plot<-stage_b_cov %>%
+  gather(2:6, key = "id", value = "value") %>%
+  dplyr::mutate(id = factor(id, levels = c("SST_CDD_SEBS", 
+                                           "Chum_hatchery",
+                                           "Pink_hatchery",
+                                           "kusko_mean_discharge_summer", 
+                                           "yukon_mean_discharge_summer" )))
+
+plotb <- ggplot(data = stage_b_cov_plot, aes(x=Year, y = value, color = id, group = id)) +
   geom_point( ) +
   geom_line( ) +
-  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Starfish",n=3)) + 
+  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Sunset2",n=5)) + 
   facet_wrap(~id, scales = "free",ncol=1) +
   theme_classic()  +
+  ylab(" ") + 
   ggtitle("Stage B Covariates")
 
 plotb
 
-pdf("output/plot_covariates_b.pdf", width = 9, height =9)
+pdf("output/plot_covariates_b.pdf", width = 7, height = 12)
 plotb
 dev.off()
 
+# Covariates B - scale ========== 
+stage_b_cov_plot <- stage_b_cov_plot %>%
+  group_by(id) %>% 
+  dplyr::mutate(scale = scale(value))
+
+plotb <- ggplot(data = stage_b_cov_plot, aes(x=Year, y = scale, color = id, group = id)) +
+  geom_point( ) +
+  geom_line( ) +
+  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Sunset2",n=5)) + 
+  facet_wrap(~id, scales = "free",ncol=1) +
+  theme_classic()  +
+  ylab(" ") + 
+  ggtitle("Stage B Covariates - Scaled") +
+  geom_hline(yintercept = 0, linetype =2)
+
+plotb
+
+pdf("output/plot_Scaled_covariates_b.pdf",  width = 7, height = 12)
+plotb
+dev.off()
+
+# Stage A: Plot individual covariates ==============================
+ ## Discharge ============= 
+  dplyr::mutate(id = factor(id, levels = c("kusko_mean_discharge", "yukon_mean_discharge",
+                                           "kusko_aniak_mean_airtemp", "yukon_chena_mean_airtemp",
+                                           "SST_CDD_NBS", "gelatinous_zoop_NBS", "large_zoop_NBS")))
+discharge <- stage_a_cov %>%
+  select(Year, kusko_mean_discharge,yukon_mean_discharge) %>%
+  gather(2:3, key = "id", value = "value") %>%
+  group_by(id) %>%
+  mutate(scale = scale(value))
+
+rivera <- ggplot( data = discharge, aes(x=Year, y = scale, group = id, color =id)) +
+  geom_point(  ) +
+  geom_line( ) + 
+  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+  theme_classic()  +
+  ggtitle("Stage A- Mean River Discharge") + 
+  geom_hline(yintercept =0) +
+   ylab(" ") +
+  theme(legend.position = "bottom")
+
+pdf("output/plot_Cov_Riverdischarge_A.pdf",  width = 7, height = 4)
+rivera
+dev.off()
+
+## Airtemp =============  
+
+airtemp <- stage_a_cov %>%
+  select(Year, kusko_aniak_mean_airtemp,yukon_chena_mean_airtemp) %>%
+  gather(2:3, key = "id", value = "value") %>%
+  group_by(id) %>%
+  mutate(scale = scale(value))
+
+airtempa <- ggplot( data = airtemp, aes(x=Year, y = scale, group = id, color =id)) +
+  geom_point(  ) +
+  geom_line( ) + 
+  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+  theme_classic()  +
+  ggtitle("Stage A- Mean Air Temp") + 
+  geom_hline(yintercept =0) +
+  ylab(" ") +
+  theme(legend.position = "bottom")
+
+pdf("output/plot_Cov_AirTemp_A.pdf",  width = 7, height = 4)
+airtempa
+dev.off()
+
+
+## SST NBS =============  
+
+SST_NBS <- stage_a_cov %>%
+  select(Year, SST_CDD_NBS) %>%  
+  mutate(scale = scale(SST_CDD_NBS))
+
+SST_NBSa <- ggplot( data = SST_NBS, aes(x=Year, y = scale), color = "#4682B4") +
+  geom_point( color = "#4682B4" ) +
+  geom_line( color = "#4682B4" ) + 
+ # scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+  theme_classic()  +
+  ggtitle("Stage A- NBS SST (cummulative degree days)") + 
+  geom_hline(yintercept =0) +
+  ylab(" ") #+
+  #theme(legend.position = "bottom")
+
+pdf("output/plot_SST_NBSCDD_A.pdf",  width = 7, height = 4)
+SST_NBSa
+dev.off()
+
+## Large zooplankton =============  
+
+large_zoop <- stage_a_cov %>%
+  select(Year, large_zoop_NBS) %>%  
+  mutate(scale = scale(large_zoop_NBS))
+
+large_zoopa <- ggplot( data = large_zoop, aes(x=Year, y = scale) ) +
+  geom_point( color = "#e1ad01" ) +
+  geom_line( color = "#e1ad01" ) + 
+  # scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+  theme_classic()  +
+  ggtitle("Stage A- Large zooplankton NBS") + 
+  geom_hline(yintercept =0) +
+  ylab(" ")  
+
+pdf("output/plot_largezoop_A.pdf",  width = 7, height = 4)
+large_zoopa
+dev.off()
+
+## Gelatinous zooplankton =============  
+gelatinous_zoop <- stage_a_cov %>%
+  select(Year, gelatinous_zoop_NBS) %>%  
+  mutate(scale = scale(gelatinous_zoop_NBS))
+
+gelatinous_zoopa <- ggplot( data = gelatinous_zoop, aes(x=Year, y = scale) ) +
+  geom_point( color = "#301934" ) +
+  geom_line( color = "#301934" ) + 
+  # scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+  theme_classic()  +
+  ggtitle("Stage A- Gelatinous zooplankton NBS") + 
+  geom_hline(yintercept =0) +
+  ylab(" ")  
+
+pdf("output/plot_gelatinouszoop_A.pdf",  width = 7, height = 4)
+gelatinous_zoopa
+dev.off()
+
+
+# Stage B: Plot individual covariates ==============================
+## SST ============= 
+# c("SST_CDD_SEBS", 
+#   "Chum_hatchery",
+#   "Pink_hatchery",
+#   "kusko_mean_discharge_summer", 
+#   "yukon_mean_discharge_summer" )))
+
+SST_SEBS <- stage_b_cov %>%
+  select(Year, SST_CDD_SEBS)  %>%
+  mutate(scale = scale(SST_CDD_SEBS))
+
+sstb <- ggplot( data = SST_SEBS, aes(x=Year, y = scale )) +
+  geom_point(color = "#4B5320"  ) +
+  geom_line(color = "#4B5320" ) + 
+  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+  theme_classic()  +
+  ggtitle("Stage B- SST SEBS (CDD January-June)") + 
+  geom_hline(yintercept =0) +
+  ylab(" ") +
+  theme(legend.position = "bottom")
+
+pdf("output/plot_SST_CDD_SEBS_B.pdf",  width = 7, height = 4)
+sstb
+dev.off()
+
+## discharge ============= 
+# c("SST_CDD_SEBS", 
+#   "Chum_hatchery",
+#   "Pink_hatchery",
+#   "kusko_mean_discharge_summer", 
+#   "yukon_mean_discharge_summer" )))
+discharge <- stage_b_cov %>%
+  select(Year, kusko_mean_discharge_summer,yukon_mean_discharge_summer) %>%
+  gather(2:3, key = "id", value = "value") %>%
+  group_by(id) %>%
+  mutate(scale = scale(value))
+
+riverb <- ggplot( data = discharge, aes(x=Year, y = scale, group = id, color =id)) +
+  geom_point(  ) +
+  geom_line( ) + 
+  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+  theme_classic()  +
+  ggtitle("Stage B - Mean River Discharge, Summer") + 
+  geom_hline(yintercept =0) +
+  ylab(" ") +
+  theme(legend.position = "bottom")
+
+pdf("output/plot_Cov_Riverdischarge_B.pdf",  width = 7, height = 4)
+riverb
+dev.off()
 
