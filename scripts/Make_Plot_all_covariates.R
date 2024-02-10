@@ -314,3 +314,30 @@ pdf("output/plot_Cov_Riverdischarge_B.pdf",  width = 7, height = 4)
 riverb
 dev.off()
 
+
+## hatchery ============= 
+# c("SST_CDD_SEBS", 
+#   "Chum_hatchery",
+#   "Pink_hatchery",
+#   "kusko_mean_discharge_summer", 
+#   "yukon_mean_discharge_summer" )))
+hatchery <- stage_b_cov %>%
+  select(Year, Pink_hatchery,Chum_hatchery) %>%
+  gather(2:3, key = "id", value = "value") %>%
+  group_by(id) %>%
+  mutate(scale = scale(value))
+
+hatcheryb <- ggplot( data = hatchery, aes(x=Year, y = scale, group = id, color =id)) +
+  geom_point(  ) +
+  geom_line( ) + 
+  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Sunset2",n=2)) +
+  theme_classic()  +
+  ggtitle("Stage B - Hatchery releases") + 
+  geom_hline(yintercept =0) +
+  ylab(" ") +
+  theme(legend.position = "bottom")
+
+pdf("output/plot_Cov_hatchery_B.pdf",  width = 7, height = 4)
+hatcheryb
+dev.off()
+
