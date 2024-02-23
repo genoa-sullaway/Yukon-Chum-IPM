@@ -9,58 +9,13 @@ library(tidync)
 library(lubridate) 
 
 # Load data =======================================================
-# # Spawners =======
-# yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/Yukon Summer Chum Total Run 1978-2022 Run Rec.xlsx") %>%
-#   dplyr::select(Year, `Total Run`) %>%
-#   dplyr::rename(Estimated_Run = `Total Run`) %>%
-#   filter(Year > 2001) %>%
-#   dplyr::mutate(id = 1)#,
-#                 #Estimated_Run = as.numeric(scale(Estimated_Run)))
-# 
-# yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv")  %>%
-#   select(Year, Estimated_Run) %>%
-#   filter(Year > 2001) %>%
-#   dplyr::mutate(id = 2)#,
-#                #Estimated_Run = as.numeric(scale(Estimated_Run)))
-# 
-# kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS")
-# kusko<-data.frame(Year = c(1988:(2022-1)),
-#                   Estimated_Run= as.vector(c(kusko_estimated_parameters[2:35])),
-#                   id =3) %>% 
-#   filter(Year > 2001) #%>%
-#   #mutate(Estimated_Run = as.numeric(scale(Estimated_Run)))
-# 
-# mean<-mean(kusko$Estimated_Run)
-# kusko<-kusko %>%
-#   rbind(df=data.frame(Year = c(2022), Estimated_Run = c(mean), id=c(3)))
-# 
-# sp <- rbind(yukon_summer, yukon_fall, kusko) %>%
-#       spread(id, Estimated_Run)
-#  
-# # Juveniles ========================================================
-# juv <- read_csv("data/Juv_Index_CC_aug2023/Index2.csv") %>%
-#       dplyr::select(Time, Estimate) %>%
-#   rename(Year = "Time") 
-# 
-# # Make proportion of juveniles per run ======================================
-# mean_prop<- read_csv("data/mean_prop_basis.csv") # see "script/explore_basis_proportions.R"
-#  
-# juv_prop_ayk <- expand_grid(juv, mean_prop) %>%
-#                 dplyr::mutate(juv_index = mean*Estimate) %>%
-#                 dplyr::select(Year, reporting_group, juv_index) %>%
-#                 #filter(!reporting_group == "Kusko_Bristol") %>%
-#                 dplyr::mutate(id = case_when(reporting_group == "Yukon_Summer" ~ 1,
-#                                              reporting_group == "Yukon_Fall" ~ 2,
-#                                              TRUE ~ 3)) %>%
-#                 # group_by(reporting_group) %>% 
-#                 # dplyr::mutate(juv_index = as.numeric(scale(juv_index))) %>% 
-#                 ungroup() %>%
-#                 dplyr::select(-reporting_group) %>% 
-#                 spread(id, juv_index) 
-# 
-# juv_prop_ayk[19,2]<- colMeans(juv_prop_ayk[-19,])[2] # get means of all columns except 2020, fill that in for 2020
-# juv_prop_ayk[19,3]<- colMeans(juv_prop_ayk[-19,])[3] # get means of all columns except 2020, fill that in for 2020
-# juv_prop_ayk[19,4]<- colMeans(juv_prop_ayk[-19,])[4]
+# Load salmon data
+# made in 01_make_salmon_data_for_model.R
+
+
+# currently this file ^^ makes two DFs one juve one spawner, I think I will want to put them into an array format?? 
+
+
 
 # load Covariates  ==========================================================
 # covariates for stage 1 =======================
