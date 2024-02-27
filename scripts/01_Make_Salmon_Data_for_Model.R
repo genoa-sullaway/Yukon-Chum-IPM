@@ -2,6 +2,7 @@
 # this is done for Yukon - final format is abundance per brood year and age class 
 library(tidyverse)
 library(here)
+library(readxl)
 
 # Make Spawner age comp =======
   ## Fall Yukon =======
@@ -29,10 +30,12 @@ yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv")  
   ## Summer Yukon =======
   # sent to me separately, by Fred west 2-22-2024
 summer_age_comp<-read_csv("data/age_comps/processed_age_comps_summer_yukon.csv")  
-
+ 
 yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", sheet = 2) %>%
-  select(1,2) %>% 
-  janitor::row_to_names(row_number = 1) %>%
+  select(1:4) %>% 
+  janitor::row_to_names(row_number = 1)
+
+yukon_summer_sp <- yukon_summer%>%
   dplyr::rename(cal_year = "Year",
        spawners = "Escapement") %>% 
   dplyr::select(cal_year, spawners)  %>%
@@ -50,7 +53,7 @@ yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", she
   mutate(id = "summer")
   
 
-yukon_spawners = rbind(yukon_fall, yukon_summer)
+yukon_spawners = rbind(yukon_fall, yukon_summer_sp)
 
 # kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS")
 # kusko<-data.frame(Year = c(1988:(2022-1)),
