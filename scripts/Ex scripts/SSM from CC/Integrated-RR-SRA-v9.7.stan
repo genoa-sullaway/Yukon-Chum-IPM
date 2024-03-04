@@ -8,7 +8,7 @@
 
 
 
-data {
+data {  
   // Data bounding integers
 //  int fyear;		
 //  int lyear;
@@ -272,7 +272,7 @@ transformed parameters {
   // Define likelihood variables  
   vector[2] offset;
  
-  // SRA Transformed parameters
+// Define SRA Transformed parameters ============================
   vector[n_year] lnS;                      // log spawner states
   vector<lower=0>[nRyrs] R;              // Recruitment states
   vector[nRyrs] lnresid;                 // log recruitment residuals
@@ -408,7 +408,7 @@ transformed parameters {
 	  t_esc[i] = canesc[i] + midesc[i] + lowesc[i];     // Total escapement   
   }// next i - year
   
-  // Offsets=====================================================  
+  // Offsets 
   offset[1] = 0.0;
   offset[2] = 0.0;
   for(i in 1:n_year) {
@@ -418,8 +418,7 @@ transformed parameters {
     } // next j
   } // next i
 
-  // SRA Transformed Parameter Calculations ============================
-  
+  // Calculations SRA Transformed Parameter  ============================
   // Maturity schedule: use a common maturation schedule to draw the brood year specific schedules
   pi[1] = prob[1];
   pi[2] = prob[2] * (1 - pi[1]);

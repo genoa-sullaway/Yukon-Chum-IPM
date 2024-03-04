@@ -7,7 +7,7 @@ data { // all equation references are from proposal numbering
   matrix[N,K] data_stage_j; // vector of number of juveniles for each group  (basis)
   matrix[N,K] data_stage_sp;// vector of number of spawners for each group (escapement)
  
-  real <lower=0>kappa_sp_start[K]; // adding starting values for kappa so there arent NAs..not sure if this is necessary
+  real <lower=0>kappa_marine_start[K]; // adding starting values for kappa so there arent NAs..not sure if this is necessary
   real <lower=0>kappa_j_start[K];
   
   int<lower=0> ncovars1; //number of covariates for first lifestage
@@ -18,6 +18,8 @@ data { // all equation references are from proposal numbering
   
   real <lower=0> basal_p_1[K]; // mean survival absent of density dependence - for now just add it in dont estimate it. 
   real <lower=0> basal_p_2[K];
+  
+  vector<lower=0,upper=1>[4] prob;   // Maturity schedule probs - currently data, eventually will probably be random effect, 4 long because of 4 age classes
 }
   
 transformed data {
@@ -67,13 +69,13 @@ real N_egg_start[K];
 real N_j_start[K]; 
   
 real kappa_j[N,K]; // predicted survival for each stock
-real kappa_sp[N,K]; // predicted survival for each stock
+real kappa_marine[N,K]; // predicted survival for each stock
 // 
 real cov_eff1[N, K, ncovars1];
 real cov_eff2[N, K, ncovars2];
 
   for (k in 1:K) {
-  kappa_sp[1,k] = kappa_sp_start[k]; 
+  kappa_marine[1,k] = kappa_marine_start[k]; 
   kappa_j[1,k]= kappa_j_start[k]; 
  
   N_sp_start[k] = exp(log_N_sp_start[k]); // transform predicted spawners
@@ -118,6 +120,28 @@ for(c in 1:ncovars2){
   }
  }
 
+ // Maturity schedule: use a common maturation schedule to draw the brood year specific schedules
+ // currently fixing this but will likely eventually have it as a random variable.  
+  pi[1] = prob[1]; // because its fixed, prob is currently data
+  pi[2] = prob[2] * (1 - pi[1]);
+  pi[3] = prob[3] * (1 - pi[1] - pi[2]);
+  pi[4] = 1 - pi[1] - pi[2] - pi[3];
+  D_sum = 1/D_scale^2;
+
+  for (a in 1:A) {
+    Dir_alpha[a] = D_sum * pi[a];
+    for (y in 1:nRyrs) {
+      p[y,a] = g[y,a]/sum(g[y,]);
+    }
+  }
+
+  // Calculate the numbers at age matrix as brood year recruits at age (proportion that matured that year)
+  for (t in 1:n_year) {
+    for(a in 1:A){
+      N_ta[t,a] = R[t+A-a] * p[t+A-a,a];
+    }
+  }
+
 
 for(k in 1:K){  // loop for each population
   for (i in 2:N){ //will need to add a loop in here for stocks too..
@@ -127,9 +151,13 @@ for(k in 1:K){  // loop for each population
     
     N_j[i,k] = kappa_j[i,k]*N_e[i,k]; // Eq 4.4  generated estiamte for the amount of fish each year and stock that survive to a juvenile stage
    
-    kappa_sp[i,k] =  p_2[i,k]/ (1 + ((p_2[i,k]*N_j[i,k])/c_2[k])); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+    kappa_marine[i,k] =  p_2[i,k]/ (1 + ((p_2[i,k]*N_j[i,k])/c_2[k])); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
    
-    N_sp[i,k] = kappa_sp[i,k]*N_j[i,k]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
+    N_recruit[i,k] = kappa_marine[i,k]*N_j[i,k]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
+    
+    N_returning[i,k] = N_recruit[i,k]*p[t-a,a] // need to figure out the indexing here.... 
+  
+    N_sp[i,k] = N_returning[i,k] - H_b[i,k]    
    }
  }
 }
