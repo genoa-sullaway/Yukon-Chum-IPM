@@ -3,10 +3,12 @@ data { // all equation references are from proposal numbering
   int<lower=0> K; // number of stocks
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit
   int<lower=0> fs; // Fecundity of each female in each stock - eventually extend for age ?
-  //matrix[N,K] data_stage_r; // vector of number of juveniles for each group  (basis)
-  matrix[N,K] data_stage_j; // vector of number of juveniles for each group  (basis)
-  matrix[N,K] data_stage_sp;// vector of number of spawners for each group (escapement)
- 
+  // matrix[N,K] data_stage_r; // vector of number of juveniles for each group  (basis)
+  matrix[N,K] data_stage_j;    // vector of number of juveniles for each group  (basis)
+  matrix[N,K] data_stage_sp;   // vector of number of spawners for each group (escapement)
+  real<lower=0>sigma_y_j[K];   // Initially fix sigma 
+  real<lower=0>sigma_y_sp[K];  // Initially fix sigma 
+  
   real <lower=0>kappa_marine_start[K]; // adding starting values for kappa so there arent NAs..not sure if this is necessary
   real <lower=0>kappa_j_start[K];
   
@@ -19,7 +21,13 @@ data { // all equation references are from proposal numbering
   real <lower=0> basal_p_1[K]; // mean survival absent of density dependence - for now just add it in dont estimate it. 
   real <lower=0> basal_p_2[K];
   
-  vector<lower=0,upper=1>[4] prob;   // Maturity schedule probs - currently data, eventually will probably be random effect, 4 long because of 4 age classes
+  // age comps 
+  int A;                            // Number of (total) age classes
+  vector<lower=0,upper=1>[4] prob;  // Maturity schedule probs - currently data, eventually will probably be random effect, 4 long because of 4 age classes
+  matrix<lower=0>[N, A] o_run;      // Observed run size by age class
+  matrix<lower=0, upper=1>[N, A] o_run_comp; // Observed age composition by year
+  vector [N] ess_age_comp;   // Effective input sample size for age comp "observations"
+  
 }
   
 transformed data {
@@ -35,8 +43,8 @@ data_log_stage_sp = log(data_stage_sp);
 }
 
 parameters {
-  real<lower=0>sigma_y_j[K];
-  real<lower=0>sigma_y_sp[K];
+// real<lower=0>sigma_y_j[K];
+//  real<lower=0>sigma_y_sp[K];
     
   real<lower=0>c_1[K]; // carrying capacity 
   real<lower=0>c_2[K]; // carrying capacity 
@@ -70,9 +78,15 @@ real N_j_start[K];
   
 real kappa_j[N,K]; // predicted survival for each stock
 real kappa_marine[N,K]; // predicted survival for each stock
-// 
+ 
 real cov_eff1[N, K, ncovars1];
 real cov_eff2[N, K, ncovars2];
+
+// Age related transformed params ====== 
+matrix<lower=0, upper=1>[N, A] p;  // Age at maturity proportions
+vector<lower=0,upper=1>[4] pi;     // Maturity schedule probs
+real<lower=0> D_sum; // Inverse of D_scale which governs variability of age proportion vectors across cohorts
+matrix<lower=0, upper=1>[N, A] q;   // Age composition by year/age classr matrix
 
   for (k in 1:K) {
   kappa_marine[1,k] = kappa_marine_start[k]; 
@@ -87,7 +101,7 @@ real cov_eff2[N, K, ncovars2];
   N_j[1,k] = N_j_start[k]; 
     }
    
-   // the cov effects need seperate loop because number of covariates varies between lifestage
+// the cov effects need seperate loop because number of covariates varies between lifestage
    for (k in 1:K){
    for(i in 1:N){
    for (c in 1:ncovars1) {
@@ -142,7 +156,7 @@ for(c in 1:ncovars2){
     }
   }
 
-
+// i dont know if this needs to be looped or not. 
 for(k in 1:K){  // loop for each population
   for (i in 2:N){ //will need to add a loop in here for stocks too..
     N_e[i,k] = fs*Ps*N_sp[i-1,k]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
@@ -155,18 +169,34 @@ for(k in 1:K){  // loop for each population
    
     N_recruit[i,k] = kappa_marine[i,k]*N_j[i,k]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
     
-    N_returning[i,k] = N_recruit[i,k]*p[t-a,a] // need to figure out the indexing here.... 
+    N_returning[i,k] = N_recruit[i,k]*p[t-a,a] // need to figure out the indexing here, maybe needs another loop for a.... 
   
     N_sp[i,k] = N_returning[i,k] - H_b[i,k]    
    }
  }
+ 
+  // Calculate the numbers at age matrix as brood year recruits at age (proportion that matured that year)
+  // THis is from currys code, same as a few lines up in my code -- can I have them seperate not all looped in one?? 
+  // for (t in 1:n_year) {
+  //   for(a in 1:A){
+  //     N_ta[t,a] = R[t+A-a] * p[t+A-a,a];
+  //   }
+  // }
+
+  // Calculate age proportions by return year
+  for (t in 1:N) {
+    for(a in 1:A){
+      q[t,a] = N_returning[t,a]/sum(N_returning[t,1:A]);
+    }
+  }
 }
 
 model {
   // PRIORS
 for(k in 1:K) { 
-   sigma_y_j[k] ~  normal(1,10);
-   sigma_y_sp[k] ~ normal(0,10);
+  //start off with sigma fixed
+   // sigma_y_j[k] ~  normal(1,10);// if i can get uncertainty from run reconstruction then i can fix this and not estiamte it 
+   // sigma_y_sp[k] ~ normal(0,10);
    
    log_N_egg_start[k] ~ normal(18,10);
    log_N_j_start[k] ~ normal(10,10);
@@ -199,11 +229,27 @@ for(k in 1:K) {
     c_2[2] ~ normal(1e7, 1e4); 
     c_2[3] ~ normal(1e7, 1e4);
              
+ // age comp priors 
+  prob[1] ~ beta(1,1);
+  prob[2] ~ beta(1,1);
+  prob[3] ~ beta(1,1);
+  D_scale ~ beta(1,1);
+
 // Liklilihoods -- 
+
+// Observation model
+  for(t in 1:n_year){
+    if(sum(S_comps[t])>0){
+    target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // time varying ESS for age comp likelihood for ONLY years with data
+    }
+    target += normal_lpdf(log(data_log_stage_sp[t]) | log(sum(N_sp[t,1:A])), sigma_y_sp);
+    
+  }
+
 for(k in 1:K){
   for (i in 2:N) {
     data_log_stage_j[i,k] ~ normal(log(N_j[i,k]), sigma_y_j[k]);
-    data_log_stage_sp[i,k] ~ normal(log(N_sp[i,k]), sigma_y_sp[k]);
+  //   data_log_stage_sp[i,k] ~ normal(log(N_sp[i,k]), sigma_y_sp[k]); // i dont think i need this because it is not by age class here and it should be, but juvs dont have an age class so its fine. 
     } 
   }
 }  

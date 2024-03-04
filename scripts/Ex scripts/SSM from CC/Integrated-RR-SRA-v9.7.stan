@@ -269,7 +269,7 @@ transformed parameters {
   matrix[3, n_year] eph_up; // Est stock proportion above Pilot
   matrix[3, n_year] eph_low;  // Est stock proportion below Pilot
   
-  // Define likelihood variables  
+// Define likelihood variables  
   vector[2] offset;
  
 // Define SRA Transformed parameters ============================

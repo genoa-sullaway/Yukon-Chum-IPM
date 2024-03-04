@@ -74,7 +74,6 @@ fs <- 2440 # fecundity - Gilk and Baumer 2009 estimate for Kusko Chum
 # load data ================================================
 summer_age_comp<-read_csv("data/age_comps/processed_age_comps_summer_yukon.csv")  
 
-
 yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", sheet = 2) %>%
   dplyr::select(1,11:14) %>% 
   janitor::row_to_names(row_number = 1) %>%
@@ -95,12 +94,28 @@ harvest_escapement <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx
 
 # test with one stock, yukon summer 
 
-A = 4  # number of age classes
+A = 4  # number of age classes, 3,4,5,6
 Y = 45 # Number of years - 1978-2022 calendar years 
 C = A + Y # cohorts
 a_min = 3 # Minimum age
 a_max = 6 # Max age 
 x = as.matrix(nrow = Y, ncol = A, yukon_summer[,2:5]) # Age counts by cal year
+
+# fix sigma until RR data or until its running and i can try to estimate it better 
+set.seed(123)
+sigma_y_j <- matrix(ncol = 1, nrow =3, NA)
+sigma_y_sp <- matrix(ncol = 1, nrow =3, NA)
+
+for(k in 1:K) {  
+ sigma_y_j[k] ~ rnorm(1,10)
+ sigma_y_sp[k] ~ rnorm(0,10)
+}
+
+# need to make this into data: ============
+# matrix<lower=0>[N, A] o_run;      // Observed run size by age class
+# matrix<lower=0, upper=1>[N, A] o_run_comp; // Observed age composition by year
+# vector [N] ess_age_comp;  # // Effective input sample size for age comp "observations"
+
 
 # weir passage data [escapement]
 data_w=as.numeric(harvest_escapement$Escapement) 
