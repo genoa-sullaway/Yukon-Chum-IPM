@@ -35,7 +35,7 @@ yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", she
   select(1:4) %>% 
   janitor::row_to_names(row_number = 1)
 
-yukon_summer_sp <- yukon_summer%>%
+yukon_summer_sp <- yukon_summer %>%
   dplyr::rename(cal_year = "Year",
        spawners = "Escapement") %>% 
   dplyr::select(cal_year, spawners)  %>%
@@ -50,8 +50,9 @@ yukon_summer_sp <- yukon_summer%>%
                                 age == "age6" ~ cal_year -6)) %>%
   dplyr::select(brood_year, age, abundance) %>%
   spread(age,abundance) %>% 
-  mutate(id = "summer")
+  dplyr::mutate(id = "summer")
   
+write_csv(yukon_summer_sp, "output/yukon_summer_broodyear.csv")
 
 yukon_spawners = rbind(yukon_fall, yukon_summer_sp)
 
@@ -84,11 +85,15 @@ juv_prop_ayk <- expand_grid(juv, mean_prop) %>%
                                TRUE ~ 3)) %>%
   ungroup() %>%
   dplyr::select(-reporting_group) %>% 
-  spread(id, juv_index) 
+  spread(id, juv_index) %>%
+  dplyr::rename(brood_year = "Year")
 
 juv_prop_ayk[19,2]<- colMeans(juv_prop_ayk[-19,])[2] # get means of all columns except 2020, fill that in for 2020
 juv_prop_ayk[19,3]<- colMeans(juv_prop_ayk[-19,])[3] # get means of all columns except 2020, fill that in for 2020
 juv_prop_ayk[19,4]<- colMeans(juv_prop_ayk[-19,])[4]
+
+write_csv(juv_prop_ayk, "data/tidy_BASIS_AYK_model.csv")
+
 
 # QAQC PLOTS =========== 
 ## Spawners ============
