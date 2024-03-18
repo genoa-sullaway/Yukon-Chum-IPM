@@ -67,11 +67,11 @@ model {
   // alpha hyper priors 
      mu_alpha ~ normal(1,5); // magic number is 3,5
      sigma_alpha ~ normal(0,5); // magic number is 0,5
-   // mu_sigma_oe ~ normal(1,0.2); // magic number is 3,5
-   //  sigma_sigma_oe ~ normal(0,0.2); // magic number is 0,5
-  //   mu ~ normal(7000, 1000);
- //  phi ~ normal(0,0.1);
- // covariate hyper priors 
+  // mu_sigma_oe ~ normal(1,0.2); // magic number is 3,5
+  // sigma_sigma_oe ~ normal(0,0.2); // magic number is 0,5
+  // mu ~ normal(7000, 1000);
+  // phi ~ normal(0,0.1);
+  // covariate hyper priors 
   for(c in 1:ncovars){
   	 mu_coef[c] ~ normal(0, 10); // 0 - 1 or 0.1 would be a penalized version as a test case - drive it to 0
      sigma_coef[c] ~ normal(0, 5); //0 - 1 or 0.1 would be a penalized version
@@ -101,6 +101,8 @@ model {
         //ln_rec[y] ~ normal(log(pred[y]), sigma_oe[S[y]]);
         ln_rec[y] ~ normal(log(pred[y]), error_rec[y]+sigma_oe[S[y]]);
     } //next y
+    
+    print("theta: ", theta)
   }
   
 generated quantities {

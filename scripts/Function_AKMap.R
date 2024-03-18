@@ -8,7 +8,8 @@ library(ggpubr) # for ggarrange
 library(viridis) 
  
 can <- sf::st_as_sf(maps::map('world','Canada', 
-                             plot=FALSE, fill=TRUE))
+                             plot=FALSE, fill=TRUE)) %>%
+  st_transform(4326)
 
 #create bounds to trim CAN map 
 bounds_can <- extent(-156,-110,52,70)
@@ -20,7 +21,8 @@ can <- st_intersection(can, extent_can) #trim map by intersections
 
 #set up maps
 ak <- sf::st_as_sf(maps::map('world','USA:Alaska', 
-                             plot=FALSE, fill=TRUE))
+                             plot=FALSE, fill=TRUE)) %>%
+  st_transform(4326)
 
 #create bounds to trim AK map 
 bounds_ak <- extent(-175,-130,52,70)

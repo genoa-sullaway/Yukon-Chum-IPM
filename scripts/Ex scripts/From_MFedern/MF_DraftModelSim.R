@@ -26,7 +26,7 @@ b <- c(rnorm(n, 0.00012, 0), #simulating a unique beta for each population
 a <- c(rnorm(n, 2.1, 0), #simulating a unique alpha for each population
        rnorm(n, 2.5, 0),
        rnorm(n, 1.77, 0))
-
+ 
 #covariate data
 cov1 <- rnorm(n*n.pop, 0, 2) #Cov 1 data
 cov2 <- rnorm(n*n.pop, 0, 2) #Cov2 data
@@ -147,7 +147,7 @@ adapt_delta <- 0.95
 
 ####Fitting the Model ####
 bh_fit <- stan(
-  file = here::here("Chinook/Src/DRAFTModelSimSTAN.stan"),
+  file = here::here("scripts/Ex scripts/From_MFedern/DRAFTModelSTANv2.stan"),
   data = data,
   chains = n_chains,
   warmup = warmups,
@@ -157,6 +157,17 @@ bh_fit <- stan(
   control = list(max_treedepth = max_treedepth,
                  adapt_delta = adapt_delta)
 )
+# bh_fit <- stan(
+#   file = here::here("Chinook/Src/DRAFTModelSimSTAN.stan"),
+#   data = data,
+#   chains = n_chains,
+#   warmup = warmups,
+#   iter = total_iterations,
+#   cores = n_cores,
+#   refresh = 250,
+#   control = list(max_treedepth = max_treedepth,
+#                  adapt_delta = adapt_delta)
+# )
 
 MCMCsummary(bh_fit,params = c("alpha", "beta",
                                 "mu_coef",
