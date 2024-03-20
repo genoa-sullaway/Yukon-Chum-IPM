@@ -97,7 +97,8 @@ parameters {
 }
 
 transformed parameters { 
-matrix[nByrs,K] N_j; // predicted juveniles - this goes into the liklihood
+matrix[nByrs,K] N_j; // predicted juveniles -calculated
+matrix[nByrs,K] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
 matrix[nByrs,K] N_recruit;  // predicted recruits - before they get assigned to returning age classes
 matrix[nByrs,K] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
                        
@@ -232,9 +233,8 @@ for(k in 1:K){  // loop for each population
   //add in age for stage where I am tracking age class.... 
    // swtich to calendar years using t+A-a
       for (a in 1:A) { 
-     N_returning[t+A-a,k,a] = (catch_q[k,1]*N_recruit[t,k])*p[t+A-a,a]; // multiply recruits by Q to change scale, then distribute across age classes, p which is age comps. 
-    //  N_returning[t+A-a,k,a] = (catch_q[k]*N_recruit[t,k])*p[t+A-a,a];   
-    
+     N_returning[t+A-a,k,a] = N_recruit[t,k]*p[t+A-a,a]; // multiply recruits by Q to change scale, then distribute across age classes, p which is age comps. 
+
     // estimate harvest -- for later, for now H_b is not estimated as I try to get model to work.
     // N_sp[t+A-a,k,a] = (1-exp(-log_fm[i]))*N_returning[t+A-a,k,a];  // instantaneous fishing mortality * returning fish yields spawners. 
   
@@ -256,6 +256,13 @@ for(k in 1:K){  // loop for each population
     }
   }
 }
+
+for(k in 1:K){
+for(t in 1:nByrs){
+ // translate juvenile fish to the appropriate scale 
+ N_j_predicted[t,k]= catch_q[k,1]*N_j[t,k]; 
+  }
+ }
 
 }// close block
 
@@ -343,7 +350,7 @@ print("sigma_y_r: ", sigma_y_r)
   // Observation model
   for(k in 1:K){
   for (t in 2:nByrs) {
-     (data_stage_j[t,k]) ~ normal((N_j[t,k]), sigma_y_j[1,k]);
+     (data_stage_j[t,k]) ~ normal((N_j_predicted[t,k]), sigma_y_j[1,k]);
     } 
   }
   for(k in 1:K){ // stocks 
