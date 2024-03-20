@@ -354,8 +354,8 @@ print("sigma_y_r: ", sigma_y_r)
       // currently getting an error related to .* so removign this component from model temporarily
      // target += (ess_age_comp*sum(o_run_comp[t,1:A].*log(q[t,k,1:A])); // ESS_AGE_COMP right now is fixed
 
-    target += normal_lpdf(log(data_stage_sp[t,k]) | log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
-    target += normal_lpdf(log(data_stage_return[t,k]) | log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
+    target += normal_lpdf((data_stage_sp[t,k]) | (sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
+    target += normal_lpdf((data_stage_return[t,k]) | (sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
     //  //}
     }
    }
