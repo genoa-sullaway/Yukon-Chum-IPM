@@ -14,6 +14,14 @@ data { // all equation references are from proposal numbering
   matrix[1,K] sigma_y_sp; // Initially fix sigma - process error for spawners
  
   real <lower=0> H_b[nRyrs,K,A]; // harvest at river mounth by age and stock, treating it as data, multipling harvest by known age comp. gets applied to recruits to get number of spawners. 
+   
+   // starting values for popualtion stages --feeding in as data
+  real log_N_sp_start[A,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
+  real log_N_returning_start[A,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
+  real log_N_egg_start[A,K,A];
+  real log_N_j_start[K,1];
+  real log_N_recruit_start[K,1];
+  real log_N_e_sum_start[K,1];
   
   // real c_1[K,1]; //fixing carrying capacity to test model
   // real c_2[K,1]; //fixing carrying capacity to test model
@@ -61,8 +69,8 @@ parameters {
 // real<lower=0>sigma_y_j[K];
 //  real<lower=0>sigma_y_sp[K];
 
-  real<lower=0>c_1[K,1]; // carrying capacity
-  real<lower=0>c_2[K,1]; // carrying capacity
+  real<lower=0>log_c_1[K,1]; // log carrying capacity
+  real<lower=0>log_c_2[K,1]; // log carrying capacity
   // 
   // covariate parameters 
   real theta1[K, ncovars1]; // covariate estimated for each covariate and each population 
@@ -75,12 +83,12 @@ parameters {
   // real sigma_coef2[ncovars2]; 
   
   // starting values for popualtion stages 
-  real log_N_sp_start[A,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
-  real log_N_returning_start[A,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
-  real log_N_egg_start[A,K,A];
-  real log_N_j_start[K];
-  real log_N_recruit_start[K]; 
-  real log_N_e_sum_start[K];
+  // real log_N_sp_start[A,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
+  // real log_N_returning_start[A,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
+  // real log_N_egg_start[A,K,A];
+  // real log_N_j_start[K];
+  // real log_N_recruit_start[K]; 
+  // real log_N_e_sum_start[K];
   
   real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
   matrix<lower=0.01> [nRyrs, A] g;    // Individual year/age class gamma variates for generating age at maturity proportions
@@ -117,6 +125,9 @@ real cov_eff1[nByrs, K, ncovars1]; // array that holds FW and early marine covar
 real cov_eff2[nByrs, K, ncovars2];// array that holds marine covariate effects by brood year and stock
 real catch_q[K,1]; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
 
+real c_1[K]; // estimate on log, transform back to normal scale 
+real c_2[K]; // estimate on log, transform back to normal scale 
+  
 // Age related transformed params ====== 
 matrix<lower=0, upper=1>[nRyrs, A] p;  // Age at maturity proportions
 vector<lower=0, upper=1>[4] pi;        // Maturity schedule probabilities
@@ -130,24 +141,31 @@ real q[nRyrs,K, A];
   kappa_marine[1,k] = kappa_marine_start[1,k]; 
   kappa_j[1,k]= kappa_j_start[1,k]; 
  
- //transform startign values 
+ //transform starting values 
   N_sp_start[1:A,k,1:A] = exp(log_N_sp_start[1:A,k,1:A]); // transform predicted spawners
   N_returning_start[1:A,k,1:A] = exp(log_N_returning_start[1:A,k,1:A]); // transform predicted recruits
   N_egg_start[1:A,k,1:A] = exp(log_N_egg_start[1:A,k,1:A]); // transform predicted eggs 
-  N_j_start[k] = exp(log_N_j_start[k]); // transform predicted juveniles
-  N_recruit_start[k] = exp(log_N_recruit_start[k]); // transform predicted recruits
-  N_e_sum_start[k] = exp(log_N_e_sum_start[k]); // transform eggs summed across ages 
+  N_j_start[k] = exp(log_N_j_start[k,1]); // transform predicted juveniles
+  N_recruit_start[k] = exp(log_N_recruit_start[k,1]); // transform predicted recruits
+  N_e_sum_start[k] = exp(log_N_e_sum_start[k,1]); // transform eggs summed across ages 
   
   // add starting values to the whole population array 
   N_sp[1:A,k,1:A] = N_sp_start[1:A,k,1:A];
   N_e[1:A,k,1:A] = N_egg_start[1:A,k,1:A]; 
   N_returning[1:A,k, 1:A] = N_returning_start[1:A,k, 1:A]; 
   N_e_sum[1,k] = N_e_sum_start[k];
+  
   // no age index on population stage
   N_j[1,k] = N_j_start[k]; 
   N_recruit[1,k] = N_recruit_start[k]; 
     }
    
+  // transform log carrying capacity to normal scale
+   for(k in 1:K){
+   c_1[k] = exp(log_c_1[k,1]);
+   c_2[k] = exp(log_c_2[k,1]);
+  }
+
  // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
    for (k in 1:K){
    for(t in 1:nByrs){
@@ -203,11 +221,11 @@ catch_q[K,1] = exp(log_catch_q[K,1]); // Q to relate basis data to recruit/escap
 for(k in 1:K){  // loop for each population
   for (t in 2:nByrs){  
    
-    kappa_j[t,k] =  p_1[t,k]/ (1 + ((p_1[t,k]*N_e_sum[t-1,k])/c_1[k,1])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+    kappa_j[t,k] =  p_1[t,k]/ (1 + ((p_1[t,k]*N_e_sum[t-1,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
     
     N_j[t,k] = kappa_j[t,k]*N_e_sum[t-1,k]; // Eq 4.4  generated estiamte for the amount of fish each year and stock that survive to a juvenile stage
    
-    kappa_marine[t,k] =  p_2[t,k]/ (1 + ((p_2[t,k]*N_j[t,k])/c_2[k,1])); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+    kappa_marine[t,k] =  p_2[t,k]/ (1 + ((p_2[t,k]*N_j[t,k])/c_2[k])); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
    
     N_recruit[t,k] = kappa_marine[t,k]*N_j[t,k]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
  
@@ -247,14 +265,14 @@ for(k in 1:K) {
   //start off with sigma fixed
    // sigma_y_j[k] ~  normal(1,10);// if i can get uncertainty from run reconstruction then i can fix this and not estiamte it -- currently fixed anyway for parsimony
    // sigma_y_sp[k] ~ normal(0,10);
-   log_N_j_start[k] ~ normal(20,2);
-   log_N_recruit_start[k] ~ normal(14,2);
-   for(a in 1:A){ 
-    log_N_egg_start[a,k,a] ~ normal(30,2);
-    log_N_sp_start[a,k,a] ~ normal(14,2);
-    log_N_returning_start[a,k,a] ~ normal(14,2);
-    }
-   log_N_e_sum_start[k] ~ normal(35,2); 
+   // log_N_j_start[k] ~ normal(20,2);
+   // log_N_recruit_start[k] ~ normal(14,2);
+   // for(a in 1:A){ 
+   //  log_N_egg_start[a,k,a] ~ normal(30,2);
+   //  log_N_sp_start[a,k,a] ~ normal(14,2);
+   //  log_N_returning_start[a,k,a] ~ normal(14,2);
+   //  }
+   //log_N_e_sum_start[k] ~ normal(35,2); 
    
    // Start priors for model parameters 
    log_catch_q[k,1] ~ normal(0,0.05); // Estimate Q - this will translate # of recruits to # of spawners 
@@ -281,14 +299,13 @@ for(k in 1:K) {
 //   }
 // }
     theta1[1]~normal(0.1,5); // environmental covariate coefficient stage 1
-    
     theta2[1]~normal(-0.2,10); // environmental covariate coefficient stage 2
-  
-    c_1[1,1] ~  uniform(1e6, 1e8); // carrying capacity prior - stage 1
+    
+  for(k in 1:K){
+    log_c_1[k,1] ~  normal(20, 10); // carrying capacity prior - stage 1
+    log_c_2[k,1] ~  normal(15, 10); // carrying capacity prior - stage 2
+}
 
-    c_2[1,1] ~  uniform(1e4, 1e6); // carrying capacity prior - stage 2
-
-             
  // age comp priors 
  // prob is fixed so I dont need this for now
   // prob[1] ~ beta(1,1);
@@ -299,8 +316,9 @@ for(k in 1:K) {
  // printing these for trouble shooting 
 // print("p_1: ", p_1)
 // print("kappa_j: ", kappa_j)
-// 
-print("N_j: ", N_j) 
+print("sigma_y_sp: ", sigma_y_sp) 
+print("sigma_y_j: ", sigma_y_j) 
+print("sigma_y_r: ", sigma_y_r) 
 // print("catch_q: ", catch_q)
 // print("N_recruit: ", N_recruit)
 // print("g:", g) 
@@ -325,7 +343,7 @@ print("N_j: ", N_j)
   // Observation model
   for(k in 1:K){
   for (t in 2:nByrs) {
-    log(data_stage_j[t,k]) ~ normal(log(N_j[t,k]), sigma_y_j[1,k]);
+     (data_stage_j[t,k]) ~ normal((N_j[t,k]), sigma_y_j[1,k]);
     } 
   }
   for(k in 1:K){ // stocks 

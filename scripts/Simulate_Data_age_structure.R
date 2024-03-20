@@ -155,6 +155,7 @@ N_recruit[1,1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
 N_returning[1:A,1,]  = rep(exp(rnorm(1,14,2))*prob, times =A)
 N_e_sum[1,1] = exp(rnorm(1,35,2))
 
+# productivity ============= 
 p_1 =  matrix(nrow=nByrs,ncol=K,NA)
 p_2 =  matrix(nrow=nByrs,ncol=K,NA)
 
@@ -255,10 +256,31 @@ for (k in 1:K) {
 #                  kappa_j, cov1, cov2) 
 
 #saveRDS(dat_sim , "data/Simulated_DatBH.RDS")
+  
+# population starting values supplied as data ==========
+  # same starting values used in simulation... 
+  log_N_j_start =  matrix(nrow=1,ncol=K,NA)
+  log_N_e_sum_start = matrix(nrow=1,ncol=K,NA)
+  log_N_recruit_start = matrix(nrow=1,ncol=K,NA)
+  
+  log_N_egg_start = array(data = NA, dim = c(A, K,A))
+  log_N_returning_start = array(data = NA, dim = c(A, K,A))
+  log_N_sp_start = array(data = NA, dim = c(A, K,A))
+ 
+  for(k in 1:K) { 
+    log_N_j_start[k,1] = rnorm(1,20,2)
+    log_N_recruit_start[k,1] = rnorm(1,14,2)
+    log_N_e_sum_start[k,1] = rnorm(1,35,2)
+    for(t in 1:4){
+      for(a in 1:A){ 
+        log_N_egg_start[t,k,a] = rnorm(1,30,2)
+        log_N_sp_start[t,k,a] = rnorm(1,14,2)
+        log_N_returning_start[t,k,a] = rnorm(1,14,2)
+    } 
+   }
+  }
 
-# callstan model =================
-
-## assign data list ==========
+  ## assign data list ==========
 data_list <- list(nByrs=nByrs,
                   nRyrs=nRyrs,
                   A=A,
@@ -268,6 +290,13 @@ data_list <- list(nByrs=nByrs,
                   data_stage_j = N_j_sim,
                   data_stage_return = N_returning_sim_s,
                   data_stage_sp = N_sp_sim_s,
+                  log_N_j_start = log_N_j_start,
+                  log_N_recruit_start = log_N_recruit_start,
+                  log_N_e_sum_start=log_N_e_sum_start,
+                  log_N_egg_start=log_N_egg_start,
+                  log_N_sp_start=log_N_sp_start,
+                  log_N_returning_start=log_N_returning_start,
+                  
                   sigma_y_j=process_error_j,
                   sigma_y_r=process_error_r,
                   sigma_y_sp=process_error_sp,
@@ -290,8 +319,8 @@ data_list <- list(nByrs=nByrs,
   
   init_fn <- function(chain_id=1) {
     list(
-      "c_1" = as.matrix(nrow = 1, ncol =1,runif(n=K, 1e6, 1e8)), 
-      "c_2" = as.matrix(nrow = 1, ncol =1,runif(n=K, 1e4, 1e6)),  
+      "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,20, 10)), 
+      "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,15, 10)),  
       "theta1" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0.1, 5)),
       "theta2" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, -0.2,10)),
       # "g"= matrix(data=rep( c(rnorm(1,40,1), rnorm(1,80,1)) , nRyrs), 
