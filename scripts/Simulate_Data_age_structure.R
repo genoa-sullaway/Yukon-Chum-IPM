@@ -355,8 +355,8 @@ bh_fit <- stan(
   chains = n_chains,
   warmup = warmups,
   iter = total_iterations,
-  cores = n_cores)#,
-  #init=init_ll)
+  cores = n_cores,
+  init=init_ll)
 
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT_statespace.RDS")
 

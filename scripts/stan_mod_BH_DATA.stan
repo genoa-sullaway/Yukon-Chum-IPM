@@ -336,9 +336,8 @@ for(k in 1:K) {
  
    
 // printing these for trouble shooting 
-  print("q: ", q)
-  print("p: ",  p)     
- 
+  // print("q: ", q)
+  // print("p: ",  p)     
  
 // Liklilihoods --  
   // Gamma variates for each year and age class which are used to determine age at maturity proportions

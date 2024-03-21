@@ -6,8 +6,8 @@ library(here)
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 
 bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT_statespace.RDS")
-print(names(bh_summary))
-bh_summary <- summary(bh_fit) %>% 
+ 
+bh_summary <- summary(bh_fit)$summary %>% 
   as.data.frame(bh_fit) %>% 
   mutate(variable = rownames(.)) %>% 
   select(variable, everything()) %>% 
