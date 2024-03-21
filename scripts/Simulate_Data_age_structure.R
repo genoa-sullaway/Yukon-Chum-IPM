@@ -71,9 +71,6 @@ fs = as.matrix(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimat
 basal_p_1 = 0.2#
 basal_p_2 = 0.4#,
 
-
-#hist(log(runif(100,10e3, 10e7)))
-# log(runif(1,10e3, 10e7))
 c_1 <- as.matrix(nrow = 1, ncol =1,exp(18.4)) # exp(rnorm(1,20,5)))#rnorm(1,1e12, 1e2)) 
 c_2 <- as.matrix(nrow = 1, ncol =1,exp(15))# (rnorm(1,as.numeric(max(juv$abund)),5))) # ,5))) #rnorm(1,1e, 1e2)) 
 
@@ -129,9 +126,9 @@ c_2 <- as.matrix(nrow = 1, ncol =1,exp(15))# (rnorm(1,as.numeric(max(juv$abund))
   
 # Simulate populations  ===================
 #error is fixed in model right now so fix it here. 
-process_error_j <- matrix(nrow=K,ncol=1,rep(1.1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
-process_error_sp <- matrix(nrow=K,ncol=1,rep(2, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-process_error_r <- matrix(nrow=K,ncol=1,rep(3, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_j <- matrix(nrow=K,ncol=1,rep(5, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
+process_error_sp <- matrix(nrow=K,ncol=1,rep(5, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_r <- matrix(nrow=K,ncol=1,rep(5, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
 
 # make pop model matricies and starting values ========= 
 kappa_j =  matrix(nrow=nByrs,ncol=K,NA)
@@ -156,15 +153,25 @@ N_returning[1:A,1,]  = rep(exp(rnorm(1,14,2))*prob, times =A)
 N_e_sum[1,1] = exp(rnorm(1,35,2))
 
 # productivity ============= 
-p_1 =  matrix(nrow=nByrs,ncol=K,NA)
-p_2 =  matrix(nrow=nByrs,ncol=K,NA)
+# p_1 =  matrix(nrow=nByrs,ncol=K,NA)
+# p_2 =  matrix(nrow=nByrs,ncol=K,NA)
+log_p_1 =  matrix(nrow=1,ncol=K,rnorm(1,-1.6, 0.5))
+log_p_2 =  matrix(nrow=1,ncol=K,rnorm(1,-0.9, 0.5))
+
+p_1 = exp(log_p_1)
+p_2 = exp(log_p_2)
+
+# "log_p_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,-1.6, 0.5)), 
+# "log_p_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,-0.9, 0.5)),
 
 catch_q = exp(rnorm(1,0,0.5))
 
 # Use covariates - calc productivity in bev holt transition function =====
 # lines below need to be edited if I use more stocks!! theta and cov 1 should be multipled and summed, can get away with just multiplying here because there is only 1 stock and 1 covar
-p_1[,1]  = 1 / 1+ exp(-basal_p_1 - (theta1*cov1[,1])) # covariate impacts survival, impact is measured through theta
-p_2[,1]  = 1 / 1+ exp(-basal_p_2  - (theta2 *cov2[,1])) 
+# save for when I try to run with covariates 
+
+# p_1[,1]  = 1 / 1+ exp(-basal_p_1 - (theta1*cov1[,1])) # covariate impacts survival, impact is measured through theta
+# p_2[,1]  = 1 / 1+ exp(-basal_p_2  - (theta2 *cov2[,1])) 
 
 # simulate H_b ========== 
 # this is the harvest, going to do a percent of the population instead of whole numbers, struggling with this part a little bit 
@@ -179,18 +186,22 @@ H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)
 # o_run_comp <- array(data = as.matrix(summer_age_comp[,2:5]), dim = c(nRyrs, K,A))
 # o_run_comp_mat <- as.matrix(summer_age_comp[,2:5]) # proportional age comp by year
 # ess_age_comp <- rep(200, times = nRyrs)
-# k=1
-# t=2
+#k=1
+#t=2
+
 # Run population model ============ 
    for(k in 1:K){  # loop for each population
      for (t in 2:nByrs){ 
          
          #kappa_j[t,k] = 1.8/(1+((1.8*N_e_sum[t-1,k])/c_1[k,1])) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
-         kappa_j[t,k] =  p_1[t,k]/ (1+((p_1[t,k]*N_e_sum[t-1,k])/c_1[k,1])) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+         kappa_j[t,k] =  p_1[1,k]/ (1+((p_1[1,k]*N_e_sum[t-1,k])/c_1[k,1])) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+       
+         #kappa_j[t,k] =  p_1[t,k]/ (1+((p_1[t,k]*N_e_sum[t-1,k])/c_1[k,1])) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
          
          N_j[t,k] = kappa_j[t,k]*N_e_sum[t-1,k] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
          
-         kappa_marine[t,k] =  p_2[t,k]/ (1 + ((p_2[t,k]*N_j[t,k])/c_2[k,1])) # Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+         kappa_marine[t,k] =  p_2[1,k]/ (1 + ((p_2[1,k]*N_j[t,k])/c_2[k,1])) # Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+         #kappa_marine[t,k] =  p_2[t,k]/ (1 + ((p_2[t,k]*N_j[t,k])/c_2[k,1])) # Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
          N_recruit[t,k] = kappa_marine[t,k]*N_j[t,k] # Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
  
@@ -220,7 +231,7 @@ for(k in 1:K){
  
 # simulate from pop ============= 
 N_j[1,] = mean(N_j[2:nByrs,1]) #mean(N_j[2:n,1:n.pop]) # just so i don't get yelled at about NA's later down the road 
-N_j_sim <-  matrix(nrow=nByrs,ncol=K,NA)
+N_j_sim_hat <-  matrix(nrow=nByrs,ncol=K,NA)
 
 N_sp_sim_s <-  array(data = NA, dim = c(nRyrs, K))
 N_sp_sim <-  array(data = NA, dim = c(nRyrs, K ))
@@ -236,15 +247,18 @@ N_returning[is.na(N_returning)] <- 0
 N_returning_sim[1:nRyrs,1]<- N_returning[1:nRyrs,1,1] + N_returning[1:nRyrs,1,2] + N_returning[1:nRyrs,1,3] +N_returning[1:nRyrs,1,4]
 
 for (k in 1:K) {
-    N_j_sim[,k] = rlnorm(nByrs, log(N_j[2:nByrs,k]), process_error_j[1,1])
+  N_j_sim_hat[,k] = rlnorm(nByrs, log(N_j[2:nByrs,k]), process_error_j[1,1])
   #for (a in 1:A) {
     N_returning_sim_s[,k] = rlnorm(nRyrs, log(N_returning_sim[2:nRyrs,k]), process_error_r[1,1])
     N_sp_sim_s[,k] = rlnorm(nRyrs, log(N_sp_sim[2:nRyrs,k]), process_error_sp[1,1])
  # }
 }
+
+# translate pop model to observations using the catch Q
+N_j_sim_observed = N_j_sim_hat*catch_q
  
 #sigma_j_obs<-
-  c(sd(log(N_j_sim)[6:nByrs,1])) 
+  c(sd(log(N_j_sim_observed)[6:nByrs,1])) 
 #sigma_r_obs<-
   c(sd(log(N_returning_sim_s)[6:nRyrs,1]))
 #sigma_sp_obs<-
@@ -287,7 +301,7 @@ data_list <- list(nByrs=nByrs,
                   K=K, 
                   Ps=Ps,
                   fs=fs,
-                  data_stage_j = N_j_sim,
+                  data_stage_j = N_j_sim_observed, # after translated from "simulation" to "basis index observed" using Q multiplier. 
                   data_stage_return = N_returning_sim_s,
                   data_stage_sp = N_sp_sim_s,
                   log_N_j_start = log_N_j_start,
@@ -300,12 +314,12 @@ data_list <- list(nByrs=nByrs,
                   sigma_y_j=process_error_j,
                   sigma_y_r=process_error_r,
                   sigma_y_sp=process_error_sp,
-                  kappa_marine_start = matrix(0.4, nrow = 1, ncol = 1), #kappa_marine_start,
-                  kappa_j_start = matrix(0.2,nrow = 1, ncol = 1),
-                  cov1 = cov1,
-                  cov2 = cov2,
-                  ncovars1 = 1,
-                  ncovars2 = 1,
+                  kappa_marine_start = matrix(p_2, nrow = 1, ncol = 1), #kappa_marine_start,
+                  kappa_j_start = matrix(p_1,nrow = 1, ncol = 1),
+                  # cov1 = cov1,
+                  # cov2 = cov2,
+                  # ncovars1 = 1,
+                  # ncovars2 = 1,
                   sigma_coef1 = sigma_coef1,
                   sigma_coef2=sigma_coef2,
                   basal_p_1=basal_p_1,
@@ -314,15 +328,17 @@ data_list <- list(nByrs=nByrs,
                   prob=prob,
                   c_1=c_1,
                   c_2=c_2) 
-  
+ 
 # create initial values ===============
   
   init_fn <- function(chain_id=1) {
     list(
-      "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,20, 10)), 
-      "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,15, 10)),  
-      "theta1" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0.1, 5)),
-      "theta2" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, -0.2,10)),
+      "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,17, 1)), 
+      "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,14, 1)),  
+      "log_p_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,-1.6, 0.5)), 
+      "log_p_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,-0.9, 0.5)),  
+      # "theta1" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0.1, 5)),
+      # "theta2" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, -0.2,10)),
       # "g"= matrix(data=rep( c(rnorm(1,40,1), rnorm(1,80,1)) , nRyrs), 
       #              nrow=nByrs, ncol=A, byrow=TRUE),
       "log_catch_q" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0, 0.05)), 
@@ -339,8 +355,8 @@ bh_fit <- stan(
   chains = n_chains,
   warmup = warmups,
   iter = total_iterations,
-  cores = n_cores,
-  init=init_ll)
+  cores = n_cores)#,
+  #init=init_ll)
 
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT_statespace.RDS")
 

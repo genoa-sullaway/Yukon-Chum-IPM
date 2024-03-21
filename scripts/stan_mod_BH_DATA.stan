@@ -30,17 +30,18 @@ data { // all equation references are from proposal numbering
   matrix[1,K] kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
   matrix[1,K] kappa_j_start;
   
-  int<lower=0> ncovars1; //number of covariates for first lifestage - starting with 1
-  int<lower=0> ncovars2; //number of covariates for second lifestage - starting with 1
+  // int<lower=0> ncovars1; //number of covariates for first lifestage - starting with 1
+  // int<lower=0> ncovars2; //number of covariates for second lifestage - starting with 1
+// 
+//   real sigma_coef1[K,ncovars1]; // initially fix, error of the covariate effect across populations 
+//   real sigma_coef2[K,ncovars2]; // initially fix, error of the covariate effect across populations 
 
-  real sigma_coef1[K,ncovars1]; // initially fix, error of the covariate effect across populations 
-  real sigma_coef2[K,ncovars2]; // initially fix, error of the covariate effect across populations 
-
-  real cov1[nByrs, ncovars1]; // covariate data in a matrix format 
-  real cov2[nByrs, ncovars2]; 
+  // real cov1[nByrs, ncovars1]; // covariate data in a matrix format 
+  // real cov2[nByrs, ncovars2]; 
+  // 
+  // real basal_p_1; // mean survival absent of density dependence - for now just add it in dont estimate it. 
+  // real basal_p_2;
   
-  real basal_p_1; // mean survival absent of density dependence - for now just add it in dont estimate it. 
-  real basal_p_2;
   // real <lower=0> basal_p_1[K]; // mean survival absent of density dependence - for now just add it in dont estimate it. 
   // real <lower=0> basal_p_2[K];
 
@@ -69,12 +70,15 @@ parameters {
 // real<lower=0>sigma_y_j[K];
 //  real<lower=0>sigma_y_sp[K];
 
-  real<lower=0>log_c_1[K,1]; // log carrying capacity
-  real<lower=0>log_c_2[K,1]; // log carrying capacity
+  real log_c_1[K,1]; // log carrying capacity
+  real log_c_2[K,1]; // log carrying capacity
   // 
   // covariate parameters 
-  real theta1[K, ncovars1]; // covariate estimated for each covariate and each population 
-  real theta2[K,ncovars2];
+  // real theta1[K, ncovars1]; // covariate estimated for each covariate and each population 
+  // real theta2[K,ncovars2];
+  
+ real log_p_1[K,1]; // covariate estimated for each covariate and each population 
+ real log_p_2[K,1];
   
   // real mu_coef1[ncovars1]; // mean covariate effect across populations (group level hierarchical effect)
   // real mu_coef2[ncovars2];
@@ -89,7 +93,8 @@ parameters {
   // real log_N_j_start[K];
   // real log_N_recruit_start[K]; 
   // real log_N_e_sum_start[K];
-  
+
+ 
   real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
   matrix<lower=0.01> [nRyrs, A] g;    // Individual year/age class gamma variates for generating age at maturity proportions
   real log_catch_q[K,1];
@@ -116,26 +121,30 @@ real N_recruit_start[K];
 real N_e_sum_start[K];
 
 // survival and covariate section 
-matrix[nByrs,K] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
-matrix[nByrs,K] p_2; // productivity in bev holt transition funciton, 2 = later marine 
+// matrix[nByrs,K] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
+// matrix[nByrs,K] p_2; // productivity in bev holt transition funciton, 2 = later marine 
 
 real kappa_j[nByrs,K]; // predicted survival for juvenile fish (FW and early marine)
 real kappa_marine[nByrs,K]; // predicted survival for marine fish
  
-real cov_eff1[nByrs, K, ncovars1]; // array that holds FW and early marine covariate effects by brood year and stock
-real cov_eff2[nByrs, K, ncovars2];// array that holds marine covariate effects by brood year and stock
+// real cov_eff1[nByrs, K, ncovars1]; // array that holds FW and early marine covariate effects by brood year and stock
+// real cov_eff2[nByrs, K, ncovars2];// array that holds marine covariate effects by brood year and stock
 real catch_q[K,1]; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
 
 real c_1[K]; // estimate on log, transform back to normal scale 
 real c_2[K]; // estimate on log, transform back to normal scale 
   
+real p_1[K]; // estimate on log, transform back to normal scale 
+real p_2[K]; // estimate on log, transform back to normal scale 
+  
 // Age related transformed params ====== 
+
 matrix<lower=0, upper=1>[nRyrs, A] p;  // Age at maturity proportions
 vector<lower=0, upper=1>[4] pi;        // Maturity schedule probabilities
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
-real q[nRyrs,K, A];
-//real<lower=0, upper=1> q[nRyrs,K, A]; //removing the bounds because it is throwing error but that is a red flag. // Age composition by year/age classr matrix
+//real q[nRyrs,K, A];
+real<lower=0, upper=1> q[nByrs,K, A]; //removing the bounds because it is throwing error but that is a red flag. // Age composition by year/age classr matrix
 
 // starting value transformations ======
  for (k in 1:K) {
@@ -165,40 +174,45 @@ real q[nRyrs,K, A];
    for(k in 1:K){
    c_1[k] = exp(log_c_1[k,1]);
    c_2[k] = exp(log_c_2[k,1]);
+   
+   p_1[k] = exp(log_p_1[k,1]);
+   p_2[k] = exp(log_p_2[k,1]);
   }
 
  // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
-   for (k in 1:K){
-   for(t in 1:nByrs){
-   for (c in 1:ncovars1) {
-  cov_eff1[t,k,c] = theta1[k,c]*cov1[t,c];
-   }
-  }
-}
+//    for (k in 1:K){
+//    for(t in 1:nByrs){
+//    for (c in 1:ncovars1) {
+//   cov_eff1[t,k,c] = theta1[k,c]*cov1[t,c];
+//    }
+//   }
+// }
+// 
 
-for (k in 1:K){
-    for(t in 1:nByrs){
-     for (c in 1:ncovars2) {
-  cov_eff2[t,k,c] = theta2[k,c]*cov2[t,c];
-   }
-  }
-}
+// for (k in 1:K){
+//     for(t in 1:nByrs){
+//      for (c in 1:ncovars2) {
+//   cov_eff2[t,k,c] = theta2[k,c]*cov2[t,c];
+//    }
+//   }
+// }
+
    // calculate productivity based on covariates for each lifestage 
- for(c in 1:ncovars1){
-  for (k in 1:K){
-    for (t in 1:nByrs) { // this will need to be updated when adding more stocks and covariates to what is behind the slashes below 
-     p_1[t,k]  = 1 / (1 + exp(-basal_p_1- sum(cov_eff1[t,k,1:c])));  
-   }
-  }
- }
- 
-for(c in 1:ncovars2){
-  for (k in 1:K){
-    for (t in 1:nByrs) { 
-     p_2[t,k]  = 1 / (1 + exp(-basal_p_2 -cov_eff2[t,k,c])); 
-   }
-  }
- }
+//  for(c in 1:ncovars1){
+//   for (k in 1:K){
+//     for (t in 1:nByrs) { // this will need to be updated when adding more stocks and covariates to what is behind the slashes below 
+//      p_1[t,k]  = 1 / (1 + exp(-basal_p_1- sum(cov_eff1[t,k,1:c])));  
+//    }
+//   }
+//  }
+//  
+// for(c in 1:ncovars2){
+//   for (k in 1:K){
+//     for (t in 1:nByrs) { 
+//      p_2[t,k]  = 1 / (1 + exp(-basal_p_2 -cov_eff2[t,k,c])); 
+//    }
+//   }
+//  }
 
  // Maturity schedule: use a common maturation schedule to draw the brood year specific schedules
  // currently fixing this by supplying prob in data section, but will likely eventually have it as a random variable.  
@@ -222,11 +236,15 @@ catch_q[K,1] = exp(log_catch_q[K,1]); // Q to relate basis data to recruit/escap
 for(k in 1:K){  // loop for each population
   for (t in 2:nByrs){  
    
-    kappa_j[t,k] =  p_1[t,k]/ (1 + ((p_1[t,k]*N_e_sum[t-1,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+    kappa_j[t,k] =  p_1[k]/ (1 + ((p_1[k]*N_e_sum[t-1,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+    
+    //kappa_j[t,k] =  p_1[t,k]/ (1 + ((p_1[t,k]*N_e_sum[t-1,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
     
     N_j[t,k] = kappa_j[t,k]*N_e_sum[t-1,k]; // Eq 4.4  generated estiamte for the amount of fish each year and stock that survive to a juvenile stage
    
-    kappa_marine[t,k] =  p_2[t,k]/ (1 + ((p_2[t,k]*N_j[t,k])/c_2[k])); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+    kappa_marine[t,k] =  p_2[k]/ (1 + ((p_2[k]*N_j[t,k])/c_2[k])); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+   
+   // kappa_marine[t,k] =  p_2[t,k]/ (1 + ((p_2[t,k]*N_j[t,k])/c_2[k])); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
    
     N_recruit[t,k] = kappa_marine[t,k]*N_j[t,k]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
  
@@ -252,7 +270,9 @@ for(k in 1:K){  // loop for each population
   for(k in 1:K){
    for (t in 1:nRyrs) {
     for(a in 1:A){
+      if(t< nByrs+1){
       q[t,k,a] = N_returning[t,k,a]/(sum(N_returning[t,k,1:A]));
+      }
     }
   }
 }
@@ -282,7 +302,7 @@ for(k in 1:K) {
    //log_N_e_sum_start[k] ~ normal(35,2); 
    
    // Start priors for model parameters 
-   log_catch_q[k,1] ~ normal(0,0.05); // Estimate Q - this will translate # of recruits to # of spawners 
+   log_catch_q[k,1] ~ normal(0,10); // Estimate Q - this will translate # of recruits to # of spawners 
 }
 
   // log_fm ~ normal(0,2);    // instantaneous fishing mortality prior - not currenytly used, include harvest as known
@@ -305,12 +325,16 @@ for(k in 1:K) {
 //       theta2[k,c] ~ normal(mu_coef2[c],sigma_coef2[c]);
 //   }
 // }
-    theta1[1]~normal(0.1,5); // environmental covariate coefficient stage 1
-    theta2[1]~normal(-0.2,10); // environmental covariate coefficient stage 2
-    
+
+    // theta1[1]~normal(0.1,5); // environmental covariate coefficient stage 1
+    // theta2[1]~normal(-0.2,10); // environmental covariate coefficient stage 2
+    // 
   for(k in 1:K){
-    log_c_1[k,1] ~  normal(20, 10); // carrying capacity prior - stage 1
+    log_c_1[k,1] ~  normal(18.4, 10); // carrying capacity prior - stage 1  
     log_c_2[k,1] ~  normal(15, 10); // carrying capacity prior - stage 2
+    
+    log_p_1[k,1]~normal(-1.609438,10); // basal productivity estimate
+    log_p_2[k,1]~normal(-0.9162907,10); // basal productivity estimate
 }
 
  // age comp priors 
@@ -320,13 +344,26 @@ for(k in 1:K) {
   // prob[3] ~ beta(1,1);
    D_scale ~ beta(1,1);
    
- // printing these for trouble shooting 
+// printing these for trouble shooting 
 // print("p_1: ", p_1)
 // print("kappa_j: ", kappa_j)
-print("sigma_y_sp: ", sigma_y_sp) 
-print("sigma_y_j: ", sigma_y_j) 
-print("sigma_y_r: ", sigma_y_r) 
-// print("catch_q: ", catch_q)
+// print("sigma_y_sp: ", sigma_y_sp) 
+// print("sigma_y_j: ", sigma_y_j) 
+// print("sigma_y_r: ", sigma_y_r) 
+  // print("catch_q: ", catch_q)
+  // print("N_j: ", N_j)
+  // print("N_j_predicted: ", N_j_predicted)   
+  // print("N_recruit: ", N_recruit)   
+  // print("p_1: ", p_1)    
+  print("q: ", q)
+  print("p: ",  p)     
+  // print("N_returning_start: ", N_returning_start)
+  // print("N_egg_start: ", N_egg_start)
+  // print("N_j_start: ", N_j_start)
+  // print("N_recruit_start: ", N_recruit_start)
+  // print("N_e_sum_start: ", N_e_sum_start)
+  //  
+ 
 // print("N_recruit: ", N_recruit)
 // print("g:", g) 
 // print("p:", p) 
@@ -350,7 +387,7 @@ print("sigma_y_r: ", sigma_y_r)
   // Observation model
   for(k in 1:K){
   for (t in 2:nByrs) {
-     (data_stage_j[t,k]) ~ normal((N_j_predicted[t,k]), sigma_y_j[1,k]);
+     log(data_stage_j[t,k]) ~ normal(log(N_j_predicted[t,k]), sigma_y_j[1,k]);
     } 
   }
   for(k in 1:K){ // stocks 
@@ -361,8 +398,8 @@ print("sigma_y_r: ", sigma_y_r)
       // currently getting an error related to .* so removign this component from model temporarily
      // target += (ess_age_comp*sum(o_run_comp[t,1:A].*log(q[t,k,1:A])); // ESS_AGE_COMP right now is fixed
 
-    target += normal_lpdf((data_stage_sp[t,k]) | (sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
-    target += normal_lpdf((data_stage_return[t,k]) | (sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
+    target += normal_lpdf(log(data_stage_sp[t,k]) | log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
+    target += normal_lpdf(log(data_stage_return[t,k]) | log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
     //  //}
     }
    }
