@@ -80,6 +80,12 @@ parameters {
  real log_p_1[K,1]; // covariate estimated for each covariate and each population 
  real log_p_2[K,1];
   
+  real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
+  matrix<lower=0.01> [nRyrs, A] g;    // Individual year/age class gamma variates for generating age at maturity proportions
+  real log_catch_q[K,1];
+  // vector<lower=0.0, upper=4.0>[nRyrs] log_fm; // instantaneous fishing mortality parameter not used right now
+
+  
   // real mu_coef1[ncovars1]; // mean covariate effect across populations (group level hierarchical effect)
   // real mu_coef2[ncovars2];
   // 
@@ -94,11 +100,6 @@ parameters {
   // real log_N_recruit_start[K]; 
   // real log_N_e_sum_start[K];
 
- 
-  real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
-  matrix<lower=0.01> [nRyrs, A] g;    // Individual year/age class gamma variates for generating age at maturity proportions
-  real log_catch_q[K,1];
-  // vector<lower=0.0, upper=4.0>[nRyrs] log_fm; // instantaneous fishing mortality parameter not used right now
 }
 
 transformed parameters { 
@@ -143,8 +144,7 @@ matrix<lower=0, upper=1>[nRyrs, A] p;  // Age at maturity proportions
 vector<lower=0, upper=1>[4] pi;        // Maturity schedule probabilities
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
-//real q[nRyrs,K, A];
-real<lower=0, upper=1> q[nByrs,K, A]; //removing the bounds because it is throwing error but that is a red flag. // Age composition by year/age classr matrix
+real<lower=0, upper=1> q[nByrs,K, A]; 
 
 // starting value transformations ======
  for (k in 1:K) {
@@ -292,21 +292,18 @@ for(k in 1:K) {
   //start off with sigma fixed
    // sigma_y_j[k] ~  normal(1,10);// if i can get uncertainty from run reconstruction then i can fix this and not estiamte it -- currently fixed anyway for parsimony
    // sigma_y_sp[k] ~ normal(0,10);
-   // log_N_j_start[k] ~ normal(20,2);
-   // log_N_recruit_start[k] ~ normal(14,2);
-   // for(a in 1:A){ 
-   //  log_N_egg_start[a,k,a] ~ normal(30,2);
-   //  log_N_sp_start[a,k,a] ~ normal(14,2);
-   //  log_N_returning_start[a,k,a] ~ normal(14,2);
-   //  }
-   //log_N_e_sum_start[k] ~ normal(35,2); 
    
    // Start priors for model parameters 
-   log_catch_q[k,1] ~ normal(0,10); // Estimate Q - this will translate # of recruits to # of spawners 
-}
+    log_catch_q[k,1] ~ normal(0,1); // Estimate Q - this will translate # of recruits to # of spawners 
 
+    log_c_1[k,1] ~  normal(18.4, 10); // carrying capacity prior - stage 1  
+    log_c_2[k,1] ~  normal(15, 10); // carrying capacity prior - stage 2
+    
+    log_p_1[k,1]~normal(-1.609438,1); // basal productivity estimate
+    log_p_2[k,1]~normal(-0.9162907,1); // basal productivity estimate
+}
   // log_fm ~ normal(0,2);    // instantaneous fishing mortality prior - not currenytly used, include harvest as known
-  
+     D_scale ~ beta(1,1);
 // skip hierarchical covarite estimates for now, just have a prior on theta  
 // for(c in 1:ncovars1){
 //   	 mu_coef1[c] ~ normal(0.1, 1);  
@@ -329,45 +326,19 @@ for(k in 1:K) {
     // theta1[1]~normal(0.1,5); // environmental covariate coefficient stage 1
     // theta2[1]~normal(-0.2,10); // environmental covariate coefficient stage 2
     // 
-  for(k in 1:K){
-    log_c_1[k,1] ~  normal(18.4, 10); // carrying capacity prior - stage 1  
-    log_c_2[k,1] ~  normal(15, 10); // carrying capacity prior - stage 2
-    
-    log_p_1[k,1]~normal(-1.609438,10); // basal productivity estimate
-    log_p_2[k,1]~normal(-0.9162907,10); // basal productivity estimate
-}
+ 
 
  // age comp priors 
  // prob is fixed so I dont need this for now
   // prob[1] ~ beta(1,1);
   // prob[2] ~ beta(1,1);
   // prob[3] ~ beta(1,1);
-   D_scale ~ beta(1,1);
+ 
    
 // printing these for trouble shooting 
-// print("p_1: ", p_1)
-// print("kappa_j: ", kappa_j)
-// print("sigma_y_sp: ", sigma_y_sp) 
-// print("sigma_y_j: ", sigma_y_j) 
-// print("sigma_y_r: ", sigma_y_r) 
-  // print("catch_q: ", catch_q)
-  // print("N_j: ", N_j)
-  // print("N_j_predicted: ", N_j_predicted)   
-  // print("N_recruit: ", N_recruit)   
-  // print("p_1: ", p_1)    
   print("q: ", q)
   print("p: ",  p)     
-  // print("N_returning_start: ", N_returning_start)
-  // print("N_egg_start: ", N_egg_start)
-  // print("N_j_start: ", N_j_start)
-  // print("N_recruit_start: ", N_recruit_start)
-  // print("N_e_sum_start: ", N_e_sum_start)
-  //  
  
-// print("N_recruit: ", N_recruit)
-// print("g:", g) 
-// print("p:", p) 
-// print("N_sp: ", N_sp) 
  
 // Liklilihoods --  
   // Gamma variates for each year and age class which are used to determine age at maturity proportions
@@ -395,12 +366,11 @@ for(k in 1:K) {
   // Currently ESS is fixed. 
   // for(a in 1:A){
     if(t<nByrs){
-      // currently getting an error related to .* so removign this component from model temporarily
+     // currently getting an error related to .* so removign this component from model temporarily
      // target += (ess_age_comp*sum(o_run_comp[t,1:A].*log(q[t,k,1:A])); // ESS_AGE_COMP right now is fixed
-
     target += normal_lpdf(log(data_stage_sp[t,k]) | log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
     target += normal_lpdf(log(data_stage_return[t,k]) | log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
-    //  //}
+
     }
    }
   }
