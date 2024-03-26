@@ -54,8 +54,8 @@ adapt_delta <- 0.95
 
 
 # Init ===================
-nByrs=105 #number of samples per population
-nRyrs = 108
+nByrs= 80 #105 #number of samples per population
+nRyrs = 83 #108
 pops = 1 #seq(1,3,1) #population pointer vector
 population<- c(rep(1,nByrs)) #population pointer vector
 K = 1 # number of stocks  
@@ -68,11 +68,14 @@ fs = as.matrix(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimat
 
 #Bev Holt parameters ===================
 # p for alpha, and c for carrying capacity 
-basal_p_1 = 0.2#
-basal_p_2 = 0.4#,
+basal_p_1 = 0.2
+basal_p_2 = 0.4
 
-c_1 <- as.matrix(nrow = 1, ncol =1,exp(18.4)) # exp(rnorm(1,20,5)))#rnorm(1,1e12, 1e2)) 
-c_2 <- as.matrix(nrow = 1, ncol =1,exp(15))# (rnorm(1,as.numeric(max(juv$abund)),5))) # ,5))) #rnorm(1,1e, 1e2)) 
+log_c_1 = 18.4
+log_c_2 = 15
+
+c_1 <- as.matrix(nrow = 1, ncol =1, exp(log_c_1)) 
+c_2 <- as.matrix(nrow = 1, ncol =1, exp(log_c_2)) 
 
 # Covariate data ===================
  cov1 <-  matrix(nrow = nByrs, ncol =1, rnorm(nByrs*1, 0, 2))  #Cov 1 data
@@ -95,18 +98,22 @@ c_2 <- as.matrix(nrow = 1, ncol =1,exp(15))# (rnorm(1,as.numeric(max(juv$abund))
   # //matrix<lower=0>[nRyrs, K,A] o_run;      // Observed run size by age class
   # real o_run[nRyrs, K,A]; // Observed run size by age class
   # real<lower=0, upper=1> o_run_comp[nRyrs, K,A]; // Observed age composition by year
-  # vector [nRyrs] ess_age_comp; 
+  vector [nRyrs] ess_age_comp; 
   
   pi = c(NA)
   Dir_alpha = c(NA)
   p = matrix(nrow=nRyrs,ncol=A,NA)
   g = matrix(nrow=nRyrs,ncol=A,NA)
   
-  prob = c(0.1148158, # rbeta(1,1,1),
-           0.2157721, # rbeta(1,1,1),
-           0.5999373, # rbeta(1,1,1),
-           0.609483)  # rbeta(1,1,1))
-  D_scale = 0.4411873 # rbeta(1,1,1)
+  prob = c(rbeta(1,1,1),
+           rbeta(1,1,1),
+           rbeta(1,1,1),
+           rbeta(1,1,1))
+  # prob = c(0.1148158, # rbeta(1,1,1),
+  #          0.2157721, # rbeta(1,1,1),
+  #          0.5999373, # rbeta(1,1,1),
+  #          0.609483)  # rbeta(1,1,1))
+  D_scale = 0.4411873 # 
   
   pi[1] = prob[1]# because its fixed, prob is currently data
   pi[2] = prob[2] * (1 - pi[1])
@@ -114,10 +121,13 @@ c_2 <- as.matrix(nrow = 1, ncol =1,exp(15))# (rnorm(1,as.numeric(max(juv$abund))
   pi[4] = 1 - pi[1] - pi[2] - pi[3]
   D_sum = 1/D_scale^2
   
-  for (a in 1:A) {
+  for (t in 1:nRyrs) {
+    for (a in 1:A) {
     Dir_alpha[a] = D_sum * pi[a]
-    g[,a] = rgamma(n=nRyrs,Dir_alpha[a],1)
+    g[t,a] = rgamma(n=1,Dir_alpha[a],1)
+   }
   }
+  
   for (a in 1:A) {
    for (t in 1:nRyrs) {
      p[t,a] = g[t,a]/sum(g[t,1:A])
@@ -183,11 +193,8 @@ H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)
 
 # o_run <- array(data = as.matrix(yukon_summer[,2:5]), dim = c(nRyrs, K,A))
 # #o_run <- as.matrix(yukon_summer[,2:5]) # observed run size by age class 
-# o_run_comp <- array(data = as.matrix(summer_age_comp[,2:5]), dim = c(nRyrs, K,A))
 # o_run_comp_mat <- as.matrix(summer_age_comp[,2:5]) # proportional age comp by year
-# ess_age_comp <- rep(200, times = nRyrs)
-#k=1
-#t=2
+ # ess_age_comp <- rep(200, times = nRyrs)
 
 # Run population model ============ 
    for(k in 1:K){  # loop for each population
@@ -228,7 +235,20 @@ for(k in 1:K){
     }
   }
 }
- 
+
+q[nByrs:nRyrs, K, 1:A] <-0 # probably not a great idea but these are getting skipped inthe liklihood anyway?? 
+o_run_comp <- q[1:nRyrs, 1, 1:A]  # is this right?? I think I can consider these tehe same for the simulation because 
+
+# Calculate ESS ============= 
+var_age <- mean( c(var(o_run_comp[1:nByrs,1]),
+                 var(o_run_comp[1:nByrs,2]),
+                 var(o_run_comp[1:nByrs,3]),
+                 var(o_run_comp[1:nByrs,4])))
+#nRyrs / (1 + var_age / nRyrs)
+
+num = nRyrs / (1 + var_age / nRyrs)
+ess_age_comp = rep(num, times = nRyrs)
+
 # simulate from pop ============= 
 N_j[1,] = mean(N_j[2:nByrs,1]) #mean(N_j[2:n,1:n.pop]) # just so i don't get yelled at about NA's later down the road 
 N_j_sim_hat <-  matrix(nrow=nByrs,ncol=K,NA)
@@ -247,11 +267,10 @@ N_returning[is.na(N_returning)] <- 0
 N_returning_sim[1:nRyrs,1]<- N_returning[1:nRyrs,1,1] + N_returning[1:nRyrs,1,2] + N_returning[1:nRyrs,1,3] +N_returning[1:nRyrs,1,4]
 
 for (k in 1:K) {
-  N_j_sim_hat[,k] = rlnorm(nByrs, log(N_j[2:nByrs,k]), process_error_j[1,1])
-  #for (a in 1:A) {
+    N_j_sim_hat[,k] = rlnorm(nByrs, log(N_j[2:nByrs,k]), process_error_j[1,1])
     N_returning_sim_s[,k] = rlnorm(nRyrs, log(N_returning_sim[2:nRyrs,k]), process_error_r[1,1])
     N_sp_sim_s[,k] = rlnorm(nRyrs, log(N_sp_sim[2:nRyrs,k]), process_error_sp[1,1])
- # }
+ 
 }
 
 # translate pop model to observations using the catch Q
@@ -263,14 +282,7 @@ N_j_sim_observed = N_j_sim_hat*catch_q
   c(sd(log(N_returning_sim_s)[6:nRyrs,1]))
 #sigma_sp_obs<-
   c(sd(log(N_sp_sim_s)[6:nRyrs,1]))
-#  
-# dat_sim <- list( N_sp_sim, N_e,
-#                  N_j_sim, p_1, p_2, 
-#                  c_1, c_2, kappa_marine,
-#                  kappa_j, cov1, cov2) 
 
-#saveRDS(dat_sim , "data/Simulated_DatBH.RDS")
-  
 # population starting values supplied as data ==========
   # same starting values used in simulation... 
   log_N_j_start =  matrix(nrow=1,ncol=K,NA)
@@ -319,7 +331,11 @@ data_list <- list(nByrs=nByrs,
                   # cov1 = cov1,
                   # cov2 = cov2,
                   # ncovars1 = 1,
-                  # ncovars2 = 1,
+                  # ncovars2 = 1, 
+                  p_1=p_1,
+                  p_2=p_2,
+                  log_p_1=log_p_1,
+                  log_p_2=log_p_2,
                   sigma_coef1 = sigma_coef1,
                   sigma_coef2=sigma_coef2,
                   basal_p_1=basal_p_1,
@@ -327,23 +343,30 @@ data_list <- list(nByrs=nByrs,
                   H_b=H_b,
                   prob=prob,
                   c_1=c_1,
-                  c_2=c_2) 
+                  c_2=c_2,
+                  log_c_1 = log_c_1,
+                  log_c_2=log_c_2,
+                  D_scale = D_scale,
+                  o_run_comp=o_run_comp,
+                  ess_age_comp=ess_age_comp,
+                  g = g,
+                  p=p,
+                  Dir_alpha=Dir_alpha) 
  
 # create initial values ===============
   
   init_fn <- function(chain_id=1) {
     list(
-      "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,17, 1)), 
-      "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,14, 1)),  
+      "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,18.4, 1)), 
+      "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,15, 1)),  
       "log_p_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,-1.6, 0.5)), 
       "log_p_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,-0.9, 0.5)),  
+      "log_catch_q" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0, 0.05)), 
+      "D_scale"= rbeta(1,1,1))
       # "theta1" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0.1, 5)),
       # "theta2" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, -0.2,10)),
       # "g"= matrix(data=rep( c(rnorm(1,40,1), rnorm(1,80,1)) , nRyrs), 
-      #              nrow=nByrs, ncol=A, byrow=TRUE),
-      "log_catch_q" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0, 0.05)), 
-      "D_scale"= rbeta(1,1,1)
-    )
+      #              nrow=nByrs, ncol=A, byrow=TRUE)
   }
   
   # Initial List of Lists for Multiple Chains
@@ -355,8 +378,8 @@ bh_fit <- stan(
   chains = n_chains,
   warmup = warmups,
   iter = total_iterations,
-  cores = n_cores,
-  init=init_ll)
+  cores = n_cores) #,
+#  init=init_ll)
 
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT_statespace.RDS")
 

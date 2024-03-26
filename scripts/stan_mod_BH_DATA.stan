@@ -46,12 +46,14 @@ data { // all equation references are from proposal numbering
   // real <lower=0> basal_p_2[K];
 
   // age comps 
-  vector<lower=0,upper=1>[4] prob;  // Maturity schedule probs - currently fixed, eventually will test as a random effect, 4 long because of 4 age classes
+   vector<lower=0,upper=1>[4] prob;  // Maturity schedule probs - currently fixed, eventually will test as a random effect, 4 long because of 4 age classes
   
   // matrix<lower=0>[nRyrs, K,A] o_run;      // Observed run size by age class
   // real o_run[nRyrs, K,A]; // Observed run size by age class
-  // real<lower=0, upper=1> o_run_comp[nRyrs, K,A]; // Observed age composition by year
-  // vector [nRyrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
+   matrix[nRyrs,A] o_run_comp; // Observed age composition by year
+  
+   //real<lower=0, upper=1> o_run_comp[nRyrs,K,A]; // Observed age composition by year
+   vector [nRyrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 }
   
 transformed data {
@@ -144,7 +146,8 @@ matrix<lower=0, upper=1>[nRyrs, A] p;  // Age at maturity proportions
 vector<lower=0, upper=1>[4] pi;        // Maturity schedule probabilities
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
-real<lower=0, upper=1> q[nByrs,K, A]; 
+// real<lower=0, upper=1> q[nByrs,K, A]; 
+matrix[nByrs, A] q; 
 
 // starting value transformations ======
  for (k in 1:K) {
@@ -271,7 +274,8 @@ for(k in 1:K){  // loop for each population
    for (t in 1:nRyrs) {
     for(a in 1:A){
       if(t< nByrs+1){
-      q[t,k,a] = N_returning[t,k,a]/(sum(N_returning[t,k,1:A]));
+      // q[t,k,a] = N_returning[t,k,a]/(sum(N_returning[t,k,1:A]));
+      q[t,a] = N_returning[t,k,a]/(sum(N_returning[t,k,1:A]));
       }
     }
   }
@@ -296,11 +300,11 @@ for(k in 1:K) {
    // Start priors for model parameters 
     log_catch_q[k,1] ~ normal(0,1); // Estimate Q - this will translate # of recruits to # of spawners 
 
-    log_c_1[k,1] ~  normal(18.4, 10); // carrying capacity prior - stage 1  
-    log_c_2[k,1] ~  normal(15, 10); // carrying capacity prior - stage 2
+    log_c_1[k,1] ~  normal(18.4, 5); // carrying capacity prior - stage 1  
+    log_c_2[k,1] ~  normal(15, 5); // carrying capacity prior - stage 2
     
-    log_p_1[k,1]~normal(-1.609438,1); // basal productivity estimate
-    log_p_2[k,1]~normal(-0.9162907,1); // basal productivity estimate
+    log_p_1[k,1]~normal(-1.609438,0.5); // basal productivity estimate
+    log_p_2[k,1]~normal(-0.9162907,0.5); // basal productivity estimate
 }
   // log_fm ~ normal(0,2);    // instantaneous fishing mortality prior - not currenytly used, include harvest as known
      D_scale ~ beta(1,1);
@@ -327,32 +331,28 @@ for(k in 1:K) {
     // theta2[1]~normal(-0.2,10); // environmental covariate coefficient stage 2
     // 
  
-
  // age comp priors 
  // prob is fixed so I dont need this for now
   // prob[1] ~ beta(1,1);
   // prob[2] ~ beta(1,1);
   // prob[3] ~ beta(1,1);
  
-   
+  
 // printing these for trouble shooting 
-  // print("q: ", q)
-  // print("p: ",  p)     
+ print("q: ", q)
+ print("g: ", g)
+ print("p: ", p)
+ print("Dir_alpha: ",  Dir_alpha)    
+ 
  
 // Liklilihoods --  
   // Gamma variates for each year and age class which are used to determine age at maturity proportions
   for (y in 1:nRyrs) {
     for (a in 1:A) {
-      //g[y,a] ~ gamma(Dir_alpha[a],1);
+     // g[y,a] ~ gamma(Dir_alpha[a],1);
       target += gamma_lpdf(g[y,a]|Dir_alpha[a],1);
     }
   }
-
-  // First `a.max` years of recruits, for which there is no spawner link
-  // lnR[1:a_max] ~ normal(mean_ln_R0, sigma_R0);
-
-  // State model -- no state space right now so currenlty not including this part 
-  // lnR[(A+a_min):nRyrs] ~ normal(lnRm_2[(A+a_min):nRyrs], sigma_R);
 
   // Observation model
   for(k in 1:K){
@@ -363,13 +363,12 @@ for(k in 1:K) {
   for(k in 1:K){ // stocks 
   for(t in 1:nRyrs){ // calendar years 
   // Currently ESS is fixed. 
-  // for(a in 1:A){
-    if(t<nByrs){
+      if(t<nByrs+1){
+     //from CC code: target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // time varying ESS for age comp likelihood for ONLY years with data
      // currently getting an error related to .* so removign this component from model temporarily
-     // target += (ess_age_comp*sum(o_run_comp[t,1:A].*log(q[t,k,1:A])); // ESS_AGE_COMP right now is fixed
+    target += ess_age_comp[t]*sum(o_run_comp[t,1:A].*log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
     target += normal_lpdf(log(data_stage_sp[t,k]) | log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
     target += normal_lpdf(log(data_stage_return[t,k]) | log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
-
     }
    }
   }
