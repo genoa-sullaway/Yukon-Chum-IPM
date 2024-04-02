@@ -6,7 +6,8 @@ library(dplyr)
 library(rstan)
 library(dirmult)
 library(here)
- 
+library(Rlab)
+
 #### Simulating data 
 # Load data for baseline ============== 
 warmups <- 2000
@@ -105,35 +106,35 @@ c_2 <- as.matrix(nrow = 1, ncol =1, exp(log_c_2))
   p = matrix(nrow=nRyrs,ncol=A,NA)
   g = matrix(nrow=nRyrs,ncol=A,NA)
   
-  prob = c(rbeta(1,1,1),
-           rbeta(1,1,1),
-           rbeta(1,1,1),
-           rbeta(1,1,1))
-  # prob = c(0.1148158, # rbeta(1,1,1),
-  #          0.2157721, # rbeta(1,1,1),
-  #          0.5999373, # rbeta(1,1,1),
-  #          0.609483)  # rbeta(1,1,1))
+  # prob = c(rbeta(1,1,1),
+  #          rbeta(1,1,1),
+  #          rbeta(1,1,1),
+  #          rbeta(1,1,1))
+  prob = c(0.1148158, # rbeta(1,1,1),
+           0.2157721, # rbeta(1,1,1),
+           0.5999373)  # rbeta(1,1,1))
   D_scale = 0.4411873 # 
   
-  pi[1] = prob[1]# because its fixed, prob is currently data
+  pi[1] = prob[1] 
   pi[2] = prob[2] * (1 - pi[1])
   pi[3] = prob[3] * (1 - pi[1] - pi[2])
   pi[4] = 1 - pi[1] - pi[2] - pi[3]
   D_sum = 1/D_scale^2
   
-  for (t in 1:nRyrs) {
-    for (a in 1:A) {
+  for (a in 1:A) {
+    for (t in 1:nRyrs) {
     Dir_alpha[a] = D_sum * pi[a]
     g[t,a] = rgamma(n=1,Dir_alpha[a],1)
+    #Rlab::rgamma(n=1,alpha = Dir_alpha[a],beta = 1)
    }
   }
-  
+ 
   for (a in 1:A) {
    for (t in 1:nRyrs) {
      p[t,a] = g[t,a]/sum(g[t,1:A])
    }
   }
-  
+
 # Simulate populations  ===================
 #error is fixed in model right now so fix it here. 
 process_error_j <- matrix(nrow=K,ncol=1,rep(5, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
@@ -159,7 +160,7 @@ N_sp[1:A,1,] <- mean.spawn
 N_e[1,1,] = exp(rnorm(A,20,2))
 N_j[1,1] = exp(rnorm(1,20,2)) #mean(juv$abund)# rnorm(K,20,10) 
 N_recruit[1,1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
-N_returning[1:A,1,]  = rep(exp(rnorm(1,14,2))*prob, times =A)
+N_returning[1:A,1,]  = rep(exp(rnorm(1,15,2))*pi, times =A)
 N_e_sum[1,1] = exp(rnorm(1,35,2))
 
 # productivity ============= 
@@ -215,7 +216,7 @@ H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)
          #add in age for stage where I am tracking age class.... 
          # switch to calendar years using t+A-a
          for (a in 1:A) { 
-           N_returning[t+A-a,k,a] = (catch_q[k]*N_recruit[t,k])*p[t+A-a,a] # currys indexing here: N_ta[t,a] = R[t+A-a] * p[t+A-a,a];
+           N_returning[t+A-a,k,a] = N_recruit[t,k]*p[t+A-a,a] # currys indexing here: N_ta[t,a] = R[t+A-a] * p[t+A-a,a];
 
            N_sp[t+A-a,k,a] = N_returning[t+A-a,k,a]*(1-H_b[t+A-a,k,a]) # harvest percent, 1-H_b are the ones that stay  
          
@@ -236,7 +237,7 @@ for(k in 1:K){
   }
 }
 
-q[nByrs:nRyrs, K, 1:A] <-0 # probably not a great idea but these are getting skipped inthe liklihood anyway?? 
+q[nByrs:nRyrs, K, 1:A] <-0 # probably not a great idea but these are getting skipped in the liklihood anyway?? 
 o_run_comp <- q[1:nRyrs, 1, 1:A]  # is this right?? I think I can consider these tehe same for the simulation because 
 
 # Calculate ESS ============= 
@@ -264,13 +265,13 @@ N_sp[is.na(N_sp)] <- 0
 N_sp_sim[1:nRyrs,1]<- N_sp[1:nRyrs,1,1] + N_sp[1:nRyrs,1,2] + N_sp[1:nRyrs,1,3] +N_sp[1:nRyrs,1,4]
 
 N_returning[is.na(N_returning)] <- 0
-N_returning_sim[1:nRyrs,1]<- N_returning[1:nRyrs,1,1] + N_returning[1:nRyrs,1,2] + N_returning[1:nRyrs,1,3] +N_returning[1:nRyrs,1,4]
+N_returning_sim[1:nRyrs,1]<- N_returning[1:nRyrs,1,1] + N_returning[1:nRyrs,1,2] + 
+                             N_returning[1:nRyrs,1,3] + N_returning[1:nRyrs,1,4]
 
 for (k in 1:K) {
     N_j_sim_hat[,k] = rlnorm(nByrs, log(N_j[2:nByrs,k]), process_error_j[1,1])
     N_returning_sim_s[,k] = rlnorm(nRyrs, log(N_returning_sim[2:nRyrs,k]), process_error_r[1,1])
     N_sp_sim_s[,k] = rlnorm(nRyrs, log(N_sp_sim[2:nRyrs,k]), process_error_sp[1,1])
- 
 }
 
 # translate pop model to observations using the catch Q
@@ -354,23 +355,23 @@ data_list <- list(nByrs=nByrs,
                   Dir_alpha=Dir_alpha) 
  
 # create initial values ===============
-  
-  init_fn <- function(chain_id=1) {
-    list(
-      "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,18.4, 1)), 
-      "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,15, 1)),  
-      "log_p_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,-1.6, 0.5)), 
-      "log_p_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,-0.9, 0.5)),  
-      "log_catch_q" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0, 0.05)), 
-      "D_scale"= rbeta(1,1,1))
-      # "theta1" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0.1, 5)),
-      # "theta2" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, -0.2,10)),
-      # "g"= matrix(data=rep( c(rnorm(1,40,1), rnorm(1,80,1)) , nRyrs), 
-      #              nrow=nByrs, ncol=A, byrow=TRUE)
-  }
-  
-  # Initial List of Lists for Multiple Chains
-  init_ll <- lapply(1:n_chains, function(id) init_fn(chain_id = id))
+  # 
+  # init_fn <- function(chain_id=1) {
+  #   list(
+  #     "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,18.4, 1)), 
+  #     "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,15, 1)),  
+  #     "log_p_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,-1.6, 0.5)), 
+  #     "log_p_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,-0.9, 0.5)),  
+  #     "log_catch_q" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0, 0.05)), 
+  #     "D_scale"= rbeta(1,1,1))
+  #     # "theta1" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0.1, 5)),
+  #     # "theta2" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, -0.2,10)),
+  #     # "g"= matrix(data=rep( c(rnorm(1,40,1), rnorm(1,80,1)) , nRyrs), 
+  #     #              nrow=nByrs, ncol=A, byrow=TRUE)
+  # }
+  # 
+  # # Initial List of Lists for Multiple Chains
+  # init_ll <- lapply(1:n_chains, function(id) init_fn(chain_id = id))
 # call mod  ===========================
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_DATA.stan"),
@@ -378,8 +379,7 @@ bh_fit <- stan(
   chains = n_chains,
   warmup = warmups,
   iter = total_iterations,
-  cores = n_cores) #,
-#  init=init_ll)
+  cores = n_cores) #init=init_ll)
 
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT_statespace.RDS")
 
