@@ -58,8 +58,9 @@ data_stage_return <- harvest %>%
 data_stage_j<- read_csv("data/tidy_BASIS_AYK_model.csv") %>%
   dplyr::select(1,2) %>% # yukon summer is column labeled 1, yukon fall is 2, kusko is 3
   dplyr::rename(abund = `1`) %>%
-  filter(!brood_year>2017) #if a fish is caught in 2023 and is 6 years old,
-# then its brood  year is 2017. Need to trim so the indexing works... I think...
+  filter(!brood_year>2017) %>% #if a fish is caught in 2023 and is 6 years old,
+  dplyr::select(abund)
+  # then its brood  year is 2017. Need to trim so the indexing works... I think...
 
 # Init ===================
 nByrs= nrow(data_stage_j) # difference between the two needs to be 3 (t+A-a, if a=1 and A=4)
@@ -78,9 +79,9 @@ fs = as.matrix(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimat
 # p for alpha, and c for carrying capacity 
 basal_p_1 = 0.2
 basal_p_2 = 0.4
-# 
-# log_c_1 = 18.4
-# log_c_2 = 15
+
+log_c_1 = as.matrix(18.4, nrow = 1, ncol=1)
+log_c_2 = as.matrix(15, nrow = 1, ncol=1)
 # 
 # c_1 <- as.matrix(nrow = 1, ncol =1, exp(log_c_1))
 # c_2 <- as.matrix(nrow = 1, ncol =1, exp(log_c_2))
@@ -268,8 +269,8 @@ data_list <- list(nByrs=nByrs,
                   # prob=prob,
                   # c_1=c_1,
                   # c_2=c_2,
-                  # log_c_1 = log_c_1,
-                  # log_c_2=log_c_2,
+                  log_c_1 = log_c_1,
+                  log_c_2=log_c_2
                   # D_scale = D_scale,
                   # 
                   # g = g,
@@ -304,6 +305,6 @@ bh_fit <- stan(
   iter = total_iterations,
   cores = n_cores) #init=init_ll)
 
-write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT_statespace.RDS")
+write_rds(bh_fit, "output/stan_fit_DATA_OUTPUT.RDS")
 
 

@@ -2,10 +2,8 @@ library(tidyverse)
 library(tidybayes)
 library(here)
 
-
-
 # translate simulated data_list to actual observations 
-bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT_statespace.RDS")
+bh_fit<- read_rds("output/stan_fit_DATA_OUTPUT.RDS")
 
 bh_summary <- summary(bh_fit)$summary %>% 
   as.data.frame(bh_fit) %>% 
@@ -16,27 +14,32 @@ bh_summary <- summary(bh_fit)$summary %>%
 # parameters  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 params<-bh_summary %>% 
-  slice(1:8)
+  slice(1:6)
 
-obs_dat <- data.frame(log_c_1  = c(data_list$log_c_1),
-                      log_c_2 = c(data_list$log_c_2),
-                      log_p_1 = c(data_list$log_p_1[1,1]),
-                      log_p_2 = c(data_list$log_p_2[1,1]),
-                      D_scale = c(data_list$D_scale),
-                      prob_1 = c(data_list$prob[1]),
-                      prob_2 = c(data_list$prob[2]),
-                      prob_3 = c(data_list$prob[3])) %>% 
-  gather(1:ncol(.), key = "variable", value = "mean_obs") %>%
-  cbind(params) %>%  
-  select(-variable_mod)
-
-# plot ===========
-obs_dat %>% 
+params %>% 
   ggplot() + 
-  geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
-  geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
-  facet_wrap(~variable, scales = 'free') +
-  geom_point(aes(variable, mean_obs), color = "red" ) #observed
+  geom_linerange(aes(mean, ymin = `2.5%`,ymax = `97.5%`)) + 
+  geom_crossbar(aes(mean, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
+  facet_wrap(~variable_mod, scales = 'free')
+
+# obs_dat <- data.frame(log_c_1  = c(data_list$log_c_1),
+#                       log_c_2 = c(data_list$log_c_2),
+#                       log_p_1 = c(data_list$log_p_1[1,1]),
+#                       log_p_2 = c(data_list$log_p_2[1,1]),
+#                       D_scale = c(data_list$D_scale),
+#                       prob_1 = c(data_list$prob[1]),
+#                       prob_2 = c(data_list$prob[2]),
+#                       prob_3 = c(data_list$prob[3])) %>% 
+#   gather(1:ncol(.), key = "variable", value = "mean_obs") %>%
+#   cbind(params) %>%  
+#   select(-variable_mod)
+
+# obs_dat %>% 
+#   ggplot() + 
+#   geom_linerange(aes(variable, ymin = `2.5%`,ymax = `97.5%`)) + 
+#   geom_crossbar(aes(variable, mean, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
+#   facet_wrap(~variable, scales = 'free') +
+#   geom_point(aes(variable, mean_obs), color = "red" ) #observed
 
 # compare other posteriors ===========
 ## G ============

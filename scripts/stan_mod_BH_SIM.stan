@@ -15,9 +15,6 @@ data { // all equation references are from proposal numbering
  
   matrix[nRyrs,A] H_b; // Initially fix sigma - process error for spawners
  
-  real log_c_1[K,1]; // log carrying capacity
-  real log_c_2[K,1]; // log carrying capacity
- 
   //real <lower=0> H_b[nRyrs,K,A]; // harvest at river mounth by age and stock, treating it as data, multipling harvest by known age comp. gets applied to recruits to get number of spawners. 
    
    // starting values for popualtion stages --feeding in as data
@@ -77,9 +74,9 @@ parameters {
 // real<lower=0>sigma_y_j[K];
 //  real<lower=0>sigma_y_sp[K];
 
-  // real log_c_1[K,1]; // log carrying capacity
-  // real log_c_2[K,1]; // log carrying capacity
-  // // 
+  real log_c_1[K,1]; // log carrying capacity
+  real log_c_2[K,1]; // log carrying capacity
+  // 
   // covariate parameters 
   // real theta1[K, ncovars1]; // covariate estimated for each covariate and each population 
   // real theta2[K,ncovars2];
@@ -148,6 +145,7 @@ real p_1[K]; // estimate on log, transform back to normal scale
 real p_2[K]; // estimate on log, transform back to normal scale 
   
 // Age related transformed params ====== 
+
 matrix<lower=0, upper=1>[nRyrs, A] p;  // Age at maturity proportions
 vector<lower=0, upper=1>[4] pi;        // Maturity schedule probabilities
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
@@ -306,11 +304,11 @@ for(k in 1:K) {
    // Start priors for model parameters 
     log_catch_q[k,1] ~ normal(0,1); // Estimate Q - this will translate # of recruits to # of spawners 
 
-    // log_c_1[k,1] ~  normal(18.4, 10); // carrying capacity prior - stage 1  
-    // log_c_2[k,1] ~  normal(15, 10); // carrying capacity prior - stage 2
+    log_c_1[k,1] ~  normal(18.4, 5); // carrying capacity prior - stage 1  
+    log_c_2[k,1] ~  normal(15, 5); // carrying capacity prior - stage 2
     
-    log_p_1[k,1]~normal(-1.609438,1); // basal productivity estimate
-    log_p_2[k,1]~normal(-0.9162907,1); // basal productivity estimate
+    log_p_1[k,1]~normal(-1.609438,0.5); // basal productivity estimate
+    log_p_2[k,1]~normal(-0.9162907,0.5); // basal productivity estimate
 }
  
  //D_scale ~ beta(0.4411873,1); // from simulation, will need to be 1,1 with full model 
@@ -351,11 +349,9 @@ for(k in 1:K) {
  
   
 // printing these for trouble shooting 
- print("p_1: ", p_1)
- print("c_1: ", c_1)
- print("N_j: ", N_j)
- print("N_j_predicted: ", N_j_predicted)
- 
+ print("N_sp: ", N_sp)
+ // print("g: ", g)
+ // print("p: ", p)
  // print("Dir_alpha: ",  Dir_alpha)    
  
  

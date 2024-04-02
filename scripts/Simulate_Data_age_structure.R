@@ -374,13 +374,13 @@ data_list <- list(nByrs=nByrs,
   # init_ll <- lapply(1:n_chains, function(id) init_fn(chain_id = id))
 # call mod  ===========================
 bh_fit <- stan(
-  file = here::here("scripts", "stan_mod_BH_DATA.stan"),
+  file = here::here("scripts", "stan_mod_BH_SIM.stan"), #differnt than data model so I can move priors around 
   data = data_list,
   chains = n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores) #init=init_ll)
 
-write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT_statespace.RDS")
+write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
 
 

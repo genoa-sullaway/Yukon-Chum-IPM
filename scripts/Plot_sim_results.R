@@ -2,7 +2,7 @@ library(tidyverse)
 library(tidybayes)
 library(here)
 
-bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT_statespace.RDS")
+bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT.RDS")
 
 bh_summary <- summary(bh_fit)$summary %>% 
   as.data.frame(bh_fit) %>% 
