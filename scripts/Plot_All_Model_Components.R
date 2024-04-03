@@ -1,19 +1,179 @@
 # covariates will need to be checked as model changes, this was copied from model script so all covariates came over the same form they would go in the model
-library(rstan)
 library(tidyverse)
 library(here)
-library(bayesplot)
-library(rstanarm) 
+library(readxl) 
+
 
 library(RNetCDF)
 library(tidync)
 library(lubridate) 
 
+
+# Havent saved the data yet so am just sourcing the script that makes them 
+source("scripts/01_Make_Salmon_Data_for_Model.R")
 # Load data =======================================================
-# Spawners =======
-yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/Yukon Summer Chum Total Run 1978-2022 Run Rec.xlsx") %>%
-  dplyr::select(Year, `Total Run`) %>%
-  dplyr::rename(Estimated_Run = `Total Run`) %>%
+
+# pull in data already tidyied HERE 
+
+# combine data for FISH plots =======
+recruits <- rbind(yukon_summer_recruits%>% mutate(id = "summer"),
+                  yukon_fall_recruits%>% mutate(id = "fall"))
+
+spawners <- rbind(yukon_summer_spawners%>% mutate(id = "summer"),
+      yukon_fall_spawners%>% mutate(id = "fall"))
+
+harvest <- rbind(yukon_summer_harvest %>% mutate(id = "summer"),
+                  yukon_fall_harvest%>% mutate(id = "fall"))
+ 
+
+
+# Plot from RR ===============
+ggplot(data = recruits,aes(x=cal_year, y =total_run/1000000, group =id, color =id)) +
+  geom_line() +
+  geom_point() +
+  theme_classic() +
+  scale_color_manual(name = "Yukon River Chum Recruits (Est Total Run)", values = c("#556B2F","#D2B48C")) + #"#FFC107")) + #PNWColors::pnw_palette("Starfish", n=2)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_text(size = 12),
+        legend.position="top") +
+  xlab("Calendar Year") +
+  ylab("Estimated Return\nAbundance (Millions)")+
+  ggtitle("Total Run")
+  
+ggplot(data = harvest,aes(x=cal_year, y =harvest/1000000, group =id, color =id)) +
+  geom_line() +
+  geom_point() +
+  theme_classic() +
+  scale_color_manual(name = "Yukon River Chum Harvest (Est Total Run)", values = c("#556B2F","#D2B48C")) + #"#FFC107")) + #PNWColors::pnw_palette("Starfish", n=2)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_text(size = 12),
+        legend.position="top") +
+  xlab("Calendar Year") +
+  ylab("Estimated Harvest\nAbundance (Millions)") +
+  ggtitle("Harvest")
+
+ggsave("output/Plot_Harvest_Chum.jpg",height = 4, width = 7)
+
+ggplot(data = spawners,aes(x=cal_year, y =Spawners/1000000, group =id, color =id)) +
+  geom_line() +
+  geom_point() +
+  theme_classic() +
+  scale_color_manual(name = "Yukon River Chum Spawners (Est Total Run)", values = c("#556B2F","#D2B48C")) + #"#FFC107")) + #PNWColors::pnw_palette("Starfish", n=2)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_text(size = 12),
+        legend.position="top") +
+  xlab("Calendar Year") +
+  ylab("Estimated Harvest\nAbundance (Millions)") +
+  ggtitle("Spawners")
+
+ggsave("output/Plot_Spawners_Chum.jpg",height = 4, width = 7)
+
+
+# spawners mean scale =========== 
+meanscale <- spawners %>%
+  group_by(id) %>% 
+  mutate(meanscale = as.numeric(scale(Spawners)))
+
+ggplot(data = meanscale,aes(x=cal_year, y =meanscale, group =id, color =id)) +
+  geom_line() +
+  geom_point() +
+  theme_classic() +
+  scale_color_manual(name = "Yukon River Chum Spawners (Est Total Run)", values = c("#556B2F","#D2B48C")) + #"#FFC107")) + #PNWColors::pnw_palette("Starfish", n=2)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_text(size = 12),
+        legend.position="top") +
+  xlab("Calendar Year") +
+  geom_hline(yintercept = 0, linetype = 2) + 
+  ylab("Estimated Harvest\nAbundance (Millions)") +
+  ggtitle("Spawners")
+
+ggsave("output/Plot_Mean_Scale_Spawners_Chum.jpg",height = 4, width = 7)
+
+
+# Runs on the same plot ==============
+
+
+summer <- rbind(yukon_summer_recruits %>% 
+                  mutate(id = "recruits") %>% 
+                  rename(abundance = "total_run"),
+                yukon_summer_spawners%>% 
+                  mutate(id = "spawners") %>% 
+                  rename(abundance = "Spawners"),
+                yukon_summer_harvest %>% 
+                  mutate(id = "harvest") %>% 
+                  rename(abundance = "harvest"))
+                
+  
+  fall <- rbind(yukon_fall_recruits %>% 
+                  mutate(id = "recruits") %>% 
+                  rename(abundance = "total_run"),
+                yukon_fall_spawners%>% 
+                  mutate(id = "spawners") %>% 
+                  rename(abundance = "Spawners"),
+                yukon_fall_harvest %>% 
+                  mutate(id = "harvest") %>% 
+                  rename(abundance = "harvest"))
+   
+  
+  ggplot(data = summer,aes(x=cal_year, y =abundance/1000000, group =id, color =id)) +
+    geom_line() +
+    geom_point() +
+    theme_classic() +
+    scale_color_manual(name = "Yukon River Summer Chum",
+                       values = PNWColors::pnw_palette("Starfish", n=3)) +  #"#FFC107")) + #PNWColors::pnw_palette("Starfish", n=2)) + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+          axis.text.y = element_text(size = 12),
+          legend.position="top") +
+    xlab("Calendar Year") +
+    ylab("Abundance (Millions)") +
+    ggtitle("Summer")
+  
+  ggsave("output/Plot_Summer_Chum.jpg",height = 4, width = 7)
+  
+  ggplot(data = fall,aes(x=cal_year, y =abundance/1000000, group =id, color =id)) +
+    geom_line() +
+    geom_point() +
+    theme_classic() +
+    scale_color_manual(name = "Yukon River Fall Chum",
+                       values = PNWColors::pnw_palette("Starfish", n=3)) +  #"#FFC107")) + #PNWColors::pnw_palette("Starfish", n=2)) + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+          axis.text.y = element_text(size = 12),
+          legend.position="top") +
+    xlab("Calendar Year") +
+    ylab("Abundance (Millions)") +
+    ggtitle("Fall")
+
+    ggsave("output/Plot_Fall_Chum.jpg", height = 4, width = 7)
+
+# # Abundances ========
+# yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx",sheet = 2) %>%
+#   select(1:4) %>% 
+#   janitor::row_to_names(row_number = 1) %>%
+#   dplyr::rename(cal_year = "Year",
+#                 total_run =`Total Run`)  %>%
+#   dplyr::mutate(Escapement = as.numeric(Escapement),
+#                 Harvest = as.numeric(Harvest),
+#                 cal_year=as.numeric(cal_year),
+#                 total_run = as.numeric(total_run))
+# 
+# yukon_summer_spawners <- yukon_summer %>%
+#   select(cal_year, Escapement)
+# 
+# yukon_summer_harvest <- yukon_summer %>%
+#   select(cal_year, Escapement)
+# 
+# yukon_summer_recruits <- yukon_summer %>%
+#   select(cal_year, total_run)
+
+
+
+  dplyr::mutate(age3=as.numeric(age3),
+                age4=as.numeric(age4),
+                age5=as.numeric(age5),
+                age6=as.numeric(age6)) %>%
+  filter(!cal_year < 2005)
+  #dplyr::select(Year, `Total Run`) %>%
+  dplyr::rename(Total_Run = `Total Run`) %>%
   filter(Year > 2001) %>%
   dplyr::mutate(id = 1)#,
 #Estimated_Run = as.numeric(scale(Estimated_Run)))
@@ -24,18 +184,6 @@ yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv")  
   dplyr::mutate(id = 2)#,
 #Estimated_Run = as.numeric(scale(Estimated_Run)))
 
-kusko_estimated_parameters<- readRDS("output/optim_output_par_data2021.RDS")
-kusko<-data.frame(Year = c(1988:(2022-1)),
-                  Estimated_Run= as.vector(c(kusko_estimated_parameters[2:35])),
-                  id =3) %>% 
-  filter(Year > 2001) #%>%
-#mutate(Estimated_Run = as.numeric(scale(Estimated_Run)))
-
-mean<-mean(kusko$Estimated_Run)
-kusko<-kusko %>%
-  rbind(df=data.frame(Year = c(2022), Estimated_Run = c(mean), id=c(3)))
-
-sp <- rbind(yukon_summer, yukon_fall, kusko) 
 
 # Juveniles ========================================================
 juv <- read_csv("data/Juv_Index_CC_aug2023/Index2.csv") %>%
