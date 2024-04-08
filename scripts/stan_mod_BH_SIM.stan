@@ -5,6 +5,7 @@ data { // all equation references are from proposal numbering
   int<lower=0> K; // number of stocks - currently set to 1 for initial model test runs 
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
   real fs[A,K]; // Fecundity of each female in each stock - eventually extend for age ?
+  real pi[A]; // mean age comps for dirichlet draws 
    
   matrix[nByrs,K] data_stage_j;    // number of juveniles for each group  (basis)
   matrix[nRyrs,K] data_stage_return;   //  number of harvest + escapement for each group 
@@ -13,9 +14,9 @@ data { // all equation references are from proposal numbering
   matrix[1,K] sigma_y_r;  // Initially fix sigma - process error for returns
   matrix[1,K] sigma_y_sp; // Initially fix sigma - process error for spawners
  
-  matrix[nRyrs,A] H_b; // Initially fix sigma - process error for spawners
+  //matrix[nRyrs,K,A] H_b; // Initially fix sigma - process error for spawners
  
-  //real <lower=0> H_b[nRyrs,K,A]; // harvest at river mounth by age and stock, treating it as data, multipling harvest by known age comp. gets applied to recruits to get number of spawners. 
+  real <lower=0> H_b[nRyrs,K,A]; // harvest at river mounth by age and stock, treating it as data, multipling harvest by known age comp. gets applied to recruits to get number of spawners. 
    
    // starting values for popualtion stages --feeding in as data
   real log_N_sp_start[A,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
@@ -51,8 +52,8 @@ data { // all equation references are from proposal numbering
   // vector<lower=0,upper=1>[4] prob;  // Maturity schedule probs - currently fixed, eventually will test as a random effect, 4 long because of 4 age classes
   
   // matrix<lower=0>[nRyrs, K,A] o_run;      // Observed run size by age class
-  // real o_run[nRyrs, K,A]; // Observed run size by age class
-   matrix[nRyrs,A] o_run_comp; // Observed age composition by year
+   //real o_run_comp[nRyrs,A]; // Observed run size by age class
+  matrix[nRyrs,A] o_run_comp; // Observed age composition by year
   
    //real<lower=0, upper=1> o_run_comp[nRyrs,K,A]; // Observed age composition by year
    vector [nRyrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
@@ -223,20 +224,20 @@ matrix[nByrs, A] q;
 
  // Maturity schedule: use a common maturation schedule to draw the brood year specific schedules
  // currently fixing this by supplying prob in data section, but will likely eventually have it as a random variable.  
-  pi[1] = prob[1];  
-  pi[2] = prob[2] * (1 - pi[1]);
-  pi[3] = prob[3] * (1 - pi[1] - pi[2]);
-  pi[4] = 1 - pi[1] - pi[2] - pi[3];
-  D_sum = 1/D_scale^2;
-
-  for (a in 1:A) {
-    Dir_alpha[a] = D_sum * pi[a];
-  }
-    for (a in 1:A) {
-      for (t in 1:nRyrs) {
-      p[t,a] = g[t,a]/sum(g[t,]);
-     }
-    }
+  // pi[1] = prob[1];  
+  // pi[2] = prob[2] * (1 - pi[1]);
+  // pi[3] = prob[3] * (1 - pi[1] - pi[2]);
+  // pi[4] = 1 - pi[1] - pi[2] - pi[3];
+  // D_sum = 1/D_scale^2;
+  // 
+  // for (a in 1:A) {
+  //   Dir_alpha[a] = D_sum * pi[a];
+  // }
+  //   for (a in 1:A) {
+  //     for (t in 1:nRyrs) {
+  //     p[t,a] = g[t,a]/sum(g[t,]);
+  //    }
+  //   }
 
 catch_q[K,1] = exp(log_catch_q[K,1]); // Q to relate basis data to recruit/escapement data -- Is this right??
  
@@ -263,7 +264,7 @@ for(k in 1:K){  // loop for each population
     // estimate harvest -- for later, for now H_b is not estimated as I try to get model to work.
     // N_sp[t+A-a,k,a] = (1-exp(-log_fm[i]))*N_returning[t+A-a,k,a];  // instantaneous fishing mortality * returning fish yields spawners. 
   
-     N_sp[t+A-a,k,a] = N_returning[t+A-a,k,a]*(1-H_b[t+A-a,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
+     N_sp[t+A-a,k,a] = N_returning[t+A-a,k,a];//*(1-H_b[t+A-a,k,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
     
      N_e[t+A-a,k,a] = fs[a,1]*Ps*N_sp[t+A-a,k,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
       }
@@ -292,7 +293,7 @@ for(t in 1:nByrs){
   }
  }
 
-}// close block
+} // close block
 
 model {
   // starting values for the population model 
@@ -312,7 +313,7 @@ for(k in 1:K) {
 }
  
  //D_scale ~ beta(0.4411873,1); // from simulation, will need to be 1,1 with full model 
- D_scale ~ beta(1,1); // from simulation, will need to be 1,1 with full model 
+ //D_scale ~ beta(1,1); // from simulation, will need to be 1,1 with full model 
  
  
   // log_fm ~ normal(0,2);    // instantaneous fishing mortality prior - not currenytly used, include harvest as known
@@ -340,29 +341,33 @@ for(k in 1:K) {
     // theta2[1]~normal(-0.2,10); // environmental covariate coefficient stage 2
  
  // age comp priors -- maturity schedules
-  // prob[1] ~ beta(0.1148158,1); // these are from simulation
-  // prob[2] ~ beta(0.2157721,1);
-  // prob[3] ~ beta(0.5999373,1);
-  prob[1] ~ beta(1,1);
-  prob[2] ~ beta(1,1);
-  prob[3] ~ beta(1,1);
+  // prob[1] ~ beta(1,1);
+  // prob[2] ~ beta(1,1);
+  // prob[3] ~ beta(1,1);
  
   
 // printing these for trouble shooting 
- print("N_sp: ", N_sp)
+// print("N_sp: ", N_sp)
  // print("g: ", g)
  // print("p: ", p)
  // print("Dir_alpha: ",  Dir_alpha)    
  
  
 // Liklilihoods --  
-  // Gamma variates for each year and age class which are used to determine age at maturity proportions
-  for (y in 1:nRyrs) {
-    for (a in 1:A) {
-     // g[y,a] ~ gamma(Dir_alpha[a],1);
-      target += gamma_lpdf(g[y,a]|Dir_alpha[a],1);
-    }
+       pi[1:A] ~ dirichlet(mean(q[,1:A])); 
+
+  // Estimate the 
+  // compare Q to the observed run composition
+  for (t in 2:nByrs) {
+      obs_run_comp[t,1:A] ~ multinomial(mean(q[,1:A]));
   }
+  // Gamma variates for each year and age class which are used to determine age at maturity proportions
+  //   for (a in 1:A) {
+  //     for (y in 1:nRyrs) {
+  //    // g[y,a] ~ gamma(Dir_alpha[a],1);
+  //     target += gamma_lpdf(g[y,a]|Dir_alpha[a],1);
+  //   }
+  // }
 
   // Observation model
   for(k in 1:K){

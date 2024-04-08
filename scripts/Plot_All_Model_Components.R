@@ -78,17 +78,16 @@ ggplot(data = meanscale,aes(x=cal_year, y =meanscale, group =id, color =id)) +
   geom_line() +
   geom_point() +
   theme_classic() +
-  scale_color_manual(name = "Yukon River Chum Spawners (Est Total Run)", values = c("#556B2F","#D2B48C")) + #"#FFC107")) + #PNWColors::pnw_palette("Starfish", n=2)) + 
+  scale_color_manual(name = "Yukon River Chum Spawners", values = c("#556B2F","#D2B48C")) + #"#FFC107")) + #PNWColors::pnw_palette("Starfish", n=2)) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         axis.text.y = element_text(size = 12),
         legend.position="top") +
   xlab("Calendar Year") +
   geom_hline(yintercept = 0, linetype = 2) + 
-  ylab("Estimated Harvest\nAbundance (Millions)") +
-  ggtitle("Spawners")
+  ylab("Mean Scale Spawner\nAbundance (Millions)") #+
+  #ggtitle("Spawners")
 
 ggsave("output/Plot_Mean_Scale_Spawners_Chum.jpg",height = 4, width = 7)
-
 
 # Runs on the same plot ==============
 

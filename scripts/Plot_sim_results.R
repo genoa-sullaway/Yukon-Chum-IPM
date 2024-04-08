@@ -56,6 +56,7 @@ bh_summary_g <- bh_summary %>%
   # dplyr::select(-del) %>% 
   dplyr::mutate(variable = (gsub("\\[", "", variable)),
          time = as.numeric((gsub("\\[", "", time)))) %>% 
+  filter(variable == "g") %>% 
   group_by(variable, age) %>%
   dplyr::summarise(mean_mod = mean(mean),
             lower = mean(`2.5%`),
@@ -136,6 +137,7 @@ bh_summary_p <- bh_summary %>%
   dplyr::select(-del) %>%
   dplyr::mutate(variable = (gsub("\\[", "", variable)),
                 time = as.numeric((gsub("\\[", "", time)))) %>% 
+  filter(variable == "p") %>%
   group_by(variable, age) %>%
   dplyr::summarise(mean_mod = mean(mean),
                    lower = mean(`2.5%`),
