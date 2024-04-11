@@ -45,7 +45,7 @@ Convert EMA fields into EcoDAAT fields
 #Create DAY, MONTH, YEAR columns from "HaulDate"
 
 EMA_Combined_Recode <-  EMA_Combined
-
+ 
 EMA_Combined_Recode <- separate(EMA_Combined_Recode, HaulDate, c("YEAR", "MONTH", "DAY"), sep="-")
 
 #Delete year column from the HaulID as there is already a year column

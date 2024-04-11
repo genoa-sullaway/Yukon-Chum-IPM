@@ -13,19 +13,16 @@ bh_summary <- summary(bh_fit)$summary %>%
 # parameters  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 params<-bh_summary %>% 
-  slice(1:8)
+  slice(1:5)
 
 obs_dat <- data.frame(log_c_1  = c(data_list$log_c_1),
                       log_c_2 = c(data_list$log_c_2),
                        log_p_1 = c(data_list$log_p_1[1,1]),
                        log_p_2 = c(data_list$log_p_2[1,1]),
-                       D_scale = c(data_list$D_scale),
-                       prob_1 = c(data_list$prob[1]),
-                       prob_2 = c(data_list$prob[2]),
-                       prob_3 = c(data_list$prob[3])) %>% 
+                       D_scale = c(data_list$D_scale)) %>% 
    gather(1:ncol(.), key = "variable", value = "mean_obs") %>%
   cbind(params) %>%  
-  select(-variable_mod)
+  dplyr::select(-variable_mod)
 
  # plot ===========
 obs_dat %>% 
@@ -47,7 +44,6 @@ obs_g <- as.data.frame(data_list$g) %>%
   dplyr::summarise(mean_obs = mean(variable),
                    variance_obs = var(variable))
   
-
 bh_summary_g <- bh_summary %>% 
   slice(6:337) %>%
   separate(variable_mod, into = c("variable", "time", "del","age"), sep =c(-5,-3,-2,-1)) %>%
@@ -72,12 +68,15 @@ bh_summary_g %>%
   labs(caption = "Red is observed, black is model output") + 
   ggtitle("G")
 
-bh_summary_g %>% 
-  ggplot() + 
-  geom_point(aes(age, variance_mod ), color = "black") + 
-  geom_point(aes(age, variance_obs), color = "red" ) +  
-  labs(caption = "Red is observed, black is model output") + 
-  ggtitle("G")
+bh_summary_g$mean_mod/sum(bh_summary_g$mean_mod)
+bh_summary_g$mean_obs/sum(bh_summary_g$mean_obs)
+
+# bh_summary_g %>% 
+#   ggplot() + 
+#   geom_point(aes(age, variance_mod ), color = "black") + 
+#   geom_point(aes(age, variance_obs), color = "red" ) +  
+#   labs(caption = "Red is observed, black is model output") + 
+#   ggtitle("G")
 
 # g plot not averaged ============= 
 obs_g_all <- as.data.frame(data_list$g) %>% 

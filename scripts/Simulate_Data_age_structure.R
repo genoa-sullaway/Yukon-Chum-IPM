@@ -94,44 +94,40 @@ c_2 <- as.matrix(nrow = 1, ncol =1, exp(log_c_2))
 # theta1 <- c(0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
 # theta2 <- c(-0.2) #relationship for simulated data
   
-# Make Pi for simulated population model =========
+# Make p for simulated population model =========
   # 
-  # pi = c(NA)
-  # Dir_alpha = c(NA)
-  # p = matrix(nrow=nRyrs,ncol=A,NA)
-  # g = matrix(nrow=nRyrs,ncol=A,NA)
+  pi = c(NA)
+  Dir_alpha = c(NA)
+  p = matrix(nrow=nRyrs,ncol=A,NA)
+  g = matrix(nrow=nRyrs,ncol=A,NA)
   
   # prob = c(0.1148158, # rbeta(1,1,1),
   #          0.2157721, # rbeta(1,1,1),
   #          0.5999373)  # rbeta(1,1,1))
-  # D_scale = 0.4411873 # 
-  # 
-  # pi[1] = prob[1] 
+  
+  D_scale = 0.4411873 #
+
+  # pi[1] = prob[1]
   # pi[2] = prob[2] * (1 - pi[1])
   # pi[3] = prob[3] * (1 - pi[1] - pi[2])
   # pi[4] = 1 - pi[1] - pi[2] - pi[3]
 
+  pi = c(0.1148158, 0.1909981, 0.4164682, 0.2777180)
 
-  pi <- c(0.1148158, 0.1909981, 0.4164682, 0.2777180)
-  p <-rdirichlet(nRyrs, pi) 
- 
-  #
-  colMeans(p)
-  
-  # D_sum = 1/D_scale^2
-  # 
-  # for (a in 1:A) {
-  #   for (t in 1:nRyrs) {
-  #   Dir_alpha[a] = D_sum * pi[a]
-  #   g[t,a] = rgamma(n=1,Dir_alpha[a],1)
-  #  }
-  # }
-  # 
-  # for (a in 1:A) {
-  #  for (t in 1:nRyrs) {
-  #    p[t,a] = g[t,a]/sum(g[t,1:A])
-  #  }
-  # }
+  D_sum = 1/D_scale^2
+
+  for (a in 1:A) {
+    for (t in 1:nRyrs) {
+    Dir_alpha[a] = D_sum * pi[a]
+    g[t,a] = rgamma(n=1,Dir_alpha[a],1)
+   }
+  }
+
+  for (a in 1:A) {
+   for (t in 1:nRyrs) {
+     p[t,a] = g[t,a]/sum(g[t,1:A])
+   }
+  }
 
 # Process error  ===================
 # error is fixed in model right now so fix it here. 
@@ -185,7 +181,8 @@ catch_q = exp(rnorm(1,0,0.5))
 # simulating with dirichlet leads to age structure being the same across all ages at 0.25
 #H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)) # higher value for alpha is a more tightly clustered distribution 
 H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)) # higher value for alpha is a more tightly clustered distribution 
-
+#H_b  <-  array(data = rmultinom(n=nRyrs,size =500, prob = pi), 
+#               dim = c(nRyrs, K, A))  
 
 # Run population model ============ 
    for(k in 1:K){  # loop for each population
@@ -224,14 +221,11 @@ for (t in 1:nRyrs) {
     }
   }
 
- # pi ============
- # mean age comp to be put into model as data...
-  pi_sim<-colMeans(o_run_comp[1:80,1:A])
-#age_comp_sim <- t(rmultinom(n=nRyrs, size = N_returning[], prob = p_sim))
-
 o_run_comp[nByrs:nRyrs, 1:A] <-0 # filling in NA's,they get skipped in likelihood anyway. 
 
-# Calculate ESS ============= 
+# colMeans(o_run_comp)
+# colMeans(p)
+# Fix ESS ============= 
 # var_age <- mean(c(var(o_run_comp[1:nByrs,1]),
 #                   var(o_run_comp[1:nByrs,2]),
 #                   var(o_run_comp[1:nByrs,3]),
@@ -253,23 +247,12 @@ N_sp_sim_s <-  array(data = NA, dim = c(nRyrs, K))
 
 N_returning_sim <-  array(data = NA, dim = c(nRyrs, K))
 N_returning_sim_s <-  array(data = NA, dim = c(nRyrs, K))
+
 # N_return and obs age comp ============
 N_returning[is.na(N_returning)] <- 0
-# N_returning_sim[1:nRyrs,1]<- N_returning[1:nRyrs,1,1] + N_returning[1:nRyrs,1,2] + 
-#                              N_returning[1:nRyrs,1,3] + N_returning[1:nRyrs,1,4]
-
-# for (k in 1:K) { 
-#   N_returning_sim[,k,1] = rlnorm(nRyrs, log(N_returning[2:nRyrs,k,1]), process_error_r[1,1]) 
-#   N_returning_sim[,k,2] = rlnorm(nRyrs, log(N_returning[2:nRyrs,k,2]), process_error_r[1,1]) 
-#   N_returning_sim[,k,3] = rlnorm(nRyrs, log(N_returning[2:nRyrs,k,3]), process_error_r[1,1]) 
-#   N_returning_sim[,k,4] = rlnorm(nRyrs, log(N_returning[2:nRyrs,k,4]), process_error_r[1,1]) 
-# }
-
+ # sum together for observation model
 N_returning_sim[1:nRyrs,1]<- N_returning[1:nRyrs,1,1] + N_returning[1:nRyrs,1,2] +
                                N_returning[1:nRyrs,1,3] + N_returning[1:nRyrs,1,4]
-
-# N_sp ============
-# likelihood considers sum of N_sp for calendar year not age class so add up N_sp
 N_sp[is.na(N_sp)] <- 0
 N_sp_sim[1:nRyrs,1]<- N_sp[1:nRyrs,1,1] + N_sp[1:nRyrs,1,2] + N_sp[1:nRyrs,1,3] +N_sp[1:nRyrs,1,4]
 
@@ -281,16 +264,6 @@ for (k in 1:K) {
 
 # translate pop model to observations using the catch Q
 N_j_sim_observed = N_j_sim_hat*catch_q
- 
-# observed run age comp from N_returning fish age comp
-# o_run_comp <-    # is this right?? I think I can consider these tehe same for the simulation because 
-
-#sigma_j_obs<-
-  # c(sd(log(N_j_sim_observed)[6:nByrs,1])) 
-#sigma_r_obs<-
-  # c(sd(log(N_returning_sim_s)[6:nRyrs,1]))
-#sigma_sp_obs<-
-  # c(sd(log(N_sp_sim_s)[6:nRyrs,1]))
 
 # population starting values supplied as data ==========
   # same starting values used in simulation... 
@@ -350,7 +323,8 @@ data_list <- list(nByrs=nByrs,
                   basal_p_1=basal_p_1,
                   basal_p_2=basal_p_2,
                   H_b=H_b,
-                  prob=prob,
+                  #prob=prob,
+                  pi=pi,
                   c_1=c_1,
                   c_2=c_2,
                   log_c_1 = log_c_1,
