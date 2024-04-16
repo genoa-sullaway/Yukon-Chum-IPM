@@ -181,10 +181,9 @@ pred_df <- large_pred_df%>%
    theme_classic() +
    geom_hline(yintercept = 0, linetype = 2)
 
- write_csv(pred_df, "output/Cov_a_Zooplankton_Index.csv")
+ write_csv(pred_df, "data/processed_covariates/Stage_A_Zooplankton_Index.csv")
  
- 
-# Estimate Spatial Temporal Fields? ============================ 
+ # Estimate Spatial Temporal Fields? ============================ 
  largezoop_ST_index <- mgcv::gam(sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
                                             s(LON,LAT, by = YEAR) + s(DOY),
                                           data = mod_df_largezoop, 

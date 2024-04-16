@@ -2,10 +2,12 @@ data { // all equation references are from proposal numbering
   int<lower=0> nByrs ; // number of brood years  
   int<lower=0> nRyrs;  // Number of recruitment years in SR model
   int<lower=0> A;     // Number of age classes - 4
-  int<lower=0> K; // number of stocks - currently set to 1 for initial model test runs 
+  int<lower=0> t_start;   // Number of age classes x2 for filling in starting values  
+  int<lower=0> K;   // number of stocks - currently set to 1 for initial model test runs 
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
-  real fs[A,K]; // Fecundity of each female in each stock - eventually extend for age ?
-  real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
+  
+  real fs[A,K];     // Fecundity of each female in each stock - eventually extend for age ?
+ // real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
  
   matrix[nByrs,K] data_stage_j;    // number of juveniles for each group  (basis)
   matrix[nRyrs,K] data_stage_return;   //  number of harvest + escapement for each group 
@@ -16,13 +18,13 @@ data { // all equation references are from proposal numbering
 
   //matrix[nRyrs,K,A] H_b; // Initially fix sigma - process error for spawners
  
-  vector<lower=0, upper=1>[4] pi;        // Maturity schedule probabilities
-  real <lower=0> H_b[nRyrs,K,A]; // harvest at river mounth by age and stock, treating it as data, multipling harvest by known age comp. gets applied to recruits to get number of spawners. 
+  vector<lower=0, upper=1>[4] pi; // Maturity schedule probabilities
+  //real <lower=0> H_b[nRyrs,K,A]; // harvest at river mounth by age and stock, treating it as data, multipling harvest by known age comp. gets applied to recruits to get number of spawners. 
    
    // starting values for popualtion stages --feeding in as data
-  real log_N_sp_start[A,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
-  real log_N_returning_start[A,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
-  real log_N_egg_start[A,K,A];
+  real log_N_sp_start[t_start,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
+  real log_N_returning_start[t_start,K,A]; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
+  real log_N_egg_start[t_start,K,A];
   real log_N_j_start[K,1];
   real log_N_recruit_start[K,1];
   real log_N_e_sum_start[K,1];
@@ -52,11 +54,11 @@ data { // all equation references are from proposal numbering
   // age comps 
   // vector<lower=0,upper=1>[4] prob;  // Maturity schedule probs - currently fixed, eventually will test as a random effect, 4 long because of 4 age classes
   
-  // matrix<lower=0>[nRyrs, K,A] o_run;      // Observed run size by age class
+   //matrix<lower=0>[nRyrs, K,A] o_run;      // Observed run size by age class
    //real o_run_comp[nRyrs,A]; // Observed run size by age class
-  matrix[nRyrs,A] o_run_comp; // Observed age composition by year
-  
-   //real<lower=0, upper=1> o_run_comp[nRyrs,K,A]; // Observed age composition by year
+   //matrix[nRyrs,A] o_run_comp; // Observed age composition by year
+   //matrix [1,A] p;  // Age at maturity proportions
+   matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
    vector [nRyrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 }
   
@@ -88,12 +90,13 @@ parameters {
  
 // vector<lower=0,upper=1>[3] prob;   // Maturity schedule probs
  
- //real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
- matrix<lower=0.01> [nRyrs, A] g;    // Individual year/age class gamma variates for generating age at maturity proportions
- real log_catch_q[K,1];
+ real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
+ //matrix<lower=0.01> [1, A] g;
+ real <lower=0> g[A];
+ // matrix<lower=0.01> [nRyrs, A] g;    // Individual year/age class gamma variates for generating age at maturity proportions
+ real <lower=0> log_catch_q[K,1];
   // vector<lower=0.0, upper=4.0>[nRyrs] log_fm; // instantaneous fishing mortality parameter not used right now
 
-  
   // real mu_coef1[ncovars1]; // mean covariate effect across populations (group level hierarchical effect)
   // real mu_coef2[ncovars2];
   // 
@@ -104,18 +107,21 @@ parameters {
 transformed parameters { 
 matrix[nByrs,K] N_j; // predicted juveniles -calculated
 matrix[nByrs,K] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
-matrix[nByrs,K] N_recruit;  // predicted recruits - before they get assigned to returning age classes
-matrix[nByrs,K] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
+ matrix[nByrs,K] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
                        
 // variables where we index with age class 
+matrix[nByrs,K] N_recruit;  // predicted recruits - before they get assigned to returning age classes
+
 real N_sp[nRyrs,K,A];
 real N_returning[nRyrs,K,A];
+
+//matrix [nRyrs,K] N_returning_sum; // new
 real N_e[nRyrs,K,A];
 
 // starting values 
-real N_sp_start[A,K,A];
-real N_returning_start[A,K,A]; // this needs to be an array because best to fill in age structure of first 4 lines
-real N_egg_start[A,K,A];
+real N_sp_start[t_start,K,A];
+real N_returning_start[t_start,K,A]; // this needs to be an array because best to fill in age structure of first 4 lines
+real N_egg_start[t_start,K,A];
 real N_j_start[K]; 
 real N_recruit_start[K];
 real N_e_sum_start[K];
@@ -138,12 +144,12 @@ real p_1[K]; // estimate on log, transform back to normal scale
 real p_2[K]; // estimate on log, transform back to normal scale 
   
 // Age related transformed params ====== 
-
-matrix<lower=0, upper=1>[nRyrs, A] p;  // Age at maturity proportions
+real<lower=0, upper=1> p[A]; 
+//matrix<lower=0, upper=1>[nRyrs, A] p;  // Age at maturity proportions
 //vector<lower=0, upper=1>[4] pi;        // Maturity schedule probabilities
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
-// real<lower=0, upper=1> q[nByrs,K, A]; 
+//real<lower=0, upper=1> q[nByrs,K, A]; 
 matrix[nByrs, A] q; 
 
 // starting value transformations ======
@@ -152,17 +158,17 @@ matrix[nByrs, A] q;
   kappa_j[1,k]= kappa_j_start[1,k]; 
  
  //transform starting values 
-  N_sp_start[1:A,k,1:A] = exp(log_N_sp_start[1:A,k,1:A]); // transform predicted spawners
-  N_returning_start[1:A,k,1:A] = exp(log_N_returning_start[1:A,k,1:A]); // transform predicted recruits
-  N_egg_start[1:A,k,1:A] = exp(log_N_egg_start[1:A,k,1:A]); // transform predicted eggs 
+  N_sp_start[1:t_start,k,1:A] = exp(log_N_sp_start[1:t_start,k,1:A]); // transform predicted spawners
+  N_returning_start[1:t_start,k,1:A] = exp(log_N_returning_start[1:t_start,k,1:A]); // transform predicted recruits
+  N_egg_start[1:t_start,k,1:A] = exp(log_N_egg_start[1:t_start,k,1:A]); // transform predicted eggs 
   N_j_start[k] = exp(log_N_j_start[k,1]); // transform predicted juveniles
   N_recruit_start[k] = exp(log_N_recruit_start[k,1]); // transform predicted recruits
   N_e_sum_start[k] = exp(log_N_e_sum_start[k,1]); // transform eggs summed across ages 
   
   // add starting values to the whole population array 
-  N_sp[1:A,k,1:A] = N_sp_start[1:A,k,1:A];
-  N_e[1:A,k,1:A] = N_egg_start[1:A,k,1:A]; 
-  N_returning[1:A,k, 1:A] = N_returning_start[1:A,k, 1:A]; 
+  N_sp[1:t_start,k,1:A] = N_sp_start[1:t_start,k,1:A];
+  N_e[1:t_start,k,1:A] = N_egg_start[1:t_start,k,1:A]; 
+  N_returning[1:t_start,k, 1:A] = N_returning_start[1:t_start,k, 1:A]; 
   N_e_sum[1,k] = N_e_sum_start[k];
   
   // no age index on population stage
@@ -220,17 +226,22 @@ matrix[nByrs, A] q;
   // pi[2] = prob[2] * (1 - pi[1]);
   // pi[3] = prob[3] * (1 - pi[1] - pi[2]);
   // pi[4] = 1 - pi[1] - pi[2] - pi[3];
-  
-  D_sum = 1/D_scale^2;
+
+  D_sum = 1/(D_scale^2);
 
   for (a in 1:A) {
     Dir_alpha[a] = D_sum * pi[a];
   }
-    for (a in 1:A) {
-      for (t in 1:nRyrs) {
-      p[t,a] = g[t,a]/sum(g[t,]);
-     }
+for (a in 1:A) { 
+      p[a] = g[a]/sum(g[1:A]);
+
     }
+
+    // for (a in 1:A) {
+    //   for (t in 1:nRyrs) {
+    //   p[t,a] = g[t,a]/sum(g[t,]);
+    //  }
+    // }
 
 catch_q[K,1] = exp(log_catch_q[K,1]); // Q to relate basis data to recruit/escapement data -- Is this right??
  
@@ -252,31 +263,38 @@ for(k in 1:K){  // loop for each population
   //add in age for stage where I am tracking age class.... 
    // swtich to calendar years using t+A-a
       for (a in 1:A) { 
-     N_returning[t+A-a,k,a] = N_recruit[t,k]*p[t+A-a,a]; // multiply recruits by Q to change scale, then distribute across age classes, p which is age comps. 
+     N_returning[t+a+1,k,a] = N_recruit[t,k]*p[a]; // try simulation with p fixed
+    // N_returning[t+A-a,k,a] = N_recruit[t,k]*p[t+A-a,a]; // multiply recruits by Q to change scale, then distribute across age classes, p which is age comps. 
 
     // estimate harvest -- for later, for now H_b is not estimated as I try to get model to work.
     // N_sp[t+A-a,k,a] = (1-exp(-log_fm[i]))*N_returning[t+A-a,k,a];  // instantaneous fishing mortality * returning fish yields spawners. 
   
-     N_sp[t+A-a,k,a] = N_returning[t+A-a,k,a];//*(1-H_b[t+A-a,k,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
+     N_sp[t+a+1,k,a] = N_returning[t+a+1,k,a];//-100;//*(1-H_b[t+A-a,k,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
     
-     N_e[t+A-a,k,a] = fs[a,1]*Ps*N_sp[t+A-a,k,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+     N_e[t+a+1,k,a] = fs[a,1]*Ps*N_sp[t+a+1,k,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
       }
       // transition back to brood years - plug in ages manually
-    N_e_sum[t,k] = (N_e[t+A-1,k,1]+N_e[t+A-2,k,2]+N_e[t+A-3,k,3]+N_e[t+A-4,k,4]);
+    N_e_sum[t,k] = (N_e[t+1+1,k,1]+N_e[t+2+1,k,2]+N_e[t+3+1,k,3]+N_e[t+4+1,k,4]);
     
    }
  }
    
   // Calculate age proportions by return year
  // for(k in 1:K){
-   for (t in 1:nRyrs) {
     for(a in 1:A){
+     for (t in 1:nRyrs) {
       if(t< nByrs+1){
       // q[t,k,a] = N_returning[t,k,a]/(sum(N_returning[t,k,1:A]));
       q[t,a] = N_returning[t,1,a]/(sum(N_returning[t,1,1:A]));
       }
     }
   }
+//      for (t in 1:nRyrs) {
+// // sum for liklihood to make sure they sum correctly 
+// N_returning_sum[t,1] = N_returning[t,1,1] + N_returning[t,1,2] + 
+// N_returning[t,1,3] + N_returning[t,1,4];
+// //N_sp_sum
+// }
 
 for(k in 1:K){
 for(t in 1:nByrs){
@@ -295,27 +313,31 @@ for(k in 1:K) {
    // sigma_y_sp[k] ~ normal(0,10);
    
    // Start priors for model parameters 
-    log_catch_q[k,1] ~ normal(0,1); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q[k,1] ~ normal(0,2); // Estimate Q - this will translate # of recruits to # of spawners 
 
-    log_c_1[k,1] ~  normal(18.4, 10); // carrying capacity prior - stage 1  
-    log_c_2[k,1] ~  normal(15, 10); // carrying capacity prior - stage 2
+    log_c_1[k,1] ~  normal(18.4, 5); // carrying capacity prior - stage 1  
+    log_c_2[k,1] ~  normal(15, 5); // carrying capacity prior - stage 2
     
-    log_p_1[k,1]~normal(-1.609438,1); // basal productivity estimate
-    log_p_2[k,1]~normal(-0.9162907,1); // basal productivity estimate
+    log_p_1[k,1]~normal(-1,5); // basal productivity estimate
+    log_p_2[k,1]~normal(-0.5,5); // basal productivity estimate
 }
 
- //D_scale ~ beta(0.4411873,1); // from simulation, will need to be 1,1 with full model 
- // D_scale ~ beta(1,1); // from simulation, will need to be 1,1 with full model 
+ D_scale ~ beta(0.3,1); // from simulation, will need to be 1,1 with full model 
+ //D_scale ~ beta(1,1); // from simulation, will need to be 1,1 with full model 
   
-
-
 // liklihood for age comp 
-  for (y in 1:nRyrs) {
     for (a in 1:A) {
-     // g[y,a] ~ gamma(Dir_alpha[a],1);
-     target += gamma_lpdf(g[y,a]|Dir_alpha[a],1);
-    }
+     
+     g[a] ~ gamma(Dir_alpha[a],1);
+    // target += gamma_lpdf(g[a]|Dir_alpha[a],1);
+
   }
+  //   for (a in 1:A) {
+  //     for (t in 1:nRyrs) {
+  //    // g[t,a] ~ gamma(Dir_alpha[a],1);
+  //    target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
+  //   }
+  // }
   // log_fm ~ normal(0,2);    // instantaneous fishing mortality prior - not currenytly used, include harvest as known
          
 // skip hierarchical covarite estimates for now, just have a prior on theta  
@@ -348,9 +370,11 @@ for(k in 1:K) {
  
   
 // printing these for trouble shooting 
+ //print("N_returning_sum: ", N_returning_sum)
+ print("N_returning: ", N_returning)
  print("N_sp: ", N_sp)
- // print("g: ", g)
- // print("p: ", p)
+ print("g: ", g)
+ print("p: ", p)
  // print("Dir_alpha: ",  Dir_alpha)    
  
  
@@ -362,15 +386,26 @@ for(k in 1:K) {
      log(data_stage_j[t,k]) ~ normal(log(N_j_predicted[t,k]), sigma_y_j[1,k]);
     } 
   }
+  
   for(k in 1:K){ // stocks 
   for(t in 1:nRyrs){ // calendar years 
   // Currently ESS is fixed. 
       if(t<nByrs+1){
  //    obs_run_comp~ multinomial(ess_age_comp,q)
-    target += ess_age_comp[t]*sum(o_run_comp[t,1:A].*log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
- 
-    target += normal_lpdf((data_stage_sp[t,k]) | (sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
-    target += normal_lpdf((data_stage_return[t,k]) | (sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += ess_age_comp[t]*sum(o_run_comp[t,1:A].*log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
+
+    // log(data_stage_return[t,k]) ~ normal(log(N_returning_sum[t,k]), sigma_y_r[1,k]);
+     //log(data_stage_sp[t,k]) ~ normal(log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
+     
+     // trying summing a different way
+     (data_stage_return[t,k]) ~ normal((sum(N_returning[t,k,1:A])), sigma_y_r[1,k]);
+     (data_stage_sp[t,k]) ~ normal((sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
+     
+     // log(data_stage_return[t,k]) ~ normal(log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]);
+     // log(data_stage_sp[t,k]) ~ normal(log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
+     //  
+    // target += normal_lpdf(log(data_stage_sp[t,k]) | log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
+    // target += normal_lpdf(log(data_stage_return[t,k]) | log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
     }
    }
   }

@@ -55,12 +55,14 @@ adapt_delta <- 0.95
 
 
 # Init ===================
-nByrs= 80 #105 #number of samples per population
-nRyrs = 83 #108
-pops = 1 #seq(1,3,1) #population pointer vector
-population<- c(rep(1,nByrs)) #population pointer vector
 K = 1 # number of stocks  
 A = 4 # age classes 
+nByrs= 80 #105 #number of samples per population
+nRyrs = nByrs +A+1# 83 #108
+t_start = A+A
+pops = 1 #seq(1,3,1) #population pointer vector
+population<- c(rep(1,nByrs)) #population pointer vector
+ 
 #n.pop <-length(unique(population)) #number of population
 #year <- rep(seq(1,n), n.pop) #creating a year pointer
  
@@ -73,7 +75,7 @@ basal_p_1 = 0.2
 basal_p_2 = 0.4
 
 log_c_1 = 18.4
-log_c_2 = 15
+log_c_2 = 17
 
 c_1 <- as.matrix(nrow = 1, ncol =1, exp(log_c_1)) 
 c_2 <- as.matrix(nrow = 1, ncol =1, exp(log_c_2)) 
@@ -95,45 +97,57 @@ c_2 <- as.matrix(nrow = 1, ncol =1, exp(log_c_2))
 # theta2 <- c(-0.2) #relationship for simulated data
   
 # Make p for simulated population model =========
-  # 
-  pi = c(NA)
+  
   Dir_alpha = c(NA)
-  p = matrix(nrow=nRyrs,ncol=A,NA)
-  g = matrix(nrow=nRyrs,ncol=A,NA)
+  p = c(NA)#matrix(nrow=K,ncol=A,NA)
+  g = c(NA)#matrix(nrow=K,ncol=A,NA)
+  
+  #p = matrix(nrow=nRyrs,ncol=A,NA)
+  #g = matrix(nrow=nRyrs,ncol=A,NA)
   
   # prob = c(0.1148158, # rbeta(1,1,1),
   #          0.2157721, # rbeta(1,1,1),
   #          0.5999373)  # rbeta(1,1,1))
-  
-  D_scale = 0.4411873 #
 
+  D_scale =0.3  
+  #D_scale =0.4 #0.01
   # pi[1] = prob[1]
   # pi[2] = prob[2] * (1 - pi[1])
   # pi[3] = prob[3] * (1 - pi[1] - pi[2])
   # pi[4] = 1 - pi[1] - pi[2] - pi[3]
-
-  pi = c(0.1148158, 0.1909981, 0.4164682, 0.2777180)
+  
+# P as a parameter ========  doesnt vary through time though
+  #p = c(0.1148158, 0.1909981, 0.4164682, 0.2777180)
+  
+  pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
 
   D_sum = 1/D_scale^2
 
   for (a in 1:A) {
-    for (t in 1:nRyrs) {
-    Dir_alpha[a] = D_sum * pi[a]
-    g[t,a] = rgamma(n=1,Dir_alpha[a],1)
-   }
+   # for (t in 1:nRyrs) {
+      Dir_alpha[a] = D_sum * pi[a]
+      g[a] = rgamma(n=1,Dir_alpha[a],1)
+ #     g[t,a] = rgamma(n=1,Dir_alpha[a],1)
+ #  }
   }
 
-  for (a in 1:A) {
-   for (t in 1:nRyrs) {
-     p[t,a] = g[t,a]/sum(g[t,1:A])
-   }
-  }
+    for (a in 1:A) {
+   #  for (t in 1:nRyrs) {
+       p[a] = g[a]/sum(g[1:A])
+    # }
+    }
+
+  #   for (a in 1:A) {
+#    for (t in 1:nRyrs) {
+#      p[t,a] = g[t,a]/sum(g[t,1:A])
+#    }
+#   }
 
 # Process error  ===================
 # error is fixed in model right now so fix it here. 
-process_error_j <- matrix(nrow=K,ncol=1,rep(5, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
-process_error_sp <- matrix(nrow=K,ncol=1,rep(5, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-process_error_r <- matrix(nrow=K,ncol=1,rep(5, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_j <- matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
+process_error_sp <- matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_r <- matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
 
 # make pop model matricies and starting values ========= 
 kappa_j =  matrix(nrow=nByrs,ncol=K,NA)
@@ -141,35 +155,43 @@ kappa_marine =  matrix(nrow=nByrs,ncol=K,NA)
 
 N_j =  matrix(nrow=nByrs,ncol=K,NA)
 N_e_sum = matrix(nrow=nByrs,ncol=K,NA)
-N_recruit = matrix(nrow=nByrs,ncol=K,NA)
+
+N_recruit = matrix(nrow=nRyrs,ncol=K,NA)
 
 N_e = array(data = NA, dim = c(nRyrs, K,A))
 N_returning = array(data = NA, dim = c(nRyrs, K,A))
-
 N_sp = array(data = NA, dim = c(nRyrs, K,A))
 
 ## starting values ========
-mean.spawn <- exp(rep(c(rnorm(1,14,2), rnorm(1,14,2), rnorm(1,14,2), rnorm(1,14,2)), times=A))
-N_sp[1:A,1,] <- mean.spawn
-
-N_e[1,1,] = exp(rnorm(A,20,2))
+ 
 N_j[1,1] = exp(rnorm(1,20,2)) #mean(juv$abund)# rnorm(K,20,10) 
 N_recruit[1,1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
-N_returning[1:A,1,]  = rep(exp(rnorm(1,15,2))*pi, times =A)
+
+for(t in 1:8){
+  N_e[t,1,] = exp(rnorm(A,20,2))
+}
+
+for(t in 1:4){
+  
+  N_sp[t,1,]  = rep(exp(rnorm(1,14,2))*p, times =1)
+  N_returning[t,1,]  = rep(exp(rnorm(1,15,2))*p, times =1)
+}
+
 N_e_sum[1,1] = exp(rnorm(1,35,2))
 
 # productivity ============= 
 # p_1 =  matrix(nrow=nByrs,ncol=K,NA)
 # p_2 =  matrix(nrow=nByrs,ncol=K,NA)
-log_p_1 =  matrix(nrow=1,ncol=K,rnorm(1,-1.6, 0.5))
-log_p_2 =  matrix(nrow=1,ncol=K,rnorm(1,-0.9, 0.5))
+
+log_p_1 =  matrix(nrow=1,ncol=K,-0.5) #rnorm(1,-1, 0.5))
+log_p_2 =  matrix(nrow=1,ncol=K,0.02) #rnorm(1,-0.5, 0.5))
 
 p_1 = exp(log_p_1)
 p_2 = exp(log_p_2)
 
-catch_q = exp(rnorm(1,0,0.5))
+catch_q = 0.7 #exp(rnorm(1,0,0.5))
 
-# Use covariates - calc productivity in bev holt transition function =====
+# Use covariates - calculate productivity in bev holt transition function =====
 # lines below need to be edited if I use more stocks!! theta and cov 1 should be multipled and summed, can get away with just multiplying here because there is only 1 stock and 1 covar
 # save for when I try to run with covariates 
 
@@ -179,16 +201,17 @@ catch_q = exp(rnorm(1,0,0.5))
 # Harvest H_b ========== 
 # this is the harvest, going to do a percent of the population instead of whole numbers
 # simulating with dirichlet leads to age structure being the same across all ages at 0.25
+  ##H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)) # higher value for alpha is a more tightly clustered distribution 
 #H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)) # higher value for alpha is a more tightly clustered distribution 
-H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)) # higher value for alpha is a more tightly clustered distribution 
-#H_b  <-  array(data = rmultinom(n=nRyrs,size =500, prob = pi), 
+  ##H_b  <-  array(data = rmultinom(n=nRyrs,size =500, prob = pi), 
 #               dim = c(nRyrs, K, A))  
+ 
 
 # Run population model ============ 
    for(k in 1:K){  # loop for each population
      for (t in 2:nByrs){ # loop for each brood year 
          
-          kappa_j[t,k] =  p_1[1,k]/ (1+((p_1[1,k]*N_e_sum[t-1,k])/c_1[k,1])) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+         kappa_j[t,k] =  p_1[1,k]/ (1+((p_1[1,k]*N_e_sum[t-1,k])/c_1[k,1])) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
        
          #kappa_j[t,k] =  p_1[t,k]/ (1+((p_1[t,k]*N_e_sum[t-1,k])/c_1[k,1])) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
          
@@ -198,32 +221,50 @@ H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)
          #kappa_marine[t,k] =  p_2[t,k]/ (1 + ((p_2[t,k]*N_j[t,k])/c_2[k,1])) # Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
          N_recruit[t,k] = kappa_marine[t,k]*N_j[t,k] # Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
-  
+ 
          # switch to track on calendar years using t+A-a
          for (a in 1:A) { 
-           N_returning[t+A-a,k,a] = N_recruit[t,k]*p[t+A-a,a]  
+           N_returning[t+a+1,k,a] = N_recruit[t,k]*p[a] # fix age structure for now  
+          
+        #   N_returning[t+A-a,k,a] = N_recruit[t,k]*p[t+A-a,a]  
            
-           N_sp[t+A-a,k,a] = N_returning[t+A-a,k,a] #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay  
+           N_sp[t+a+1,k,a] = N_returning[t+a+1,k,a] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay  
          
-           N_e[t+A-a,k,a] = fs[a,1]*Ps*N_sp[t+A-a,k,a] #  generated estimate for the amount of eggs produced that year for that stock.
+           N_e[t+a+1,k,a] = fs[a,1]*Ps*N_sp[t+a+1,k,a] #  generated estimate for the amount of eggs produced that year for that stock.
          }
         # transition back to brood years - plug in ages manually
-         N_e_sum[t,k] = (N_e[t+A-1,k,1]+N_e[t+A-2,k,2]+N_e[t+A-3,k,3]+N_e[t+A-4,k,4])
+         N_e_sum[t,k] = N_e[t+1+1,k,1] + N_e[t+2+1,k,2]+N_e[t+3+1,k,3]+N_e[t+4+1,k,4]
+        # N_e_sum[t,k] = (N_e[t+A-1,k,1]+N_e[t+A-2,k,2]+N_e[t+A-3,k,3]+N_e[t+A-4,k,4])
      }
-   }
+   } 
 
-# calculate Obs Run Comp   
+# calculate Obs Run Comp  ============
 o_run_comp = array(data = NA, dim = c(nRyrs,  A))
- 
-for (t in 1:nRyrs) {
-  for (a in 1:A) {
-   o_run_comp[t,a] = N_returning[t,1 ,a]/sum(N_returning[t,1, 1:A])
-    }
+o_run_comp_sp= array(data = NA, dim = c(nRyrs,  A))
+for (a in 1:A) {
+  for (t in 1:nRyrs) {
+    
+    o_run_comp[t,a] = N_returning[t,1,a]/sum(N_returning[t,1, 1:A])
+    o_run_comp_sp[t,a] = N_sp[t,1,a]/sum(N_sp[t,1, 1:A])
   }
+}
+ #barplot(t(o_run_comp))
+ 
+# fill in the weird gaps
+for(t in 1:6){
+  for (a in 1:A) {
+  #N_recruit[t,1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
+  o_run_comp[t,a]  = p[[a]]
+  o_run_comp[(t+nByrs-1), a] = p[[a]]
+ # N_returning[t,1,]  = rep(exp(rnorm(1,15,2))*p, times =1)
+  }
+}
+ 
+# ggplot(data = o_run_comp) +
+#   geom_bar(aes(x=time, y=proportion, fill = age, group = age), stat = "identity")
+ 
+#colMeans(o_run_comp)
 
-o_run_comp[nByrs:nRyrs, 1:A] <-0 # filling in NA's,they get skipped in likelihood anyway. 
-
-# colMeans(o_run_comp)
 # colMeans(p)
 # Fix ESS ============= 
 # var_age <- mean(c(var(o_run_comp[1:nByrs,1]),
@@ -250,16 +291,19 @@ N_returning_sim_s <-  array(data = NA, dim = c(nRyrs, K))
 
 # N_return and obs age comp ============
 N_returning[is.na(N_returning)] <- 0
+
  # sum together for observation model
 N_returning_sim[1:nRyrs,1]<- N_returning[1:nRyrs,1,1] + N_returning[1:nRyrs,1,2] +
                                N_returning[1:nRyrs,1,3] + N_returning[1:nRyrs,1,4]
-N_sp[is.na(N_sp)] <- 0
-N_sp_sim[1:nRyrs,1]<- N_sp[1:nRyrs,1,1] + N_sp[1:nRyrs,1,2] + N_sp[1:nRyrs,1,3] +N_sp[1:nRyrs,1,4]
 
+N_sp[is.na(N_sp)] <- 0
+N_sp_sim[1:nRyrs,1]<- N_sp[1:nRyrs,1,1] + N_sp[1:nRyrs,1,2] +
+N_sp[1:nRyrs,1,3]+N_sp[1:nRyrs,1,4]
+ 
 for (k in 1:K) {
-    N_j_sim_hat[,k] = rlnorm(nByrs, log(N_j[2:nByrs,k]), process_error_j[1,1])
-    N_returning_sim_s[,k] = rlnorm(nRyrs, log(N_returning_sim[2:nRyrs,k]), process_error_r[1,1])
-    N_sp_sim_s[,k] = rlnorm(nRyrs, log(N_sp_sim[2:nRyrs,k]), process_error_sp[1,1])
+    N_j_sim_hat[,k] = exp(rnorm(nByrs, log(N_j[2:nByrs,k]), process_error_j[1,1]))
+    N_returning_sim_s[,k] = exp(rnorm(nRyrs, log(N_returning_sim[2:nRyrs,k]), process_error_r[1,1]))
+    N_sp_sim_s[,k] = exp(rnorm(nRyrs, log(N_sp_sim[2:nRyrs,k]+1), process_error_sp[1,1]))
 }
 
 # translate pop model to observations using the catch Q
@@ -271,28 +315,31 @@ N_j_sim_observed = N_j_sim_hat*catch_q
   log_N_e_sum_start = matrix(nrow=1,ncol=K,NA)
   log_N_recruit_start = matrix(nrow=1,ncol=K,NA)
   
-  log_N_egg_start = array(data = NA, dim = c(A, K,A))
-  log_N_returning_start = array(data = NA, dim = c(A, K,A))
-  log_N_sp_start = array(data = NA, dim = c(A, K,A))
+  log_N_egg_start = array(data = NA, dim = c(t_start, K,A))
+  log_N_returning_start = array(data = NA, dim = c(t_start, K,A))
+  log_N_sp_start = array(data = NA, dim = c(t_start, K,A))
  
   for(k in 1:K) { 
     log_N_j_start[k,1] = rnorm(1,20,2)
     log_N_recruit_start[k,1] = rnorm(1,14,2)
     log_N_e_sum_start[k,1] = rnorm(1,35,2)
-    for(t in 1:4){
-      for(a in 1:A){ 
+    for(a in 1:A){
+        for(t in 1:t_start){
         log_N_egg_start[t,k,a] = rnorm(1,30,2)
         log_N_sp_start[t,k,a] = rnorm(1,14,2)
         log_N_returning_start[t,k,a] = rnorm(1,14,2)
     } 
    }
-  }
+  } 
 
-  ## assign data list ==========
+    # barplot(t(log(N_returning_sim_s)))
+    #barplot(t((N_j_sim_observed)))
+    ## assign data list ==========
 data_list <- list(nByrs=nByrs,
                   nRyrs=nRyrs,
                   A=A,
                   K=K, 
+                  t_start = t_start,
                   Ps=Ps,
                   fs=fs,
                   data_stage_j = N_j_sim_observed, # after translated from "simulation" to "basis index observed" using Q multiplier. 
@@ -304,7 +351,7 @@ data_list <- list(nByrs=nByrs,
                   log_N_egg_start=log_N_egg_start,
                   log_N_sp_start=log_N_sp_start,
                   log_N_returning_start=log_N_returning_start,
-                  
+                  catch_q = log(catch_q),
                   sigma_y_j=process_error_j,
                   sigma_y_r=process_error_r,
                   sigma_y_sp=process_error_sp,
@@ -322,7 +369,7 @@ data_list <- list(nByrs=nByrs,
                   sigma_coef2=sigma_coef2,
                   basal_p_1=basal_p_1,
                   basal_p_2=basal_p_2,
-                  H_b=H_b,
+                  #H_b=H_b,
                   #prob=prob,
                   pi=pi,
                   c_1=c_1,
@@ -356,12 +403,12 @@ data_list <- list(nByrs=nByrs,
   # init_ll <- lapply(1:n_chains, function(id) init_fn(chain_id = id))
 # call mod  ===========================
 bh_fit <- stan(
-  file = here::here("scripts", "stan_mod_BH_SIM.stan"), #differnt than data model so I can move priors around 
+  file = here::here("scripts", "stan_mod_BH_SIM.stan"), #different than data model so I can move priors around 
   data = data_list,
   chains = n_chains,
   warmup = warmups,
   iter = total_iterations,
-  cores = n_cores) #init=init_ll)
+  cores = n_cores) # init=init_ll)
 
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
 
