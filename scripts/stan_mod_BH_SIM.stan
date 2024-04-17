@@ -247,7 +247,7 @@ catch_q[K,1] = exp(log_catch_q[K,1]); // Q to relate basis data to recruit/escap
  
 for(k in 1:K){  // loop for each population
   for (t in 2:nByrs){  
-   
+
     kappa_j[t,k] =  p_1[k]/ (1 + ((p_1[k]*N_e_sum[t-1,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
     
     //kappa_j[t,k] =  p_1[t,k]/ (1 + ((p_1[t,k]*N_e_sum[t-1,k])/c_1[k])); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
@@ -260,21 +260,24 @@ for(k in 1:K){  // loop for each population
    
     N_recruit[t,k] = kappa_marine[t,k]*N_j[t,k]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
  
-  //add in age for stage where I am tracking age class.... 
-   // swtich to calendar years using t+A-a
+   // add in age for stage where I am tracking age class.... 
+   // swtich to calendar years using t+a+1
       for (a in 1:A) { 
-     N_returning[t+a+1,k,a] = N_recruit[t,k]*p[a]; // try simulation with p fixed
-    // N_returning[t+A-a,k,a] = N_recruit[t,k]*p[t+A-a,a]; // multiply recruits by Q to change scale, then distribute across age classes, p which is age comps. 
+     N_returning[t+a,k,a] = N_recruit[t,k]*p[a]; 
+     
+     // N_returning[t+A-a,k,a] = N_recruit[t,k]*p[t+A-a,a]; // multiply recruits by Q to change scale, then distribute across age classes, p which is age comps. 
 
-    // estimate harvest -- for later, for now H_b is not estimated as I try to get model to work.
-    // N_sp[t+A-a,k,a] = (1-exp(-log_fm[i]))*N_returning[t+A-a,k,a];  // instantaneous fishing mortality * returning fish yields spawners. 
+     // estimate harvest -- for later, for now H_b is not estimated as I try to get model to work.
+     // N_sp[t+A-a,k,a] = (1-exp(-log_fm[i]))*N_returning[t+A-a,k,a];  // instantaneous fishing mortality * returning fish yields spawners. 
   
-     N_sp[t+a+1,k,a] = N_returning[t+a+1,k,a];//-100;//*(1-H_b[t+A-a,k,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
+     N_sp[t+a,k,a] = N_returning[t+a,k,a];//-100;//*(1-H_b[t+A-a,k,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
     
-     N_e[t+a+1,k,a] = fs[a,1]*Ps*N_sp[t+a+1,k,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+     N_e[t+a,k,a] = fs[a,1]*Ps*N_sp[t+a,k,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
       }
+      
+      N_e_sum[t,k] = sum(N_e[t,k,1:A]);
       // transition back to brood years - plug in ages manually
-    N_e_sum[t,k] = (N_e[t+1+1,k,1]+N_e[t+2+1,k,2]+N_e[t+3+1,k,3]+N_e[t+4+1,k,4]);
+    // N_e_sum[t,k] = (N_e[t+1+1,k,1]+N_e[t+2+1,k,2]+N_e[t+3+1,k,3]+N_e[t+4+1,k,4]);
     
    }
  }
@@ -285,14 +288,14 @@ for(k in 1:K){  // loop for each population
      for (t in 1:nRyrs) {
       if(t< nByrs+1){
       // q[t,k,a] = N_returning[t,k,a]/(sum(N_returning[t,k,1:A]));
-      q[t,a] = N_returning[t,1,a]/(sum(N_returning[t,1,1:A]));
+      q[t,a] = N_returning[t,1,a]/sum(N_returning[t,1,1:A]);
       }
     }
   }
+  
 //      for (t in 1:nRyrs) {
-// // sum for liklihood to make sure they sum correctly 
-// N_returning_sum[t,1] = N_returning[t,1,1] + N_returning[t,1,2] + 
-// N_returning[t,1,3] + N_returning[t,1,4];
+// // sum for liklihood to make sure they sum correctly
+// N_returning_sum[t,1] = N_returning[t,1,1] + N_returning[t,1,2] + N_returning[t,1,3] + N_returning[t,1,4];
 // //N_sp_sum
 // }
 
@@ -303,7 +306,7 @@ for(t in 1:nByrs){
   }
  }
  
-}// close block
+} // close block
 
 model {
   // starting values for the population model 
@@ -313,7 +316,7 @@ for(k in 1:K) {
    // sigma_y_sp[k] ~ normal(0,10);
    
    // Start priors for model parameters 
-    log_catch_q[k,1] ~ normal(0,2); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q[k,1] ~ normal(-0.35,0.5); // Estimate Q - this will translate # of recruits to # of spawners 
 
     log_c_1[k,1] ~  normal(18.4, 5); // carrying capacity prior - stage 1  
     log_c_2[k,1] ~  normal(15, 5); // carrying capacity prior - stage 2
@@ -327,9 +330,8 @@ for(k in 1:K) {
   
 // liklihood for age comp 
     for (a in 1:A) {
-     
-     g[a] ~ gamma(Dir_alpha[a],1);
-    // target += gamma_lpdf(g[a]|Dir_alpha[a],1);
+    // g[a] ~ gamma(Dir_alpha[a],1);
+   target += gamma_lpdf(g[a]|Dir_alpha[a],1);
 
   }
   //   for (a in 1:A) {
@@ -370,12 +372,13 @@ for(k in 1:K) {
  
   
 // printing these for trouble shooting 
- //print("N_returning_sum: ", N_returning_sum)
+// print("N_returning_sum: ", N_returning_sum)
  print("N_returning: ", N_returning)
  print("N_sp: ", N_sp)
- print("g: ", g)
+ //print("g: ", g)
  print("p: ", p)
- // print("Dir_alpha: ",  Dir_alpha)    
+ print("q: ", q)
+ // prin("Dir_alpha: ",  Dir_alpha)    
  
  
 // Liklilihoods --  
@@ -388,24 +391,18 @@ for(k in 1:K) {
   }
   
   for(k in 1:K){ // stocks 
-  for(t in 1:nRyrs){ // calendar years 
-  // Currently ESS is fixed. 
+  for(t in 8:nRyrs){ // calendar years 
+  // Currently ESS is fixed through time. 
       if(t<nByrs+1){
- //    obs_run_comp~ multinomial(ess_age_comp,q)
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A].*log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
+ 
+      // log(data_stage_return[t,k]) ~ normal(log(N_returning_sum[t,k]), sigma_y_r[1,k]);
+      // log(data_stage_sp[t,k]) ~ normal(log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
 
-    // log(data_stage_return[t,k]) ~ normal(log(N_returning_sum[t,k]), sigma_y_r[1,k]);
-     //log(data_stage_sp[t,k]) ~ normal(log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
-     
-     // trying summing a different way
-     (data_stage_return[t,k]) ~ normal((sum(N_returning[t,k,1:A])), sigma_y_r[1,k]);
-     (data_stage_sp[t,k]) ~ normal((sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
-     
      // log(data_stage_return[t,k]) ~ normal(log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]);
      // log(data_stage_sp[t,k]) ~ normal(log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
-     //  
-    // target += normal_lpdf(log(data_stage_sp[t,k]) | log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
-    // target += normal_lpdf(log(data_stage_return[t,k]) | log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_return[t,k]) | log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_sp[t,k]) | log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
     }
    }
   }

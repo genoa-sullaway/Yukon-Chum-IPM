@@ -80,6 +80,9 @@ bh_summary_q %>%
 remove_bracket <- function(lst) {
   sapply(lst, function(x) gsub("\\[", "", x))
 }
+remove_comma <- function(lst) {
+  sapply(lst, function(x) gsub("\\,", "", x))
+}
  
 # n returning =====
 # load n_returning from output and calculate proportions to see if the age structure is the same there.... 
@@ -87,7 +90,7 @@ proportion_q<- bh_summary %>%
   filter(grepl("N_returning",variable_mod),
          !grepl("start",variable_mod)) %>%
   separate(variable_mod, into = c("variable", "time", "del", "age", "del1"), sep =c(11,-5,-2,-1))  %>%
-  dplyr::mutate(time = remove_bracket(time)) %>%
+  dplyr::mutate(time = remove_bracket(time) ) %>%
   as.data.frame() %>% 
   dplyr::select(-del, -del1) %>%
   filter(!is.nan(mean)) %>% 
@@ -100,7 +103,7 @@ proportion_q<- bh_summary %>%
 ggplot(data = proportion_q) +
   geom_bar(aes(x=time, y=proportion, 
                fill = age, group = age), stat = "identity")
-p
+
 proportion_q_time <- proportion_q %>%
   ungroup() %>%
   group_by(age) %>%
@@ -111,6 +114,68 @@ proportion_q_time %>%
   ggplot() +  
   geom_point(aes(age, mean_prop), color = "red" )  +
   scale_y_continuous(limits = c(0,1))
+
+
+# n sp =====
+# load n_returning from output and calculate proportions to see if the age structure is the same there.... 
+proportion_nsp<- bh_summary %>% 
+  filter(grepl("N_sp",variable_mod),
+         !grepl("start",variable_mod)) %>%
+  separate(variable_mod, into = c("variable", "time", "del", "age", "del1"), sep =c(4,7,-2,-1))  %>%
+  dplyr::mutate(time = remove_bracket(time),
+                time = remove_comma(time)) %>%
+  as.data.frame() %>% 
+  dplyr::select(-del, -del1) %>%
+  filter(!is.nan(mean)) %>% 
+  group_by(time) %>%
+  dplyr::mutate(sum = sum(mean),
+                proportion = mean/sum)  %>%
+  select(time,age,proportion) %>%
+  mutate(time = as.numeric(time))
+
+ggplot(data = proportion_nsp) +
+  geom_bar(aes(x=time, y=proportion, 
+               fill = age, group = age), stat = "identity")
+ 
+
+# n eggs =====
+# load n_returning from output and calculate proportions to see if the age structure is the same there.... 
+proportion_n_e<- bh_summary %>% 
+  filter(grepl("N_e",variable_mod),
+         !grepl("sum",variable_mod),
+         !grepl("start",variable_mod)) %>%
+  separate(variable_mod, into = c("variable", "time", "del", "age", "del1"), sep =c(3,6,-2,-1))  %>%
+  dplyr::mutate(time = remove_bracket(time),
+                time = remove_comma(time)) %>%
+  as.data.frame() %>% 
+  dplyr::select(-del, -del1) %>%
+  filter(!is.nan(mean)) %>% 
+  group_by(time) %>%
+  dplyr::mutate(sum = sum(mean),
+                proportion = mean/sum)  %>%
+  select(time,age,proportion) %>%
+  mutate(time = as.numeric(time))
+
+ggplot(data = proportion_n_e) +
+  geom_bar(aes(x=time, y=proportion, 
+               fill = age, group = age), stat = "identity") +
+  ggtitle("N_e")
+
+# n recruit =====
+n_recruit<- bh_summary %>% 
+  filter(grepl("N_recruit",variable_mod),
+         !grepl("sum",variable_mod),
+         !grepl("start",variable_mod)) %>%
+  separate(variable_mod, into = c("variable","del1", "time", "del"), sep =c(9,10,-2,-1))  %>%
+  dplyr::mutate(#time = remove_bracket(time),
+                time = as.numeric(remove_comma(time))) %>%
+  as.data.frame() %>% 
+  dplyr::select(-del, -del1) %>%
+  filter(!is.nan(mean)) 
+
+ggplot(data = n_recruit) +
+  geom_point(aes(x=time, y = mean)) +
+  geom_errorbar(aes(x=time, ymin = `2.5%`, ymax=`97.5%`))
 
 # G ============
 # gamma variates used in age structure 
@@ -213,7 +278,7 @@ bh_summary_alpha %>%
 
 obs_p <- as.data.frame(data_list$p)  
 
-bh_summary_g <- bh_summary %>% 
+bh_summary_p <- bh_summary %>% 
   slice(6:9) %>%
   separate(variable_mod, into = c("variable", "del"), sep =c(-3)) %>%
   dplyr::select(-del) %>%
