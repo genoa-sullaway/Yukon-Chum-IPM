@@ -76,6 +76,21 @@ bh_summary_q %>%
   labs(caption = "Red is observed, black is model output") + 
   ggtitle("Q")
 
+# through time 
+bh_q <- bh_summary %>% 
+  filter(grepl("q",variable_mod)) %>%
+  slice(-c(1:2)) %>% 
+  separate(variable_mod, into = c("variable", "time", "del","age"), sep =c(-5,-3,-2,-1)) %>%
+  dplyr::select(-del,-variable) %>%
+  dplyr::mutate(variable = mean, #variable = (gsub("\\[", "", variable)),
+                id = "mod",
+                time = as.numeric((gsub("\\[", "", time)))) %>%
+  dplyr::select(time, age, variable) %>%
+  spread(age, variable)
+
+ 
+barplot(t(bh_q[,2:5]))
+
 # Function to remove '[' character
 remove_bracket <- function(lst) {
   sapply(lst, function(x) gsub("\\[", "", x))
@@ -89,10 +104,11 @@ remove_comma <- function(lst) {
 proportion_q<- bh_summary %>% 
   filter(grepl("N_returning",variable_mod),
          !grepl("start",variable_mod)) %>%
-  separate(variable_mod, into = c("variable", "time", "del", "age", "del1"), sep =c(11,-5,-2,-1))  %>%
-  dplyr::mutate(time = remove_bracket(time) ) %>%
+  separate(variable_mod, into = c("variable", "time", "age", "del" ), sep =c(11,-4,-2))  %>%
+  dplyr::mutate(time = remove_comma(remove_bracket(time)),
+                age=remove_comma(age)) %>%
   as.data.frame() %>% 
-  dplyr::select(-del, -del1) %>%
+  dplyr::select(-del) %>%
   filter(!is.nan(mean)) %>% 
   group_by(time) %>%
   dplyr::mutate(sum = sum(mean),
@@ -121,11 +137,11 @@ proportion_q_time %>%
 proportion_nsp<- bh_summary %>% 
   filter(grepl("N_sp",variable_mod),
          !grepl("start",variable_mod)) %>%
-  separate(variable_mod, into = c("variable", "time", "del", "age", "del1"), sep =c(4,7,-2,-1))  %>%
-  dplyr::mutate(time = remove_bracket(time),
-                time = remove_comma(time)) %>%
+  separate(variable_mod, into = c("variable", "time", "age", "del" ), sep =c(4,-4,-2))  %>%
+  dplyr::mutate(time = remove_comma(remove_bracket(time)),
+                age=remove_comma(age)) %>%
   as.data.frame() %>% 
-  dplyr::select(-del, -del1) %>%
+  dplyr::select(-del ) %>%
   filter(!is.nan(mean)) %>% 
   group_by(time) %>%
   dplyr::mutate(sum = sum(mean),
@@ -144,11 +160,11 @@ proportion_n_e<- bh_summary %>%
   filter(grepl("N_e",variable_mod),
          !grepl("sum",variable_mod),
          !grepl("start",variable_mod)) %>%
-  separate(variable_mod, into = c("variable", "time", "del", "age", "del1"), sep =c(3,6,-2,-1))  %>%
-  dplyr::mutate(time = remove_bracket(time),
-                time = remove_comma(time)) %>%
+  separate(variable_mod, into = c("variable", "time", "age", "del1"), sep =c(3,6,-3))  %>%
+  dplyr::mutate(time = remove_comma(remove_bracket(time)),
+                age = remove_comma(age)) %>%
   as.data.frame() %>% 
-  dplyr::select(-del, -del1) %>%
+  dplyr::select( -del1) %>%
   filter(!is.nan(mean)) %>% 
   group_by(time) %>%
   dplyr::mutate(sum = sum(mean),
@@ -279,24 +295,19 @@ bh_summary_alpha %>%
 obs_p <- as.data.frame(data_list$p)  
 
 bh_summary_p <- bh_summary %>% 
-  slice(6:9) %>%
-  separate(variable_mod, into = c("variable", "del"), sep =c(-3)) %>%
-  dplyr::select(-del) %>%
-  dplyr::mutate(mean_mod =  mean,
-                age = 1:nrow(.)) %>%
-  dplyr::select(1,5,9,12,13) %>%
-  cbind(obs_g) %>%
-  rename(obs_g= `data_list$g`,
-         lower= `2.5%`,
-         upper = `97.5%`) 
+  filter(variable_mod %in% c( "p[1]","p[2]","p[3]","p[4]" )) %>% 
+  cbind(obs_p) %>%
+  #slice(6:9) %>%
+  #separate(variable_mod, into = c("variable", "del"), sep =c(-3)) %>%
+  dplyr::select(1,2,5,9,12) 
 
-bh_summary_g %>% 
+bh_summary_p %>% 
   ggplot() + 
-  geom_linerange(aes(age, ymin = lower,ymax = upper)) + 
-  geom_point(aes(age, mean_mod ), fill= 'grey') + 
-  geom_point(aes(age, obs_g), color = "red" ) +  
+  geom_linerange(aes(variable_mod, ymin = `2.5%`,ymax = `97.5%`)) + 
+  geom_point(aes(variable_mod, mean), fill= 'grey') + 
+  geom_point(aes(variable_mod, `data_list$p`), color = "red", alpha = 0.5 ) +  
   labs(caption = "Red is observed, black is model output") + 
-  ggtitle("G")
+  ggtitle("P")
 
 # 
 # obs_p <- as.data.frame(data_list$p) %>% 
