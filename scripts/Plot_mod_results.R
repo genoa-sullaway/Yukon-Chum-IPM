@@ -20,12 +20,13 @@ bh_summary <- summary(bh_fit)$summary %>%
 # parameters  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 params<-bh_summary %>% 
-  slice(1:4,10) %>% 
-  separate(variable_mod, into=c("param", "delete"), sep = -5) %>%
-  dplyr::select(-delete) %>%
-  rbind(bh_summary %>% 
-          slice(5) %>% rename(param = "variable_mod")) %>%
-  dplyr::mutate(mean_mod=mean) %>%
+  slice(1:5,10) %>% 
+  # separate(variable_mod, into=c("param", "delete"), sep = -5) %>%
+  # dplyr::select(-delete) %>%
+  # rbind(bh_summary %>% 
+  #         slice(5) %>% rename(param = "variable_mod")) %>%
+  dplyr::mutate(mean_mod=mean,
+                param = variable_mod) %>%
   dplyr::select(param, mean_mod,`2.5%`,`25%`,`75%`,`97.5%`)
 
  dat<-data.frame(log_c_1 = data_list$log_c_1,
@@ -88,27 +89,29 @@ bh_q <- bh_summary %>%
   dplyr::select(time, age, variable) %>%
   spread(age, variable)
 
- 
 barplot(t(bh_q[,2:5]))
 
 # Function to remove '[' character
 remove_bracket <- function(lst) {
   sapply(lst, function(x) gsub("\\[", "", x))
 }
+remove_bracket2 <- function(lst) {
+  sapply(lst, function(x) gsub("\\]", "", x))
+}
 remove_comma <- function(lst) {
   sapply(lst, function(x) gsub("\\,", "", x))
 }
  
-# n returning =====
+# n returning prop =====
 # load n_returning from output and calculate proportions to see if the age structure is the same there.... 
 proportion_q<- bh_summary %>% 
   filter(grepl("N_returning",variable_mod),
          !grepl("start",variable_mod)) %>%
-  separate(variable_mod, into = c("variable", "time", "age", "del" ), sep =c(11,-4,-2))  %>%
+  separate(variable_mod, into = c("variable", "time", "age" ), sep =c(11,-2))  %>%
   dplyr::mutate(time = remove_comma(remove_bracket(time)),
-                age=remove_comma(age)) %>%
+                age=remove_comma(remove_bracket2(age))) %>%
   as.data.frame() %>% 
-  dplyr::select(-del) %>%
+ # dplyr::select(-del) %>%
   filter(!is.nan(mean)) %>% 
   group_by(time) %>%
   dplyr::mutate(sum = sum(mean),
@@ -129,19 +132,38 @@ proportion_q_time <- proportion_q %>%
 proportion_q_time %>% 
   ggplot() +  
   geom_point(aes(age, mean_prop), color = "red" )  +
-  scale_y_continuous(limits = c(0,1))
+  scale_y_continuous(limits = c(0,1)) 
 
+# n returning abundance =====
+# load n_returning from output and calculate proportions to see if the age structure is the same there.... 
+abund_return<- bh_summary %>% 
+  filter(grepl("N_returning",variable_mod),
+         !grepl("start",variable_mod)) %>%
+  separate(variable_mod, into = c("variable", "time", "age" ), sep =c(11,-2))  %>%
+  dplyr::mutate(time = remove_comma(remove_bracket(time)),
+                age=remove_comma(remove_bracket2(age))) %>%
+  as.data.frame() %>% 
+  # dplyr::select(-del) %>%
+  filter(!is.nan(mean)) %>% 
+  group_by(time) %>%
+  select(time,age,mean) %>%
+  mutate(time = as.numeric(time))%>% 
+  filter(!time<10)
 
+ggplot(data = abund_return) +
+  geom_bar(aes(x=time, y=mean, 
+               fill = age, group = age), stat = "identity", position = "stack")
+ 
 # n sp =====
 # load n_returning from output and calculate proportions to see if the age structure is the same there.... 
 proportion_nsp<- bh_summary %>% 
   filter(grepl("N_sp",variable_mod),
          !grepl("start",variable_mod)) %>%
-  separate(variable_mod, into = c("variable", "time", "age", "del" ), sep =c(4,-4,-2))  %>%
+  separate(variable_mod, into = c("variable", "time", "age"), sep =c(4,-2))  %>%
   dplyr::mutate(time = remove_comma(remove_bracket(time)),
-                age=remove_comma(age)) %>%
+                age=remove_comma(remove_bracket2(age))) %>%
   as.data.frame() %>% 
-  dplyr::select(-del ) %>%
+  #dplyr::select(-del ) %>%
   filter(!is.nan(mean)) %>% 
   group_by(time) %>%
   dplyr::mutate(sum = sum(mean),
@@ -160,11 +182,11 @@ proportion_n_e<- bh_summary %>%
   filter(grepl("N_e",variable_mod),
          !grepl("sum",variable_mod),
          !grepl("start",variable_mod)) %>%
-  separate(variable_mod, into = c("variable", "time", "age", "del1"), sep =c(3,6,-3))  %>%
+  separate(variable_mod, into = c("variable", "time", "age"), sep =c(3,6,-1))  %>%
   dplyr::mutate(time = remove_comma(remove_bracket(time)),
-                age = remove_comma(age)) %>%
+                age = remove_comma(remove_bracket2(age))) %>%
   as.data.frame() %>% 
-  dplyr::select( -del1) %>%
+ # dplyr::select( -del1) %>%
   filter(!is.nan(mean)) %>% 
   group_by(time) %>%
   dplyr::mutate(sum = sum(mean),
@@ -340,8 +362,8 @@ bh_summary_p %>%
 
 # D_scale ============
 d_scale <- as.data.frame(data_list$D_scale) %>% 
-  cbind(params %>% filter(variable_mod == "D_scale") %>%
-          dplyr::select(variable_mod, mean, se_mean)) %>% 
+  cbind(params %>% filter(param == "D_scale") %>%
+          dplyr::select(param, mean_mod)) %>% 
   rename(d_scale_obs=`data_list$D_scale`) %>%
   select(-2) %>%
   gather(1:2, key = "param", value ="value") %>%
