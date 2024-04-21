@@ -11,6 +11,9 @@ library(Rlab)
 # translate simulated data_list to actual observations 
 bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT.RDS")
 
+test<-as.data.frame(extract(bh_fit)) %>%
+  gather(1:ncol(.), key = "variable", value = "value")
+
 bh_summary <- summary(bh_fit)$summary %>% 
   as.data.frame( ) %>% 
   mutate(variable_mod = (names(bh_fit))) %>% 
