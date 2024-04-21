@@ -151,11 +151,11 @@ kappa_marine = vector( )
 
 N_j =  vector() # matrix(nrow=nByrs,ncol=K,NA)
 N_e_sum =  vector() #= matrix(nrow=nByrs,ncol=K,NA)
-N_e  = matrix(NA, nrow = A,ncol=nByrs)
+N_e  = matrix(NA, nrow = nByrs,ncol=A)
 N_recruit =  vector() #= matrix(nrow=nRyrs,ncol=K,NA)
-N_returning = matrix(NA, nrow = A,ncol=nByrs)
-N_returning_test = matrix(NA, nrow = A,ncol=nByrs)
-N_sp = matrix(NA, nrow = A,ncol=nByrs)
+N_returning = matrix(NA, nrow = nByrs,ncol=A)
+N_returning_test = matrix(NA, nrow = nByrs,ncol=A)
+N_sp = matrix(NA, nrow = nByrs,ncol=A)
 
 ## starting values ========
  
@@ -221,10 +221,10 @@ log_catch_q= log(catch_q)
          N_recruit[t] = kappa_marine[t]*N_j[t] # Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
  
          for (a in 1:A) { 
-           N_returning[a,t] = N_recruit[t]*p[a] # fix age structure for now
+           N_returning[t,a] = N_recruit[t]*p[a] # fix age structure for now
           # N_sp[t,a] = N_returning[t,a] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay
              
-           N_e[a,t] = fs[a]*Ps*N_returning[a,t] #  generated estimate for the amount of eggs produced that year for that stock.
+           N_e[t,a] = fs[a]*Ps*N_returning[t,a] #  generated estimate for the amount of eggs produced that year for that stock.
            
            # N_sp[t+a,a,k] = N_returning[t,a,k] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay
            # 
@@ -232,20 +232,21 @@ log_catch_q= log(catch_q)
          
            }
         # transition back to brood years - plug in ages manually
-         N_e_sum[t] = sum(N_e[1:A,t]) #N_e[t+1,k,1] + N_e[t+2,k,2]+N_e[t+3,k,3]+N_e[t+4,k,4]
+         N_e_sum[t] = sum(N_e[t,1:A]) #N_e[t+1,k,1] + N_e[t+2,k,2]+N_e[t+3,k,3]+N_e[t+4,k,4]
    #  }
    } 
 
  
-barplot(N_returning[,1:nByrs])
+barplot(N_returning[1:nByrs,])
+
 p
 # calculate Obs Run Comp  ============
-o_run_comp = array(data = NA, dim = c(A,nByrs))
-o_run_comp_sp= array(data = NA, dim = c(A,nByrs))
-for (a in 1:A) {
+o_run_comp = array(data = NA, dim = c(nByrs,A))
+o_run_comp_sp= array(data = NA, dim = c(nByrs,A))
   for (t in 1:nByrs) {
-    if(t< nByrs+1){
-    o_run_comp[a,t] = N_returning[a,t]/sum(N_returning[1:A,t])
+    for (a in 1:A) {
+        if(t< nByrs+1){
+    o_run_comp[t,a] = N_returning[t,a]/sum(N_returning[t,1:A])
     #o_run_comp_sp[t,a] = N_sp[t,a]/sum(N_sp[t,1:A])
     }
   }
@@ -255,8 +256,8 @@ for (a in 1:A) {
 for(t in 1:6){
   for (a in 1:A) {
   #N_recruit[t,1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
-  o_run_comp[a,t]  = p[[a]]
-  o_run_comp[ a,(t+nByrs-1)] = p[[a]]
+  o_run_comp[t,a]  = p[[a]]
+  o_run_comp[(t+nByrs-1),a] = p[[a]]
  # N_returning[t,1,]  = rep(exp(rnorm(1,15,2))*p, times =1)
   }
 }
@@ -300,11 +301,11 @@ N_returning_sim_s <-  vector() #array(data = NA, dim = c(nRyrs, K))
 N_returning[is.na(N_returning)] <- 0
 
  # sum together for observation model
-N_returning_sim[1:nByrs]<- N_returning[1,1:nByrs] + N_returning[2,1:nByrs] +
-                               N_returning[3,1:nByrs] + N_returning[4,1:nByrs]
+N_returning_sim[1:nByrs]<- N_returning[1:nByrs,1] + N_returning[1:nByrs,2] +
+                               N_returning[1:nByrs,3] + N_returning[1:nByrs,4]
 
 N_sp[is.na(N_sp)] <- 0
-N_sp_sim[1:nByrs]<- N_sp[1,1:nByrs] + N_sp[2,1:nByrs] + N_sp[3,1:nByrs]+N_sp[4,1:nByrs]
+N_sp_sim[1:nByrs]<- N_sp[1:nByrs,1] + N_sp[1:nByrs,2] + N_sp[1:nByrs,3]+N_sp[1:nByrs,4]
  
  
     N_j_sim_hat  = rlnorm(nByrs, log(N_j[2:nByrs]), process_error_j)
@@ -326,7 +327,7 @@ N_j_sim_observed = N_j_sim_hat*catch_q
   N_e_sum_start = as.vector(NA)
   N_recruit_start = as.vector(NA)
   
-  N_egg_start = matrix(NA,nrow=A, ncol=t_start)
+  N_egg_start = matrix(NA,nrow=t_start, ncol=A)
   N_returning_start = vector() # ages # array(data = NA, dim = c(1, A))
   N_sp_start = vector() # array(data = NA, dim = c(1, A,K))
  
@@ -338,7 +339,7 @@ N_j_sim_observed = N_j_sim_hat*catch_q
    N_returning_start =exp(rnorm(1,21,2))*p
    # for(a in 1:A){
         for(t in 1:t_start){
-         N_egg_start[,t] = exp(rnorm(1,40,2))*p
+         N_egg_start[t,] = exp(rnorm(1,40,2))*p
    # } 
         }
   

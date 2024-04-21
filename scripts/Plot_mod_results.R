@@ -11,8 +11,10 @@ library(Rlab)
 # translate simulated data_list to actual observations 
 bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT.RDS")
 
-test<-as.data.frame(extract(bh_fit)) %>%
-  gather(1:ncol(.), key = "variable", value = "value")
+test<-as.data.frame(extract(bh_fit)) 
+  
+#gather(1:ncol(.), key = "variable", value = "value")
+mu_tau_summary <- summary(bh_fit, pars = c("N_returning"), probs = c(0.1, 0.9))$summary
 
 bh_summary <- summary(bh_fit)$summary %>% 
   as.data.frame( ) %>% 
