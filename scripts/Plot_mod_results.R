@@ -105,6 +105,60 @@ ggplot(data = abund_return) +
   geom_bar(aes(x=time, y=mean, 
                fill = age, group = age), stat = "identity", position = "stack")
  
+# Plot N_sp proportions ====================
+# load n_returning from output and calculate proportions to see if the age structure is the same there.... 
+n_sp_summary <- summary(bh_fit, pars = c("N_sp"), probs = c(0.1, 0.9))$summary
+
+n_sp_prop<- n_sp_summary %>%
+  data.frame()%>%
+  rownames_to_column() %>% 
+  separate(rowname, into = c("variable", "time", "age" ), sep =c(4,-2))  %>%
+  dplyr::mutate(time = as.numeric(remove_comma(remove_bracket(time))),
+                age=as.numeric(remove_comma(remove_bracket2(age)))) %>%
+  as.data.frame() %>% 
+  # dplyr::select(-del) %>%
+  filter(!is.nan(mean)) %>% 
+  group_by(time) %>%
+  dplyr::mutate(sum = sum(mean),
+                proportion = mean/sum)  %>%
+  select(time,age,proportion)  
+
+ggplot(data = n_sp_prop) +
+  geom_bar(aes(x=time, y=proportion, 
+               fill = age, group = age), stat = "identity")
+
+obs_p <- as.data.frame(data_list$p)  
+
+n_sp_prop_mean <- n_sp_prop %>%
+  ungroup() %>%
+  group_by(age) %>%
+  dplyr::summarise(mean_prop = mean(proportion),
+                   sd = sd(proportion)) %>%
+  cbind(obs_p)
+
+n_sp_prop_mean %>% 
+  ggplot() +  
+  geom_point(aes(age, mean_prop), color = "red",alpha = 0.5 )  +
+  geom_point(aes(x=age, y = `data_list$p`), color = "black" ,alpha = 0.5) + 
+  scale_y_continuous(limits = c(0,1)) 
+
+# Plot N_sp abundances ====================
+abund_sp<-  n_sp_summary %>%
+  data.frame()%>%
+  rownames_to_column() %>% 
+  separate(rowname, into = c("variable", "time", "age" ), sep =c(4,-2))  %>%
+  dplyr::mutate(time = remove_comma(remove_bracket(time)),
+                age=remove_comma(remove_bracket2(age))) %>%
+  as.data.frame() %>%  
+  group_by(time) %>%
+  select(time,age,mean) %>%
+  mutate(time = as.numeric(time))%>% 
+  filter(!time<10)
+
+ggplot(data = abund_sp) +
+  geom_bar(aes(x=time, y=mean, 
+               fill = age, group = age), stat = "identity", position = "stack")
+
 
 
 

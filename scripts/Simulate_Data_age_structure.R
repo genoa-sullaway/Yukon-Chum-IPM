@@ -113,6 +113,7 @@ N_j =  vector() # matrix(nrow=nByrs,ncol=K,NA)
 N_e_sum =  vector() #= matrix(nrow=nByrs,ncol=K,NA)
 N_e  = matrix(NA, nrow = nRyrs,ncol=A)
 N_recruit =  vector() #= matrix(nrow=nRyrs,ncol=K,NA)
+N_ocean = matrix(NA, nrow = nRyrs,ncol=A)
 N_returning = matrix(NA, nrow = nRyrs,ncol=A)
 N_sp = matrix(NA, nrow = nRyrs,ncol=A)
 
@@ -122,6 +123,7 @@ N_j[1] = exp(rnorm(1,20,2)) #mean(juv$abund)# rnorm(K,20,10)
 N_recruit[1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
  
 for(t in 1:t_start){
+  N_ocean[t,] = exp(rnorm(1,19.5,2))*p
   N_returning[t,]= exp(rnorm(1,19,2))*p
   N_sp[t,] = exp(rnorm(1,18,2))*p
   N_e[t,] = exp(rnorm(1,20,2))*p
@@ -144,13 +146,16 @@ N_e_sum[1] = exp(rnorm(1,30,2))
 # p_1 =  matrix(nrow=nByrs,ncol=K,NA)
 # p_2 =  matrix(nrow=nByrs,ncol=K,NA)
 
-log_p_1 = -0.5 # matrix(nrow=1,ncol=K,-0.5) #rnorm(1,-1, 0.5))
-log_p_2 = 0.02 # matrix(nrow=1,ncol=K,0.02) #rnorm(1,-0.5, 0.5))
+# log_p_1 = -0.5 # matrix(nrow=1,ncol=K,-0.5) #rnorm(1,-1, 0.5))
+# log_p_2 = 0.02 # matrix(nrow=1,ncol=K,0.02) #rnorm(1,-0.5, 0.5))
 
-p_1 = exp(log_p_1)
-p_2 = exp(log_p_2)
+p_1 = basal_p_1 #exp(log_p_1)
+p_2 = basal_p_2 #exp(log_p_2)
 
-catch_q = 0.7 #exp(rnorm(1,0,0.5))
+log(p_1)
+log(p_2)
+
+catch_q = 1.3 #exp(rnorm(1,0,0.5))
 log_catch_q= log(catch_q)
 
 # Use covariates - calculate productivity in bev holt transition function =====
@@ -167,8 +172,11 @@ log_catch_q= log(catch_q)
 #H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)) # higher value for alpha is a more tightly clustered distribution 
   ##H_b  <-  array(data = rmultinom(n=nRyrs,size =500, prob = pi), 
 #               dim = c(nRyrs, K, A))  
- 
- 
+
+# age specific mortality =============== 
+M = c(0.1, 0.2, 0.3, 0.4)
+a=1
+t=2
 # POPULATION MODEL ============ 
   # for(k in 1:K){  # loop for each population
      for (t in 2:nByrs){ # loop for each brood year 
@@ -182,11 +190,12 @@ log_catch_q= log(catch_q)
          N_recruit[t] = kappa_marine[t]*N_j[t] # Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
  
          for (a in 1:A) { 
-           N_returning[t+a,a] = N_recruit[t]*p[a] # fix age structure for now
-          # N_sp[t,a] = N_returning[t,a] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay
-             
-          # N_e[t,a] = fs[a]*Ps*N_returning[t,a] #  generated estimate for the amount of eggs produced that year for that stock.
+           N_ocean[t+a,a] = N_recruit[t]*p[a] # fix age structure for now
            
+           # age-specific FIXED marine mortality - add a new stage, N_ocean
+           N_returning[t+a,a] = N_ocean[t+a,a]*exp(-M[a]) 
+           # N_returning[t+a,a] = N_recruit[t]*p[a] # fix age structure for now
+        
            N_sp[t+a,a] = N_returning[t+a,a] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay
            
            #N_sp[t+a,a,k] = N_returning[t,a,k] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay
@@ -218,29 +227,16 @@ o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
 # fill in the weird gaps
 for(t in 1:6){
   for (a in 1:A) {
-  #N_recruit[t,1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
   o_run_comp[t,a]  = p[[a]]
   o_run_comp[t+(nByrs-1),a] = p[[a]]
- # N_returning[t,1,]  = rep(exp(rnorm(1,15,2))*p, times =1)
   }
 }
 
- 
 barplot(t(o_run_comp))
 colMeans(o_run_comp)
 p
  
 # Fix ESS ============= 
-# var_age <- mean(c(var(o_run_comp[1:nByrs,1]),
-#                   var(o_run_comp[1:nByrs,2]),
-#                   var(o_run_comp[1:nByrs,3]),
-#                   var(o_run_comp[1:nByrs,4])))
-
-# nRyrs / (1 + var_age / nRyrs)
-# num = nRyrs / (1 + var_age / nRyrs)
-# ess_age_comp = rep(num, times = nRyrs)
-
-# try making this bigger 
 ess_age_comp = rep(300, times = nByrs)
 
 # PROCESS MODEL ============= 
@@ -262,21 +258,13 @@ N_returning_sim[1:nRyrs]<- N_returning[1:nRyrs,1] + N_returning[1:nRyrs,2] +
 N_sp[is.na(N_sp)] <- 0
 N_sp_sim[1:nRyrs]<- N_sp[1:nRyrs,1] + N_sp[1:nRyrs,2] + N_sp[1:nRyrs,3]+N_sp[1:nRyrs,4]
  
-    N_j_sim_observed=catch_q*N_j
-
-    N_j_sim_hat  = rlnorm(nByrs, log(N_j_sim_observed[2:nByrs]), process_error_j)
+    N_j_sim_hat  = rlnorm(nByrs, log(N_j[2:nByrs]), process_error_j)
     N_returning_sim_s  = rlnorm(nRyrs, log(N_returning_sim[2:nRyrs]), process_error_r)
     N_sp_sim_s  = rlnorm(nRyrs, log(N_sp_sim[2:nRyrs]), process_error_sp)
- 
-# 
-# hist(N_j_sim_hat)
-# hist(N_returning_sim_s)
-# hist(N_sp_sim_s)
-# plot(N_returning_sim_s)
-# translate pop model to observations using the catch Q
-# N_j_sim_observed = N_j_sim_hat*catch_q
-#  
-
+    
+    # incorporate Q, to connect different data sources in population model 
+    N_j_sim_observed=catch_q*N_j_sim_hat
+    
 # STAN STARTING VALUES ==========
   # same starting values used in simulation... 
   N_j_start =  as.vector(NA)
@@ -300,15 +288,14 @@ N_sp_sim[1:nRyrs]<- N_sp[1:nRyrs,1] + N_sp[1:nRyrs,2] + N_sp[1:nRyrs,3]+N_sp[1:n
          N_egg_start[t,] = exp(rnorm(1,40,2))*p
         }
 
-  ## assign data list ==========
-data_list <- list(nByrs=nByrs,
+  ## assign data list for PLOTTING ==========
+data_list_plot <- list(nByrs=nByrs,
                  nRyrs=nRyrs,
                   A=A,
-                #  K=K, 
                   t_start = t_start,
                   Ps=Ps,
                   fs=fs,
-                  data_stage_j = N_j_sim_hat, # after translated from "simulation" to "basis index observed" using Q multiplier. 
+                  data_stage_j = N_j_sim_observed, # after translated from "simulation" to "basis index observed" using Q multiplier. 
                   data_stage_return = N_returning_sim_s,
                   data_stage_sp = N_sp_sim_s,
                    N_j_start =  N_j_start,
@@ -317,26 +304,16 @@ data_list <- list(nByrs=nByrs,
                    N_egg_start= N_egg_start,
                    N_sp_start= N_sp_start,
                    N_returning_start= N_returning_start,
-                  catch_q = log(catch_q), # not a data input just for later
+                  catch_q = log_catch_q, # not a data input just for later
                   sigma_y_j=process_error_j,
                   sigma_y_r=process_error_r,
                   sigma_y_sp=process_error_sp,
                   kappa_marine_start = p_2,# matrix(p_2, nrow = 1, ncol = 1), #kappa_marine_start,
                   kappa_j_start = p_1,#matrix(p_1,nrow = 1, ncol = 1),
-                  # cov1 = cov1,
-                  # cov2 = cov2,
-                  # ncovars1 = 1,
-                  # ncovars2 = 1, 
-                  p_1=p_1,
-                  p_2=p_2,
+                  
                   log_p_1=log_p_1,
                   log_p_2=log_p_2,
-                  # sigma_coef1 = sigma_coef1,
-                  # sigma_coef2=sigma_coef2,
-                  basal_p_1=basal_p_1,
-                  basal_p_2=basal_p_2,
-                  #H_b=H_b,
-                  #prob=prob,
+                  M =M,
                   pi=pi,
                   c_1=c_1,
                   c_2=c_2,
@@ -348,29 +325,37 @@ data_list <- list(nByrs=nByrs,
                   g = g,
                   p=p,
                   Dir_alpha=Dir_alpha) 
- p
-# create initial values ===============
-  # 
-  # init_fn <- function(chain_id=1) {
-  #   list(
-  #     "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,18.4, 1)), 
-  #     "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,15, 1)),  
-  #     "log_p_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,-1.6, 0.5)), 
-  #     "log_p_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,-0.9, 0.5)),  
-  #     "log_catch_q" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0, 0.05)), 
-  #     "D_scale"= rbeta(1,1,1))
-  #     # "theta1" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0.1, 5)),
-  #     # "theta2" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, -0.2,10)),
-  #     # "g"= matrix(data=rep( c(rnorm(1,40,1), rnorm(1,80,1)) , nRyrs), 
-  #     #              nrow=nByrs, ncol=A, byrow=TRUE)
-  # }
-  # 
-  # # Initial List of Lists for Multiple Chains
-  # init_ll <- lapply(1:n_chains, function(id) init_fn(chain_id = id))
+
+ ## assign data list for STAN ==========
+ data_list_stan <- list(nByrs=nByrs,
+                   nRyrs=nRyrs,
+                   A=A,
+                   t_start = t_start,
+                   Ps=Ps,
+                   fs=fs,
+                   data_stage_j = N_j_sim_observed, # after translated from "simulation" to "basis index observed" using Q multiplier. 
+                   data_stage_return = N_returning_sim_s,
+                   data_stage_sp = N_sp_sim_s,
+                   N_j_start =  N_j_start,
+                   N_recruit_start = N_recruit_start,
+                   N_e_sum_start = N_e_sum_start,
+                   N_egg_start = N_egg_start,
+                   N_sp_start = N_sp_start,
+                   N_returning_start= N_returning_start,
+                   sigma_y_j=process_error_j,
+                   sigma_y_r=process_error_r,
+                   sigma_y_sp=process_error_sp,
+                   kappa_marine_start = p_2,
+                   kappa_j_start = p_1,
+                   pi=pi,
+                   M = M,
+                   o_run_comp=o_run_comp,
+                   ess_age_comp=ess_age_comp)
+
 # call mod  ===========================
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_SIM.stan"), #different than data model so I can move priors around 
-  data = data_list,
+  data = data_list_stan,
   chains = n_chains,
   warmup = warmups,
   iter = total_iterations,
@@ -378,3 +363,33 @@ bh_fit <- stan(
 
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
  
+
+# OLD ========
+# ESS ======= 
+# var_age <- mean(c(var(o_run_comp[1:nByrs,1]),
+#                   var(o_run_comp[1:nByrs,2]),
+#                   var(o_run_comp[1:nByrs,3]),
+#                   var(o_run_comp[1:nByrs,4])))
+
+# nRyrs / (1 + var_age / nRyrs)
+# num = nRyrs / (1 + var_age / nRyrs)
+# ess_age_comp = rep(num, times = nRyrs)
+
+# create initial values ===============
+# 
+# init_fn <- function(chain_id=1) {
+#   list(
+#     "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,18.4, 1)), 
+#     "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,15, 1)),  
+#     "log_p_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,-1.6, 0.5)), 
+#     "log_p_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,-0.9, 0.5)),  
+#     "log_catch_q" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0, 0.05)), 
+#     "D_scale"= rbeta(1,1,1))
+#     # "theta1" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0.1, 5)),
+#     # "theta2" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, -0.2,10)),
+#     # "g"= matrix(data=rep( c(rnorm(1,40,1), rnorm(1,80,1)) , nRyrs), 
+#     #              nrow=nByrs, ncol=A, byrow=TRUE)
+# }
+# 
+# # Initial List of Lists for Multiple Chains
+# init_ll <- lapply(1:n_chains, function(id) init_fn(chain_id = id))

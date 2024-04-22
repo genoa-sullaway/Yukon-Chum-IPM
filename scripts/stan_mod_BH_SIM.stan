@@ -5,7 +5,8 @@ data { // all equation references are from proposal numbering
   int<lower=0> t_start;   // Number of age classes x2 for filling in starting values  
   
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
-  vector [A] fs;   
+  vector [A] fs; 
+  vector [A] M; // fixed age ocean mortality
  // real fs[A,K];     // Fecundity of each female in each stock - eventually extend for age ?
  // real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
  
@@ -74,8 +75,8 @@ real <lower=10, upper=20>log_c_2; // log carrying capacity
   // real theta1[K, ncovars1]; // covariate estimated for each covariate and each population 
   // real theta2[K,ncovars2];
   
- real<lower=-1, upper=1> log_p_1; // covariate estimated for each covariate and each population 
- real<lower=-1, upper=1> log_p_2;
+ real log_p_1; // covariate estimated for each covariate and each population 
+ real log_p_2;
 
 real<lower=0,upper=0.5> D_scale;     // Variability of age proportion vectors across cohorts
 vector<lower=0> [A] g; // gamma random draws
@@ -90,22 +91,15 @@ real <lower=0.001, upper=1> log_catch_q;
 }
 
 transformed parameters { 
-vector[nByrs] N_j; // predicted juveniles -calculated
-vector[nByrs] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
-vector[nByrs] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
-                       
-// variables where we index with age class 
-vector[nByrs] N_recruit;  // predicted recruits - before they get assigned to returning age classes
-
+ vector[nByrs] N_j; // predicted juveniles -calculated
+ vector[nByrs] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
+ vector[nByrs] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
+ vector[nByrs] N_recruit;  // predicted recruits - before they get assigned to returning age classes
+ 
  real N_sp [nRyrs,A];
- // matrix [nRyrs,A] N_sp;
  real N_returning[nRyrs,A];
- //vector[nByrs] N_return_liklihood; 
-//real N_returning[nByrs,A]; 
-//vector[A] N_returning[nByrs]; //new
-
-//matrix [nRyrs,K] N_returning_sum; // new
-real N_e [nRyrs,A];
+ real N_ocean[nRyrs,A];
+ real N_e [nRyrs,A];
 
 // survival and covariate section 
 // matrix[nByrs,K] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
@@ -232,7 +226,7 @@ matrix[nRyrs,A] q;
     N_recruit[t] = kappa_marine[t]*N_j[t]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
     
 for (a in 1:A) {  
-   N_returning[t+a,a] =  N_recruit[t]*p[a]; // this still tracks on brood year
+        N_ocean[t+a,a] =  N_recruit[t]*p[a]; // this still tracks on brood year
  
      // N_returning[t+1,1] =  N_recruit[t]*p[1]; // this still tracks on brood year
      // N_returning[t+2,2] =  N_recruit[t]*p[2]; // this still tracks on brood year
@@ -241,7 +235,7 @@ for (a in 1:A) {
    
 //now track on cal year - apply cal year specificy harvest, mortality, etc
 //N_sp[t+a,a] = N_returning[t+a,a];//-100;//*(1-H_b[t+A-a,k,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
-  
+         N_returning[t+a,a] = N_ocean[t+a,a]*exp(-M[a]); 
          N_sp[t+a,a] = N_returning[t+a,a];
   // for (a in 1:A) { 
       // N_sp[t+1,1] = N_returning[t+1,1];
@@ -295,13 +289,13 @@ model {
    // sigma_y_sp[k] ~ normal(0,10);
    
    // Start priors for model parameters 
-    log_catch_q ~ normal(-0.35,0.05); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q ~ normal(0.26,1); // Estimate Q - this will translate # of recruits to # of spawners 
 
     log_c_1 ~  normal(18.4, 5); // carrying capacity prior - stage 1  
     log_c_2 ~  normal(15, 5); // carrying capacity prior - stage 2
     
-    log_p_1~normal(-1,5); // basal productivity estimate
-    log_p_2~normal(-0.5,5); // basal productivity estimate
+    log_p_1~normal(-1.6,5); // basal productivity estimate
+    log_p_2~normal(-0.9,5); // basal productivity estimate
 // }
 
     D_scale ~ beta(0.3,1); // from simulation, will need to be 1,1 with full model 
@@ -355,7 +349,8 @@ model {
  // print("N_returning: ", N_returning)
  // print("N_sp: ", N_sp)
  // print("pi: ", pi)
- // print("g:", g)
+ //
+ print("p_1:", p_1)
  print("p: ", p)
  
 
