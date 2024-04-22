@@ -8,31 +8,28 @@ library(rstan)
 library(dirmult)
 library(Rlab)
 
-# translate simulated data_list to actual observations 
+# funcitons for tidying ===========
+# Function to remove '[' character
+remove_bracket <- function(lst) {
+  sapply(lst, function(x) gsub("\\[", "", x))
+}
+remove_bracket2 <- function(lst) {
+  sapply(lst, function(x) gsub("\\]", "", x))
+}
+remove_comma <- function(lst) {
+  sapply(lst, function(x) gsub("\\,", "", x))
+}
+
+
+# load model ==============
 bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT.RDS")
 
-test<-as.data.frame(extract(bh_fit)) 
-  
-#gather(1:ncol(.), key = "variable", value = "value")
-mu_tau_summary <- summary(bh_fit, pars = c("N_returning"), probs = c(0.1, 0.9))$summary
-
-bh_summary <- summary(bh_fit)$summary %>% 
-  as.data.frame( ) %>% 
-  mutate(variable_mod = (names(bh_fit))) %>% 
-  select(variable_mod, everything()) %>% 
-  as_data_frame()  
-
-# parameters  ======================  
+# plot main single parameters  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
-params<-bh_summary %>% 
-  slice(1:5,10) %>% 
-  # separate(variable_mod, into=c("param", "delete"), sep = -5) %>%
-  # dplyr::select(-delete) %>%
-  # rbind(bh_summary %>% 
-  #         slice(5) %>% rename(param = "variable_mod")) %>%
-  dplyr::mutate(mean_mod=mean,
-                param = variable_mod) %>%
-  dplyr::select(param, mean_mod,`2.5%`,`25%`,`75%`,`97.5%`)
+params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q","log_p_1","log_p_2",
+                                   "D_scale"), probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column() 
 
  dat<-data.frame(log_c_1 = data_list$log_c_1,
                     log_c_2 = data_list$log_c_2,
@@ -42,18 +39,88 @@ params<-bh_summary %>%
                     D_scale = data_list$D_scale#, 
                     #g = data_list$g
                  ) %>%
-  gather(1:ncol(.), key = "param", value = "mean_obs") %>%
+  gather(1:ncol(.), key = "rowname", value = "mean_obs") %>%
   left_join(params)
-
+ 
 dat %>% 
   ggplot() + 
-  geom_linerange(aes(param, ymin = `2.5%`,ymax = `97.5%`)) + 
-  geom_crossbar(aes(param, mean_mod, ymin = `25%`, ymax = `75%`), fill= 'grey') + 
-  geom_point(aes(x=param, y = mean_obs), color = "red") + 
-  facet_wrap(~param, scales = 'free') +
+  geom_linerange(aes(rowname, ymin = X10.,ymax = X90.)) + 
+  geom_crossbar(aes(rowname, mean, ymin = X10.,ymax = X90.),  fill= 'grey') + 
+  geom_point(aes(x=rowname, y = mean_obs), color = "red") + 
+  facet_wrap(~rowname, scales = 'free') +
   labs(caption = "red is observed, black is model")
 
+# plot n returning prop =====
+# load n_returning from output and calculate proportions to see if the age structure is the same there.... 
+ n_return_summary <- summary(bh_fit, pars = c("N_returning"), probs = c(0.1, 0.9))$summary
 
+n_return_prop<- n_return_summary %>%
+  data.frame()%>%
+  rownames_to_column() %>% 
+  separate(rowname, into = c("variable", "time", "age" ), sep =c(11,-2))  %>%
+  dplyr::mutate(time = as.numeric(remove_comma(remove_bracket(time))),
+                age=as.numeric(remove_comma(remove_bracket2(age)))) %>%
+  as.data.frame() %>% 
+ # dplyr::select(-del) %>%
+  #filter(!is.nan(mean)) %>% 
+  group_by(time) %>%
+  dplyr::mutate(sum = sum(mean),
+         proportion = mean/sum)  %>%
+  select(time,age,proportion)  
+
+ggplot(data = n_return_prop) +
+  geom_bar(aes(x=time, y=proportion, 
+               fill = age, group = age), stat = "identity")
+
+obs_p <- as.data.frame(data_list$p)  
+
+n_return_prop_mean <- n_return_prop %>%
+  ungroup() %>%
+  group_by(age) %>%
+  dplyr::summarise(mean_prop = mean(proportion),
+                   sd = sd(proportion)) %>%
+  cbind(obs_p)
+ 
+n_return_prop_mean %>% 
+  ggplot() +  
+  geom_point(aes(age, mean_prop), color = "red",alpha = 0.5 )  +
+  geom_point(aes(x=age, y = `data_list$p`), color = "black" ,alpha = 0.5) + 
+  scale_y_continuous(limits = c(0,1)) 
+
+# plot n returning abundance =====
+# load n_returning from output and calculate proportions to see if the age structure is the same there.... 
+abund_return<-  n_return_summary %>%
+  data.frame()%>%
+  rownames_to_column() %>% 
+  separate(rowname, into = c("variable", "time", "age" ), sep =c(11,-2))  %>%
+  dplyr::mutate(time = remove_comma(remove_bracket(time)),
+                age=remove_comma(remove_bracket2(age))) %>%
+  as.data.frame() %>%  
+  group_by(time) %>%
+  select(time,age,mean) %>%
+  mutate(time = as.numeric(time))%>% 
+  filter(!time<10)
+
+ggplot(data = abund_return) +
+  geom_bar(aes(x=time, y=mean, 
+               fill = age, group = age), stat = "identity", position = "stack")
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Not updated with new extraction format ==============
 # Q ============
 # compared to observed run composition in simulation and in model 
 obs_run_comp <- as.data.frame(colMeans(data_list$o_run_comp)) %>% 
@@ -95,70 +162,6 @@ bh_q <- bh_summary %>%
   spread(age, variable)
 
 barplot(t(bh_q[,2:5]))
-
-# Function to remove '[' character
-remove_bracket <- function(lst) {
-  sapply(lst, function(x) gsub("\\[", "", x))
-}
-remove_bracket2 <- function(lst) {
-  sapply(lst, function(x) gsub("\\]", "", x))
-}
-remove_comma <- function(lst) {
-  sapply(lst, function(x) gsub("\\,", "", x))
-}
- 
-# n returning prop =====
-# load n_returning from output and calculate proportions to see if the age structure is the same there.... 
-proportion_q<- bh_summary %>% 
-  filter(grepl("N_returning",variable_mod),
-         !grepl("start",variable_mod)) %>%
-  separate(variable_mod, into = c("variable", "time", "age" ), sep =c(11,-2))  %>%
-  dplyr::mutate(time = remove_comma(remove_bracket(time)),
-                age=remove_comma(remove_bracket2(age))) %>%
-  as.data.frame() %>% 
- # dplyr::select(-del) %>%
-  filter(!is.nan(mean)) %>% 
-  group_by(time) %>%
-  dplyr::mutate(sum = sum(mean),
-         proportion = mean/sum)  %>%
-  select(time,age,proportion) %>%
-  mutate(time = as.numeric(time))
-
-ggplot(data = proportion_q) +
-  geom_bar(aes(x=time, y=proportion, 
-               fill = age, group = age), stat = "identity")
-
-proportion_q_time <- proportion_q %>%
-  ungroup() %>%
-  group_by(age) %>%
-  dplyr::summarise(mean_prop = mean(proportion),
-                   sd = sd(proportion))
-
-proportion_q_time %>% 
-  ggplot() +  
-  geom_point(aes(age, mean_prop), color = "red" )  +
-  scale_y_continuous(limits = c(0,1)) 
-
-# n returning abundance =====
-# load n_returning from output and calculate proportions to see if the age structure is the same there.... 
-abund_return<- bh_summary %>% 
-  filter(grepl("N_returning",variable_mod),
-         !grepl("start",variable_mod)) %>%
-  separate(variable_mod, into = c("variable", "time", "age" ), sep =c(11,-2))  %>%
-  dplyr::mutate(time = remove_comma(remove_bracket(time)),
-                age=remove_comma(remove_bracket2(age))) %>%
-  as.data.frame() %>% 
-  # dplyr::select(-del) %>%
-  filter(!is.nan(mean)) %>% 
-  group_by(time) %>%
-  select(time,age,mean) %>%
-  mutate(time = as.numeric(time))%>% 
-  filter(!time<10)
-
-ggplot(data = abund_return) +
-  geom_bar(aes(x=time, y=mean, 
-               fill = age, group = age), stat = "identity", position = "stack")
- 
 # n sp =====
 # load n_returning from output and calculate proportions to see if the age structure is the same there.... 
 proportion_nsp<- bh_summary %>% 

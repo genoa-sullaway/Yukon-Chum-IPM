@@ -16,43 +16,6 @@ n_chains <- 1
 n_cores <- 4
 adapt_delta <- 0.95
 
-# load salmon data ================================================
-# summer_age_comp<-read_csv("data/age_comps/processed_age_comps_summer_yukon.csv")  %>% 
-#   filter(!cal_year < 2005 )
-# 
-# summer_brood <- read_csv("output/yukon_summer_broodyear.csv")%>%
-#   filter(!brood_year < 2002) # for now to simplify matching with juveniles
-# 
-# yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", sheet = 2) %>%
-#   dplyr::select(1,11:14) %>% 
-#   janitor::row_to_names(row_number = 1) %>%
-#   dplyr::rename(cal_year = "Year")  %>%
-#   dplyr::mutate(age3=as.numeric(age3),
-#                 age4=as.numeric(age4),
-#                 age5=as.numeric(age5),
-#                 age6=as.numeric(age6)) %>% 
-#   filter(!cal_year < 2005)
-# 
-# ## harvest below weir 
-# harvest_escapement <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", sheet = 2) %>%
-#   dplyr::select(1:2,4) %>%  
-#   janitor::row_to_names(row_number = 1)  %>% 
-#   dplyr::rename(cal_year = "Year") %>% 
-#   dplyr::mutate(cal_year = as.numeric(cal_year), 
-#                 Harvest = as.numeric(Harvest), 
-#                 Escapement = as.numeric(Escapement)) %>% 
-#   filter(!cal_year < 2005) %>% # from brood year 2002 (first year of juvenile data), the first year that fish could return is 2005 if its a 3yo, the last yera it coudl return is 2007 if its a 6yo. 
-#   as.data.frame()  #%>%  
-# #as.matrix()
-# 
-# # juv data =========
-# juv<- read_csv("data/tidy_BASIS_AYK_model.csv") %>%
-#   dplyr::select(1,2) %>% # yukon summer is column labeled 1, yukon fall is 2, kusko is 3
-#   dplyr::rename(abund = `1`) %>%
-#   filter(!brood_year>2017) #if a fish is caught in 2023 and is 6 years old, 
-# # then its brood  year is 2017. Need to trim so the indexing works... I think... 
-
-
 # Init ===================
 #K = 1 # number of stocks  
 A = 4 # age classes 
@@ -62,12 +25,9 @@ t_start = 5
 pops = 1 #seq(1,3,1) #population pointer vector
 population<- c(rep(1,nByrs)) #population pointer vector
  
-#n.pop <-length(unique(population)) #number of population
-#year <- rep(seq(1,n), n.pop) #creating a year pointer
- 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-#fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-fs = as.vector(c(2440, 2440, 2440, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+#fs = as.vector(c(2440, 2440, 2440, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 
 #Bev Holt parameters ===================
 # p for alpha, and c for carrying capacity 
@@ -151,11 +111,10 @@ kappa_marine = vector( )
 
 N_j =  vector() # matrix(nrow=nByrs,ncol=K,NA)
 N_e_sum =  vector() #= matrix(nrow=nByrs,ncol=K,NA)
-N_e  = matrix(NA, nrow = nByrs,ncol=A)
+N_e  = matrix(NA, nrow = nRyrs,ncol=A)
 N_recruit =  vector() #= matrix(nrow=nRyrs,ncol=K,NA)
-N_returning = matrix(NA, nrow = nByrs,ncol=A)
-N_returning_test = matrix(NA, nrow = nByrs,ncol=A)
-N_sp = matrix(NA, nrow = nByrs,ncol=A)
+N_returning = matrix(NA, nrow = nRyrs,ncol=A)
+N_sp = matrix(NA, nrow = nRyrs,ncol=A)
 
 ## starting values ========
  
@@ -163,6 +122,8 @@ N_j[1] = exp(rnorm(1,20,2)) #mean(juv$abund)# rnorm(K,20,10)
 N_recruit[1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
  
 for(t in 1:t_start){
+  N_returning[t,]= exp(rnorm(1,19,2))*p
+  N_sp[t,] = exp(rnorm(1,18,2))*p
   N_e[t,] = exp(rnorm(1,20,2))*p
 }
 
@@ -221,14 +182,16 @@ log_catch_q= log(catch_q)
          N_recruit[t] = kappa_marine[t]*N_j[t] # Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
  
          for (a in 1:A) { 
-           N_returning[t,a] = N_recruit[t]*p[a] # fix age structure for now
+           N_returning[t+a,a] = N_recruit[t]*p[a] # fix age structure for now
           # N_sp[t,a] = N_returning[t,a] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay
              
-           N_e[t,a] = fs[a]*Ps*N_returning[t,a] #  generated estimate for the amount of eggs produced that year for that stock.
+          # N_e[t,a] = fs[a]*Ps*N_returning[t,a] #  generated estimate for the amount of eggs produced that year for that stock.
            
-           # N_sp[t+a,a,k] = N_returning[t,a,k] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay
+           N_sp[t+a,a] = N_returning[t+a,a] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay
+           
+           #N_sp[t+a,a,k] = N_returning[t,a,k] #-100 #* (1-H_b[t+A-a, k, a]) # harvest percent, 1-H_b are the ones that stay
            # 
-           # N_e[t+a,a,k] = fs[a]*Ps*N_sp[t+a,a,k] #  generated estimate for the amount of eggs produced that year for that stock.
+          N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a] #  generated estimate for the amount of eggs produced that year for that stock.
          
            }
         # transition back to brood years - plug in ages manually
@@ -237,43 +200,36 @@ log_catch_q= log(catch_q)
    } 
 
  
-barplot(N_returning[1:nByrs,])
+barplot(t(N_returning[5:nByrs,]))
 
 p
 # calculate Obs Run Comp  ============
-o_run_comp = array(data = NA, dim = c(nByrs,A))
-o_run_comp_sp= array(data = NA, dim = c(nByrs,A))
-  for (t in 1:nByrs) {
+o_run_comp = array(data = NA, dim = c(nRyrs,A))
+o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
+  for (t in 1:nRyrs) {
     for (a in 1:A) {
         if(t< nByrs+1){
     o_run_comp[t,a] = N_returning[t,a]/sum(N_returning[t,1:A])
-    #o_run_comp_sp[t,a] = N_sp[t,a]/sum(N_sp[t,1:A])
+    o_run_comp_sp[t,a] = N_sp[t,a]/sum(N_sp[t,1:A])
     }
   }
 }
-
+ 
 # fill in the weird gaps
 for(t in 1:6){
   for (a in 1:A) {
   #N_recruit[t,1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
   o_run_comp[t,a]  = p[[a]]
-  o_run_comp[(t+nByrs-1),a] = p[[a]]
+  o_run_comp[t+(nByrs-1),a] = p[[a]]
  # N_returning[t,1,]  = rep(exp(rnorm(1,15,2))*p, times =1)
   }
 }
 
-
-barplot(o_run_comp_sp)
-barplot(o_run_comp)
-# ggplot(data = o_run_comp) +
-#   geom_bar(aes(x=time, y=proportion, fill = age, group = age), stat = "identity")
  
-#
-rowMeans(o_run_comp)
-#
+barplot(t(o_run_comp))
+colMeans(o_run_comp)
 p
-
-# colMeans(p)
+ 
 # Fix ESS ============= 
 # var_age <- mean(c(var(o_run_comp[1:nByrs,1]),
 #                   var(o_run_comp[1:nByrs,2]),
@@ -287,7 +243,7 @@ p
 # try making this bigger 
 ess_age_comp = rep(300, times = nByrs)
 
-# make DFs before simulating from pop ============= 
+# PROCESS MODEL ============= 
 N_j[1] = mean(N_j[2:nByrs]) #mean(N_j[2:n,1:n.pop]) # just so i don't get yelled at about NA's later down the road 
 N_j_sim_hat <- vector()# matrix(nrow=nByrs,ncol=K,NA)
  
@@ -297,29 +253,29 @@ N_sp_sim_s <-  vector() #array(data = NA, dim = c(nRyrs, K))
 N_returning_sim <-  vector() #array(data = NA, dim = c(nRyrs, K))
 N_returning_sim_s <-  vector() #array(data = NA, dim = c(nRyrs, K))
 
-# N_return and obs age comp ============
 N_returning[is.na(N_returning)] <- 0
 
  # sum together for observation model
-N_returning_sim[1:nByrs]<- N_returning[1:nByrs,1] + N_returning[1:nByrs,2] +
-                               N_returning[1:nByrs,3] + N_returning[1:nByrs,4]
+N_returning_sim[1:nRyrs]<- N_returning[1:nRyrs,1] + N_returning[1:nRyrs,2] +
+                               N_returning[1:nRyrs,3] + N_returning[1:nRyrs,4]
 
 N_sp[is.na(N_sp)] <- 0
-N_sp_sim[1:nByrs]<- N_sp[1:nByrs,1] + N_sp[1:nByrs,2] + N_sp[1:nByrs,3]+N_sp[1:nByrs,4]
+N_sp_sim[1:nRyrs]<- N_sp[1:nRyrs,1] + N_sp[1:nRyrs,2] + N_sp[1:nRyrs,3]+N_sp[1:nRyrs,4]
  
- 
-    N_j_sim_hat  = rlnorm(nByrs, log(N_j[2:nByrs]), process_error_j)
-    N_returning_sim_s  = rlnorm(nByrs, log(N_returning_sim[2:nByrs]), process_error_r)
-    N_sp_sim_s  = rlnorm(nByrs, log(N_sp_sim[2:nByrs]), process_error_sp)
- 
+    N_j_sim_observed=catch_q*N_j
 
-hist(N_j_sim_hat)
-hist(N_returning_sim_s)
-hist(N_sp_sim_s)
-plot(N_returning_sim_s)
-# translate pop model to observations using the catch Q
-N_j_sim_observed = N_j_sim_hat*catch_q
+    N_j_sim_hat  = rlnorm(nByrs, log(N_j_sim_observed[2:nByrs]), process_error_j)
+    N_returning_sim_s  = rlnorm(nRyrs, log(N_returning_sim[2:nRyrs]), process_error_r)
+    N_sp_sim_s  = rlnorm(nRyrs, log(N_sp_sim[2:nRyrs]), process_error_sp)
  
+# 
+# hist(N_j_sim_hat)
+# hist(N_returning_sim_s)
+# hist(N_sp_sim_s)
+# plot(N_returning_sim_s)
+# translate pop model to observations using the catch Q
+# N_j_sim_observed = N_j_sim_hat*catch_q
+#  
 
 # STAN STARTING VALUES ==========
   # same starting values used in simulation... 
@@ -328,33 +284,31 @@ N_j_sim_observed = N_j_sim_hat*catch_q
   N_recruit_start = as.vector(NA)
   
   N_egg_start = matrix(NA,nrow=t_start, ncol=A)
-  N_returning_start = vector() # ages # array(data = NA, dim = c(1, A))
-  N_sp_start = vector() # array(data = NA, dim = c(1, A,K))
+  N_returning_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
+  N_sp_start = matrix(NA,nrow=t_start, ncol=A)#vector() # array(data = NA, dim = c(1, A,K))
  
   # for(k in 1:K) { 
    N_j_start = exp(rnorm(1,20,2))
    N_recruit_start = exp(rnorm(1,14,2))
    N_e_sum_start = exp(rnorm(1,30,2))
-   N_sp_start = exp(rnorm(1,18,2))*p 
-   N_returning_start =exp(rnorm(1,21,2))*p
+   # N_sp_start = exp(rnorm(1,18,2))*p 
+ 
    # for(a in 1:A){
         for(t in 1:t_start){
+         N_returning_start[t,] =exp(rnorm(1,21,2))*p
+         N_sp_start[t,] = exp(rnorm(1,18,2))*p 
          N_egg_start[t,] = exp(rnorm(1,40,2))*p
-   # } 
         }
-  
-  # } 
 
-  
   ## assign data list ==========
 data_list <- list(nByrs=nByrs,
-                 # nRyrs=nRyrs,
+                 nRyrs=nRyrs,
                   A=A,
                 #  K=K, 
                   t_start = t_start,
                   Ps=Ps,
                   fs=fs,
-                  data_stage_j = N_j_sim_observed, # after translated from "simulation" to "basis index observed" using Q multiplier. 
+                  data_stage_j = N_j_sim_hat, # after translated from "simulation" to "basis index observed" using Q multiplier. 
                   data_stage_return = N_returning_sim_s,
                   data_stage_sp = N_sp_sim_s,
                    N_j_start =  N_j_start,
@@ -423,4 +377,4 @@ bh_fit <- stan(
   cores = n_cores) # init=init_ll)
 
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
-
+ 

@@ -1,6 +1,6 @@
 data { // all equation references are from proposal numbering
   int<lower=0> nByrs ; // number of brood years  
-//  int<lower=0> nRyrs;  // Number of recruitment years in SR model
+  int<lower=0> nRyrs;  // Number of recruitment years in SR model
   int<lower=0> A;     // Number of age classes - 4
   int<lower=0> t_start;   // Number of age classes x2 for filling in starting values  
   
@@ -10,11 +10,11 @@ data { // all equation references are from proposal numbering
  // real<lower=0,upper=1> D_scale;     // Variability of age proportion vectors across cohorts
  
   vector[nByrs] data_stage_j;    // number of juveniles for each group  (basis)
-  vector[nByrs] data_stage_return;   //  number of harvest + escapement for each group 
-//  vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
+  vector[nRyrs] data_stage_return;   //  number of harvest + escapement for each group 
+  vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
   real sigma_y_j;  // Initially fix sigma - process error for juveniles
   real sigma_y_r;  // Initially fix sigma - process error for returns
- // real sigma_y_sp; // Initially fix sigma - process error for spawners
+  real sigma_y_sp; // Initially fix sigma - process error for spawners
 
   //matrix[nRyrs,K,A] H_b; // Initially fix sigma - process error for spawners
  
@@ -22,8 +22,10 @@ data { // all equation references are from proposal numbering
   //real <lower=0> H_b[nRyrs,K,A]; // harvest at river mounth by age and stock, treating it as data, multipling harvest by known age comp. gets applied to recruits to get number of spawners. 
    
    // starting values for popualtion stages --feeding in as data
-  //vector [A] N_sp_start; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
-  vector [A] N_returning_start; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
+  // vector [A] N_sp_start; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
+  // vector [A] N_returning_start; // fill first 4 years with starting values so there arent NAs due to brood year/cal year transformation
+  real N_sp_start [t_start,A];  
+  real N_returning_start [t_start,A];
   real N_egg_start [t_start,A];
   real N_j_start;
   real N_recruit_start;
@@ -58,7 +60,7 @@ real kappa_j_start;
    //real o_run_comp[nRyrs,A]; // Observed run size by age class
    //matrix[nRyrs,A] o_run_comp; // Observed age composition by year
    //matrix [1,A] p;  // Age at maturity proportions
-   matrix<lower=0, upper=1>[nByrs,A] o_run_comp; // Observed age composition by year
+   matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
    vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 }
   
@@ -95,14 +97,15 @@ vector[nByrs] N_e_sum; // sum eggs across ages to then go into the lifecycle sec
 // variables where we index with age class 
 vector[nByrs] N_recruit;  // predicted recruits - before they get assigned to returning age classes
 
-//matrix [nRyrs,A] N_sp;
- real N_returning[nByrs,A];
+ real N_sp [nRyrs,A];
+ // matrix [nRyrs,A] N_sp;
+ real N_returning[nRyrs,A];
  //vector[nByrs] N_return_liklihood; 
 //real N_returning[nByrs,A]; 
 //vector[A] N_returning[nByrs]; //new
 
 //matrix [nRyrs,K] N_returning_sum; // new
-real N_e [nByrs,A];
+real N_e [nRyrs,A];
 
 // survival and covariate section 
 // matrix[nByrs,K] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
@@ -129,7 +132,7 @@ vector<lower=0>[A] p;
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 //real<lower=0, upper=1> q[nByrs,K, A]; 
-matrix[nByrs,A] q;
+matrix[nRyrs,A] q;
 //vector[A] q[nByrs]; //new
 
 //vector[A] return_row;
@@ -144,9 +147,9 @@ matrix[nByrs,A] q;
 // for(t in 1:t_start){
     for(a in 1:A){
    // add starting values to the whole population array 
-  //N_sp[1,a] = N_sp_start[a];
+  N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
   N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
-  N_returning[1,a] = N_returning_start[a]; 
+  N_returning[1:t_start,a] = N_returning_start[1:t_start,a]; 
   N_e_sum[1] = N_e_sum_start;
      }
    
@@ -228,30 +231,30 @@ matrix[nByrs,A] q;
    
     N_recruit[t] = kappa_marine[t]*N_j[t]; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
     
-      //  for (a in 1:A) {  
-    //  N_returning[t,a] =  N_recruit[t]*p[a]; // this still tracks on brood year
+for (a in 1:A) {  
+   N_returning[t+a,a] =  N_recruit[t]*p[a]; // this still tracks on brood year
  
-     N_returning[t,1] =  N_recruit[t]*p[1]; // this still tracks on brood year
-     N_returning[t,2] =  N_recruit[t]*p[2]; // this still tracks on brood year
-     N_returning[t,3] =  N_recruit[t]*p[3]; // this still tracks on brood year
-     N_returning[t,4] =  N_recruit[t]*p[4]; // this still tracks on brood year
-    
-  //    for (t in 1:n_year) {
-  //   for(a in 1:A){
-  //     N_ta[t,a] = R[t+A-a] * p[t+A-a,a];
-  //   }
-  // }
+     // N_returning[t+1,1] =  N_recruit[t]*p[1]; // this still tracks on brood year
+     // N_returning[t+2,2] =  N_recruit[t]*p[2]; // this still tracks on brood year
+     // N_returning[t+3,3] =  N_recruit[t]*p[3]; // this still tracks on brood year
+     // N_returning[t+4,4] =  N_recruit[t]*p[4]; // this still tracks on brood year
+   
+//now track on cal year - apply cal year specificy harvest, mortality, etc
+//N_sp[t+a,a] = N_returning[t+a,a];//-100;//*(1-H_b[t+A-a,k,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
   
-     // N_returning[t+a,a,k] = N_recruit[t,k]*p[a]; 
-    // N_returning[t,1:A,k] =  N_recruit[t,k]*p[a]; // this still tracks on brood year
-     //now track on cal year - apply cal year specificy harvest, mortality, etc
-    // N_sp[t,a] = N_returning[t,a];//-100;//*(1-H_b[t+A-a,k,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
-// for (a in 1:A) { 
-      N_e[t,1] = fs[1]*Ps*N_returning[t,1]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
-      N_e[t,2] = fs[2]*Ps*N_returning[t,2]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
-      N_e[t,3] = fs[3]*Ps*N_returning[t,3]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
-      N_e[t,4] = fs[4]*Ps*N_returning[t,4]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+         N_sp[t+a,a] = N_returning[t+a,a];
+  // for (a in 1:A) { 
+      // N_sp[t+1,1] = N_returning[t+1,1];
+      // N_sp[t+2,2] = N_returning[t+2,2];
+      // N_sp[t+3,3] = N_returning[t+3,3];
+      // N_sp[t+4,4] = N_returning[t+4,4];
       
+      N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+      // N_e[t+2,2] = fs[2]*Ps*N_sp[t+2,2]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+      // N_e[t+3,3] = fs[3]*Ps*N_sp[t+3,3]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+      // N_e[t+4,4] = fs[4]*Ps*N_sp[t+4,4]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+
+}
      // COMMENTED OUT 4-17:  N_returning[t+A-a,k,a] = N_recruit[t,k]*p[t+A-a,a]; // multiply recruits by Q to change scale, then distribute across age classes, p which is age comps. 
     // N_sp[t+a,a,k] = N_returning[t+a,a,k];//-100;//*(1-H_b[t+A-a,k,a]); // currently just feeding simulated harvest proportions until I get stuff to work    
     // N_e[t+a,a,k] = fs[a,1]*Ps*N_sp[t+a,a,k]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
@@ -269,49 +272,30 @@ matrix[nByrs,A] q;
   // Calculate age proportions by return year
  // for(k in 1:K){
   for (t in 1:nByrs) {
-  //  for(a in 1:A){
+ for(a in 1:A){
    // if(t< nByrs){
-      // q[t,k,a] = N_returning[t,k,a]/(sum(N_returning[t,k,1:A]));
-      q[t,1] = N_returning[t,1]/sum(N_returning[t,1:A]);//new
-      q[t,2] = N_returning[t,2]/sum(N_returning[t,1:A]);//new
-      q[t,3] = N_returning[t,3]/sum(N_returning[t,1:A]);//new
-      q[t,4] = N_returning[t,4]/sum(N_returning[t,1:A]);//new
-    //}
-   // }
+     q[t,a] = N_returning[t,a]/(sum(N_returning[t,1:A]));
+      // q[t,1] = N_returning[t,1]/sum(N_returning[t,1:A]);//new
+      // q[t,2] = N_returning[t,2]/sum(N_returning[t,1:A]);//new
+      // q[t,3] = N_returning[t,3]/sum(N_returning[t,1:A]);//new
+      // q[t,4] = N_returning[t,4]/sum(N_returning[t,1:A]);//new
+   }
   }
 
-  
-//      for (t in 1:nRyrs) {
-// // sum for liklihood to make sure they sum correctly
-// N_returning_sum[t,1] = N_returning[t,1,1] + N_returning[t,1,2] + N_returning[t,1,3] + N_returning[t,1,4];
-// //N_sp_sum
-// }
-
-// for(k in 1:K){
 for(t in 1:nByrs){
  // translate juvenile fish to the appropriate scale 
  N_j_predicted[t]= catch_q*N_j[t]; 
- // sum for liklihood
-  // N_return_liklihood[t] = sum(N_returning[1:A,t]); //N_returning[1,t] + N_returning[2,t] +  N_returning[3,t] + N_returning[4,t];
-
-  // }
  }
-   // // sum for liklihood
-   // N_return_liklihood = N_returning[1,1:nByrs] + N_returning[2,1:nByrs] + 
-   // N_returning[3,1:nByrs] + N_returning[4,1:nByrs];
-
- 
-} // close block
+}
 
 model {
-  // starting values for the population model 
-// for(k in 1:K) { 
+
   //start off with sigma fixed
    // sigma_y_j[k] ~  normal(1,10);// if i can get uncertainty from run reconstruction then i can fix this and not estiamte it -- currently fixed anyway for parsimony
    // sigma_y_sp[k] ~ normal(0,10);
    
    // Start priors for model parameters 
-    log_catch_q ~ normal(-0.35,0.5); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q ~ normal(-0.35,0.05); // Estimate Q - this will translate # of recruits to # of spawners 
 
     log_c_1 ~  normal(18.4, 5); // carrying capacity prior - stage 1  
     log_c_2 ~  normal(15, 5); // carrying capacity prior - stage 2
@@ -367,9 +351,9 @@ model {
  
 // printing these for trouble shooting 
  // print("N_e: ", N_e)
- // print("N_egg_start: ", N_egg_start)
- print("N_returning: ", N_returning)
- print("N_returning_start: ", N_returning_start)
+ // print("N_sp_start: ", N_sp_start)
+ // print("N_returning: ", N_returning)
+ // print("N_sp: ", N_sp)
  // print("pi: ", pi)
  // print("g:", g)
  print("p: ", p)
@@ -379,15 +363,15 @@ model {
  
   // Observation model
   // for(k in 1:K){
-  for (t in 1:nByrs) {
+  for (t in 6:nByrs) {
      log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j);
     } 
   // }
   
   // for(k in 1:K){ // stocks 
-  for(t in 1:nByrs){ // calendar years 
+  for(t in 6:nRyrs){ // calendar years 
   // Currently ESS is fixed through time. 
-    //  if(t<nByrs){
+  if(t<nByrs){
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
       // log(data_stage_return[t,k]) ~ normal(log(N_returning_sum[t,k]), sigma_y_r[1,k]);
       // log(data_stage_sp[t,k]) ~ normal(log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
@@ -395,9 +379,9 @@ model {
      // log(data_stage_return[t,k]) ~ normal(log(sum(N_returning[t,k,1:A])), sigma_y_r[1,k]);
      // log(data_stage_sp[t,k]) ~ normal(log(sum(N_sp[t,k,1:A])), sigma_y_sp[1,k]);
      target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_returning[t,1:A])), sigma_y_r); // not sure if this is liklihood is right, returning here is escapement + harvest
-     // target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_y_sp);
+     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_y_sp);
     // }
-   // }
+    }
   }
 }  
 
