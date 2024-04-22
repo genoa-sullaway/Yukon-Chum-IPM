@@ -236,14 +236,14 @@ model {
     log_catch_q ~ normal(0.26,0.05); // Estimate Q - this will translate # of recruits to # of spawners 
 
     log_c_1 ~  normal(18.4, 0.5); // carrying capacity prior - stage 1  
-    log_c_2 ~  normal(15, 0.5); // carrying capacity prior - stage 2
+    log_c_2 ~  normal(17, 0.5); // carrying capacity prior - stage 2
     
    // log_p_1~normal(-1.6,5); // basal productivity estimate
     log_p_2~normal(-0.9,0.05); // basal productivity estimate
-// }
-   
-    theta1~normal(0.5,0.05); // environmental covariate coefficient stage 1
-   
+
+    theta1[1]~normal(0.5,0.05); // environmental covariate coefficient stage 1
+    theta1[2]~normal(-0.1,0.05); // environmental covariate coefficient stage 1
+ 
     D_scale ~ beta(0.3,0.001); // from simulation, will need to be 1,1 with full model 
  //D_scale ~ beta(1,1); // from simulation, will need to be 1,1 with full model 
   

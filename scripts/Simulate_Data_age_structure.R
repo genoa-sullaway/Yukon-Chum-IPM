@@ -39,12 +39,12 @@ c_1 = exp(log_c_1) # as.matrix(nrow = 1, ncol =1, exp(log_c_1))
 c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2)) 
 
 # SURVIVAL/ COVARIATE ===================
-ncovars1 =1
+ncovars1 =2
 basal_p_1 = 0.2 # base survival
 #basal_p_2 = 0.4
 
-cov1 <-  matrix(nrow = nByrs, ncol =ncovars1, rnorm(nByrs*1, 0, 2))  #Cov 1 data
- # cov2 <- matrix(nrow = nByrs, ncol =1, rnorm(nByrs*1, 0, 2))  #Cov2 data
+cov1 <-  matrix(nrow = nByrs, ncol =ncovars1, rnorm(nByrs, 0, 2),rnorm(nByrs, 0, 1))  #Cov 1 data
+#cov2 <- matrix(nrow = nByrs, ncol =1, rnorm(nByrs*1, 0, 2))  #Cov2 data
  # 
 # only need sigma and mu coeff if they are set up hierarchically
  # sigma_coef1 <- as.matrix(nrow = 1, ncol =1, 0.1)
@@ -56,7 +56,7 @@ cov1 <-  matrix(nrow = nByrs, ncol =ncovars1, rnorm(nByrs*1, 0, 2))  #Cov 1 data
  # theta1 <- rnorm(1,mu_coef1,sigma_coef1[1,1])
  #  theta2 <- rnorm(1,mu_coef2,sigma_coef2[1,1])
 
- theta1 <- c(0.5) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+ theta1 <- c(0.5,-0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
 # theta2 <- c(-0.2) #relationship for simulated data
    
  p_1 = as.vector(NA) #matrix(nrow=nByrs,ncol=1,NA)
@@ -64,15 +64,23 @@ cov1 <-  matrix(nrow = nByrs, ncol =ncovars1, rnorm(nByrs*1, 0, 2))  #Cov 1 data
  
  # lines below need to be edited if I use more stocks!! theta and cov 1 should be multipled and summed, can get away with just multiplying here because there is only 1 stock and 1 covar
  # save for when I try to run with covariates 
+ cov_eff1 = matrix(NA, nrow = nByrs, ncol = ncovars1)
+
+  for(t in 1:nByrs){
+   for (c in 1:ncovars1) {
+     cov_eff1[t,c] = theta1[c]*cov1[t,c]
+   }
+    p_1[t]  = 1 / 1+ exp(-basal_p_1 - (sum(cov_eff1[t,1:c]))) # covariate impacts survival, impact is measured through theta
+ }
+    p_2 = 0.4
  
-   p_1  = 1 / 1+ exp(-basal_p_1 - (theta1*cov1)) # covariate impacts survival, impact is measured through theta
- # p_2[,1]  = 1 / 1+ exp(-basal_p_2  - (theta2 *cov2[,1])) 
-   p_2 = 0.4
+  # p_2[,1]  = 1 / 1+ exp(-basal_p_2  - (theta2 *cov2[,1])) 
+    
 # AGE STRUCTURE =========
   Dir_alpha = c(NA)
   p = c(NA) #matrix(nrow=K,ncol=A,NA)
   g = c(NA) #matrix(nrow=K,ncol=A,NA)
-  D_scale =0.3 
+  D_scale = 0.3 
   
   pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
 
@@ -244,7 +252,7 @@ barplot(t(N_j_sim_hat)    )
          N_egg_start[t,] = exp(rnorm(1,40,2))*p
         }
 
-# assign data list for PLOTTING 
+# PLOT data =======
 data_list_plot <- list(nByrs=nByrs,
                     nRyrs=nRyrs,
                     A=A,
@@ -281,7 +289,8 @@ data_list_plot <- list(nByrs=nByrs,
                   g = g,
                   p=p,
                   Dir_alpha=Dir_alpha,
-                  theta1=theta1) 
+                  "theta1[1]"=theta1[1],
+                  "theta1[2]"=theta1[2]) 
 
  ## STAN data ==========
  data_list_stan <- list(nByrs=nByrs,

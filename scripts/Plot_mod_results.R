@@ -30,7 +30,8 @@ params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q",
                   probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column() %>%
-  dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1",
+  dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1_1",
+                                    rowname == "theta1[2]"~ "theta1_2",
                              TRUE ~ rowname))
 
  
@@ -40,10 +41,11 @@ params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q",
                     #log_p_1 = data_list_plot$log_p_1,
                     log_p_2 = data_list_plot$log_p_2,
                     D_scale = data_list_plot$D_scale,
-                    theta1 = data_list_plot$theta1) %>%
+                    theta1_1 = data_list_plot$`theta1[1]`,
+                    theta1_2 = data_list_plot$`theta1[2]`) %>%
   gather(1:ncol(.), key = "rowname", value = "mean_obs") %>%
   left_join(params)
- 
+
 dat %>% 
   ggplot() + 
   geom_linerange(aes(rowname, ymin = X10.,ymax = X90.)) + 
@@ -51,7 +53,6 @@ dat %>%
   geom_point(aes(x=rowname, y = mean_obs), color = "red") + 
   facet_wrap(~rowname, scales = 'free') +
   labs(caption = "red is observed, black is model")
-
 
 # plot n ocean prop =====
 n_ocean_summary <- summary(bh_fit, pars = c("N_ocean"), probs = c(0.1, 0.9))$summary
