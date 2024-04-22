@@ -31,8 +31,6 @@ fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimat
 
 #Bev Holt parameters ===================
 # p for alpha, and c for carrying capacity 
-basal_p_1 = 0.2
-basal_p_2 = 0.4
 
 log_c_1 = 18.4
 log_c_2 = 17
@@ -40,45 +38,40 @@ log_c_2 = 17
 c_1 = exp(log_c_1) # as.matrix(nrow = 1, ncol =1, exp(log_c_1)) 
 c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2)) 
 
-# Covariate data ===================
- # cov1 <-  matrix(nrow = nByrs, ncol =1, rnorm(nByrs*1, 0, 2))  #Cov 1 data
+# SURVIVAL/ COVARIATE ===================
+ncovars1 =1
+basal_p_1 = 0.2 # base survival
+#basal_p_2 = 0.4
+
+cov1 <-  matrix(nrow = nByrs, ncol =ncovars1, rnorm(nByrs*1, 0, 2))  #Cov 1 data
  # cov2 <- matrix(nrow = nByrs, ncol =1, rnorm(nByrs*1, 0, 2))  #Cov2 data
  # 
- #  sigma_coef1 <- as.matrix(nrow = 1, ncol =1, 0.1)
+# only need sigma and mu coeff if they are set up hierarchically
+ # sigma_coef1 <- as.matrix(nrow = 1, ncol =1, 0.1)
  #  sigma_coef2 <- as.matrix(nrow = 1, ncol =1, 0.1)
  #   
- #  mu_coef1 <- 0.1 #rnorm(0, 10)
+ # mu_coef1 <- 0.1 #rnorm(0, 10)
  #  mu_coef2 <- -0.2 #rnorm(0, 10)
  #  
- #  theta1 <- rnorm(1,mu_coef1,sigma_coef1[1,1])
+ # theta1 <- rnorm(1,mu_coef1,sigma_coef1[1,1])
  #  theta2 <- rnorm(1,mu_coef2,sigma_coef2[1,1])
 
-# theta1 <- c(0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+ theta1 <- c(0.5) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
 # theta2 <- c(-0.2) #relationship for simulated data
-  
-# Make p for simulated population model =========
-  
+   
+ p_1 = as.vector(NA) #matrix(nrow=nByrs,ncol=1,NA)
+ # p_2 =  matrix(nrow=nByrs,ncol=K,NA)
+ 
+ # lines below need to be edited if I use more stocks!! theta and cov 1 should be multipled and summed, can get away with just multiplying here because there is only 1 stock and 1 covar
+ # save for when I try to run with covariates 
+ 
+   p_1  = 1 / 1+ exp(-basal_p_1 - (theta1*cov1)) # covariate impacts survival, impact is measured through theta
+ # p_2[,1]  = 1 / 1+ exp(-basal_p_2  - (theta2 *cov2[,1])) 
+   p_2 = 0.4
+# AGE STRUCTURE =========
   Dir_alpha = c(NA)
-  p = c(NA)#matrix(nrow=K,ncol=A,NA)
-  g = c(NA)#matrix(nrow=K,ncol=A,NA)
-  
-  #p = matrix(nrow=nRyrs,ncol=A,NA)
-  #g = matrix(nrow=nRyrs,ncol=A,NA)
-  
-  # prob = c(0.1148158, # rbeta(1,1,1),
-  #          0.2157721, # rbeta(1,1,1),
-  #          0.5999373)  # rbeta(1,1,1))
-
-  
-  #D_scale =0.4 #0.01
-  # pi[1] = prob[1]
-  # pi[2] = prob[2] * (1 - pi[1])
-  # pi[3] = prob[3] * (1 - pi[1] - pi[2])
-  # pi[4] = 1 - pi[1] - pi[2] - pi[3]
-  
-# P as a parameter ========  doesnt vary through time though
-  #p = c(0.1148158, 0.1909981, 0.4164682, 0.2777180)
-  
+  p = c(NA) #matrix(nrow=K,ncol=A,NA)
+  g = c(NA) #matrix(nrow=K,ncol=A,NA)
   D_scale =0.3 
   
   pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
@@ -86,17 +79,12 @@ c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2))
   D_sum = 1/D_scale^2
 
   for (a in 1:A) {
-   # for (t in 1:nRyrs) {
       Dir_alpha[a] = D_sum * pi[a]
       g[a] = rgamma(n=1,Dir_alpha[a],1)
- #     g[t,a] = rgamma(n=1,Dir_alpha[a],1)
- #  }
   }
 
     for (a in 1:A) {
-   #  for (t in 1:nRyrs) {
        p[a] = g[a]/sum(g[1:A])
-    # }
     }
   
 # Process error  ===================
@@ -118,7 +106,6 @@ N_returning = matrix(NA, nrow = nRyrs,ncol=A)
 N_sp = matrix(NA, nrow = nRyrs,ncol=A)
 
 ## starting values ========
- 
 N_j[1] = exp(rnorm(1,20,2)) #mean(juv$abund)# rnorm(K,20,10) 
 N_recruit[1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
  
@@ -128,42 +115,11 @@ for(t in 1:t_start){
   N_sp[t,] = exp(rnorm(1,18,2))*p
   N_e[t,] = exp(rnorm(1,20,2))*p
 }
-
-# for(t in 4:8){
-#   N_e[t, ,1] = 0 #exp(rnorm(A,20,2))
-# }
-# 
-# for(t in 1:4){
-#   N_sp[t,,1]  = rep(exp(rnorm(1,14,2))*p, times =1)
-# }
-#  
+  
 N_e_sum[1] = exp(rnorm(1,30,2))
-# 
-# N_e[1,1,1]/sum(N_e[1,1:A,1])
-# N_e[1,2,1]/sum(N_e[1,1:A,1])
-# p
-# productivity ============= 
-# p_1 =  matrix(nrow=nByrs,ncol=K,NA)
-# p_2 =  matrix(nrow=nByrs,ncol=K,NA)
-
-# log_p_1 = -0.5 # matrix(nrow=1,ncol=K,-0.5) #rnorm(1,-1, 0.5))
-# log_p_2 = 0.02 # matrix(nrow=1,ncol=K,0.02) #rnorm(1,-0.5, 0.5))
-
-p_1 = basal_p_1 #exp(log_p_1)
-p_2 = basal_p_2 #exp(log_p_2)
-
-log(p_1)
-log(p_2)
-
+ 
 catch_q = 1.3 #exp(rnorm(1,0,0.5))
 log_catch_q= log(catch_q)
-
-# Use covariates - calculate productivity in bev holt transition function =====
-# lines below need to be edited if I use more stocks!! theta and cov 1 should be multipled and summed, can get away with just multiplying here because there is only 1 stock and 1 covar
-# save for when I try to run with covariates 
-
-# p_1[,1]  = 1 / 1+ exp(-basal_p_1 - (theta1*cov1[,1])) # covariate impacts survival, impact is measured through theta
-# p_2[,1]  = 1 / 1+ exp(-basal_p_2  - (theta2 *cov2[,1])) 
 
 # Harvest H_b ========== 
 # this is the harvest, going to do a percent of the population instead of whole numbers
@@ -173,15 +129,14 @@ log_catch_q= log(catch_q)
   ##H_b  <-  array(data = rmultinom(n=nRyrs,size =500, prob = pi), 
 #               dim = c(nRyrs, K, A))  
 
-# age specific mortality =============== 
+# age specific marine mortality =============== 
 M = c(0.1, 0.2, 0.3, 0.4)
-a=1
-t=2
+ 
 # POPULATION MODEL ============ 
   # for(k in 1:K){  # loop for each population
      for (t in 2:nByrs){ # loop for each brood year 
         
-         kappa_j[t] =  p_1/(1+((p_1*N_e_sum[t-1])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+         kappa_j[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t-1])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
        
          N_j[t] = kappa_j[t]*N_e_sum[t-1] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
          
@@ -205,7 +160,6 @@ t=2
            }
         # transition back to brood years - plug in ages manually
          N_e_sum[t] = sum(N_e[t,1:A]) #N_e[t+1,k,1] + N_e[t+2,k,2]+N_e[t+3,k,3]+N_e[t+4,k,4]
-   #  }
    } 
 
  
@@ -218,7 +172,7 @@ o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
   for (t in 1:nRyrs) {
     for (a in 1:A) {
         if(t< nByrs+1){
-    o_run_comp[t,a] = N_returning[t,a]/sum(N_returning[t,1:A])
+    o_run_comp[t,a] = N_ocean[t,a]/sum(N_ocean[t,1:A])
     o_run_comp_sp[t,a] = N_sp[t,a]/sum(N_sp[t,1:A])
     }
   }
@@ -264,7 +218,7 @@ N_sp_sim[1:nRyrs]<- N_sp[1:nRyrs,1] + N_sp[1:nRyrs,2] + N_sp[1:nRyrs,3]+N_sp[1:n
     
     # incorporate Q, to connect different data sources in population model 
     N_j_sim_observed=catch_q*N_j_sim_hat
-    
+barplot(t(N_j_sim_hat)    )
 # STAN STARTING VALUES ==========
   # same starting values used in simulation... 
   N_j_start =  as.vector(NA)
@@ -272,6 +226,7 @@ N_sp_sim[1:nRyrs]<- N_sp[1:nRyrs,1] + N_sp[1:nRyrs,2] + N_sp[1:nRyrs,3]+N_sp[1:n
   N_recruit_start = as.vector(NA)
   
   N_egg_start = matrix(NA,nrow=t_start, ncol=A)
+  N_ocean_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
   N_returning_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
   N_sp_start = matrix(NA,nrow=t_start, ncol=A)#vector() # array(data = NA, dim = c(1, A,K))
  
@@ -283,21 +238,22 @@ N_sp_sim[1:nRyrs]<- N_sp[1:nRyrs,1] + N_sp[1:nRyrs,2] + N_sp[1:nRyrs,3]+N_sp[1:n
  
    # for(a in 1:A){
         for(t in 1:t_start){
+         N_ocean_start[t,] = exp(rnorm(1,19.5,2))*p
          N_returning_start[t,] =exp(rnorm(1,21,2))*p
          N_sp_start[t,] = exp(rnorm(1,18,2))*p 
          N_egg_start[t,] = exp(rnorm(1,40,2))*p
         }
 
-  ## assign data list for PLOTTING ==========
+# assign data list for PLOTTING 
 data_list_plot <- list(nByrs=nByrs,
-                 nRyrs=nRyrs,
-                  A=A,
-                  t_start = t_start,
-                  Ps=Ps,
-                  fs=fs,
-                  data_stage_j = N_j_sim_observed, # after translated from "simulation" to "basis index observed" using Q multiplier. 
-                  data_stage_return = N_returning_sim_s,
-                  data_stage_sp = N_sp_sim_s,
+                    nRyrs=nRyrs,
+                    A=A,
+                    t_start = t_start,
+                    Ps=Ps,
+                    fs=fs,
+                    data_stage_j = N_j_sim_observed, # after translated from "simulation" to "basis index observed" using Q multiplier. 
+                    data_stage_return = N_returning_sim_s,
+                    data_stage_sp = N_sp_sim_s,
                    N_j_start =  N_j_start,
                    N_recruit_start = N_recruit_start,
                    N_e_sum_start= N_e_sum_start,
@@ -312,7 +268,7 @@ data_list_plot <- list(nByrs=nByrs,
                   kappa_j_start = p_1,#matrix(p_1,nrow = 1, ncol = 1),
                   
                   log_p_1=log_p_1,
-                  log_p_2=log_p_2,
+                  log_p_2=log(p_2),
                   M =M,
                   pi=pi,
                   c_1=c_1,
@@ -324,9 +280,10 @@ data_list_plot <- list(nByrs=nByrs,
                   ess_age_comp=ess_age_comp,
                   g = g,
                   p=p,
-                  Dir_alpha=Dir_alpha) 
+                  Dir_alpha=Dir_alpha,
+                  theta1=theta1) 
 
- ## assign data list for STAN ==========
+ ## STAN data ==========
  data_list_stan <- list(nByrs=nByrs,
                    nRyrs=nRyrs,
                    A=A,
@@ -338,6 +295,7 @@ data_list_plot <- list(nByrs=nByrs,
                    data_stage_sp = N_sp_sim_s,
                    N_j_start =  N_j_start,
                    N_recruit_start = N_recruit_start,
+                   N_ocean_start = N_ocean_start,
                    N_e_sum_start = N_e_sum_start,
                    N_egg_start = N_egg_start,
                    N_sp_start = N_sp_start,
@@ -346,7 +304,10 @@ data_list_plot <- list(nByrs=nByrs,
                    sigma_y_r=process_error_r,
                    sigma_y_sp=process_error_sp,
                    kappa_marine_start = p_2,
-                   kappa_j_start = p_1,
+                   kappa_j_start = basal_p_1,
+                   basal_p_1=basal_p_1,
+                   cov1=cov1,
+                   ncovars1=ncovars1,
                    pi=pi,
                    M = M,
                    o_run_comp=o_run_comp,
