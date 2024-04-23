@@ -2,10 +2,8 @@ library(tidyverse)
 library(tidybayes)
 library(here)
 
-library(actuaryr)
-library(readxl)
+#library(actuaryr)
 library(rstan)
-library(dirmult)
 library(Rlab)
 
 # functions for tidying ===========
@@ -26,12 +24,14 @@ bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT.RDS")
 # plot main single parameters  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
-                                   "log_p_2", "D_scale", "theta1"), 
+                                   "D_scale", "theta1", "theta2"), 
                   probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column() %>%
   dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1_1",
                                     rowname == "theta1[2]"~ "theta1_2",
+                                    rowname == "theta2[1]"~ "theta2_1",
+                                    rowname == "theta2[2]"~ "theta2_2",
                              TRUE ~ rowname))
 
  
@@ -39,10 +39,13 @@ params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q",
                     log_c_2 = data_list_plot$log_c_2,
                     log_catch_q = data_list_plot$catch_q,
                     #log_p_1 = data_list_plot$log_p_1,
-                    log_p_2 = data_list_plot$log_p_2,
+                   # log_p_2 = data_list_plot$log_p_2,
                     D_scale = data_list_plot$D_scale,
                     theta1_1 = data_list_plot$`theta1[1]`,
-                    theta1_2 = data_list_plot$`theta1[2]`) %>%
+                    theta1_2 = data_list_plot$`theta1[2]`,
+                    theta2_1 = data_list_plot$`theta2[1]`
+                 #   theta2_2 = data_list_plot$`theta2[2]`
+                 ) %>%
   gather(1:ncol(.), key = "rowname", value = "mean_obs") %>%
   left_join(params)
 
@@ -75,7 +78,7 @@ ggplot(data = n_ocean_prop) +
   geom_bar(aes(x=time, y=proportion, 
                fill = age, group = age), stat = "identity")
 
-obs_p <- as.data.frame(data_list$p)  
+obs_p <- as.data.frame(data_list_plot$p)  
 
 n_ocean_prop_mean <- n_ocean_prop %>%
   ungroup() %>%
@@ -87,7 +90,7 @@ n_ocean_prop_mean <- n_ocean_prop %>%
 n_ocean_prop_mean %>% 
   ggplot() +  
   geom_point(aes(age, mean_prop), color = "red",alpha = 0.5 )  +
-  geom_point(aes(x=age, y = `data_list$p`), color = "black" ,alpha = 0.5) + 
+  geom_point(aes(x=age, y = `data_list_plot$p`), color = "black" ,alpha = 0.5) + 
   scale_y_continuous(limits = c(0,1)) 
 
 
@@ -113,7 +116,7 @@ ggplot(data = n_return_prop) +
   geom_bar(aes(x=time, y=proportion, 
                fill = age, group = age), stat = "identity")
 
-obs_p <- as.data.frame(data_list$p)  
+obs_p <- as.data.frame(data_list_plot$p)  
 
 n_return_prop_mean <- n_return_prop %>%
   ungroup() %>%
@@ -125,7 +128,7 @@ n_return_prop_mean <- n_return_prop %>%
 n_return_prop_mean %>% 
   ggplot() +  
   geom_point(aes(age, mean_prop), color = "red",alpha = 0.5 )  +
-  geom_point(aes(x=age, y = `data_list$p`), color = "black" ,alpha = 0.5) + 
+  geom_point(aes(x=age, y = `data_list_plot$p`), color = "black" ,alpha = 0.5) + 
   scale_y_continuous(limits = c(0,1)) 
 
 # plot n returning abundance =====
