@@ -157,7 +157,7 @@ for (a in 1:A) {
         N_ocean[t+a,a] =  N_j[t]*p[a]; // this still tracks on brood year
        
         N_recruit[t+a,a] = (kappa_marine[t]*N_ocean[t+a,a])*exp(-M[a]); ; // Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
-           //N_returning[t+a,a] = N_ocean[t+a,a]*exp(-M[a]); 
+      
         N_sp[t+a,a] = N_recruit[t+a,a]; //*(1-H_b[t+A-a,k,a]);
 
         N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.

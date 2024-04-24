@@ -100,9 +100,9 @@ cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rnorm(nByrs, 0, 2)) #,rnorm(nByrs,
   
 # Process error  ===================
 # error is fixed in model right now so fix it here. 
-process_error_j = 1 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
-process_error_sp = 1 # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-process_error_r = 1 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_j = 0.05 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
+process_error_sp = 0.05 # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_r = 0.05 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
 
 # make pop model matricies and starting values ========= 
 kappa_j =  vector( )
@@ -143,9 +143,10 @@ log_catch_q= log(catch_q)
 
 # age specific marine mortality =============== 
 M = c(0, 0.2, 0.3, 0.4)
- 
+
+#M = c(0, 0.4, 0.3, 0.2)
+
 # POPULATION MODEL ============ 
-  # for(k in 1:K){  # loop for each population
      for (t in 2:nByrs){ # loop for each brood year 
         
          kappa_j[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t-1])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
@@ -219,7 +220,11 @@ N_sp_sim[1:nRyrs]<- N_sp[1:nRyrs,1] + N_sp[1:nRyrs,2] + N_sp[1:nRyrs,3]+N_sp[1:n
     
     # incorporate Q, to connect different data sources in population model 
     N_j_sim_observed=catch_q*N_j_sim_hat
- 
+
+    sd(log(N_j_sim_hat))
+    sd(log(N_recruit_sim_s[1:nByrs]))
+    sd(log(N_sp_sim_s[1:nByrs]))
+    
 # STAN STARTING VALUES ==========
   # same starting values used in simulation... 
   N_j_start =  as.vector(NA)
@@ -265,6 +270,8 @@ data_list_plot <- list(nByrs=nByrs,
                   sigma_y_j=process_error_j,
                   sigma_y_r=process_error_r,
                   sigma_y_sp=process_error_sp,
+                  kappa_marine = kappa_marine,
+                  kappa_j = kappa_j,
                   kappa_marine_start = p_2,# matrix(p_2, nrow = 1, ncol = 1), #kappa_marine_start,
                   kappa_j_start = p_1,#matrix(p_1,nrow = 1, ncol = 1),
                   
@@ -330,6 +337,35 @@ bh_fit <- stan(
   cores = n_cores) # init=init_ll)
 
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
+
+
+
+# plot kappa marine =====================
+ plot_survival <- as.data.frame(cbind(kappa_j,kappa_marine)) %>%
+  mutate(time = 1:nrow(.)) %>% 
+  gather(1:2, key = "id", value = "survival")  %>%
+  filter(!time <10)
+
+ggplot(data = plot_survival) +
+  geom_point(aes(x=time, y =survival, group = id, color = id))+
+  facet_wrap(~id, scales = "free")
+
+# plot n recruit and n ocean ============
+recruit_df <- as.data.frame(N_recruit) %>%
+  mutate(time = 1:nrow(.)) %>% 
+  gather(1:4, key = "age", value = "recruit_abundance")  
+  
+ocean_df <- as.data.frame(N_ocean) %>%
+  mutate(time = 1:nrow(.)) %>% 
+  gather(1:4, key = "age", value = "ocean_abundance")  
+
+plot_df <- left_join(recruit_df, ocean_df) %>% 
+  gather(3:4, key = "id", value = "abundance") %>%
+  filter(!time <10)
+
+ggplot(data = plot_df) +
+  geom_line(aes(x=time, y =abundance, group = id, color =id)) +
+  facet_wrap(~age,nrow=1)#,scales = "free")
 
 # OLD ========
 # ESS ======= 

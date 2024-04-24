@@ -94,14 +94,14 @@ n_ocean_prop_mean %>%
   scale_y_continuous(limits = c(0,1)) 
 
 
-# plot n returning prop =====
-# load n_returning from output and calculate proportions to see if the age structure is the same there.... 
- n_return_summary <- summary(bh_fit, pars = c("N_returning"), probs = c(0.1, 0.9))$summary
+# plot n recruit prop =====
+# load recruit from output and calculate proportions to see if the age structure is the same there.... 
+ n_recruit_summary <- summary(bh_fit, pars = c("N_recruit"), probs = c(0.1, 0.9))$summary
 
-n_return_prop<- n_return_summary %>%
+n_recruit_prop<- n_recruit_summary %>%
   data.frame()%>%
   rownames_to_column() %>% 
-  separate(rowname, into = c("variable", "time", "age" ), sep =c(11,-2))  %>%
+  separate(rowname, into = c("variable", "time", "age" ), sep =c(9,-2))  %>%
   dplyr::mutate(time = as.numeric(remove_comma(remove_bracket(time))),
                 age=as.numeric(remove_comma(remove_bracket2(age)))) %>%
   as.data.frame() %>% 
@@ -112,20 +112,20 @@ n_return_prop<- n_return_summary %>%
          proportion = mean/sum)  %>%
   select(time,age,proportion)  
 
-ggplot(data = n_return_prop) +
+ggplot(data =  n_recruit_prop) +
   geom_bar(aes(x=time, y=proportion, 
                fill = age, group = age), stat = "identity")
 
 obs_p <- as.data.frame(data_list_plot$p)  
 
-n_return_prop_mean <- n_return_prop %>%
+n_recruit_prop_mean <-  n_recruit_prop %>%
   ungroup() %>%
   group_by(age) %>%
   dplyr::summarise(mean_prop = mean(proportion),
                    sd = sd(proportion)) %>%
   cbind(obs_p)
  
-n_return_prop_mean %>% 
+n_recruit_prop_mean %>% 
   ggplot() +  
   geom_point(aes(age, mean_prop), color = "red",alpha = 0.5 )  +
   geom_point(aes(x=age, y = `data_list_plot$p`), color = "black" ,alpha = 0.5) + 
@@ -133,10 +133,10 @@ n_return_prop_mean %>%
 
 # plot n returning abundance =====
 # load n_returning from output and calculate proportions to see if the age structure is the same there.... 
-abund_return<-  n_return_summary %>%
+abund_recruit<-  n_recruit_summary %>%
   data.frame()%>%
   rownames_to_column() %>% 
-  separate(rowname, into = c("variable", "time", "age" ), sep =c(11,-2))  %>%
+  separate(rowname, into = c("variable", "time", "age" ), sep =c(9,-2))  %>%
   dplyr::mutate(time = remove_comma(remove_bracket(time)),
                 age=remove_comma(remove_bracket2(age))) %>%
   as.data.frame() %>%  
@@ -145,7 +145,7 @@ abund_return<-  n_return_summary %>%
   mutate(time = as.numeric(time))%>% 
   filter(!time<10)
 
-ggplot(data = abund_return) +
+ggplot(data = abund_recruit) +
   geom_bar(aes(x=time, y=mean, 
                fill = age, group = age), stat = "identity", position = "stack")
  
@@ -205,20 +205,77 @@ ggplot(data = abund_sp) +
 
 
 
+# plot time series of predicted vs observed =========== 
+#juveniles
+obs_juv<-as.data.frame(data_list_plot$data_stage_j) %>%
+  mutate(time = 1:nrow(.),
+         obs_juv = data_list_plot$data_stage_j)
+pred_juv <- summary(bh_fit, pars = c("N_j"), probs = c(0.1, 0.9))$summary
+
+pred_juv_df <- pred_juv%>%
+  data.frame()%>%
+  rownames_to_column() %>% 
+  separate(rowname, into = c("variable", "time", "del" ), sep =c(3,-1))  %>%
+  dplyr::mutate(time = as.numeric(remove_comma(remove_bracket(time)))) %>%
+  as.data.frame()  %>%
+  dplyr::select(-del) %>%
+  left_join(obs_juv)
+
+ggplot(data=pred_juv_df) +
+  geom_path(aes(x=time, y = mean)) +
+  geom_ribbon(aes(x=time, ymin =X10., ymax = X90.)) + 
+  geom_path(aes(x=time, y = obs_juv)) +
+  theme_classic()
+
+# recruit =======
+  obs_recruit <- as.data.frame(data_list_plot$data_stage_return) %>%
+    mutate(time = 1:nrow(.)) %>%
+    rename(obs_recruit = "data_list_plot$data_stage_return")
+
+mod_recruit<-  abund_recruit %>%
+    group_by(time) %>%
+    summarise(mean = sum(mean)) %>%
+    left_join(obs_recruit) %>%
+  gather(2:3, key = "key", value = "value")
+
+testr <- mod_recruit %>%
+  filter(!is.nan(value),
+         !is.na(value)) %>%
+  group_by(key) %>%
+  summarise(se = sd(value)/sqrt(length(value)),
+            var = var(value))
+
+ggplot(data = mod_recruit) +
+  geom_path(aes(x=time, y = value, group =key, color = key))
 
 
+# Plot Compare Kappa obs and derived ============
+
+kappa_obs <-   data.frame(kappa_j=c(data_list_plot$kappa_j),
+                         kappa_m=c(data_list_plot$kappa_marine)) %>% 
+  mutate(time = 1:nrow(.)) %>%
+  gather(1:2, key = "variable", value = "obs_kappa")
+
+kappa_mod <- summary(bh_fit, pars = c("kappa_marine", "kappa_j"), probs = c(0.1, 0.9))$summary
+
+kappa_mod_df<- kappa_mod %>%
+  data.frame()%>%
+  rownames_to_column() %>% 
+  separate(rowname, into = c("variable", "del", "time" ), sep =c(7,-3))  %>%
+  select(-del) %>% 
+  dplyr::mutate(time = as.numeric(remove_bracket2(remove_bracket(time)))) %>%
+  as.data.frame()  %>%
+  left_join(kappa_obs) %>% 
+  select(time, variable, mean, obs_kappa) %>%
+  gather(3:4, key = "id", value = "value") %>% 
+  filter(!time <10)
+
+ggplot(data =kappa_mod_df) +
+  geom_point(aes(x=time, y =value, color = id)) + 
+  facet_wrap(~variable, scales = "free")
 
 
-
-
-
-
-
-
-
-
-
-# Not updated with new extraction format ==============
+# OLD Not updated with new extraction format ==============
 # Q ============
 # compared to observed run composition in simulation and in model 
 obs_run_comp <- as.data.frame(colMeans(data_list$o_run_comp)) %>% 
