@@ -122,8 +122,7 @@ N_j[1] = exp(rnorm(1,20,2)) #mean(juv$abund)# rnorm(K,20,10)
  
 for(t in 1:t_start){
   N_recruit[t,] = exp(rnorm(1,14,2))*p #mean(harvest_escapement$Harvest)
-  N_ocean[t,] = exp(rnorm(1,19.5,2))*p
-  #N_returning[t,]= exp(rnorm(1,19,2))*p
+  N_ocean[t,] = exp(rnorm(1,19.5,2))*p 
   N_sp[t,] = exp(rnorm(1,18,2))*p
   N_e[t,] = exp(rnorm(1,20,2))*p
 }
@@ -160,7 +159,7 @@ M = c(0, 0.2, 0.3, 0.4)
            
            N_recruit[t+a,a] = (kappa_marine[t]*N_ocean[t+a,a])*exp(-M[a]) # Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
            
-           N_sp[t+a,a] = N_recruit[t+a,a] #//*(1-H_b[t+A-a,a]);
+           N_sp[t+a,a] = N_recruit[t+a,a]*exp(-Fm[t+a,a])
            
            N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a] # Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
          }

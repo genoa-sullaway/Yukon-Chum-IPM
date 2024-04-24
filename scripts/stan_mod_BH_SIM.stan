@@ -55,8 +55,9 @@ real <lower=10, upper=20>log_c_2; // log carrying capacity
   
 real<lower=0,upper=0.5> D_scale;     // Variability of age proportion vectors across cohorts
 vector<lower=0> [A] g; // gamma random draws
-real <lower=0.001, upper=1> log_catch_q;
-// vector<lower=0.0, upper=4.0>[nRyrs] log_fm; // instantaneous fishing mortality parameter not used right now
+real<lower=0.001, upper=1> log_catch_q;
+vector<lower=0> [A] log_fm; // instantaneous fishing mortality parameter  
+//real<lower=0.0, upper=4.0> log_fm [nRyrs,A]; // instantaneous fishing mortality parameter  
 
 }
 
@@ -64,11 +65,9 @@ transformed parameters {
  vector[nByrs] N_j; // predicted juveniles -calculated
  vector[nByrs] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
  vector[nByrs] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
- //vector[nByrs] N_recruit;  // predicted recruits - before they get assigned to returning age classes
 
  real N_recruit [nRyrs,A]; 
  real N_sp [nRyrs,A];
- //real N_returning[nRyrs,A];
  real N_ocean[nRyrs,A];
  real N_e [nRyrs,A];
 
@@ -101,7 +100,6 @@ matrix[nRyrs,A] q;
    // no age index on population stage
   N_j[1] = N_j_start; 
   
-// for(t in 1:t_start){
     for(a in 1:A){
    // add starting values to the whole population array 
   N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
@@ -114,9 +112,6 @@ matrix[nRyrs,A] q;
   // transform log carrying capacity to normal scale
    c_1 = exp(log_c_1);
    c_2 = exp(log_c_2);
-   
-   //p_1 = exp(log_p_1);
-   // p_2 = exp(log_p_2);
 
 // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
   for(t in 1:nByrs){
@@ -203,17 +198,10 @@ model {
   
 // liklihood for age comp 
     for (a in 1:A) {
-    // g[a] ~ gamma(Dir_alpha[a],1);
    target += gamma_lpdf(g[a]|Dir_alpha[a],1);
+    log_fm ~ normal(0,2);    // instantaneous fishing mortality prior for each age
   }
-  //   for (a in 1:A) {
-  //     for (t in 1:nRyrs) {
-  //    // g[t,a] ~ gamma(Dir_alpha[a],1);
-  //    target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
-  //   }
-  // }
-  // log_fm ~ normal(0,2);    // instantaneous fishing mortality prior - not currenytly used, include harvest as known
-         
+
 // skip hierarchical covarite estimates for now, just have a prior on theta  
 // for(c in 1:ncovars1){
 //   	 mu_coef1[c] ~ normal(0.1, 1);  
