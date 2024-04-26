@@ -100,16 +100,16 @@ cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rnorm(nByrs, 0, 2)) #,rnorm(nByrs,
   
 # Process error  ===================
 # error is fixed in model right now so fix it here. 
-process_error_j = 0.05 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
-process_error_sp = 0.05 # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-process_error_r = 0.05 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_j = 0.5 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
+process_error_sp = 0.5 # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_r = 0.5 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
 
 # make pop model matricies and starting values ========= 
 kappa_j =  vector( )
 kappa_marine = vector( )
 
-N_j =  vector() # matrix(nrow=nByrs,ncol=K,NA)
-N_e_sum =  vector() #= matrix(nrow=nByrs,ncol=K,NA)
+N_j =  matrix(nrow=nByrs,ncol=1,NA)
+N_e_sum = matrix(nrow=nByrs,ncol=1,NA)
 N_e  = matrix(NA, nrow = nRyrs,ncol=A)
 N_recruit =  matrix(NA, nrow = nRyrs,ncol=A)
 N_ocean = matrix(NA, nrow = nRyrs,ncol=A)
@@ -117,7 +117,9 @@ N_ocean = matrix(NA, nrow = nRyrs,ncol=A)
 N_sp = matrix(NA, nrow = nRyrs,ncol=A)
 
 ## starting values ========
-N_j[1] = exp(rnorm(1,20,2)) #mean(juv$abund)# rnorm(K,20,10) 
+N_j[1,1] = exp(rnorm(1,20,2)) #mean(juv$abund)# rnorm(K,20,10) 
+N_e_sum[1,1] = exp(rnorm(1,30,2))
+
 #N_recruit[1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
  
 for(t in 1:t_start){
@@ -127,24 +129,19 @@ for(t in 1:t_start){
   N_e[t,] = exp(rnorm(1,20,2))*p
 }
   
-N_e_sum[1] = exp(rnorm(1,30,2))
- 
 catch_q = 1.3 #exp(rnorm(1,0,0.5))
 log_catch_q= log(catch_q)
 
-# Harvest H_b ========== 
-# this is the harvest, going to do a percent of the population instead of whole numbers
-# simulating with dirichlet leads to age structure being the same across all ages at 0.25
-  ##H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)) # higher value for alpha is a more tightly clustered distribution 
-#H_b  <-  array(data = rdirichlet(n=nRyrs, alpha=rep(10,A)), dim = c(nRyrs, K, A)) # higher value for alpha is a more tightly clustered distribution 
-  ##H_b  <-  array(data = rmultinom(n=nRyrs,size =500, prob = pi), 
-#               dim = c(nRyrs, K, A))  
+# Harvest =============
+# fishing mortality by age 
+F =  0.4 #,0.4,0.4,0.4) #rnorm(A,0,2) 
+log(0.4)
 
-# age specific marine mortality =============== 
-M = c(0, 0.2, 0.3, 0.4)
-
-#M = c(0, 0.4, 0.3, 0.2)
-
+ # age specific marine mortality =============== 
+M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
+M = matrix(ncol = A, nrow = nRyrs, 
+           c(NA,0.06, 0.06, 0.06) , byrow = TRUE)
+ 
 # POPULATION MODEL ============ 
      for (t in 2:nByrs){ # loop for each brood year 
         
@@ -154,17 +151,22 @@ M = c(0, 0.2, 0.3, 0.4)
          
          kappa_marine[t] =  p_2[t]/ (1 + ((p_2[t]*N_j[t])/c_2)) # Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
+         M[t,1] = kappa_marine[t] # fill in the age 1 survival for the next stage  
+       
          for (a in 1:A) { 
-           N_ocean[t+a,a] =  N_j[t]*p[a] # 
+           N_ocean[t+a,a] =  N_j[t]*p[a] # add age structure, p is proportion per age class
+         
+           N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-sum(M[t,1:a])) #add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
+           #should M be indexed by t or t+a???
            
-           N_recruit[t+a,a] = (kappa_marine[t]*N_ocean[t+a,a])*exp(-M[a]) # Eq 4.5 generated estiamte for the amount of fish each year and stock that survive to a spawning stage
+           #OLD way of doing it: N_recruit[t+a,a] = (kappa_marine[t]*N_ocean[t+a,a])*exp(-M[a]) 
            
-           N_sp[t+a,a] = N_recruit[t+a,a]*exp(-Fm[t+a,a])
+           N_sp[t+a,a] = N_recruit[t+a,a]*exp(-F)#[a]) # fishing occurs before spawning
            
-           N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a] # Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+           N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a] 
          }
-        # transition back to brood years - plug in ages manually
-         N_e_sum[t] = sum(N_e[t,1:A]) #N_e[t+1,k,1] + N_e[t+2,k,2]+N_e[t+3,k,3]+N_e[t+4,k,4]
+        # sum across age classes and transition back to brood years 
+         N_e_sum[t] = sum(N_e[t,1:A]) 
    } 
  
 # calculate Obs Run Comp  ============
@@ -208,17 +210,17 @@ N_recruit[is.na(N_recruit)] <- 0
 
  # sum together for observation model
 N_recruit_sim[1:nRyrs]<- N_recruit[1:nRyrs,1] + N_recruit[1:nRyrs,2] +
-  N_recruit[1:nRyrs,3] + N_recruit[1:nRyrs,4]
+N_recruit[1:nRyrs,3] + N_recruit[1:nRyrs,4]
 
 N_sp[is.na(N_sp)] <- 0
 N_sp_sim[1:nRyrs]<- N_sp[1:nRyrs,1] + N_sp[1:nRyrs,2] + N_sp[1:nRyrs,3]+N_sp[1:nRyrs,4]
- 
-    N_j_sim_hat  = rlnorm(nByrs, log(N_j[2:nByrs]), process_error_j)
-    N_recruit_sim_s  = rlnorm(nRyrs, log(N_recruit_sim[2:nRyrs]), process_error_r)
-    N_sp_sim_s  = rlnorm(nRyrs, log(N_sp_sim[2:nRyrs]), process_error_sp)
+
+N_j_sim_hat  = (rnorm(nByrs, (N_j[2:nByrs]), process_error_j))
+N_recruit_sim_s  = (rnorm(nRyrs, (N_recruit_sim[2:nRyrs]), process_error_r))
+N_sp_sim_s  = (rnorm(nRyrs, (N_sp_sim[2:nRyrs]), process_error_sp))
     
     # incorporate Q, to connect different data sources in population model 
-    N_j_sim_observed=catch_q*N_j_sim_hat
+N_j_sim_observed=catch_q*N_j_sim_hat
 
     sd(log(N_j_sim_hat))
     sd(log(N_recruit_sim_s[1:nByrs]))
@@ -232,23 +234,18 @@ N_sp_sim[1:nRyrs]<- N_sp[1:nRyrs,1] + N_sp[1:nRyrs,2] + N_sp[1:nRyrs,3]+N_sp[1:n
   N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
   N_egg_start = matrix(NA,nrow=t_start, ncol=A)
   N_ocean_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
-  #N_returning_start = matrix(NA,nrow=t_start, ncol=A) #vector() # ages # array(data = NA, dim = c(1, A))
   N_sp_start = matrix(NA,nrow=t_start, ncol=A)#vector() # array(data = NA, dim = c(1, A,K))
- 
-  # for(k in 1:K) { 
+  
    N_j_start = exp(rnorm(1,20,2))
-   # N_recruit_start = exp(rnorm(1,14,2))
    N_e_sum_start = exp(rnorm(1,30,2))
  
-   # for(a in 1:A){
         for(t in 1:t_start){
          N_recruit_start[t,] = exp(rnorm(1,14,2))*p
          N_ocean_start[t,] = exp(rnorm(1,19.5,2))*p
-        # N_returning_start[t,] =exp(rnorm(1,21,2))*p
          N_sp_start[t,] = exp(rnorm(1,18,2))*p 
          N_egg_start[t,] = exp(rnorm(1,40,2))*p
         }
-
+   
 # PLOT data =======
 data_list_plot <- list(nByrs=nByrs,
                     nRyrs=nRyrs,
@@ -271,11 +268,8 @@ data_list_plot <- list(nByrs=nByrs,
                   sigma_y_sp=process_error_sp,
                   kappa_marine = kappa_marine,
                   kappa_j = kappa_j,
-                  kappa_marine_start = p_2,# matrix(p_2, nrow = 1, ncol = 1), #kappa_marine_start,
-                  kappa_j_start = p_1,#matrix(p_1,nrow = 1, ncol = 1),
-                  
-                  #log_p_1=log_p_1,
-                  #log_p_2=log(p_2),
+                  kappa_marine_start = basal_p_2, 
+                  kappa_j_start = basal_p_1, 
                   M =M,
                   pi=pi,
                   c_1=c_1,
@@ -287,13 +281,14 @@ data_list_plot <- list(nByrs=nByrs,
                   ess_age_comp=ess_age_comp,
                   g = g,
                   p=p,
+                  F=F,
                   Dir_alpha=Dir_alpha,
                   "theta1[1]"=theta1[1],
                   "theta1[2]"=theta1[2],
                   "theta2[1]"=theta2[1],
                   "theta2[2]"=theta2[2]) 
 
- ## STAN data ==========
+ # STAN data ==========
  data_list_stan <- list(nByrs=nByrs,
                    nRyrs=nRyrs,
                    A=A,
@@ -309,7 +304,6 @@ data_list_plot <- list(nByrs=nByrs,
                    N_e_sum_start = N_e_sum_start,
                    N_egg_start = N_egg_start,
                    N_sp_start = N_sp_start,
-                   #N_returning_start= N_returning_start,
                    sigma_y_j=process_error_j,
                    sigma_y_r=process_error_r,
                    sigma_y_sp=process_error_sp,
@@ -322,7 +316,7 @@ data_list_plot <- list(nByrs=nByrs,
                    ncovars1=ncovars1,
                    ncovars2=ncovars2,
                    pi = pi,
-                   M = M,
+                   M = M_fill_stan,
                    o_run_comp=o_run_comp,
                    ess_age_comp=ess_age_comp)
 
