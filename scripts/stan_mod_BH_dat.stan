@@ -6,9 +6,9 @@ data { // all equation references are from proposal numbering
   
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
   vector [A] fs; // fecundity
-  vector [A-1] M; // fixed mortality for 3 older age classes,  
-  real basal_p_1; // mean alpha for covariate survival stage 1 
-  real basal_p_2; // mean alpha for covariate survival stage 1 
+  vector [A-1] M; // fixed mortality for 3 older age classes
+  real basal_p_1; // mean alpha for covariate survival stage 1
+  real basal_p_2; // mean alpha for covariate survival stage 1
 
   vector[nByrs] data_stage_j;    // number of juveniles for each group  (basis)
   vector[nRyrs] data_stage_return;   //  number of harvest + escapement for each group 
@@ -26,8 +26,8 @@ data { // all equation references are from proposal numbering
   real N_e_sum_start;
 
 // kappa is marine and juvenile survival estimated via beverton holt transition fxn 
-real kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
-real kappa_j_start;
+  real kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
+  real kappa_j_start;
   
   int<lower=0> ncovars1; //number of covariates for first lifestage  
   int<lower=0> ncovars2; //number of covariates for second lifestage  
@@ -35,8 +35,8 @@ real kappa_j_start;
   matrix [nByrs, ncovars1] cov1; // covariate data in a matrix format 
   matrix [nByrs, ncovars2] cov2; // covariate data in a matrix format 
   
-   matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
-   vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
+  matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
+  vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 }
   
 parameters {
@@ -52,6 +52,10 @@ real<lower=0,upper=0.5> D_scale;     // Variability of age proportion vectors ac
 vector<lower=0> [A] g; // gamma random draws
 real<lower=0.001, upper=1> log_catch_q;
 vector [nRyrs] log_F;
+
+// real basal_p_1; // mean alpha for covariate survival stage 1 
+// real basal_p_2; // mean alpha for covariate survival stage 2
+
 
 }
 
@@ -199,7 +203,7 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs){
- log_F[t] ~ normal(-0.9,0.5); //log fishing mortatliy
+ log_F[t] ~ normal(-0.9,0.2); //log fishing mortatliy
 }
 
  // age comp priors -- maturity schedules

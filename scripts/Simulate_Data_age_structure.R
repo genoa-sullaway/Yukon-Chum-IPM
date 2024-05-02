@@ -20,11 +20,9 @@ adapt_delta <- 0.95
 #K = 1 # number of stocks  
 A = 4 # age classes 
 nByrs= 80 #105 #number of samples per population
-nRyrs = nByrs +A+1# 83 #108
+nRyrs = nByrs+A+1# 83 #108
 t_start = 5
-pops = 1 #seq(1,3,1) #population pointer vector
-population<- c(rep(1,nByrs)) #population pointer vector
- 
+
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 #fs = as.vector(c(2440, 2440, 2440, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
@@ -85,8 +83,20 @@ cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rnorm(nByrs, 0, 2)) #,rnorm(nByrs,
   g = c(NA) #matrix(nrow=K,ncol=A,NA)
   D_scale = 0.3 
   
-  pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
+  # pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
+prob = c(NA)
 
+# for (r in 1:3) {
+#   prob[r] = rbeta(1,1,1)
+# }
+
+prob = c(0.1548598, 0.7782258, 0.40537690)
+
+  pi[1] = prob[1]
+  pi[2] = prob[2] * (1 - pi[1])
+  pi[3] = prob[3] * (1 - pi[1] - pi[2])
+  pi[4] = 1 - pi[1] - pi[2] - pi[3]
+  
   D_sum = 1/D_scale^2
 
   for (a in 1:A) {
@@ -117,13 +127,11 @@ N_ocean = matrix(NA, nrow = nRyrs,ncol=A)
 N_sp = matrix(NA, nrow = nRyrs,ncol=A)
 
 ## starting values ========
-N_j[1,1] = exp(rnorm(1,20,2)) #mean(juv$abund)# rnorm(K,20,10) 
+N_j[1,1] = exp(rnorm(1,20,2)) 
 N_e_sum[1,1] = exp(rnorm(1,30,2))
 
-#N_recruit[1] = exp(rnorm(1,14,2)) #mean(harvest_escapement$Harvest)
- 
 for(t in 1:t_start){
-  N_recruit[t,] = exp(rnorm(1,14,2))*p #mean(harvest_escapement$Harvest)
+  N_recruit[t,] = exp(rnorm(1,14,2))*p 
   N_ocean[t,] = exp(rnorm(1,19.5,2))*p 
   N_sp[t,] = exp(rnorm(1,18,2))*p
   N_e[t,] = exp(rnorm(1,20,2))*p
@@ -134,10 +142,13 @@ log_catch_q= log(catch_q)
 
 # Harvest =============
 # fishing mortality by age 
-F =  0.4 #,0.4,0.4,0.4) #rnorm(A,0,2) 
-log(0.4)
 
- # age specific marine mortality =============== 
+log_F = rnorm(nRyrs, -0.9, 0.2)
+F =  exp(log_F) # 0.4 #,0.4,0.4,0.4) #rnorm(A,0,2) 
+hist(log_F)
+hist(F)
+ 
+# age specific marine mortality =============== 
 M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
 M = matrix(ncol = A, nrow = nRyrs, 
            c(NA,0.06, 0.06, 0.06) , byrow = TRUE)
@@ -151,7 +162,7 @@ M = matrix(ncol = A, nrow = nRyrs,
          
          kappa_marine[t] =  p_2[t]/ (1 + ((p_2[t]*N_j[t])/c_2)) # Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
-         M[t,1] = kappa_marine[t] # fill in the age 1 survival for the next stage  
+         M[t,1] = -log(kappa_marine[t]) # fill in the age 1 survival for the next stage  
        
          for (a in 1:A) { 
            N_ocean[t+a,a] =  N_j[t]*p[a] # add age structure, p is proportion per age class
@@ -161,7 +172,7 @@ M = matrix(ncol = A, nrow = nRyrs,
            
            #OLD way of doing it: N_recruit[t+a,a] = (kappa_marine[t]*N_ocean[t+a,a])*exp(-M[a]) 
            
-           N_sp[t+a,a] = N_recruit[t+a,a]*exp(-F)#[a]) # fishing occurs before spawning
+           N_sp[t+a,a] = N_recruit[t+a,a]*exp(-F[t+a])#[a]) # fishing occurs before spawning
            
            N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a] 
          }
@@ -286,7 +297,10 @@ data_list_plot <- list(nByrs=nByrs,
                   "theta1[1]"=theta1[1],
                   "theta1[2]"=theta1[2],
                   "theta2[1]"=theta2[1],
-                  "theta2[2]"=theta2[2]) 
+                  "theta2[2]"=theta2[2],
+                  "prob[1]"=prob[1],
+                  "prob[2]"=prob[2],
+                  "prob[3]"=prob[3]) 
 
  # STAN data ==========
  data_list_stan <- list(nByrs=nByrs,
@@ -334,31 +348,31 @@ write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
 
 
 # plot kappa marine =====================
- plot_survival <- as.data.frame(cbind(kappa_j,kappa_marine)) %>%
-  mutate(time = 1:nrow(.)) %>% 
-  gather(1:2, key = "id", value = "survival")  %>%
-  filter(!time <10)
-
-ggplot(data = plot_survival) +
-  geom_point(aes(x=time, y =survival, group = id, color = id))+
-  facet_wrap(~id, scales = "free")
+#  plot_survival <- as.data.frame(cbind(kappa_j,kappa_marine)) %>%
+#   mutate(time = 1:nrow(.)) %>% 
+#   gather(1:2, key = "id", value = "survival")  %>%
+#   filter(!time <10)
+# 
+# ggplot(data = plot_survival) +
+#   geom_point(aes(x=time, y =survival, group = id, color = id))+
+#   facet_wrap(~id, scales = "free")
 
 # plot n recruit and n ocean ============
-recruit_df <- as.data.frame(N_recruit) %>%
-  mutate(time = 1:nrow(.)) %>% 
-  gather(1:4, key = "age", value = "recruit_abundance")  
-  
-ocean_df <- as.data.frame(N_ocean) %>%
-  mutate(time = 1:nrow(.)) %>% 
-  gather(1:4, key = "age", value = "ocean_abundance")  
-
-plot_df <- left_join(recruit_df, ocean_df) %>% 
-  gather(3:4, key = "id", value = "abundance") %>%
-  filter(!time <10)
-
-ggplot(data = plot_df) +
-  geom_line(aes(x=time, y =abundance, group = id, color =id)) +
-  facet_wrap(~age,nrow=1)#,scales = "free")
+# recruit_df <- as.data.frame(N_recruit) %>%
+#   mutate(time = 1:nrow(.)) %>% 
+#   gather(1:4, key = "age", value = "recruit_abundance")  
+#   
+# ocean_df <- as.data.frame(N_ocean) %>%
+#   mutate(time = 1:nrow(.)) %>% 
+#   gather(1:4, key = "age", value = "ocean_abundance")  
+# 
+# plot_df <- left_join(recruit_df, ocean_df) %>% 
+#   gather(3:4, key = "id", value = "abundance") %>%
+#   filter(!time <10)
+# 
+# ggplot(data = plot_df) +
+#   geom_line(aes(x=time, y =abundance, group = id, color =id)) +
+#   facet_wrap(~age,nrow=1)#,scales = "free")
 
 # OLD ========
 # ESS ======= 

@@ -19,11 +19,15 @@ remove_comma <- function(lst) {
 # load model ==============
 bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT.RDS")
 
+test <- extract(bh_fit)
+n_rec_mat<-test$N_recruit[1:nRyrs, 1:4,1]
+str(test)
+
+traceplot(bh_fit,  pars=  c( "D_scale", "log_c_1", "log_c_2"))
 # PLOT PARAMS  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
-                                   "D_scale", "theta1", "theta2",
-                                   "log_F"), 
+                                   "D_scale", "theta1", "theta2"), 
                   probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column() %>%
@@ -52,6 +56,43 @@ dat %>%
   geom_point(aes(x=rowname, y = mean_obs), color = "red") + 
   facet_wrap(~rowname, scales = 'free') +
   labs(caption = "red is observed, black is model")
+
+# Plot Fishing Mortality ========
+fm <- summary(bh_fit, pars = c("log_F"), 
+                  probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = 1:nrow(.))
+
+fm_dat <- data.frame(log_F = log(data_list_plot$F)) %>%
+  gather(1:ncol(.), key = "rowname", value = "mean_obs")  
+
+ggplot() + 
+  geom_density(data = fm, aes(x=mean), fill ="black", alpha = 0.5) +
+  geom_density(data = fm_dat, aes(x=mean_obs), fill ="darkgreen", alpha = 0.5) +
+  geom_vline(aes(xintercept = mean(fm$mean)), color = "black") +
+  geom_vline(aes(xintercept = mean(fm_dat$mean_obs)),color = "darkgreen")
+
+# plot prob =====
+age_structure <- summary(bh_fit, pars = c("prob"), probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column() %>% 
+  dplyr::mutate(rowname = case_when(rowname == "prob[1]"~ "prob_1",
+                          rowname == "prob[2]"~ "prob_2",
+                          rowname == "prob[3]"~ "prob_3"))
+ 
+prob_obs <- data.frame(prob_1 = data_list_plot$`prob[1]`,
+                       prob_2 = data_list_plot$`prob[2]`,
+                       prob_3 = data_list_plot$`prob[3]`) %>% 
+  gather(1:ncol(.), key = "rowname", value = "mean_obs")  %>%
+  left_join(age_structure)
+
+ggplot()+
+  geom_point(data = prob_obs, aes(x=rowname, y = mean_obs), color = "red")+
+  geom_point(data = prob_obs, aes(x=rowname, y = mean), color = "black") +
+  labs(caption = "black is modeled, red is observed")
+
+
 
 # plot n ocean prop =====
 n_ocean_summary <- summary(bh_fit, pars = c("N_ocean"), probs = c(0.1, 0.9))$summary

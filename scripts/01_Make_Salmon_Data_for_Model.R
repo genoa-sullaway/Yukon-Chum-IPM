@@ -6,28 +6,28 @@ library(readxl)
 
 yukon_summer_df<-read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx",sheet = 2)  
 
-# Abundances ========
+# spawner harvest recruit Abundances ========
 ## Summer ========
-yukon_summer <-  yukon_summer_df %>% 
-  select(1:4) %>% 
-  janitor::row_to_names(row_number = 1) %>%
-  dplyr::rename(cal_year = "Year",
-                total_run =`Total Run`,
-                Spawners="Escapement" )  %>%
-  dplyr::mutate(Spawners = as.numeric(Spawners),
-                Harvest = as.numeric(Harvest),
-                cal_year=as.numeric(cal_year),
-                total_run = as.numeric(total_run))
-
-yukon_summer_spawners <- yukon_summer %>%
-  select(cal_year, Spawners)
-
-yukon_summer_harvest <- yukon_summer %>%
-  dplyr::rename(harvest = "Harvest") %>% 
-  select(cal_year, harvest)
-
-yukon_summer_recruits <- yukon_summer %>%
-  select(cal_year, total_run)
+# yukon_summer <-  yukon_summer_df %>% 
+#   select(1:4) %>% 
+#   janitor::row_to_names(row_number = 1) %>%
+#   dplyr::rename(cal_year = "Year",
+#                 total_run =`Total Run`,
+#                 Spawners="Escapement" )  %>%
+#   dplyr::mutate(Spawners = as.numeric(Spawners),
+#                 Harvest = as.numeric(Harvest),
+#                 cal_year=as.numeric(cal_year),
+#                 total_run = as.numeric(total_run))
+# 
+# yukon_summer_spawners <- yukon_summer %>%
+#   select(cal_year, Spawners)
+# 
+# yukon_summer_harvest <- yukon_summer %>%
+#   dplyr::rename(harvest = "Harvest") %>% 
+#   select(cal_year, harvest)
+# 
+# yukon_summer_recruits <- yukon_summer %>%
+#   select(cal_year, total_run)
 
 ## Fall ========
 yukon_fall<- read_csv("data/Yukon_Escapement_ADFG/Yukon_Fall_Chum_RR_JTC.csv") %>%  
@@ -44,17 +44,23 @@ yukon_fall_recruits <- yukon_fall %>%
   dplyr::rename(total_run = "Estimated_Run") %>% 
   dplyr::select(cal_year, total_run)
 
+write_csv(yukon_fall_spawners, "data/processed_data/yukon_fall_spawners.csv")
+
+write_csv(yukon_fall_harvest, "data/processed_data/yukon_fall_harvest.csv")
+
+write_csv(yukon_fall_recruits,"data/processed_data/yukon_fall_recruits.csv")
+ 
 # age comps ========
 ## Summer ========
-yukon_summer_age_abund<- yukon_summer_df %>%
-  dplyr::select(1,6:9) %>% 
-  janitor::row_to_names(row_number = 1) %>%
-  dplyr::rename(cal_year = "Year") %>%  
-  gather(2:5, key = "age", value = "abundance") %>% 
-  dplyr::mutate(cal_year = as.numeric(cal_year),
-                abundance = as.numeric(abundance)) %>%
-  spread(age, abundance) 
-# 
+# yukon_summer_age_abund<- yukon_summer_df %>%
+#   dplyr::select(1,6:9) %>% 
+#   janitor::row_to_names(row_number = 1) %>%
+#   dplyr::rename(cal_year = "Year") %>%  
+#   gather(2:5, key = "age", value = "abundance") %>% 
+#   dplyr::mutate(cal_year = as.numeric(cal_year),
+#                 abundance = as.numeric(abundance)) %>%
+#   spread(age, abundance) 
+ 
 # yukon_summer <- yukon_summer_df %>%
 #   select(1:4) %>% 
 #   janitor::row_to_names(row_number = 1)
@@ -89,34 +95,41 @@ yukon_fall_ages <- readxl::read_excel("data/age_comps/Fall_Yukon_Calc_Source4.xl
   group_by(cal_year) %>%
   dplyr::mutate(sum = sum(abund),
                 percent = abund/sum) %>%
-  select(cal_year,age,percent) %>%
+  dplyr::select(cal_year,age,percent) %>%
   spread(age, percent)
+
+write_csv(yukon_fall_ages, "data/processed_data/yukon_fall_age_comp.csv")
 
 # Juveniles ========================================================
 juv <- read_csv("data/Juv_Index_CC_aug2023/Index2.csv") %>%
   dplyr::select(Time, Estimate) %>%
   rename(Year = "Time") 
 
-# Make proportion of juveniles per run ======================================
-mean_prop<- read_csv("data/mean_prop_basis.csv") # see "script/explore_basis_proportions.R"
-
-juv_prop_ayk <- expand_grid(juv, mean_prop) %>%
-  dplyr::mutate(juv_index = mean*Estimate) %>%
-  dplyr::select(Year, reporting_group, juv_index) %>%
-  dplyr::mutate(id = case_when(reporting_group == "Yukon_Summer" ~ 1,
-                               reporting_group == "Yukon_Fall" ~ 2,
-                               TRUE ~ 3)) %>%
-  ungroup() %>%
-  dplyr::select(-reporting_group) %>% 
-  spread(id, juv_index) %>%
-  dplyr::rename(brood_year = "Year")
-
-juv_prop_ayk[19,2]<- colMeans(juv_prop_ayk[-19,])[2] # get means of all columns except 2020, fill that in for 2020
-juv_prop_ayk[19,3]<- colMeans(juv_prop_ayk[-19,])[3] # get means of all columns except 2020, fill that in for 2020
-juv_prop_ayk[19,4]<- colMeans(juv_prop_ayk[-19,])[4]
-
-write_csv(juv_prop_ayk, "data/tidy_BASIS_AYK_model.csv")
-
+# Proportion of juveniles per run ======================================
+# Use Fall Yukon proportions 
+# liz lee emailed this data in april 2024, see "script/explore_basis_proportions.R" for some exploratory info
+fall_juv_proportions <- read_excel("data/BeringSea_Chum_Juv_annual_2003-2023_analysis_msa.xlsx") %>% 
+  janitor::row_to_names(row_number = 1) %>%
+  rename(reporting_group = `Reporting Group`) %>%
+  mutate(Year = as.numeric(Year),
+         Mean = as.numeric(Mean),
+         SD = as.numeric(SD),
+         reporting_group = case_when(reporting_group == "Yukon River Fall Run"~ "Yukon_Fall",
+                                     reporting_group == "Coastal Western Alaska"~ "CWAK",
+                                     TRUE ~ reporting_group )) %>%
+  dplyr::select(1:4) %>%
+  filter(reporting_group %in% c("Yukon_Fall"))
+ 
+fall_juv <- left_join(juv, fall_juv_proportions)  %>%
+  mutate(Mean = case_when(is.na(Mean) ~  mean(fall_juv$Mean, na.rm=TRUE),
+                          TRUE ~ Mean ),
+         Estimate = case_when(Estimate==0 ~  mean(fall_juv$Estimate, na.rm=TRUE),
+                          TRUE ~ Estimate ),
+         fall_abundance = Estimate * Mean) %>%
+  dplyr::select(Year, fall_abundance)
+ 
+# SAVE HERE ============
+write_csv(fall_juv, "data/processed_data/tidy_juv_fall_yukon.csv")
 
 # QAQC PLOTS =========== 
 ## Spawners ============
