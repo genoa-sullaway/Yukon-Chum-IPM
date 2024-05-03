@@ -7,8 +7,8 @@ data { // all equation references are from proposal numbering
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
   vector [A] fs; // fecundity
   vector [A-1] M; // fixed mortality for 3 older age classes
-  real basal_p_1; // mean alpha for covariate survival stage 1
-  real basal_p_2; // mean alpha for covariate survival stage 1
+  // real basal_p_1; // mean alpha for covariate survival stage 1
+  // real basal_p_2; // mean alpha for covariate survival stage 1
 
   vector[nByrs] data_stage_j;    // number of juveniles for each group  (basis)
   vector[nRyrs] data_stage_return;   //  number of harvest + escapement for each group 
@@ -40,23 +40,23 @@ data { // all equation references are from proposal numbering
 }
   
 parameters {
-real <lower=10, upper=20>log_c_1; // log carrying capacity
-real <lower=10, upper=20>log_c_2; // log carrying capacity
- 
+real <lower=0 > log_c_1; // log carrying capacity
+real <lower=0 > log_c_2; // log carrying capacity
+
+// real <lower=10, upper=20>log_c_1; // log carrying capacity
+// real <lower=10, upper=20>log_c_2; // log carrying capacity
+//  
 // covariate parameters 
 real theta1[ncovars1]; // covariate estimated for each covariate and each population 
 real theta2[ncovars2];
   
-vector[A-1] prob; 
-real<lower=0,upper=0.5> D_scale;     // Variability of age proportion vectors across cohorts
+vector <lower=0>[A-1] prob; 
+real<lower=0.001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
 vector<lower=0> [A] g; // gamma random draws
-real<lower=0.001, upper=1> log_catch_q;
+real log_catch_q;
 vector [nRyrs] log_F;
-
-// real basal_p_1; // mean alpha for covariate survival stage 1 
-// real basal_p_2; // mean alpha for covariate survival stage 2
-
-
+real basal_p_1; // mean alpha for covariate survival stage 1 
+real basal_p_2; // mean alpha for covariate survival stage 2
 }
 
 transformed parameters { 
@@ -87,9 +87,10 @@ real<lower=0> c_2; // estimate on log, transform back to normal scale
 // Age related transformed params ====== 
 vector<lower=0>[A] p;  
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
+//vector [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix[nRyrs,A] q;
-vector<lower=0>[A] pi;
+vector<lower=0, upper=1> [A] pi;
 
 vector [nRyrs] F; // instantaneous fishing mortality           
 
@@ -184,18 +185,24 @@ for(t in 1:nByrs){
 }
 
 model {
-    log_catch_q ~ normal(0.26,0.05); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q ~ normal(0,1); // Estimate Q - this will translate # of recruits to # of spawners 
 
-    log_c_1 ~  normal(18.4, 0.5); // carrying capacity prior - stage 1  
-    log_c_2 ~  normal(17.5, 1); // carrying capacity prior - stage 2
+    log_c_1 ~  normal(18, 5); // carrying capacity prior - stage 1  
+    log_c_2 ~  normal(15, 5); // carrying capacity prior - stage 2
 
-    theta1[1] ~ normal(0.5,0.05); // environmental covariate coefficient stage 1
-    theta1[2] ~ normal(-0.1,0.05); // environmental covariate coefficient stage 1
+    // log_c_1 ~  normal(18.4, 0.5); // carrying capacity prior - stage 1  
+    // log_c_2 ~  normal(17.5, 1); // carrying capacity prior - stage 2
+
+    theta1[1] ~ normal(0,1); // environmental covariate coefficient stage 1
+    theta1[2] ~ normal(0,1); // environmental covariate coefficient stage 1
  
-    theta2 ~ normal(-0.5,0.05); 
+    theta2 ~ normal(0,1); 
    
-    D_scale ~ beta(0.3,0.001); // from simulation, will need to be 1,1 with full model 
-
+    D_scale ~ beta(0.5,1); // from simulation, will need to be 1,1 with full model 
+    
+    basal_p_1 ~ normal(0,1); // mean survival stage 1 
+    basal_p_2 ~ normal(0,1); // mean survivial stage 2
+    
 // age comp 
     for (a in 1:A) {
    target += gamma_lpdf(g[a]|Dir_alpha[a],1);
@@ -203,16 +210,16 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs){
- log_F[t] ~ normal(-0.9,0.2); //log fishing mortatliy
+ log_F[t] ~ normal(0,1); //log fishing mortatliy
 }
 
  // age comp priors -- maturity schedules
-  prob[1] ~ beta(0.15,1);// beta(1,1);
-  prob[2] ~ beta(0.77,1); //beta(1,1);
-  prob[3] ~ beta(0.4,1); //beta(1,1);
+  prob[1] ~ beta(1,1); 
+  prob[2] ~ beta(1,1);  
+  prob[3] ~ beta(1,1);  
  
 // printing these for trouble shooting 
-// print("N_ocean:", N_ocean)
+// print("prob:", prob)
 
 // Likelilihoods --  
   // Observation model

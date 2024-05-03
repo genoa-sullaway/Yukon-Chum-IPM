@@ -81,7 +81,7 @@ cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rnorm(nByrs, 0, 2)) #,rnorm(nByrs,
   Dir_alpha = c(NA)
   p = c(NA) #matrix(nrow=K,ncol=A,NA)
   g = c(NA) #matrix(nrow=K,ncol=A,NA)
-  D_scale = 0.3 
+  D_scale = 0.9
   
   # pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
 prob = c(NA)
@@ -97,7 +97,7 @@ prob = c(0.1548598, 0.7782258, 0.40537690)
   pi[3] = prob[3] * (1 - pi[1] - pi[2])
   pi[4] = 1 - pi[1] - pi[2] - pi[3]
   
-  D_sum = 1/D_scale^2
+  D_sum = 1/(D_scale^2)
 
   for (a in 1:A) {
       Dir_alpha[a] = D_sum * pi[a]
