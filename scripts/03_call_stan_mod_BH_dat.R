@@ -14,6 +14,7 @@ library(readxl)
 # Load data ==================================================================
 # see 01_make salmon data.R for salmon data tidying 
 # see 02_make covariates for data tidying 
+
 # setup inputs ===============================================================
 warmups <- 2000
 total_iterations <- 4000
@@ -106,10 +107,6 @@ K = 1 # number of stocks
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = 5 # to fill startgin values 
-
-# fix sigma until RR data or until its running and I can try to estimate it better 
-  sigma_y_j = 1  #rnorm(1,0.5)
-  sigma_y_sp = 1 #rnorm(1,0.5)
  
 # covariates ===========
 # number covariates for each life stage 
@@ -133,11 +130,10 @@ ess_age_comp = as.vector(rep(300, times = nByrs))
 
 # Process error  ===================
 # error is fixed in model right now so fix it here. 
-process_error_j = 1 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
-process_error_sp = 1 # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-process_error_r = 1 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-
-
+process_error_j = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
+process_error_sp = 10 # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_r = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_h = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  runif(1, 0.2, 0.2)
@@ -147,6 +143,7 @@ N_j_start =  as.vector(NA)
 N_e_sum_start = as.vector(NA)
 
 N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
+N_catch_start = matrix(NA,nrow=t_start, ncol=A)
 N_egg_start = matrix(NA,nrow=t_start, ncol=A)
 N_ocean_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
 N_sp_start = matrix(NA,nrow=t_start, ncol=A)#vector() # array(data = NA, dim = c(1, A,K))
@@ -161,6 +158,7 @@ for(t in 1:t_start){
   N_recruit_start[t,] = exp(rnorm(1,14,2))*p
   N_ocean_start[t,] = exp(rnorm(1,19.5,2))*p
   N_sp_start[t,] = exp(rnorm(1,18,2))*p 
+  N_catch_start[t,] = exp(rnorm(1,8,2))*p 
   N_egg_start[t,] = exp(rnorm(1,40,2))*p
 }
 
@@ -179,11 +177,15 @@ data_list_stan <- list(nByrs=nByrs,
                        data_stage_j = as.vector(fall_juv$fall_abundance), 
                        data_stage_return = as.vector(yukon_fall_recruits$total_run),
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
+                       data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
+                      
                        sigma_y_j=process_error_j,
                        sigma_y_r=process_error_r,
+                       sigma_y_h=process_error_h,
                        sigma_y_sp=process_error_sp,
                        
                        N_sp_start = N_sp_start,
+                       N_catch_start = N_catch_start,
                        N_ocean_start = N_ocean_start,
                        N_egg_start = N_egg_start,
                        N_j_start =  N_j_start,
@@ -203,7 +205,6 @@ data_list_stan <- list(nByrs=nByrs,
                        ess_age_comp=ess_age_comp)
                  
 # call mod  ===========================
-
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
@@ -214,10 +215,4 @@ bh_fit <- stan(
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
  
-
-
-
-
-
-
 

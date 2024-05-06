@@ -37,7 +37,7 @@ traceplot(bh_fit,pars=  c("log_F","log_catch_q","g"))
 #            pars = c("D_scale", "theta1[1]","theta1[2]","theta2[1]"),
 #            prob = 0.8)  
 # pairs =====  
-pairs(bh_fit)
+# pairs(bh_fit)
 # parameter plots ======== 
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 

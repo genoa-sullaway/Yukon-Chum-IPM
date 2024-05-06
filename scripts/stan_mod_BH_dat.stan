@@ -13,12 +13,16 @@ data { // all equation references are from proposal numbering
   vector[nByrs] data_stage_j;    // number of juveniles for each group  (basis)
   vector[nRyrs] data_stage_return;   //  number of harvest + escapement for each group 
   vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
+  vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
+  
   real sigma_y_j;  // Initially fix sigma - process error for juveniles
   real sigma_y_r;  // Initially fix sigma - process error for returns
+  real sigma_y_h;  // Initially fix sigma - process error for returns
   real sigma_y_sp; // Initially fix sigma - process error for spawners
 
  // starting values for popualtion stages  
   real N_sp_start [t_start,A];  
+  real N_catch_start [t_start,A];  
   real N_ocean_start[t_start,A];
   real N_egg_start [t_start,A];
   real N_j_start;
@@ -66,6 +70,7 @@ transformed parameters {
 
  real N_recruit [nRyrs,A]; 
  real N_sp [nRyrs,A];
+ real N_catch [nRyrs,A];
  real N_ocean[nRyrs,A];
  real N_e [nRyrs,A];
 
@@ -103,6 +108,7 @@ vector [nRyrs] F; // instantaneous fishing mortality
    // add starting values to the whole population array 
   N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
   N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+  N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
   N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
   N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
   N_e_sum[1] = N_e_sum_start;
@@ -163,8 +169,9 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:(a-1)])+ kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
            //should M be indexed by t or t+a???
            } 
-         
-        N_sp[t+a,a] = N_recruit[t+a,a]*exp(-F[t+a]); // fishing occurs before spawning -- 
+        N_catch[t+a,a] = N_recruit[t+a,a]*(1- exp(-F[t+a]));
+ 
+        N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
          
         N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
    }
@@ -185,23 +192,23 @@ for(t in 1:nByrs){
 }
 
 model {
-    log_catch_q ~ normal(0,1); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q ~ normal(1,1); // Estimate Q - this will translate # of recruits to # of spawners 
 
-    log_c_1 ~  normal(18, 5); // carrying capacity prior - stage 1  
-    log_c_2 ~  normal(15, 5); // carrying capacity prior - stage 2
+    log_c_1 ~  normal(18, 10); // carrying capacity prior - stage 1  
+    log_c_2 ~  normal(15, 10); // carrying capacity prior - stage 2
 
     // log_c_1 ~  normal(18.4, 0.5); // carrying capacity prior - stage 1  
     // log_c_2 ~  normal(17.5, 1); // carrying capacity prior - stage 2
 
-    theta1[1] ~ normal(0,1); // environmental covariate coefficient stage 1
-    theta1[2] ~ normal(0,1); // environmental covariate coefficient stage 1
+    theta1[1] ~ normal(0,5); // environmental covariate coefficient stage 1
+    theta1[2] ~ normal(0,5); // environmental covariate coefficient stage 1
  
-    theta2 ~ normal(0,1); 
+    theta2 ~ normal(0,5); 
    
     D_scale ~ beta(0.5,1); // from simulation, will need to be 1,1 with full model 
     
-    basal_p_1 ~ normal(0,1); // mean survival stage 1 
-    basal_p_2 ~ normal(0,1); // mean survivial stage 2
+    basal_p_1 ~ normal(-1,5); // mean survival stage 1 
+    basal_p_2 ~ normal(-1,5); // mean survivial stage 2
     
 // age comp 
     for (a in 1:A) {
@@ -210,7 +217,7 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs){
- log_F[t] ~ normal(0,1); //log fishing mortatliy
+ log_F[t] ~ normal(0,10); //log fishing mortatliy
 }
 
  // age comp priors -- maturity schedules
@@ -233,6 +240,7 @@ model {
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
      target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])), sigma_y_r); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_y_h); // not sure if this is liklihood is right, returning here is escapement + harvest
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_y_sp);
     }
   }
