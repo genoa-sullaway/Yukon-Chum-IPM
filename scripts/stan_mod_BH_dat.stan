@@ -75,8 +75,8 @@ transformed parameters {
  real N_e [nRyrs,A];
 
 // survival and covariate section 
-vector [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
-vector [nByrs] p_2; // productivity in bev holt transition funciton, 1 = FW early marine 
+vector <upper=1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
+vector <upper=1> [nByrs] p_2; // productivity in bev holt transition funciton, 1 = FW early marine 
  
 vector [nByrs] kappa_j ; // predicted survival for juvenile fish (FW and early marine)
 vector [nByrs] kappa_marine; // predicted survival for marine fish
@@ -200,15 +200,15 @@ model {
     // log_c_1 ~  normal(18.4, 0.5); // carrying capacity prior - stage 1  
     // log_c_2 ~  normal(17.5, 1); // carrying capacity prior - stage 2
 
-    theta1[1] ~ normal(0,5); // environmental covariate coefficient stage 1
-    theta1[2] ~ normal(0,5); // environmental covariate coefficient stage 1
+    theta1[1] ~ normal(0,10); // environmental covariate coefficient stage 1
+    theta1[2] ~ normal(0,10); // environmental covariate coefficient stage 1
  
-    theta2 ~ normal(0,5); 
+    theta2 ~ normal(0,10); 
    
-    D_scale ~ beta(0.5,1); // from simulation, will need to be 1,1 with full model 
+    D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(-1,5); // mean survival stage 1 
-    basal_p_2 ~ normal(-1,5); // mean survivial stage 2
+    basal_p_1 ~ normal(-1,0.1); // mean survival stage 1 
+    basal_p_2 ~ normal(-1,0.1); // mean survivial stage 2
     
 // age comp 
     for (a in 1:A) {
@@ -230,12 +230,12 @@ model {
 
 // Likelilihoods --  
   // Observation model
-  for (t in 6:nByrs) {
+  for (t in 1:nByrs) {
      log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j);
     } 
 
   
-  for(t in 6:nRyrs){ // calendar years 
+  for(t in 1:nRyrs){ // calendar years 
   if(t<nByrs){
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      

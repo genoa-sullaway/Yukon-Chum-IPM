@@ -27,17 +27,6 @@ traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_
 
 traceplot(bh_fit,pars=  c("log_F","log_catch_q","g"))
 
-# bayesplot diagnostics ======= 
-
-# need to remove NAs to use it 
-# posterior <- as.matrix(bh_fit)
-# posterior[is.na(posterior)] <- 0
-#   
-# mcmc_areas(posterior,
-#            pars = c("D_scale", "theta1[1]","theta1[2]","theta2[1]"),
-#            prob = 0.8)  
-# pairs =====  
-# pairs(bh_fit)
 # parameter plots ======== 
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -90,6 +79,103 @@ params %>%
   facet_wrap(~rowname, scales = 'free') +
   labs(caption = "red is observed, black is model")
 
+
+# Plot Observed vs Predicted ========
+## Spawners ==========
+pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
+              probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:21, each=4),
+                age = rep(1:4, length.out = nrow(.)))
+
+# plt proportions 
+
+
+# sum to comarpe with data 
+summ_n_sp <- pred_N_SP %>%
+  group_by(time) %>%
+  summarise(pred_n_sp = sum(mean),
+            pred_se = mean(se_mean)) %>% 
+  cbind(obs = data_list_stan$data_stage_sp)
+  
+ggplot(data = summ_n_sp) +
+  geom_point(aes(x=time, y = obs)) +
+  geom_line(aes(x=time, y = pred_n_sp)) +
+  geom_ribbon(aes(x=time, ymin = pred_n_sp-pred_se,
+                  ymax = pred_n_sp+pred_se))
+
+## recruits ====== 
+pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
+                     probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:21, each=4),
+                age = rep(1:4, length.out = nrow(.)))
+
+# plt proportions 
+
+# sum to compare with data 
+summ_n_rec <- pred_N_recruit %>%
+  group_by(time) %>%
+  summarise(pred_n_rec = sum(mean),
+            pred_se = mean(se_mean)) %>% 
+  cbind(obs = data_list_stan$data_stage_return)
+
+ggplot(data = summ_n_rec) +
+  geom_point(aes(x=time, y = obs)) +
+  geom_line(aes(x=time, y = pred_n_rec)) +
+  geom_ribbon(aes(x=time, ymin = pred_n_rec-pred_se,
+                  ymax = pred_n_rec+pred_se))
+
+## harvest ====== 
+pred_N_harvest <- summary(bh_fit, pars = c("N_catch"), 
+                          probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:21, each=4),
+                age = rep(1:4, length.out = nrow(.)))
+
+# plt proportions 
+
+# sum to compare with data 
+summ_n_harvest <- pred_N_harvest %>%
+  group_by(time) %>%
+  summarise(pred_n_harvest = sum(mean),
+            pred_se = mean(se_mean)) %>% 
+  cbind(obs = data_list_stan$data_stage_harvest)
+
+ggplot(data = summ_n_harvest) +
+  geom_point(aes(x=time, y = obs)) +
+  geom_line(aes(x=time, y = pred_n_harvest)) +
+  geom_ribbon(aes(x=time, ymin = pred_n_harvest-pred_se,
+                  ymax = pred_n_harvest+pred_se))
+
+
+
+
+## juveniles ====== 
+pred_N_j <- summary(bh_fit, pars = c("N_j"), 
+                          probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = 1:nrow(.))
+                
+# plt proportions 
+
+# sum to compare with data 
+summ_n_j <- pred_N_j %>%
+  group_by(time)  %>% 
+  cbind(obs = data_list_stan$data_stage_j)
+
+ggplot(data = summ_n_j) +
+  geom_point(aes(x=time, y = obs)) +
+  geom_line(aes(x=time, y = mean)) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean))
+
+
+# OLD ===========================
 # Plot Fishing Mortality ========
 fm <- summary(bh_fit, pars = c("log_F"), 
                   probs = c(0.1, 0.9))$summary %>%
