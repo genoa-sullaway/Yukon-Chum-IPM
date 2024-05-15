@@ -14,11 +14,11 @@ data { // all equation references are from proposal numbering
   vector[nRyrs] data_stage_return;   //  number of harvest + escapement for each group 
   vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
-  
-  real sigma_y_j;  // Initially fix sigma - process error for juveniles
-  real sigma_y_r;  // Initially fix sigma - process error for returns
-  real sigma_y_h;  // Initially fix sigma - process error for returns
-  real sigma_y_sp; // Initially fix sigma - process error for spawners
+  // 
+  // real sigma_y_j;  // Initially fix sigma - process error for juveniles
+  // real sigma_y_r;  // Initially fix sigma - process error for returns
+  // real sigma_y_h;  // Initially fix sigma - process error for returns
+  // real sigma_y_sp; // Initially fix sigma - process error for spawners
 
  // starting values for popualtion stages  
   real N_sp_start [t_start,A];  
@@ -61,6 +61,12 @@ real log_catch_q;
 vector [nRyrs] log_F;
 real basal_p_1; // mean alpha for covariate survival stage 1 
 real basal_p_2; // mean alpha for covariate survival stage 2
+
+real sigma_y_j;
+real sigma_y_r;
+real sigma_y_sp;
+real sigma_y_h;
+
 }
 
 transformed parameters { 
@@ -192,6 +198,11 @@ for(t in 1:nByrs){
 }
 
 model {
+  sigma_y_j ~ normal(0,10); 
+  sigma_y_r ~ normal(0,10); 
+  sigma_y_sp ~ normal(0,10); 
+  sigma_y_h ~ normal(0,10); 
+  
     log_catch_q ~ normal(1,1); // Estimate Q - this will translate # of recruits to # of spawners 
 
     log_c_1 ~  normal(18, 10); // carrying capacity prior - stage 1  
@@ -200,14 +211,14 @@ model {
     // log_c_1 ~  normal(18.4, 0.5); // carrying capacity prior - stage 1  
     // log_c_2 ~  normal(17.5, 1); // carrying capacity prior - stage 2
 
-    theta1[1] ~ normal(0,10); // environmental covariate coefficient stage 1
+    theta1[1] ~ normal(0,10); //normal(0.5,5); // environmental covariate coefficient stage 1
     theta1[2] ~ normal(0,10); // environmental covariate coefficient stage 1
  
-    theta2 ~ normal(0,10); 
+    theta2 ~ normal(0.5,5); 
    
     D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(-1,0.1); // mean survival stage 1 
+    basal_p_1 ~ normal(-1.5,0.1); // mean survival stage 1 
     basal_p_2 ~ normal(-1,0.1); // mean survivial stage 2
     
 // age comp 
@@ -217,7 +228,7 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs){
- log_F[t] ~ normal(0,10); //log fishing mortatliy
+ log_F[t] ~ normal(-1.2,1); //log fishing mortatliy
 }
 
  // age comp priors -- maturity schedules

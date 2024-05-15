@@ -59,6 +59,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "g"),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "sigma_y_j","sigma_y_sp","sigma_y_r", "sigma_y_h"),
+     fill_color = "blue")
+
 # PLOT PARAMS  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
@@ -90,8 +94,6 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
                 age = rep(1:4, length.out = nrow(.)))
 
 # plt proportions 
-
-
 # sum to comarpe with data 
 summ_n_sp <- pred_N_SP %>%
   group_by(time) %>%
@@ -151,28 +153,32 @@ ggplot(data = summ_n_harvest) +
   geom_ribbon(aes(x=time, ymin = pred_n_harvest-pred_se,
                   ymax = pred_n_harvest+pred_se))
 
-
-
-
 ## juveniles ====== 
+# multiply by catch q to fit observations
+ 
+catch_q <- summary(bh_fit, pars = c("log_catch_q"), 
+                   probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  mutate(mean = exp(mean))
+
 pred_N_j <- summary(bh_fit, pars = c("N_j"), 
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = 1:nrow(.))
                 
-# plt proportions 
-
+# plot proportions 
 # sum to compare with data 
 summ_n_j <- pred_N_j %>%
-  group_by(time)  %>% 
+  dplyr::mutate(mean_J_Q = mean*catch_q$mean) %>% 
   cbind(obs = data_list_stan$data_stage_j)
 
 ggplot(data = summ_n_j) +
   geom_point(aes(x=time, y = obs)) +
-  geom_line(aes(x=time, y = mean)) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean))
+  geom_line(aes(x=time, y = mean_J_Q)) +
+  geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
+                  ymax = mean_J_Q+se_mean), alpha = 0.5)
 
 
 # OLD ===========================
