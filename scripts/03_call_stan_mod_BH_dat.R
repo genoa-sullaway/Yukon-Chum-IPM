@@ -180,12 +180,7 @@ data_list_stan <- list(nByrs=nByrs,
                        data_stage_return = as.vector(yukon_fall_recruits$total_run),
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
-                       # 
-                       # sigma_y_j=process_error_j,
-                       # sigma_y_r=process_error_r,
-                       # sigma_y_h=process_error_h,
-                       # sigma_y_sp=process_error_sp,
-                       
+                  
                        N_sp_start = N_sp_start,
                        N_catch_start = N_catch_start,
                        N_ocean_start = N_ocean_start,
