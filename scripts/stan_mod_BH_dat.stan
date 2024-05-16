@@ -227,7 +227,7 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs){
- log_F[t] ~ normal(0,10); //normal(1,2);//-1.2,1); //log fishing mortatliy
+ log_F[t] ~ normal(-0.5,3); //normal(1,2);//-1.2,1); //log fishing mortatliy
 }
 
  // age comp priors -- maturity schedules

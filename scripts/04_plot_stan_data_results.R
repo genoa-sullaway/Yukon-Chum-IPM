@@ -28,11 +28,9 @@ traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_
 traceplot(bh_fit,pars=  c("log_F","log_catch_q","g"))
 
 # parameter plots ======== 
-
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "D_scale", "theta1[1]","theta1[2]","theta2[1]"),
      fill_color = "blue")
-
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_1"),
@@ -41,7 +39,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_2"),
      fill_color = "blue")
-
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"),
@@ -62,27 +59,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "sigma_y_j","sigma_y_sp","sigma_y_r", "sigma_y_h"),
      fill_color = "blue")
-
-# PLOT PARAMS  ======================  
-# data_list - holds simulated values, this is from: simulate_data_age_structure.R
-params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
-                                   "D_scale", "theta1", "theta2"), 
-                  probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column() %>%
-  dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1_1",
-                                    rowname == "theta1[2]"~ "theta1_2",
-                                    rowname == "theta2[1]"~ "theta2_1",
-                             TRUE ~ rowname))
-
-params %>% 
-  ggplot() + 
-  geom_linerange(aes(rowname, ymin = X10.,ymax = X90.)) + 
-  geom_crossbar(aes(rowname, mean, ymin = X10.,ymax = X90.),  fill= 'grey') + 
-  #geom_point(aes(x=rowname, y = mean_obs), color = "red") + 
-  facet_wrap(~rowname, scales = 'free') +
-  labs(caption = "red is observed, black is model")
-
 
 # Plot Observed vs Predicted ========
 ## Spawners ==========
@@ -180,6 +156,39 @@ ggplot(data = summ_n_j) +
   geom_line(aes(x=time, y = mean_J_Q)) +
   geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
                   ymax = mean_J_Q+se_mean), alpha = 0.5)
+
+# plot time series of estimated fishing mortality 
+
+fishing <- summary(bh_fit, pars = c("log_F"), 
+                   probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  mutate(mean = exp(mean)) %>% 
+  dplyr::mutate(time = 1:nrow(.))
+
+ggplot(data = fishing) + 
+  geom_line(aes(x=time, y = mean)) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5)
+# PLOT PARAMS  ======================  
+# data_list - holds simulated values, this is from: simulate_data_age_structure.R
+params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
+                                   "D_scale", "theta1", "theta2"), 
+                  probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column() %>%
+  dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1_1",
+                                    rowname == "theta1[2]"~ "theta1_2",
+                                    rowname == "theta2[1]"~ "theta2_1",
+                                    TRUE ~ rowname))
+
+params %>% 
+  ggplot() + 
+  geom_linerange(aes(rowname, ymin = X10.,ymax = X90.)) + 
+  geom_crossbar(aes(rowname, mean, ymin = X10.,ymax = X90.),  fill= 'grey') + 
+  #geom_point(aes(x=rowname, y = mean_obs), color = "red") + 
+  facet_wrap(~rowname, scales = 'free') +
+  labs(caption = "red is observed, black is model")
 
 
 # OLD ===========================
