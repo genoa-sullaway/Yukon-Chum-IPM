@@ -146,12 +146,12 @@ N_e_sum_start = as.vector(NA)
 
 N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
 N_catch_start = matrix(NA,nrow=t_start, ncol=A)
-N_egg_start = matrix(NA,nrow=t_start, ncol=A)
+# N_egg_start = matrix(NA,nrow=t_start, ncol=A)
 N_ocean_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
 N_sp_start = matrix(NA,nrow=t_start, ncol=A)#vector() # array(data = NA, dim = c(1, A,K))
 
 N_j_start = exp(rnorm(1,log(10393.312),2))
-N_e_sum_start = exp(rnorm(1,30,2))
+N_e_sum_start = exp(rnorm(1,20,2))#exp(rnorm(1,30,2))
 
 # use average age comp to distribute starting values
 p <- colMeans(yukon_fall_obs_agecomp) 
@@ -159,9 +159,9 @@ p <- colMeans(yukon_fall_obs_agecomp)
 for(t in 1:t_start){
   N_recruit_start[t,] = exp(rnorm(1,log(426469),2))*p
   N_ocean_start[t,] = exp(rnorm(1,13,2))*p
-  N_sp_start[t,] = exp(rnorm(1,log(398700),2))*p 
-  N_catch_start[t,] = exp(rnorm(1,log(27769),2))*p 
-  N_egg_start[t,] = exp(rnorm(1,15,2))*p
+  N_sp_start[t,] = exp(rnorm(1,log(200000),2))*p #exp(rnorm(1,log(398700),2))*p 
+  N_catch_start[t,] = exp(rnorm(1,log(40000),2))*p #exp(rnorm(1,log(27769),2))*p 
+  N_egg_start[t,] = exp(rnorm(1,20,2))*p
 }
 
 # ASSIGN DATA ==========
@@ -205,7 +205,7 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 1,# n_chains,
+  chains = n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores)

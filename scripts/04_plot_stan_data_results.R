@@ -157,14 +157,13 @@ ggplot(data = summ_n_j) +
   geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
                   ymax = mean_J_Q+se_mean), alpha = 0.5)
 
-# plot time series of estimated fishing mortality 
-
+# plot time series of estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("log_F"), 
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  mutate(mean = exp(mean)) %>% 
-  dplyr::mutate(time = 1:nrow(.))
+  mutate(mean = exp(mean),
+         time = 1:nrow(.))
 
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) +

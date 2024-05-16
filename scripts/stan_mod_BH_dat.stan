@@ -49,7 +49,10 @@ real <lower=0 > log_c_2; // log carrying capacity
 
 // real <lower=10, upper=20>log_c_1; // log carrying capacity
 // real <lower=10, upper=20>log_c_2; // log carrying capacity
-//  
+
+//  estiamte egg startign value 
+//vector [t_start] N_egg_start_log;  
+
 // covariate parameters 
 real theta1[ncovars1]; // covariate estimated for each covariate and each population 
 real theta2[ncovars2];
@@ -73,7 +76,9 @@ transformed parameters {
  vector[nByrs] N_j; // predicted juveniles -calculated
  vector[nByrs] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
  vector[nByrs] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
-
+ 
+ //vector[t_start] N_egg_start; 
+ 
  real N_recruit [nRyrs,A]; 
  real N_sp [nRyrs,A];
  real N_catch [nRyrs,A];
@@ -109,7 +114,10 @@ vector [nRyrs] F; // instantaneous fishing mortality
   kappa_marine[1] = kappa_marine_start; 
   kappa_j[1]= kappa_j_start; 
   N_j[1] = N_j_start; 
-  
+
+  //transform parameter - then add to pop vector
+   // N_egg_start = exp(N_egg_start_log);
+    
     for(a in 1:A){
    // add starting values to the whole population array 
   N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
@@ -128,7 +136,8 @@ vector [nRyrs] F; // instantaneous fishing mortality
   // transform log carrying capacity to normal scale
    c_1 = exp(log_c_1);
    c_2 = exp(log_c_2);
-
+   
+ 
 // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
   for(t in 1:nByrs){
    for (c in 1:ncovars1) {
@@ -207,6 +216,10 @@ model {
     log_c_1 ~  normal(18, 10); // carrying capacity prior - stage 1  
     log_c_2 ~  normal(15, 10); // carrying capacity prior - stage 2
 
+    // for (t in 1:t_start){
+    //   N_egg_start_log[t] ~  normal(25, 5); 
+    // }
+
     theta1[1] ~ normal(0,10); //normal(0.5,5); // environmental covariate coefficient stage 1
     theta1[2] ~ normal(0,10); // environmental covariate coefficient stage 1
  
@@ -214,8 +227,8 @@ model {
    
     D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(-1,0.1); // mean survival stage 1 
-    basal_p_2 ~ normal(-1,0.1); // mean survivial stage 2
+    basal_p_1 ~ normal(-1,1); // mean survival stage 1 
+    basal_p_2 ~ normal(-1,1); // mean survivial stage 2
     
     // basal_p_1 ~ normal(0,1); // mean survival stage 1 
     // basal_p_2 ~ normal(0,1); // mean survivial stage 2
@@ -227,7 +240,7 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs){
- log_F[t] ~ normal(-0.5,3); //normal(1,2);//-1.2,1); //log fishing mortatliy
+ log_F[t] ~ normal(-1.5,3); //normal(1,2);//-1.2,1); //log fishing mortatliy
 }
 
  // age comp priors -- maturity schedules
@@ -236,7 +249,9 @@ model {
   prob[3] ~ beta(1,1);  
  
 // printing these for trouble shooting 
- print("kappa_marine_mortality:", kappa_marine_mortality)
+ print("kappa_marine_mortality:", kappa_marine_mortality);
+  print("log_F:", log_F);
+  
 
 // Likelilihoods --  
   // Observation model
