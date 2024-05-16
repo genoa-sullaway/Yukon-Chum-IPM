@@ -91,22 +91,25 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood) %>%
   dplyr::select(yukon_mean_discharge,SST_CDD_NBS) %>% 
+  dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+         SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>% 
   as.matrix()
 
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood) %>% 
   dplyr::select(SST_CDD_SEBS) %>% 
+  dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS))) %>% 
   as.matrix()
 
 # Organize data call inputs ================================================
-nByrs = nrow(fall_juv) # Number of BROOD years                 #- 1978-2022 calendar years 
-nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN                    #years - 1978-2022 calendar years 
+nByrs = nrow(fall_juv) # Number of BROOD years                
+nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN        
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = 5 # to fill startgin values 
+t_start = 5 # to fill starting values 
  
 # covariates ===========
 # number covariates for each life stage 
@@ -114,30 +117,29 @@ ncovars1 = 2
 ncovars2 = 1
 
 # mean productivity rate =====
-# I think this will actually need to be estimated... but will fix it for now. 
-basal_p_1 = 0.2#,0.05,
+ # estimating this now
+basal_p_1 = 0.5#,0.05,
               #0.05) # straight from simulation
-basal_p_2 = 0.4#,
+basal_p_2 = 0.5#,
               # 0.15,
               # 0.15) # straight from simulation
 # fix marine mortality =======
+# generally low mortality in ocean for older life stages 
 M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
-# M = matrix(ncol = A, nrow = nRyrs, 
-#            c(NA,0.06, 0.06, 0.06) , byrow = TRUE)
 
 #ess age comp =======
 ess_age_comp = as.vector(rep(300, times = nByrs))
 
 # Process error  ===================
-# error is fixed in model right now so fix it here. 
-process_error_j = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
-process_error_sp = 10 # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-process_error_r = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-process_error_h = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+# error is now estimated
+# process_error_j = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
+# process_error_sp = 10 # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+# process_error_r = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+# process_error_h = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
 
 # STAN STARTING VALUES ==========
-kappa_j_start =  runif(1, 0.2, 0.2)
-kappa_marine_start = runif(1, 0.4, 0.4)
+kappa_j_start =  basal_p_1 # runif(1, 0.2, 0.2)
+kappa_marine_start = basal_p_2 #runif(1, 0.4, 0.4)
 
 N_j_start =  as.vector(NA)
 N_e_sum_start = as.vector(NA)
@@ -198,7 +200,7 @@ data_list_stan <- list(nByrs=nByrs,
                        ncovars1=ncovars1,
                        ncovars2=ncovars2,
 
-                       cov1=stage_a_cov ,
+                       cov1=stage_a_cov,
                        cov2=stage_b_cov,
                                         
                        o_run_comp=yukon_fall_obs_agecomp,

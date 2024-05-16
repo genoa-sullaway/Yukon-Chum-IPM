@@ -171,8 +171,9 @@ pred_N_j <- summary(bh_fit, pars = c("N_j"),
 # plot proportions 
 # sum to compare with data 
 summ_n_j <- pred_N_j %>%
-  dplyr::mutate(mean_J_Q = mean*catch_q$mean) %>% 
-  cbind(obs = data_list_stan$data_stage_j)
+ dplyr::mutate(mean_J_Q = mean*catch_q$mean) %>% 
+  cbind(obs = data_list_stan$data_stage_j) #%>%
+#  dplyr::mutate(obs = obs*catch_q$mean) 
 
 ggplot(data = summ_n_j) +
   geom_point(aes(x=time, y = obs)) +
