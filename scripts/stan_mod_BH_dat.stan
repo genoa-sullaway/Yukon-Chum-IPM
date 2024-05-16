@@ -86,7 +86,7 @@ vector <upper=1> [nByrs] p_2; // productivity in bev holt transition funciton, 1
  
 vector [nByrs] kappa_j ; // predicted survival for juvenile fish (FW and early marine)
 vector [nByrs] kappa_marine; // predicted survival for marine fish
-vector [nByrs] kappa_marine_mortality; // converting kappa marine survival to mortality 
+vector [nRyrs] kappa_marine_mortality; // converting kappa marine survival to mortality 
 
 matrix [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine covariate effects by brood year and stock
 matrix [nByrs, ncovars2] cov_eff2; // array that holds FW and early marine covariate effects by brood year and stock
@@ -166,14 +166,13 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
     // convert survival to mortality for next equation
         kappa_marine_mortality[t] = -log(kappa_marine[t]);
       for (a in 1:A) {  
-        N_ocean[t+a,a] =  N_j[t]*p[a]; // this still tracks on brood year
+        N_ocean[t+a,a] =  N_j[t]*p[a]; //convert to calendar year 
         
         if(a==1){
-        N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-kappa_marine_mortality[t]); // convert from survival to mortality 
+        N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-kappa_marine_mortality[t+a]); // convert from survival to mortality 
            } 
         if(a>1){
-        N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:(a-1)])+ kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
-           //should M be indexed by t or t+a???
+        N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:(a-1)])+ kappa_marine_mortality[t+1])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
            } 
         N_catch[t+a,a] = N_recruit[t+a,a]*(1- exp(-F[t+a]));
  
@@ -218,8 +217,8 @@ model {
    
     D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(-1.5,0.1); // mean survival stage 1 
-    basal_p_2 ~ normal(-1,0.1); // mean survivial stage 2
+    basal_p_1 ~ normal(0.001,1); // mean survival stage 1 
+    basal_p_2 ~ normal(0.001,1); // mean survivial stage 2
     
 // age comp 
     for (a in 1:A) {
@@ -228,7 +227,7 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs){
- log_F[t] ~ normal(-1.2,1); //log fishing mortatliy
+ log_F[t] ~ normal(0,2);//-1.2,1); //log fishing mortatliy
 }
 
  // age comp priors -- maturity schedules
