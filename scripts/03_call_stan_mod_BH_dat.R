@@ -25,38 +25,42 @@ adapt_delta <- 0.95
 
 year_min = 2002
 year_max_cal = 2022
-year_max_brood = 2017
+year_max_brood = 2021
 
 # load salmon data ==============================================
 ## Fall age comp ================================================
 yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv") %>%
   filter(cal_year >= year_min, 
-         cal_year <= year_max_cal) %>%
+         cal_year <= 2022
+         ) %>%
   dplyr::select(2:ncol(.)) %>%
   as.matrix()
 
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
-  filter(cal_year >= year_min, 
-         cal_year <= year_max_cal)%>%
+  filter(cal_year >= year_min #, 
+         #cal_year <= year_max_cal
+         )%>%
   select(2) %>%
   as.vector()
 
 yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
-  filter(cal_year >= year_min, 
-         cal_year <= year_max_cal)%>%
+  filter(cal_year >= year_min#, 
+         #cal_year <= year_max_cal
+         )%>%
   select(2) %>%
   as.vector()
 
 yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
-  filter(cal_year >= year_min, 
-         cal_year <= year_max_cal) %>%
+  filter(cal_year >= year_min#, 
+         #cal_year <= year_max_cal
+         ) %>%
   select(2) %>%
   as.vector()
 
 ## Fall Juveniles ================================================
 fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
-  filter(Year <= year_max_brood) %>%
+  filter(Year <= 2021) %>% # 1 year less than all spawners 
   select(2) %>% 
   as.vector()
 
@@ -89,7 +93,8 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   filter(Year >= year_min, 
-         Year <= year_max_brood) %>%
+         Year <= year_max_brood
+         ) %>%
   dplyr::select(yukon_mean_discharge,SST_CDD_NBS) %>% 
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
          SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>% 
@@ -97,14 +102,16 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
 
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(Year >= year_min, 
-         Year <= year_max_brood) %>% 
+         Year <= year_max_brood
+         ) %>% 
   dplyr::select(SST_CDD_SEBS) %>% 
   dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS))) %>% 
   as.matrix()
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
-nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN        
+nRyrs = nrow(yukon_fall_harvest)  # Number of CAL/RETURN  
+nRyrs_T = nRyrs + 4
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
@@ -146,27 +153,28 @@ N_e_sum_start = as.vector(NA)
 
 N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
 N_catch_start = matrix(NA,nrow=t_start, ncol=A)
-# N_egg_start = matrix(NA,nrow=t_start, ncol=A)
+ N_egg_start = matrix(NA,nrow=t_start, ncol=A)
 N_ocean_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
 N_sp_start = matrix(NA,nrow=t_start, ncol=A)#vector() # array(data = NA, dim = c(1, A,K))
 
-N_j_start = exp(rnorm(1,log(10393.312),2))
-N_e_sum_start = exp(rnorm(1,20,2))#exp(rnorm(1,30,2))
+N_j_start = exp(rnorm(1,9.2,2))
+N_e_sum_start = exp(rnorm(1,20,2)) #exp(rnorm(1,30,2))
 
 # use average age comp to distribute starting values
-p <- colMeans(yukon_fall_obs_agecomp) 
+p <- colMeans(yukon_fall_obs_agecomp[1:21,]) 
 
 for(t in 1:t_start){
-  N_recruit_start[t,] = exp(rnorm(1,log(426469),2))*p
+  N_recruit_start[t,] = exp(rnorm(1,12.9,2))*p
   N_ocean_start[t,] = exp(rnorm(1,13,2))*p
-  N_sp_start[t,] = exp(rnorm(1,log(200000),2))*p #exp(rnorm(1,log(398700),2))*p 
-  N_catch_start[t,] = exp(rnorm(1,log(40000),2))*p #exp(rnorm(1,log(27769),2))*p 
+  N_sp_start[t,] = exp(rnorm(1,12.2,2))*p #exp(rnorm(1,log(398700),2))*p 
+  N_catch_start[t,] = exp(rnorm(1,10.6,2))*p #exp(rnorm(1,log(27769),2))*p 
   N_egg_start[t,] = exp(rnorm(1,20,2))*p
 }
 
 # ASSIGN DATA ==========
 data_list_stan <- list(nByrs=nByrs,
                        nRyrs=nRyrs,
+                       nRyrs_T = nRyrs_T, 
                        A=A,
                        t_start = t_start,
                       
@@ -181,12 +189,12 @@ data_list_stan <- list(nByrs=nByrs,
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                   
-                       N_sp_start = N_sp_start,
-                       N_catch_start = N_catch_start,
+                      # N_sp_start = N_sp_start,
+                       #N_catch_start = N_catch_start,
                        N_ocean_start = N_ocean_start,
                        N_egg_start = N_egg_start,
                        N_j_start =  N_j_start,
-                       N_recruit_start = N_recruit_start,
+                      # N_recruit_start = N_recruit_start,
                        N_e_sum_start = N_e_sum_start,
                                         
                        kappa_marine_start = basal_p_2,
@@ -199,13 +207,14 @@ data_list_stan <- list(nByrs=nByrs,
                        cov2=stage_b_cov,
                                         
                        o_run_comp=yukon_fall_obs_agecomp,
-                       ess_age_comp=ess_age_comp)
+                       ess_age_comp=ess_age_comp,
+                       p_obs = p)
                  
 # call mod  ===========================
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = n_chains,
+  chains = 1,#n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores)

@@ -27,6 +27,8 @@ traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_
 
 traceplot(bh_fit,pars=  c("log_F","log_catch_q","g"))
 
+traceplot(bh_fit,pars=  c("N_sp_start_log"))
+
 # parameter plots ======== 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "D_scale", "theta1[1]","theta1[2]","theta2[1]"),
@@ -60,14 +62,19 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "sigma_y_j","sigma_y_sp","sigma_y_r", "sigma_y_h"),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "N_sp_start_log"),
+     fill_color = "blue")
+
 # Plot Observed vs Predicted ========
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
               probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:21, each=4),
-                age = rep(1:4, length.out = nrow(.)))
+  dplyr::mutate(time = rep(1:25, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>%
+  filter(!time>21) # remove years without full return estiamtes 
 
 # plt proportions 
 # sum to comarpe with data 
@@ -75,8 +82,9 @@ summ_n_sp <- pred_N_SP %>%
   group_by(time) %>%
   summarise(pred_n_sp = sum(mean),
             pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_sp)
+  cbind(obs = data_list_stan$data_stage_sp)  
   
+
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = pred_n_sp)) +
@@ -88,8 +96,9 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:21, each=4),
-                age = rep(1:4, length.out = nrow(.)))
+  dplyr::mutate(time = rep(1:25, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>% 
+  filter(!time>21) 
 
 # plt proportions 
 
@@ -104,15 +113,17 @@ ggplot(data = summ_n_rec) +
   geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = pred_n_rec)) +
   geom_ribbon(aes(x=time, ymin = pred_n_rec-pred_se,
-                  ymax = pred_n_rec+pred_se))
+                  ymax = pred_n_rec+pred_se))+
+  ggtitle(("Recruits, est and observed"))
 
 ## harvest ====== 
 pred_N_harvest <- summary(bh_fit, pars = c("N_catch"), 
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:21, each=4),
-                age = rep(1:4, length.out = nrow(.)))
+  dplyr::mutate(time = rep(1:25, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>% 
+  filter(!time>21) 
 
 # plt proportions 
 
@@ -127,11 +138,11 @@ ggplot(data = summ_n_harvest) +
   geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = pred_n_harvest)) +
   geom_ribbon(aes(x=time, ymin = pred_n_harvest-pred_se,
-                  ymax = pred_n_harvest+pred_se))
+                  ymax = pred_n_harvest+pred_se))+
+  ggtitle(("Harvest, est and observed"))
 
 ## juveniles ====== 
 # multiply by catch q to fit observations
- 
 catch_q <- summary(bh_fit, pars = c("log_catch_q"), 
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
@@ -147,7 +158,8 @@ pred_N_j <- summary(bh_fit, pars = c("N_j"),
 # plot proportions 
 # sum to compare with data 
 summ_n_j <- pred_N_j %>%
- dplyr::mutate(mean_J_Q = mean*catch_q$mean) %>% 
+ dplyr::mutate(mean_J_Q = mean*catch_q$mean,
+               se_mean = se_mean*catch_q$mean) %>% 
   cbind(obs = data_list_stan$data_stage_j) #%>%
 #  dplyr::mutate(obs = obs*catch_q$mean) 
 
@@ -155,7 +167,8 @@ ggplot(data = summ_n_j) +
   geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = mean_J_Q)) +
   geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
-                  ymax = mean_J_Q+se_mean), alpha = 0.5)
+                  ymax = mean_J_Q+se_mean), alpha = 0.5)+
+  ggtitle(("Juveniles, est and observed"))
 
 # plot time series of estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("log_F"), 
@@ -168,7 +181,23 @@ fishing <- summary(bh_fit, pars = c("log_F"),
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5)
+                  ymax = mean+se_mean), alpha = 0.5) +
+  ylab("Log fishing")
+
+# plot time series of estimated survival ======
+survival <- summary(bh_fit, pars = c("p_1", "p_2"), 
+                   probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
+          variable = case_when(grepl("p_1",rowname) ~ "p_1",
+                               TRUE ~ "p_2"))
+
+ggplot(data = survival, aes(x=time, y = mean, group = variable ,color = variable)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) 
+
 # PLOT PARAMS  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
