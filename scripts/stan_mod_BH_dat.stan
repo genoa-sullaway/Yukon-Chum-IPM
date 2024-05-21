@@ -271,7 +271,8 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(-1,0.1); // normal(1.2,1); //normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
+ log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: 1.5,0.7);
+ //normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
  
 }
 

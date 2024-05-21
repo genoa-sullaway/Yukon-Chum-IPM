@@ -182,7 +182,7 @@ ggplot(data = fishing) +
   geom_line(aes(x=time, y = mean)) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) +
-  ylab("Log fishing")
+  ylab("Fm")
 
 # plot time series of estimated survival ======
 survival <- summary(bh_fit, pars = c("p_1", "p_2"), 
