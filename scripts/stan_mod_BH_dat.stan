@@ -258,8 +258,8 @@ model {
    
     D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(-1,1); // mean survival stage 1 
-    basal_p_2 ~ normal(-1,1); // mean survivial stage 2
+    basal_p_1 ~ normal(0,1); // mean survival stage 1 
+    basal_p_2 ~ normal(0,1); // mean survivial stage 2
     
     // basal_p_1 ~ normal(0,1); // mean survival stage 1 
     // basal_p_2 ~ normal(0,1); // mean survivial stage 2
@@ -271,7 +271,8 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(-0.9,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
+ log_F[t] ~ normal(-1,0.1); // normal(1.2,1); //normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
+ 
 }
 
  // age comp priors -- maturity schedules
