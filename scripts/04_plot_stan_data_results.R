@@ -198,6 +198,21 @@ ggplot(data = survival, aes(x=time, y = mean, group = variable ,color = variable
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) 
 
+ 
+# plot age comp  ======
+age_comp <- summary(bh_fit, pars = c("p"), 
+                   probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column() %>% 
+  rename(pred = "mean") %>% 
+  cbind(obs = data_list_stan$p_obs) %>% 
+  dplyr::select(1,2,9) %>% 
+  gather(2:3, key = "key", value = "value")
+
+ggplot(data = age_comp) +
+  geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
+  theme_classic()
+
 # PLOT PARAMS  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
