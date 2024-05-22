@@ -14,12 +14,7 @@ data { // all equation references are from proposal numbering
   vector[nRyrs] data_stage_return;   //  number of harvest + escapement for each group 
   vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
-  // 
-  // real sigma_y_j;  // Initially fix sigma - process error for juveniles
-  // real sigma_y_r;  // Initially fix sigma - process error for returns
-  // real sigma_y_h;  // Initially fix sigma - process error for returns
-  // real sigma_y_sp; // Initially fix sigma - process error for spawners
-
+ 
  // starting values for popualtion stages  
  // real N_sp_start [t_start,A];  
   // real N_catch_start [t_start,A];  
@@ -54,6 +49,7 @@ real <lower=0 > log_c_2; // log carrying capacity
  vector<lower=12, upper=16> [t_start] N_sp_start_log; 
  vector<lower=12>[t_start]N_recruit_start_log;
  vector<lower=10>[t_start]N_catch_start_log;
+ //real N_j_start_log;
  //vector [t_start] N_egg_start_log;
 //vector [t_start] N_egg_start_log;  
 // real <lower=25> N_e_sum_start_log; 
@@ -62,7 +58,7 @@ real theta1[ncovars1]; // covariate estimated for each covariate and each popula
 real theta2[ncovars2];
   
 vector <lower=0>[A-1] prob; 
-real<lower=0.001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
+real<lower=0.0001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
 vector<lower=0> [A] g; // gamma random draws
 real log_catch_q;
 vector [nRyrs_T] log_F;
@@ -82,7 +78,6 @@ transformed parameters {
  vector[nByrs] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
  
  //vector[t_start] N_egg_start; 
- 
  real N_recruit [nRyrs_T,A]; 
  real N_sp [nRyrs_T,A];
  real N_catch [nRyrs_T,A];
@@ -92,6 +87,7 @@ transformed parameters {
 real N_sp_start [t_start,A];
 real N_recruit_start [t_start,A];
 real N_catch_start [t_start,A];
+//real N_j_start;
 
 //real N_egg_start [t_start, A];
 
@@ -135,8 +131,10 @@ for(t in 1:t_start){
   N_sp_start[t,a] = exp(N_sp_start_log[t]*p_obs[a]); 
   N_recruit_start[t,a] = exp(N_recruit_start_log[t]*p_obs[a]); 
   N_catch_start[t,a] = exp(N_catch_start_log[t]*p_obs[a]); 
- } 
+  } 
  }
+ 
+ //N_j_start = exp(N_j_start_log);
 
     for(a in 1:A){
    // add starting values to the whole population array 
@@ -239,12 +237,14 @@ model {
     N_sp_start_log ~ normal(10, 10);
     N_recruit_start_log ~  normal(12.9, 10);
     N_catch_start_log ~ normal(10.6,10); 
-   // N_egg_start_log ~ normal(30, 10);
+    // N_j_start_log ~ normal(0,10); 
+    
+    // N_egg_start_log ~ normal(30, 10);
     // N_e_sum_start_log ~  normal(30, 1); // starting value for eggs, initiates pop model 
-    //N_e_sum_start_log ~  uniform(20, 30); // starting value for eggs, initiates pop model 
+    // N_e_sum_start_log ~  uniform(20, 30); // starting value for eggs, initiates pop model 
  
- 
- // print("N_egg_start_log:", N_egg_start_log);
+ //   print("N_j_start_log:", N_j_start_log);
+      print("N_j", N_j);
  
     // for (t in 1:t_start){
     //   N_egg_start_log[t] ~  normal(25, 5); 
@@ -270,7 +270,7 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: 1.5,0.7);
+ log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
  //normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
  
 }

@@ -157,7 +157,7 @@ N_catch_start = matrix(NA,nrow=t_start, ncol=A)
 N_ocean_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
 N_sp_start = matrix(NA,nrow=t_start, ncol=A)#vector() # array(data = NA, dim = c(1, A,K))
 
-N_j_start = exp(rnorm(1,9.2,2))
+N_j_start = exp(rnorm(1,15,2))
 N_e_sum_start = exp(rnorm(1,20,2)) #exp(rnorm(1,30,2))
 
 # use average age comp to distribute starting values
