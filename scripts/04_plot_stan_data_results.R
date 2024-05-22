@@ -63,7 +63,8 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "N_sp_start_log"),
+     pars=  c( "N_sp_start_log", #"N_ocean_start_log",
+               "N_catch_start_log", "N_recruit_start_log"),
      fill_color = "blue")
 
 # Plot Observed vs Predicted ========
@@ -107,7 +108,7 @@ summ_n_rec <- pred_N_recruit %>%
   group_by(time) %>%
   summarise(pred_n_rec = sum(mean),
             pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_return)
+  cbind(obs = data_list_stan$data_stage_return) 
 
 ggplot(data = summ_n_rec) +
   geom_point(aes(x=time, y = obs)) +
