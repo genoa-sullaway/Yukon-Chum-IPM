@@ -31,7 +31,7 @@ traceplot(bh_fit,pars=  c("N_sp_start_log"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "D_scale", "theta1[1]","theta1[2]","theta2[1]"),
+     pars=  c( "D_scale", "theta1[1]","theta1[2]","theta2[1]","theta2[2]"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -65,6 +65,14 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "N_sp_start_log", #"N_ocean_start_log",
                "N_catch_start_log", "N_recruit_start_log"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "cov_eff1"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "cov_eff2"),
      fill_color = "blue")
 
 # Plot Observed vs Predicted ========
@@ -185,7 +193,7 @@ ggplot(data = fishing) +
                   ymax = mean+se_mean), alpha = 0.5) +
   ylab("Fm")
 
-# plot time series of estimated survival ======
+# plot  estimated survival ======
 survival <- summary(bh_fit, pars = c("p_1", "p_2"), 
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%

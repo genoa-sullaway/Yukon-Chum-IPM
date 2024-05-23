@@ -95,18 +95,29 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood
          ) %>%
-  dplyr::select(yukon_mean_discharge,SST_CDD_NBS) %>% 
-  dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
-         SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>% 
-  as.matrix()
+  # dplyr::select(yukon_mean_discharge) %>% 
+  # dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge))) %>% 
+  #               #SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>% 
+  # as.matrix()
+dplyr::select(yukon_mean_discharge,SST_CDD_NBS) %>%
+dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+       SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
+as.matrix()
+
+#plot(stage_a_cov[,2])
 
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood
          ) %>% 
-  dplyr::select(SST_CDD_SEBS) %>% 
+  dplyr::select(SST_CDD_SEBS,Chum_hatchery) %>% 
   dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS))) %>% 
   as.matrix()
+
+ 
+# number covariates for each life stage 
+ncovars1 = 2
+ncovars2 = 2
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
@@ -117,11 +128,7 @@ K = 1 # number of stocks
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = 5 # to fill starting values 
- 
-# covariates ===========
-# number covariates for each life stage 
-ncovars1 = 2
-ncovars2 = 1
+  
 
 # mean productivity rate =====
  # estimating this now

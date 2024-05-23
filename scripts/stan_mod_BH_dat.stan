@@ -233,10 +233,14 @@ for(t in 1:nByrs){
 }
 
 model {
-  sigma_y_j ~ normal(0,10); 
-  sigma_y_r ~ normal(0,10); 
-  sigma_y_sp ~ normal(0,10); 
-  sigma_y_h ~ normal(0,10); 
+  sigma_y_j ~ normal(0,8);
+  sigma_y_r ~ normal(0,8);
+  sigma_y_sp ~ normal(0,8);
+  sigma_y_h ~ normal(0,8);
+  //  sigma_y_j ~ normal(0,10); 
+  // sigma_y_r ~ normal(0,10); 
+  // sigma_y_sp ~ normal(0,10); 
+  // sigma_y_h ~ normal(0,10); 
   
     log_catch_q ~ normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
 
@@ -264,12 +268,13 @@ model {
     theta1[1] ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
     theta1[2] ~ normal(0,1); // environmental covariate coefficient stage 1
  
-    theta2 ~ normal(0,1); 
+    theta2[1] ~ normal(0,1); 
+    theta2[2] ~ normal(0,1); // environmental covariate coefficient stage 1
    
     D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(0,0.5); // mean survival stage 1 
-    basal_p_2 ~ normal(0,0.5); // mean survivial stage 2
+    basal_p_1 ~ normal(0.5,1); // mean survival stage 1 
+    basal_p_2 ~ normal(0.5,1); // mean survivial stage 2
     
     // basal_p_1 ~ normal(0,1); // mean survival stage 1 
     // basal_p_2 ~ normal(0,1); // mean survivial stage 2
