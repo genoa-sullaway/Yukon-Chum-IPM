@@ -39,16 +39,14 @@ data { // all equation references are from proposal numbering
 }
   
 parameters {
+// real <lower=15,upper=21 > log_c_1; // log carrying capacity
+// real <lower=13,upper=19 > log_c_2; // log carrying capacity
 real <lower=0 > log_c_1; // log carrying capacity
 real <lower=0 > log_c_2; // log carrying capacity
 
-// real <lower=10, upper=20>log_c_1; // log carrying capacity
-// real <lower=10, upper=20>log_c_2; // log carrying capacity
-
 //starting values 
  
- real<lower=5>N_j_start_log;
- //real<lower=5> N_e_sum_start_log;
+ real<lower=5> N_j_start_log; 
  
  vector [t_start]N_sp_start_log;
  vector [t_start]N_recruit_start_log;
@@ -70,7 +68,7 @@ real theta2[ncovars2];
 vector <lower=0>[A-1] prob; 
 real<lower=0.0001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
 vector<lower=0> [A] g; // gamma random draws
-real log_catch_q;
+real <upper=- 0.5> log_catch_q;
 vector [nRyrs_T] log_F;
 real basal_p_1; // mean alpha for covariate survival stage 1 
 real basal_p_2; // mean alpha for covariate survival stage 2
@@ -118,7 +116,6 @@ real<lower=0> c_2; // estimate on log, transform back to normal scale
 // Age related transformed params ====== 
 vector<lower=0>[A] p;  
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
-//vector [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix[nRyrs,A] q; 
 vector<lower=0, upper=1> [A] pi;
@@ -174,8 +171,8 @@ for(t in 1:t_start){
    for (c in 1:ncovars2) {
   cov_eff2[t,c] = theta2[c]*cov2[t,c];
    }
-    p_1[t]  = 1 / (1 + exp(-basal_p_1- sum(cov_eff1[t,1:ncovars1])));
-    p_2[t]  = 1 / (1 + exp(-basal_p_2- sum(cov_eff2[t,1:ncovars2])));
+    p_1[t]  = 1 / (1 + exp(basal_p_1+ sum(cov_eff1[t,1:ncovars1])));
+    p_2[t]  = 1 / (1 + exp(basal_p_2+ sum(cov_eff2[t,1:ncovars2])));
   }
  
  // Maturity schedule: use a common maturation schedule to draw the brood year specific schedules
@@ -244,19 +241,19 @@ model {
   // sigma_y_sp ~ normal(0,10); 
   // sigma_y_h ~ normal(0,10); 
   
-    log_catch_q ~ normal(-2,4); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q ~ normal(-2,5); // Estimate Q - this will translate # of recruits to # of spawners 
 
     log_c_1 ~  normal(18, 2); // carrying capacity prior - stage 1  
     log_c_2 ~  normal(16, 2); // carrying capacity prior - stage 2
 
-    N_j_start_log ~ normal(13.7,5); 
+    N_j_start_log ~ normal(13.7,10); 
    // N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
     
  for(t in 1:t_start){
-    N_sp_start_log[t] ~ normal(13.4,5);
-    N_recruit_start_log[t] ~  normal(12.3,5);
-    N_catch_start_log[t] ~ normal(12.3,5);
-    N_ocean_start_log[t] ~ normal(13.6,5);
+    N_sp_start_log[t] ~ normal(13.4,10);
+    N_recruit_start_log[t] ~  normal(12.3,10);
+    N_catch_start_log[t] ~ normal(12.3,10);
+    N_ocean_start_log[t] ~ normal(13.6,10);
     N_egg_start_log[t] ~  normal(14, 10); // starting value for eggs, initiates pop model 
 }
     // print("N_e_sum_start_log:", N_e_sum_start_log);
@@ -293,8 +290,8 @@ model {
   prob[3] ~ beta(1,1);  
  
 // printing these for trouble shooting 
-  print("kappa_marine_mortality:", kappa_marine_mortality);
-  print("log_F:", log_F);
+  // print("kappa_marine_mortality:", kappa_marine_mortality);
+   print("log_catch_q:", log_catch_q);
   
 // Likelilihoods --  
   // Observation model

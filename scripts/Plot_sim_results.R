@@ -99,8 +99,8 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:25, each=4),
-                age = rep(1:4, length.out = nrow(.))) #%>% 
-  #filter(!time > 21)
+                age = rep(1:4, length.out = nrow(.))) %>% 
+  filter(!time > 21)
 
 # plot proportions 
 # sum to compare with data 
@@ -109,7 +109,7 @@ summ_n_sp <- pred_N_SP %>%
   summarise(pred_n_sp = sum(mean),
             pred_se = mean(se_mean)) %>% 
   cbind(obs = data_list_stan$data_stage_sp) %>%  
-  filter(!time <5)
+  filter(!time <7)
 
 
 ggplot(data = summ_n_sp) +
@@ -124,8 +124,8 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:25, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>% 
-  filter(!time>21) 
+                age = rep(1:4, length.out = nrow(.))) %>%  
+  filter(!time > 21)
 
 # plt proportions 
 
@@ -134,7 +134,8 @@ summ_n_rec <- pred_N_recruit %>%
   group_by(time) %>%
   summarise(pred_n_rec = sum(mean),
             pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_return) 
+  cbind(obs = data_list_stan$data_stage_return) %>%
+  filter(!time < 7)
 
 ggplot(data = summ_n_rec) +
   geom_point(aes(x=time, y = obs)) +
@@ -159,7 +160,8 @@ summ_n_harvest <- pred_N_harvest %>%
   group_by(time) %>%
   summarise(pred_n_harvest = sum(mean),
             pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_harvest)
+  cbind(obs = data_list_stan$data_stage_harvest) %>%
+  filter(!time < 7)
 
 ggplot(data = summ_n_harvest) +
   geom_point(aes(x=time, y = obs)) +
@@ -187,8 +189,8 @@ pred_N_j <- summary(bh_fit, pars = c("N_j_predicted"),
 summ_n_j <- pred_N_j %>%
   # dplyr::mutate(mean_J_Q = mean*catch_q$mean,
   #               se_mean = se_mean*catch_q$mean) %>% 
-  cbind(obs = data_list_stan$data_stage_j) #%>%
-#  dplyr::mutate(obs = obs*catch_q$mean) 
+  cbind(obs = data_list_stan$data_stage_j)  %>%
+  filter(!time < 7)
 
 ggplot(data = summ_n_j) +
   geom_point(aes(x=time, y = obs)) +
@@ -251,12 +253,16 @@ obs <- data.frame(log_c_1 = data_list_plot$log_c_1,
                   theta1_2 = data_list_plot$`theta1[2]`,
                   theta2_1 = data_list_plot$`theta2[1]`, 
                   theta2_2 = data_list_plot$`theta2[2]`,
-                  N_j_start_log = log(data_list_plot$N_j_start),
-                  N_egg_start_log = log(data_list_plot$N_egg_start)) %>% 
+                 # N_catch_start_log =  log(data_list_plot$N_catch_start), 
+                  N_j_start_log = log(data_list_plot$N_j_start)
+                  #N_egg_start_log = log(data_list_plot$N_egg_start)
+                 ) %>% 
   gather(1:ncol(.), key = "rowname", value = "obs")
 
 params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
-                                   "D_scale", "theta1", "theta2", "N_j_start_log"), 
+                                   "D_scale", "theta1", "theta2", "N_j_start_log"
+                                  # "N_catch_start_log", "N_egg_start_log" 
+                                  ), 
                   probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column() %>%

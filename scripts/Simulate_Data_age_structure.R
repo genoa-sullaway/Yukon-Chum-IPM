@@ -75,7 +75,7 @@ c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2))
 # SURVIVAL/COVARIATE ===================
 ncovars1 =2
 ncovars2 = 2
-basal_p_1 = 0.1 #base survival
+basal_p_1 = 0.1 #base survival 
 basal_p_2 = 0.4
 
 cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rnorm(nByrs, 0, 1),rnorm(nByrs, 0, 1))   
@@ -109,8 +109,8 @@ cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rnorm(nByrs, 0, 1),rnorm(nByrs, 0,
     for (c in 1:ncovars2) {
       cov_eff2[t,c] = theta2[c]*cov2[t,c]
     }
-    p_1[t]  = 1 / 1+ exp(-basal_p_1 - (sum(cov_eff1[t,1:c]))) # covariate impacts survival, impact is measured through theta
-    p_2[t]  = 1 / 1+ exp(-basal_p_2 - (sum(cov_eff2[t,1:c]))) # covariate impacts survival, impact is measured through theta
+    p_1[t]  = 1 / 1+ exp(basal_p_1 + (sum(cov_eff1[t,1:c]))) # covariate impacts survival, impact is measured through theta
+    p_2[t]  = 1 / 1+ exp(basal_p_2 + (sum(cov_eff2[t,1:c]))) # covariate impacts survival, impact is measured through theta
     }
 
 # AGE STRUCTURE =========
@@ -219,12 +219,9 @@ M = matrix(ncol = A, nrow = nRyrs_T,
      for (t in 2:nByrs){ # loop for each brood year 
         
          kappa_j[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t-1])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
-         kappa_j[t]
          
          N_j[t] = kappa_j[t]*N_e_sum[t-1] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
-         log(N_j[t])
-         N_j[t]
-         
+        
          kappa_marine[t] =  p_2[t]/ (1 + ((p_2[t]*N_j[t])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
          M[t,1] = -log(kappa_marine[t]) # fill in the age 1 survival for the next stage  
@@ -278,12 +275,14 @@ p
 barplot(t(p_1))
 barplot(t(kappa_j))
 
+barplot(t(kappa_j[5:22]))
+
  
 # Fix ESS ============= 
 ess_age_comp = rep(300, times = nByrs)
 
 # PROCESS MODEL ============= 
-N_j[1] = mean(N_j[2:nByrs]) #mean(N_j[2:n,1:n.pop]) # just so i don't get yelled at about NA's later down the road 
+#N_j[1] = mean(N_j[2:nByrs]) #mean(N_j[2:n,1:n.pop]) # just so i don't get yelled at about NA's later down the road 
 N_j_sim_hat <- vector()# matrix(nrow=nByrs,ncol=K,NA)
  
 N_sp_sim <- vector() #array(data = NA, dim = c(nRyrs, K ))
@@ -309,7 +308,8 @@ N_sp_sim[1:nRyrs_T]<- N_sp[1:nRyrs_T,1] + N_sp[1:nRyrs_T,2] + N_sp[1:nRyrs_T,3]+
 
 
 # incorporate Q, to connect different data sources in population model 
-N_j_sim_observed=exp(log_catch_q)*N_j
+N_j_sim_observed= N_j*exp(log_catch_q)
+
 N_j_sim_hat  =  (rnorm(nByrs,  (N_j_sim_observed), process_error_j))
 
 N_catch_sim_s =   (rnorm(nRyrs_T,  (N_catch_sim), process_error_c))
@@ -371,7 +371,50 @@ barplot(t(N_sp_sim_s))
                           o_run_comp=o_run_comp[6:nRyrs,],
                           ess_age_comp=ess_age_comp[6:nByrs],
                           p_obs = p)
-    
+        
+        # PLOT data =======
+        data_list_plot <- list(nByrs=nByrs,
+                               nRyrs=nRyrs,
+                               A=A,
+                               t_start = t_start,
+                               Ps=Ps,
+                               fs=fs,
+                               data_stage_j = N_j_sim_observed[6:nByrs],
+                               data_stage_return = N_recruit_sim_s[6:nRyrs],
+                               data_stage_sp = N_sp_sim_s[6:nRyrs],
+                               data_stage_harvest = N_catch_sim_s[6:nRyrs], 
+                               N_j_start =  N_j_start,
+                                N_recruit_start = N_recruit_start,
+                               N_e_sum_start= N_e_sum_start,
+                               N_egg_start= N_egg_start,
+                               N_sp_start= N_sp_start,
+                               N_catch_start= N_catch_start,
+                               catch_q = log_catch_q, 
+                               kappa_marine = kappa_marine,
+                               kappa_j = kappa_j,
+                               kappa_marine_start = basal_p_2, 
+                               kappa_j_start = basal_p_1, 
+                               M =M,
+                               pi=pi,
+                               c_1=c_1,
+                               c_2=c_2,
+                               log_c_1 = log_c_1,
+                               log_c_2=log_c_2,
+                               D_scale = D_scale,
+                               o_run_comp=o_run_comp,
+                               ess_age_comp=ess_age_comp,
+                               g = g,
+                               p=p,
+                               F=F,
+                               Dir_alpha=Dir_alpha,
+                               "theta1[1]"=theta1[1],
+                               "theta1[2]"=theta1[2],
+                               "theta2[1]"=theta2[1],
+                               "theta2[2]"=theta2[2],
+                               "prob[1]"=prob[1],
+                               "prob[2]"=prob[2],
+                               "prob[3]"=prob[3]) 
+        
 # call mod  ===========================
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_SIM.stan"), # different than data model so I can move priors around 
@@ -382,71 +425,4 @@ bh_fit <- stan(
   cores = n_cores) # init=init_ll)
 
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
-
-# PLOT data =======
-data_list_plot <- list(nByrs=nByrs,
-                       nRyrs=nRyrs,
-                       A=A,
-                       t_start = t_start,
-                       Ps=Ps,
-                       fs=fs,
-                       data_stage_j = N_j_sim_observed[6:nByrs],
-                       data_stage_return = N_recruit_sim_s[6:nRyrs],
-                       data_stage_sp = N_sp_sim_s[6:nRyrs],
-                       data_stage_harvest = N_catch_sim_s[6:nRyrs], 
-                       N_j_start =  N_j_start,
-                       #N_recruit_start = N_recruit_start,
-                       N_e_sum_start= N_e_sum_start,
-                       N_egg_start= N_egg_start,
-                       #N_sp_start= N_sp_start,
-                       # N_returning_start= N_returning_start,
-                       catch_q = log_catch_q, # not a data input just for later
-                       # sigma_y_j=process_error_j,
-                       # sigma_y_r=process_error_r,
-                       # sigma_y_sp=process_error_sp,
-                       kappa_marine = kappa_marine,
-                       kappa_j = kappa_j,
-                       kappa_marine_start = basal_p_2, 
-                       kappa_j_start = basal_p_1, 
-                       M =M,
-                       pi=pi,
-                       c_1=c_1,
-                       c_2=c_2,
-                       log_c_1 = log_c_1,
-                       log_c_2=log_c_2,
-                       D_scale = D_scale,
-                       o_run_comp=o_run_comp,
-                       ess_age_comp=ess_age_comp,
-                       g = g,
-                       p=p,
-                       F=F,
-                       Dir_alpha=Dir_alpha,
-                       "theta1[1]"=theta1[1],
-                       "theta1[2]"=theta1[2],
-                       "theta2[1]"=theta2[1],
-                       "theta2[2]"=theta2[2],
-                       "prob[1]"=prob[1],
-                       "prob[2]"=prob[2],
-                       "prob[3]"=prob[3]) 
-
-# OLD ========
  
-
-# create initial values ===============
-# 
-# init_fn <- function(chain_id=1) {
-#   list(
-#     "log_c_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,18.4, 1)), 
-#     "log_c_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,15, 1)),  
-#     "log_p_1" = as.matrix(nrow = 1, ncol =1,rnorm(1,-1.6, 0.5)), 
-#     "log_p_2" = as.matrix(nrow = 1, ncol =1,rnorm(1,-0.9, 0.5)),  
-#     "log_catch_q" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0, 0.05)), 
-#     "D_scale"= rbeta(1,1,1))
-#     # "theta1" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, 0.1, 5)),
-#     # "theta2" = as.matrix(nrow = 1, ncol =1,rnorm(n=K, -0.2,10)),
-#     # "g"= matrix(data=rep( c(rnorm(1,40,1), rnorm(1,80,1)) , nRyrs), 
-#     #              nrow=nByrs, ncol=A, byrow=TRUE)
-# }
-# 
-# # Initial List of Lists for Multiple Chains
-# init_ll <- lapply(1:n_chains, function(id) init_fn(chain_id = id))
