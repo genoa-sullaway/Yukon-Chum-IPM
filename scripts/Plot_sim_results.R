@@ -39,7 +39,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "theta1[1]","theta1[2]","theta2[1]","theta2[2]"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+plot(bh_fit,  ci_level = 0.95, 
      pars=  c( "kappa_marine"),
      fill_color = "blue")
 

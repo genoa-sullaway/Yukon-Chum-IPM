@@ -66,20 +66,21 @@ t_start = 5 # to fill starting values
 #Bev Holt parameters ===================
 # p for alpha, and c for carrying capacity 
 
-log_c_1 = 18
-log_c_2 = 16
+log_c_1 = 20
+log_c_2 = 18
 
 c_1 = exp(log_c_1) # as.matrix(nrow = 1, ncol =1, exp(log_c_1)) 
 c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2)) 
 
 # SURVIVAL/COVARIATE ===================
-ncovars1 =2
-ncovars2 = 2
-basal_p_1 = 0.1 #base survival 
-basal_p_2 = 0.4
+ncovars1 = 1
+ncovars2 = 1
 
-cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rnorm(nByrs, 0, 1),rnorm(nByrs, 0, 1))   
-cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rnorm(nByrs, 0, 1),rnorm(nByrs, 0, 1)) 
+basal_p_1 =  (0.1) #base survival 
+basal_p_2 =  (0.4)
+
+cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
+cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = ncovars2))
 
  # only need sigma and mu coeff if they are set up hierarchically
  # sigma_coef1 <- as.matrix(nrow = 1, ncol =1, 0.1)
@@ -91,9 +92,12 @@ cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rnorm(nByrs, 0, 1),rnorm(nByrs, 0,
  #  theta1 <- rnorm(1,mu_coef1,sigma_coef1[1,1])
  #  theta2 <- rnorm(1,mu_coef2,sigma_coef2[1,1])
 
- theta1 <- c(0.5,0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
- theta2 <- c(-0.5,-0.9)#, -0.6) #relationship for simulated data
-   
+theta1 <- c(0.5 ) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+theta2 <- c(-0.5 )#, -0.6) #relationship for simulated data
+# 
+# theta1 <- c(0.5,0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+#  theta2 <- c(-0.5,-0.9)#, -0.6) #relationship for simulated data
+#    
  p_1 = as.vector(NA) #matrix(nrow=nByrs,ncol=1,NA)
  p_2 = as.vector(NA) #matrix(nrow=nByrs,ncol=K,NA)
  
@@ -109,8 +113,8 @@ cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rnorm(nByrs, 0, 1),rnorm(nByrs, 0,
     for (c in 1:ncovars2) {
       cov_eff2[t,c] = theta2[c]*cov2[t,c]
     }
-    p_1[t]  = 1 / 1+ exp(basal_p_1 + (sum(cov_eff1[t,1:c]))) # covariate impacts survival, impact is measured through theta
-    p_2[t]  = 1 / 1+ exp(basal_p_2 + (sum(cov_eff2[t,1:c]))) # covariate impacts survival, impact is measured through theta
+    p_1[t]  = 1 / 1+ exp(-basal_p_1 - (sum(cov_eff1[t,1:c]))) # covariate impacts survival, impact is measured through theta
+    p_2[t]  = 1 / 1+ exp(-basal_p_2 - (sum(cov_eff2[t,1:c]))) # covariate impacts survival, impact is measured through theta
     }
 
 # AGE STRUCTURE =========
@@ -176,7 +180,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
  N_e_sum_start = exp(rnorm(1,14,1))
 
  for(t in 1:t_start){
-   N_recruit_start[t,] = exp(rnorm(1,yukon_fall_harvest$mean,1))*p
+   N_recruit_start[t,] = exp(rnorm(1,yukon_fall_recruits$mean,1))*p
    N_ocean_start[t,] = exp(rnorm(1,13.6,1))*p
    N_sp_start[t,] = exp(rnorm(1,yukon_fall_spawners$mean,1))*p 
    N_catch_start[t,] = exp(rnorm(1,yukon_fall_harvest$mean,1))*p 
@@ -199,7 +203,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
   # translates from predicted juveniles to observed juveniles 
   # catch_q = -2  #exp(rnorm(1,0,0.5))
   
- log_catch_q = -2
+ log_catch_q = -1
  
 # Harvest =============
 # fishing mortality by age 
@@ -250,8 +254,8 @@ o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
   for (t in 1:nRyrs) {
     for (a in 1:A) {
         if(t< nByrs+1){
-    o_run_comp[t,a] = N_ocean[t,a]/sum(N_ocean[t,1:A])
-    o_run_comp_sp[t,a] = N_sp[t,a]/sum(N_sp[t,1:A])
+   # o_run_comp[t,a] = N_ocean[t,a]/sum(N_ocean[t,1:A])
+          o_run_comp[t,a] = N_ocean[t,a]/sum(N_ocean[t,1:A])
     }
   }
 }
@@ -260,12 +264,13 @@ o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
 for(t in 1:6){
   for (a in 1:A) {
   o_run_comp[t,a]  = p[[a]]
-  o_run_comp[t+(nByrs-1),a] = p[[a]]
+  o_run_comp[26,a] = p[[a]]
   }
 }
 
+
 barplot(t(o_run_comp))
-barplot(t(o_run_comp_sp))
+#barplot(t(o_run_comp_sp))
 barplot(t(N_j))
 barplot(t(N_sp))
 
@@ -310,13 +315,14 @@ N_sp_sim[1:nRyrs_T]<- N_sp[1:nRyrs_T,1] + N_sp[1:nRyrs_T,2] + N_sp[1:nRyrs_T,3]+
 # incorporate Q, to connect different data sources in population model 
 N_j_sim_observed= N_j*exp(log_catch_q)
 
-N_j_sim_hat  =  (rnorm(nByrs,  (N_j_sim_observed), process_error_j))
+N_j_sim_hat  =   (rnorm(nByrs,   (N_j_sim_observed), process_error_j))
 
-N_catch_sim_s =   (rnorm(nRyrs_T,  (N_catch_sim), process_error_c))
-N_recruit_sim_s  =  (rnorm(nRyrs_T,  (N_recruit_sim), process_error_r))
-N_sp_sim_s  =  (rnorm(nRyrs_T,  (N_sp_sim), process_error_sp))
+N_catch_sim_s =    (rnorm(nRyrs_T,   (N_catch_sim), process_error_c))
+N_recruit_sim_s  =   (rnorm(nRyrs_T,   (N_recruit_sim), process_error_r))
+N_sp_sim_s  =   (rnorm(nRyrs_T,   (N_sp_sim), process_error_sp))
      
 barplot(t(N_sp_sim_s))
+barplot(t(N_j_sim_hat))
 
     sd(log(N_j_sim_hat))
     sd(log(N_recruit_sim_s[1:nByrs]))
@@ -335,8 +341,9 @@ barplot(t(N_sp_sim_s))
         
         barplot(N_j[6:nByrs])
         barplot(N_j_sim_observed[6:nRyrs])
-        exp(5)
-        
+ 
+        barplot(kappa_j[6:nByrs])
+        barplot(kappa_marine[6:nByrs])
         
      # STAN data ==========
    data_list_stan <- list(nByrs=nByrs_stan,
@@ -357,7 +364,7 @@ barplot(t(N_sp_sim_s))
                           # N_ocean_start = N_ocean_start,
                           # N_egg_start = N_egg_start,
                           # N_j_start =  N_j_start, 
-                          N_e_sum_start = N_e_sum_start,
+                          #N_e_sum_start = N_e_sum_start,
                           
                           kappa_marine_start = basal_p_2,
                           kappa_j_start = basal_p_1,
@@ -365,8 +372,8 @@ barplot(t(N_sp_sim_s))
                           ncovars1=ncovars1,
                           ncovars2=ncovars2,
                           
-                          cov1=cov1[6:nByrs,],
-                          cov2=cov2[6:nByrs,],
+                          cov1=cov1[6:nByrs,ncovars1],
+                          cov2=cov2[6:nByrs,ncovars2],
                           
                           o_run_comp=o_run_comp[6:nRyrs,],
                           ess_age_comp=ess_age_comp[6:nByrs],

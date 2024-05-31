@@ -22,7 +22,7 @@ data { // all equation references are from proposal numbering
  // real N_egg_start [t_start,A];
   //real N_j_start;
   //real N_recruit_start[t_start,A];
- real N_e_sum_start;
+ //real N_e_sum_start;
 
 // kappa is marine and juvenile survival estimated via beverton holt transition fxn 
   real kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
@@ -31,9 +31,12 @@ data { // all equation references are from proposal numbering
   int<lower=0> ncovars1; //number of covariates for first lifestage  
   int<lower=0> ncovars2; //number of covariates for second lifestage  
 
-  matrix [nByrs, ncovars1] cov1; // covariate data in a matrix format 
-  matrix [nByrs, ncovars2] cov2; // covariate data in a matrix format 
+  vector [nByrs] cov1; // covariate data in a matrix format 
+  vector [nByrs] cov2; // covariate data in a matrix format 
   
+  // matrix [nByrs, ncovars1] cov1; // covariate data in a matrix format 
+  // matrix [nByrs, ncovars2] cov2; // covariate data in a matrix format 
+  // 
   matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
   vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 }
@@ -41,12 +44,13 @@ data { // all equation references are from proposal numbering
 parameters {
 // real <lower=15,upper=21 > log_c_1; // log carrying capacity
 // real <lower=13,upper=19 > log_c_2; // log carrying capacity
-real <lower=0 > log_c_1; // log carrying capacity
-real <lower=0 > log_c_2; // log carrying capacity
+real <lower=13 > log_c_1; // log carrying capacity
+real <lower=12 > log_c_2; // log carrying capacity
 
 //starting values 
  
  real<lower=5> N_j_start_log; 
+  real<lower=5> N_e_sum_start_log; 
  
  vector [t_start]N_sp_start_log;
  vector [t_start]N_recruit_start_log;
@@ -96,7 +100,7 @@ real N_catch_start [t_start,A];
 real N_ocean_start[t_start,A];
 real N_egg_start[t_start,A];
 real N_j_start;
-// real N_e_sum_start;
+ real N_e_sum_start;
 
 // survival and covariate section 
 vector <upper=1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
@@ -128,7 +132,7 @@ vector [nRyrs_T] F; // instantaneous fishing mortality
   N_j[1] = N_j_start; 
   N_e_sum[1]= N_e_sum_start; 
   
-// real N_e_sum_start;
+ 
 for(t in 1:t_start){
  for(a in 1:A){
   N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
@@ -142,7 +146,7 @@ for(t in 1:t_start){
  N_j_start = exp(N_j_start_log);
  N_j[1] = N_j_start;
  
- //N_e_sum_start = exp(N_e_sum_start_log);
+ N_e_sum_start = exp(N_e_sum_start_log);
  N_e_sum[1] = N_e_sum_start;
  
     for(a in 1:A){
@@ -166,10 +170,10 @@ for(t in 1:t_start){
 // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
   for(t in 1:nByrs){
    for (c in 1:ncovars1) {
-  cov_eff1[t,c] = theta1[c]*cov1[t,c];
+  cov_eff1[t,c] = theta1[c]*cov1[t];
    }
    for (c in 1:ncovars2) {
-  cov_eff2[t,c] = theta2[c]*cov2[t,c];
+  cov_eff2[t,c] = theta2[c]*cov2[t];
    }
     p_1[t]  = 1 / (1 + exp(basal_p_1+ sum(cov_eff1[t,1:ncovars1])));
     p_2[t]  = 1 / (1 + exp(basal_p_2+ sum(cov_eff2[t,1:ncovars2])));
@@ -241,34 +245,38 @@ model {
   // sigma_y_sp ~ normal(0,10); 
   // sigma_y_h ~ normal(0,10); 
   
-    log_catch_q ~ normal(-2,5); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q ~ normal(-1,5); // Estimate Q - this will translate # of recruits to # of spawners 
 
-    log_c_1 ~  normal(18, 2); // carrying capacity prior - stage 1  
-    log_c_2 ~  normal(16, 2); // carrying capacity prior - stage 2
+    log_c_1 ~  normal(20, 2); // carrying capacity prior - stage 1  
+    log_c_2 ~  normal(18, 2); // carrying capacity prior - stage 2
 
-    N_j_start_log ~ normal(13.7,10); 
-   // N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
+    N_j_start_log ~ normal(13.7,6); 
+   N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
     
  for(t in 1:t_start){
-    N_sp_start_log[t] ~ normal(13.4,10);
-    N_recruit_start_log[t] ~  normal(12.3,10);
-    N_catch_start_log[t] ~ normal(12.3,10);
-    N_ocean_start_log[t] ~ normal(13.6,10);
-    N_egg_start_log[t] ~  normal(14, 10); // starting value for eggs, initiates pop model 
+    N_sp_start_log[t] ~ normal(13.48,5);
+    N_recruit_start_log[t] ~  normal(13.7,5);
+    N_catch_start_log[t] ~ normal(12.3,5);
+    N_ocean_start_log[t] ~ normal(13.6,5);
+    N_egg_start_log[t] ~  normal(14, 5); // starting value for eggs, initiates pop model 
 }
-    // print("N_e_sum_start_log:", N_e_sum_start_log);
+  print("N_e_sum_start_log:", N_e_sum_start_log);
       // print("N_catch_start_log:", N_catch_start_log);
       // print("N_sp_start_log:", N_sp_start_log);
  
-    theta1[1] ~ normal(0.5,0.5); // normal(0.5,5); // environmental covariate coefficient stage 1
-    theta1[2] ~ normal(0.1,0.5); // environmental covariate coefficient stage 1
+  theta1 ~ normal(0.5,0.5); // normal(0.5,5); // environmental covariate coefficient stage 1
+    
+  theta2 ~ normal(-0.5,0.5); 
  
-    theta2[1] ~ normal(-0.5,0.5); 
-    theta2[2] ~ normal(-0.9,0.5); // environmental covariate coefficient stage 1
-   
+    // theta1[1] ~ normal(0.5,0.5); // normal(0.5,5); // environmental covariate coefficient stage 1
+    // theta1[2] ~ normal(0.1,0.5); // environmental covariate coefficient stage 1
+    // 
+    // theta2[1] ~ normal(-0.5,0.5); 
+    // theta2[2] ~ normal(-0.9,0.5); // environmental covariate coefficient stage 1
+    // 
     D_scale ~ beta(0.3,1);  
     
-    basal_p_1 ~ normal(0.4,0.5); // mean survival stage 1 
+    basal_p_1 ~ normal(0.1,0.5); // mean survival stage 1 
     basal_p_2 ~ normal(0.4,0.5); // mean survivial stage 2
     
     // basal_p_1 ~ normal(0,1); // mean survival stage 1 
