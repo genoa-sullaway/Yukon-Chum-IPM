@@ -76,13 +76,15 @@ c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2))
 ncovars1 = 1
 ncovars2 = 1
 
-basal_p_1 =  (0.1) #base survival 
-basal_p_2 =  (0.4)
+basal_p_1 =  -1.820463 # (0.1) #base survival 
+basal_p_2 =  -0.2369558 # (0.4)
 
 cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
 cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = ncovars2))
 
- # only need sigma and mu coeff if they are set up hierarchically
+# rnorm(1, 0,1.5^2)
+ 
+# only need sigma and mu coeff if they are set up hierarchically
  # sigma_coef1 <- as.matrix(nrow = 1, ncol =1, 0.1)
  #  sigma_coef2 <- as.matrix(nrow = 1, ncol =1, 0.1)
  #   
@@ -277,10 +279,15 @@ barplot(t(N_sp))
 colMeans(o_run_comp)
 p
 
+# barplots =====
 barplot(t(p_1))
+barplot(t(p_2))
+
 barplot(t(kappa_j))
 
 barplot(t(kappa_j[5:22]))
+
+barplot(t(kappa_marine[5:22]))
 
  
 # Fix ESS ============= 

@@ -227,6 +227,20 @@ ggplot(data = survival, aes(x=time, y = mean, group = variable ,color = variable
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) 
 
+# kappa marine =====
+kappa_m <- summary(bh_fit, pars = c("kappa_marine"), 
+                    probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
+                variable = case_when(grepl("p_1",rowname) ~ "p_1",
+                                     TRUE ~ "p_2")) %>% 
+  filter(!time<5)
+
+ggplot(data = kappa_m, aes(x=time, y = mean, group = variable ,color = variable)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) 
 
 # plot age comp  ======
 age_comp <- summary(bh_fit, pars = c("p"), 
@@ -252,15 +266,15 @@ obs <- data.frame(log_c_1 = data_list_plot$log_c_1,
                   theta1_1 = data_list_plot$`theta1[1]`, 
                   theta1_2 = data_list_plot$`theta1[2]`,
                   theta2_1 = data_list_plot$`theta2[1]`, 
-                  theta2_2 = data_list_plot$`theta2[2]`,
+                  theta2_2 = data_list_plot$`theta2[2]`
                  # N_catch_start_log =  log(data_list_plot$N_catch_start), 
-                  N_j_start_log = log(data_list_plot$N_j_start)
+                 # N_j_start_log = log(data_list_plot$N_j_start)
                   #N_egg_start_log = log(data_list_plot$N_egg_start)
                  ) %>% 
   gather(1:ncol(.), key = "rowname", value = "obs")
 
 params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
-                                   "D_scale", "theta1", "theta2", "N_j_start_log"
+                                   "D_scale", "theta1", "theta2"
                                   # "N_catch_start_log", "N_egg_start_log" 
                                   ), 
                   probs = c(0.1, 0.9))$summary %>%

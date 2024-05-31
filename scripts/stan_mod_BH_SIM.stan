@@ -70,9 +70,9 @@ real theta1[ncovars1]; // covariate estimated for each covariate and each popula
 real theta2[ncovars2];
   
 vector <lower=0>[A-1] prob; 
-real<lower=0.0001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
+real<lower=0.2,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
 vector<lower=0> [A] g; // gamma random draws
-real <upper=- 0.5> log_catch_q;
+real <upper= - 0.7> log_catch_q;
 vector [nRyrs_T] log_F;
 real basal_p_1; // mean alpha for covariate survival stage 1 
 real basal_p_2; // mean alpha for covariate survival stage 2
@@ -245,10 +245,10 @@ model {
   // sigma_y_sp ~ normal(0,10); 
   // sigma_y_h ~ normal(0,10); 
   
-    log_catch_q ~ normal(-1,5); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q ~ normal(-1,1); // Estimate Q - this will translate # of recruits to # of spawners 
 
-    log_c_1 ~  normal(20, 2); // carrying capacity prior - stage 1  
-    log_c_2 ~  normal(18, 2); // carrying capacity prior - stage 2
+    log_c_1 ~  normal(20, 5); // carrying capacity prior - stage 1  
+    log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
 
     N_j_start_log ~ normal(13.7,6); 
    N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
@@ -264,9 +264,9 @@ model {
       // print("N_catch_start_log:", N_catch_start_log);
       // print("N_sp_start_log:", N_sp_start_log);
  
-  theta1 ~ normal(0.5,0.5); // normal(0.5,5); // environmental covariate coefficient stage 1
+  theta1 ~ normal(0.5,0.25); // normal(0.5,5); // environmental covariate coefficient stage 1
     
-  theta2 ~ normal(-0.5,0.5); 
+  theta2 ~ normal(-0.5,0.25); 
  
     // theta1[1] ~ normal(0.5,0.5); // normal(0.5,5); // environmental covariate coefficient stage 1
     // theta1[2] ~ normal(0.1,0.5); // environmental covariate coefficient stage 1
@@ -274,7 +274,7 @@ model {
     // theta2[1] ~ normal(-0.5,0.5); 
     // theta2[2] ~ normal(-0.9,0.5); // environmental covariate coefficient stage 1
     // 
-    D_scale ~ beta(0.3,1);  
+    D_scale ~ beta(0.3,0.5);  
     
     basal_p_1 ~ normal(0.1,0.5); // mean survival stage 1 
     basal_p_2 ~ normal(0.4,0.5); // mean survivial stage 2
