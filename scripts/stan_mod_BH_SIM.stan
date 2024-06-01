@@ -50,7 +50,7 @@ real <lower=12 > log_c_2; // log carrying capacity
 //starting values 
  
  real<lower=5> N_j_start_log; 
-  real<lower=5> N_e_sum_start_log; 
+ real<lower=5> N_e_sum_start_log; 
  
  vector [t_start]N_sp_start_log;
  vector [t_start]N_recruit_start_log;
@@ -103,8 +103,8 @@ real N_j_start;
  real N_e_sum_start;
 
 // survival and covariate section 
-vector <upper=1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
-vector <upper=1> [nByrs] p_2; // productivity in bev holt transition funciton, 1 = FW early marine 
+vector [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
+vector [nByrs] p_2; // productivity in bev holt transition funciton, 1 = FW early marine 
  
 vector [nByrs] kappa_j ; // predicted survival for juvenile fish (FW and early marine)
 vector [nByrs] kappa_marine; // predicted survival for marine fish
@@ -251,7 +251,7 @@ model {
     log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
 
     N_j_start_log ~ normal(13.7,6); 
-   N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
+    N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
     
  for(t in 1:t_start){
     N_sp_start_log[t] ~ normal(13.48,5);

@@ -99,25 +99,26 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   # dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge))) %>% 
   #               #SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>% 
   # as.matrix()
-dplyr::select(yukon_mean_discharge,SST_CDD_NBS) %>%
 dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
        SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
+  dplyr::select(yukon_mean_discharge
+                #,SST_CDD_NBS
+                ) %>%
 as.matrix()
-
-#plot(stage_a_cov[,2])
-
+ 
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood
          ) %>% 
-  dplyr::select(SST_CDD_SEBS,Chum_hatchery) %>% 
   dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS))) %>% 
+  dplyr::select(SST_CDD_SEBS
+                #,Chum_hatchery
+                ) %>% 
   as.matrix()
 
- 
 # number covariates for each life stage 
-ncovars1 = 2
-ncovars2 = 2
+ncovars1 = 1
+ncovars2 = 1
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
@@ -132,9 +133,9 @@ t_start = 5 # to fill starting values
 
 # mean productivity rate =====
  # estimating this now
-basal_p_1 = 0.5#,0.05,
+basal_p_1 = 0.1#,0.05,
               #0.05) # straight from simulation
-basal_p_2 = 0.5#,
+basal_p_2 = 0.4#,
               # 0.15,
               # 0.15) # straight from simulation
 # fix marine mortality =======
@@ -144,39 +145,32 @@ M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative
 #ess age comp =======
 ess_age_comp = as.vector(rep(300, times = nByrs))
 
-# Process error  ===================
-# error is now estimated
-# process_error_j = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
-# process_error_sp = 10 # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-# process_error_r = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-# process_error_h = 10 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
-
 # STAN STARTING VALUES ==========
-kappa_j_start =  basal_p_1 # runif(1, 0.2, 0.2)
-kappa_marine_start = basal_p_2 #runif(1, 0.4, 0.4)
+kappa_j_start =  basal_p_1  
+kappa_marine_start = basal_p_2  
 
-N_j_start =  as.vector(NA)
-N_e_sum_start = as.vector(NA)
-
-N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
-N_catch_start = matrix(NA,nrow=t_start, ncol=A)
- N_egg_start = matrix(NA,nrow=t_start, ncol=A)
-N_ocean_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
-N_sp_start = matrix(NA,nrow=t_start, ncol=A)#vector() # array(data = NA, dim = c(1, A,K))
-
-N_j_start = exp(rnorm(1,15,2))
-N_e_sum_start = exp(rnorm(1,20,2)) #exp(rnorm(1,30,2))
+# N_j_start =  as.vector(NA)
+# N_e_sum_start = as.vector(NA)
+# 
+# N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
+# N_catch_start = matrix(NA,nrow=t_start, ncol=A)
+#  N_egg_start = matrix(NA,nrow=t_start, ncol=A)
+# N_ocean_start = matrix(NA,nrow=t_start, ncol=A)#vector() # ages # array(data = NA, dim = c(1, A))
+# N_sp_start = matrix(NA,nrow=t_start, ncol=A)#vector() # array(data = NA, dim = c(1, A,K))
+# 
+# N_j_start = exp(rnorm(1,15,2))
+# N_e_sum_start = exp(rnorm(1,20,2)) #exp(rnorm(1,30,2))
 
 # use average age comp to distribute starting values
 p <- colMeans(yukon_fall_obs_agecomp[1:21,]) 
-
-for(t in 1:t_start){
-  N_recruit_start[t,] = exp(rnorm(1,12.9,2))*p
-  N_ocean_start[t,] = exp(rnorm(1,13,2))*p
-  N_sp_start[t,] = exp(rnorm(1,12.2,2))*p #exp(rnorm(1,log(398700),2))*p 
-  N_catch_start[t,] = exp(rnorm(1,10.6,2))*p #exp(rnorm(1,log(27769),2))*p 
-  N_egg_start[t,] = exp(rnorm(1,20,2))*p
-}
+# 
+# for(t in 1:t_start){
+#   N_recruit_start[t,] = exp(rnorm(1,12.9,2))*p
+#   N_ocean_start[t,] = exp(rnorm(1,13,2))*p
+#   N_sp_start[t,] = exp(rnorm(1,12.2,2))*p #exp(rnorm(1,log(398700),2))*p 
+#   N_catch_start[t,] = exp(rnorm(1,10.6,2))*p #exp(rnorm(1,log(27769),2))*p 
+#   N_egg_start[t,] = exp(rnorm(1,20,2))*p
+# }
 
 # ASSIGN DATA ==========
 data_list_stan <- list(nByrs=nByrs,

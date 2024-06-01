@@ -19,9 +19,6 @@ remove_comma <- function(lst) {
 # load model ==============
 bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT.RDS")
 
-test <- extract(bh_fit)
-n_rec_mat<-test$N_recruit[1:nRyrs, 1:4,1]
-str(test)
 
 traceplot(bh_fit,  pars=  c( "D_scale", "log_c_1", "log_c_2"))
 # PLOT PARAMS  ======================  
