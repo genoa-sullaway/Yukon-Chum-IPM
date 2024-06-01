@@ -95,30 +95,22 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood
          ) %>%
-  # dplyr::select(yukon_mean_discharge) %>% 
-  # dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge))) %>% 
-  #               #SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>% 
-  # as.matrix()
-dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
-       SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
-  dplyr::select(yukon_mean_discharge
-                #,SST_CDD_NBS
-                ) %>%
-as.matrix()
+  dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+                SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
+  dplyr::select(yukon_mean_discharge,SST_CDD_NBS) %>%
+  as.matrix()
  
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood
          ) %>% 
   dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS))) %>% 
-  dplyr::select(SST_CDD_SEBS
-                #,Chum_hatchery
-                ) %>% 
+  dplyr::select(SST_CDD_SEBS,Chum_hatchery) %>% 
   as.matrix()
 
 # number covariates for each life stage 
-ncovars1 = 1
-ncovars2 = 1
+ncovars1 = 2
+ncovars2 = 2
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                

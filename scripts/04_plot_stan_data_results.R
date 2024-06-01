@@ -239,8 +239,8 @@ params %>%
   geom_linerange(aes(rowname, ymin = X10.,ymax = X90.)) + 
   geom_crossbar(aes(rowname, mean, ymin = X10.,ymax = X90.),  fill= 'grey') + 
   #geom_point(aes(x=rowname, y = mean_obs), color = "red") + 
-  facet_wrap(~rowname, scales = 'free') +
-  labs(caption = "red is observed, black is model")
+  facet_wrap(~rowname, scales = 'free') #+
+  #labs(caption = "red is observed, black is model")
 
 
 # OLD ===========================

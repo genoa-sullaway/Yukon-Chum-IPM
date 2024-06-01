@@ -273,11 +273,11 @@ model {
 }
   print("N_e_sum_start_log:", N_e_sum_start_log);
  
-    theta1  ~ normal(0,2); //normal(0.5,5); // environmental covariate coefficient stage 1
-   // theta1[2] ~ normal(0,2); // environmental covariate coefficient stage 1
+    theta1[1]  ~ normal(0,2); //normal(0.5,5); // environmental covariate coefficient stage 1
+    theta1[2] ~ normal(0,2); // environmental covariate coefficient stage 1
  
-    theta2  ~ normal(0,2); 
-   // theta2[2] ~ normal(0,2); // environmental covariate coefficient stage 1
+    theta2[1]  ~ normal(0,2); 
+    theta2[2] ~ normal(0,2); // environmental covariate coefficient stage 1
    
     // theta1[1] ~ normal(0,2); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta1[2] ~ normal(0,2); // environmental covariate coefficient stage 1
