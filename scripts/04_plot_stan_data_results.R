@@ -60,7 +60,11 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "sigma_y_j","sigma_y_sp","sigma_y_r", "sigma_y_h"),
+     pars=  c( "sigma_y_j",
+               "sigma_y_sp"#,
+               #"sigma_y_r", 
+               #"sigma_y_h"
+               ),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -150,8 +154,7 @@ ggplot(data = summ_n_harvest) +
                   ymax = pred_n_harvest+pred_se))+
   ggtitle(("Harvest, est and observed"))
 
-
-
+ 
 # ggplot(data = summ_n_harvest) +
 #   geom_line(aes(x=time, y = obs)) +
  # geom_line(aes(x=time, y = pred_n_harvest)) +
@@ -178,7 +181,8 @@ pred_N_j <- summary(bh_fit, pars = c("N_j"),
 summ_n_j <- pred_N_j %>%
  dplyr::mutate(mean_J_Q = mean*catch_q$mean,
                se_mean = se_mean*catch_q$mean) %>% 
-  cbind(obs = data_list_stan$data_stage_j) #%>%
+  cbind(obs = data_list_stan$data_stage_j) %>%
+  filter(!time<5)
 #  dplyr::mutate(obs = obs*catch_q$mean) 
 
 ggplot(data = summ_n_j) +
@@ -187,6 +191,7 @@ ggplot(data = summ_n_j) +
   geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
+ 
 
 # plot time series of estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("log_F"), 
@@ -217,7 +222,25 @@ ggplot(data = survival, aes(x=time, y = mean, group = variable ,color = variable
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) 
 
+
+# plot sigma  ======
+sigma <- summary(bh_fit, pars = c("sigma_y_h", 
+                                  "sigma_y_r", 
+                                  "sigma_y_j",
+                                  "sigma_y_sp"), 
+                    probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()   
+  # rename(pred = "mean") %>% 
+  # cbind(obs = data_list_stan$p_obs) %>% 
+  # dplyr::select(1,2,9) %>% 
+  # gather(2:3, key = "key", value = "value")
+
+ggplot(data = sigma) +
+  geom_point(aes(x= rowname, y = mean)) + 
+  theme_classic()
  
+
 # plot age comp  ======
 age_comp <- summary(bh_fit, pars = c("p"), 
                    probs = c(0.1, 0.9))$summary %>%

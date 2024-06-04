@@ -75,14 +75,15 @@ vector <lower=0>[A-1] prob;
 real<lower=0.0001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
 vector<lower=0> [A] g; // gamma random draws
 real log_catch_q;
-vector<lower= -3>[nRyrs_T] log_F;
+//vector<lower= -3>[nRyrs_T] log_F;
+vector<lower= -3>[19] log_F;
 real basal_p_1; // mean alpha for covariate survival stage 1 
 real basal_p_2; // mean alpha for covariate survival stage 2
 
 real sigma_y_j;
-real sigma_y_r;
+//real sigma_y_r;
 real sigma_y_sp;
-real sigma_y_h;
+//real sigma_y_h;
 }
 
 transformed parameters { 
@@ -129,7 +130,8 @@ matrix[nRyrs,A] q;
 // vector<lower=0, upper=1> [A] pi;
 vector [A] pi;
 
-vector [nRyrs_T] F; // instantaneous fishing mortality           
+vector [19] F; //
+//vector [nRyrs_T] F; // instantaneous fishing mortality           
 
 // starting value transformations ======
   kappa_marine[1] = kappa_marine_start; 
@@ -160,7 +162,7 @@ for(t in 1:t_start){
   N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
      }
 
-  for(t in 1:nRyrs_T){
+  for(t in 1:19){//nRyrs_T){
   // instant fishing mortality 
   F[t]  = exp(log_F[t]);
  }
@@ -221,8 +223,13 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         if(a>1){
         N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:(a-1)])+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
            } 
-        N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t+a]));
- 
+           if(t<20){
+        N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t]));
+           }
+           if (t>19){
+             N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.04));
+       }
+       
         N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
          
         N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
@@ -244,10 +251,10 @@ for(t in 1:nByrs){
 }
 
 model {
-  sigma_y_j ~ normal(0,8);
-  sigma_y_r ~ normal(0,8);
-  sigma_y_sp ~ normal(0,8);
-  sigma_y_h ~ normal(0,8);
+  sigma_y_j ~ uniform(0,5); //normal(0,8);
+  //sigma_y_r ~ normal(0,8);
+  sigma_y_sp ~ uniform(0,5);//normal(0,8);
+  //sigma_y_h ~ normal(0,8);
   //  sigma_y_j ~ normal(0,10); 
   // sigma_y_r ~ normal(0,10); 
   // sigma_y_sp ~ normal(0,10); 
@@ -271,15 +278,15 @@ model {
     N_ocean_start_log[t] ~ normal(13.6,5);
     N_egg_start_log[t] ~  normal(14, 5); // starting value for eggs, initiates pop model 
 }
-  print("N_e_sum_start_log:", N_e_sum_start_log);
+  //print("N_e_sum_start_log:", N_e_sum_start_log);
  
-    theta1[1]  ~ normal(0,2); //normal(0.5,5); // environmental covariate coefficient stage 1
-    theta1[2] ~ normal(0,2); // environmental covariate coefficient stage 1
-    theta1[3]  ~ normal(0,2); //normal(0.5,5); // environmental covariate coefficient stage 1
-    theta1[4] ~ normal(0,2); // environmental covariate coefficient stage 1
+    theta1[1]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
+    theta1[2] ~ normal(0,1); // environmental covariate coefficient stage 1
+    theta1[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
+    theta1[4] ~ normal(0,1); // environmental covariate coefficient stage 1
  
-    theta2[1]  ~ normal(0,2); 
-    theta2[2] ~ normal(0,2); // environmental covariate coefficient stage 1
+    theta2[1]  ~ normal(0,1); 
+    theta2[2] ~ normal(0,1); // environmental covariate coefficient stage 1
    
     // theta1[1] ~ normal(0,2); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta1[2] ~ normal(0,2); // environmental covariate coefficient stage 1
@@ -305,8 +312,8 @@ model {
  }
  
  // log fishing mortality for each calendar year 
-  for(t in 1:nRyrs_T){
- log_F[t] ~ normal(0,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
+  for(t in 1:19){ //for(t in 1:nRyrs_T){
+ log_F[t] ~ normal(1,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
  // log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
  // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
 }
@@ -317,8 +324,8 @@ model {
   prob[3] ~ beta(1,1);  
  
 // printing these for trouble shooting 
-  print("kappa_marine_mortality:", kappa_marine_mortality);
-  print("log_F:", log_F);
+  // print("kappa_marine_mortality:", kappa_marine_mortality);
+  // print("log_F:", log_F);
    
 // Likelilihoods --  
   // Observation model
@@ -330,8 +337,8 @@ model {
  if(t<nByrs){
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
-     target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])), sigma_y_r); // not sure if this is liklihood is right, returning here is escapement + harvest
-     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_y_h); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])), sqrt(log((0.04^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.01^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_y_sp);
  }
   }

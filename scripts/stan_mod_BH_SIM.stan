@@ -81,7 +81,7 @@ real basal_p_2; // mean alpha for covariate survival stage 2
 real sigma_y_j;
 real sigma_y_r;
 real sigma_y_sp;
-real sigma_y_h;
+//real sigma_y_h;
 }
 
 transformed parameters { 
@@ -240,7 +240,7 @@ model {
   sigma_y_j ~ normal(1,2);
   sigma_y_r ~ normal(1,2);
   sigma_y_sp ~ normal(1,2);
-  sigma_y_h ~ normal(1,2);
+  //sigma_y_h ~ normal(1,2);
   //  sigma_y_j ~ normal(0,10); 
   // sigma_y_r ~ normal(0,10); 
   // sigma_y_sp ~ normal(0,10); 
@@ -314,8 +314,11 @@ model {
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
      target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])), sigma_y_r); // not sure if this is liklihood is right, returning here is escapement + harvest
-     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_y_h); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.01^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_y_sp);
+//  CV = 0.01
+// sqrt(log(CV^2 + 1))  
+ 
  }
   }
 }  
