@@ -68,8 +68,8 @@ real <lower=12 > log_c_2; // log carrying capacity
 //vector [t_start] N_egg_start_log;  
 // real <lower=25> N_e_sum_start_log; 
 // covariate parameters 
-real theta1[ncovars1]; // covariate estimated for each covariate and each population 
-real theta2[ncovars2];
+real <lower=-2, upper = 2> theta1[ncovars1]; // covariate estimated for each covariate and each population 
+real <lower=-2, upper = 2> theta2[ncovars2];
   
 vector <lower=0>[A-1] prob; 
 real<lower=0.0001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
@@ -80,7 +80,7 @@ vector<lower= -3>[19] log_F;
 real basal_p_1; // mean alpha for covariate survival stage 1 
 real basal_p_2; // mean alpha for covariate survival stage 2
 
-real sigma_y_j;
+ real sigma_y_j;
 //real sigma_y_r;
 real sigma_y_sp;
 //real sigma_y_h;
@@ -162,7 +162,8 @@ for(t in 1:t_start){
   N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
      }
 
-  for(t in 1:19){//nRyrs_T){
+  for(t in 1:19){//  
+  //for(t in 1:nRyrs_T){
   // instant fishing mortality 
   F[t]  = exp(log_F[t]);
  }
@@ -223,11 +224,11 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         if(a>1){
         N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:(a-1)])+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
            } 
-           if(t<20){
-        N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t]));
+           if(t+a<20){
+        N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t+a]));
            }
-           if (t>19){
-             N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.04));
+           if (t+a>19){
+             N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.02));
        }
        
         N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
@@ -312,7 +313,8 @@ model {
  }
  
  // log fishing mortality for each calendar year 
-  for(t in 1:19){ //for(t in 1:nRyrs_T){
+ for(t in 1:19){ //
+ // for(t in 1:nRyrs_T){
  log_F[t] ~ normal(1,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
  // log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
  // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
@@ -330,7 +332,7 @@ model {
 // Likelilihoods --  
   // Observation model
   for (t in 1:nByrs) {
-     log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j);
+     log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j); //sqrt(log((0.08^2) + 1)));
     } 
 
   for(t in 1:nRyrs){ // calendar years 
