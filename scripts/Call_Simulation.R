@@ -7,9 +7,8 @@ library(dirmult)
 library(here)
 library(Rlab)
 
-# this pairs with the "simulate_data_age_strucutre.R" script. 
- 
-
+# this pairs with the "stan_mod_BH_SIM.stan" script. 
+  
 # load salmon data for starting values==============================================
 
 year_min = 2002
@@ -76,8 +75,8 @@ c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2))
 ncovars1 = 1
 ncovars2 = 1
 
-basal_p_1 =  -1.820463 # (0.1) #base survival 
-basal_p_2 =  -0.2369558 # (0.4)
+basal_p_1 = 0.1 # -1.820463 # (0.1) #base survival 
+basal_p_2 = 0.4 # -0.2369558 # (0.4)
 
 cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
 cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = ncovars2))
@@ -210,7 +209,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
 # Harvest =============
 # fishing mortality by age 
 
-log_F = rnorm(nRyrs_T, -1.5,0.7)
+log_F = rnorm(nRyrs_T, 0.5,1) #-1.5,0.7)
 F =  exp(log_F) 
 
 # age specific marine mortality =============== 
@@ -247,8 +246,7 @@ M = matrix(ncol = A, nrow = nRyrs_T,
          N_e_sum[t] = sum(N_e[t,1:A]) 
      } 
 
-log(N_e_sum[1:5])
-log(N_e_sum_start)
+  
  
 # calculate Obs Run Comp  ============
 o_run_comp = array(data = NA, dim = c(nRyrs,A))

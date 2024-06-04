@@ -75,7 +75,7 @@ vector <lower=0>[A-1] prob;
 real<lower=0.0001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
 vector<lower=0> [A] g; // gamma random draws
 real log_catch_q;
-vector [nRyrs_T] log_F;
+vector<lower= -3>[nRyrs_T] log_F;
 real basal_p_1; // mean alpha for covariate survival stage 1 
 real basal_p_2; // mean alpha for covariate survival stage 2
 
@@ -306,7 +306,7 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(-1.5,0.7);
+ log_F[t] ~ normal(0,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
  // log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
  // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
 }

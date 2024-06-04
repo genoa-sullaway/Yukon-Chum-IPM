@@ -152,8 +152,8 @@ ggplot(data = summ_n_harvest) +
 
 
 
-ggplot(data = summ_n_harvest) +
-  geom_line(aes(x=time, y = obs)) +
+# ggplot(data = summ_n_harvest) +
+#   geom_line(aes(x=time, y = obs)) +
  # geom_line(aes(x=time, y = pred_n_harvest)) +
   # geom_ribbon(aes(x=time, ymin = pred_n_harvest-pred_se,
   #                 ymax = pred_n_harvest+pred_se))+
@@ -194,7 +194,8 @@ fishing <- summary(bh_fit, pars = c("log_F"),
   data.frame() %>%
   rownames_to_column()  %>% 
   mutate(mean = exp(mean),
-         time = 1:nrow(.))
+         time = 1:nrow(.)) %>% 
+  filter(!time<5)
 
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) +

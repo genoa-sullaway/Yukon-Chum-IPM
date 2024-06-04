@@ -251,7 +251,7 @@ model {
     log_c_1 ~  normal(20, 5); // carrying capacity prior - stage 1  
     log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
 
-    N_j_start_log ~ normal(13.7,6); 
+    N_j_start_log ~ normal(13.7,20); 
     N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
     
  for(t in 1:t_start){
@@ -265,9 +265,9 @@ model {
       // print("N_catch_start_log:", N_catch_start_log);
       // print("N_sp_start_log:", N_sp_start_log);
 
-  theta1 ~ normal(0.5,1); // normal(0.5,5); // environmental covariate coefficient stage 1
+  theta1 ~ normal(0.5,2); // normal(0.5,5); // environmental covariate coefficient stage 1
 
-  theta2 ~ normal(-0.5,1);
+  theta2 ~ normal(-0.5,2);
  
     // theta1[1] ~ normal(0.5,0.5); // normal(0.5,5); // environmental covariate coefficient stage 1
     // theta1[2] ~ normal(0.1,0.5); // environmental covariate coefficient stage 1
@@ -290,7 +290,8 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(-1.5,2); //  best I have gotten so far: -1.5,0.7);
+ log_F[t] ~ normal(0.5,3);
+ //log_F[t] ~ normal(-1.5,2); //  best I have gotten so far: -1.5,0.7);
  }
 
  // age comp priors -- maturity schedules
