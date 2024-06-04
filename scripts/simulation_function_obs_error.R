@@ -1,58 +1,53 @@
-# add in observation error and run model multiple imtes to see when it stops being able to estiamtemdoel well.  
-
-# function to add aobservation error to estimates 
+# add in observation error and run model multiple times to see when it stops being able to estimate model well.  
+library(actuaryr)
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(rstan)
+library(dirmult)
+library(here)
+library(Rlab)
+# function to add observation error to estimates 
   # things to consider: 
-  # - adding error to which popualtion stage? seperately or together? 
+  # - adding error to which population stage? 
+  # - separately or together? 
 
+# this pairs with the "simulate_data_age_structure.R" script. 
+
+# load salmon data for starting values==============================================
+
+year_min = 2002
+year_max_cal = 2022
+year_max_brood = 2021
+
+## Spawners, Recruits, Harvest ==================================== 
+yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
+  filter(cal_year >= year_min)%>%
+  select(2) %>%
+  summarise(mean = log(mean(Spawners)))
+
+yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
+  filter(cal_year >= year_min)%>%
+  select(2) %>% 
+  summarise(mean = log(mean(harvest)))
+
+yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
+  filter(cal_year >= year_min) %>%
+  select(2) %>%
+  dplyr::summarise(mean = log(mean(total_run)))
+
+## Fall Juveniles ================================================
+fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
+  filter(Year <= 2021) %>% # 1 year less than all spawners 
+  select(2) %>% 
+  dplyr::summarise(mean = log(mean(fall_abundance)))
 
 
 # function to create simulated data with a specified amount of obs error. 
-simulation_fxn <- function(){
-  library(actuaryr)
-  library(readxl)
-  library(tidyverse)
-  library(dplyr)
-  library(rstan)
-  library(dirmult)
-  library(here)
-  library(Rlab)
-  
-  # this pairs with the "simulate_data_age_strucutre.R" script. 
-  
-  
-  # load salmon data for starting values==============================================
-  
-  year_min = 2002
-  year_max_cal = 2022
-  year_max_brood = 2021
-  
-  
-  ## Spawners, Recruits, Harvest ==================================== 
-  yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
-    filter(cal_year >= year_min #, 
-           #cal_year <= year_max_cal
-    )%>%
-    select(2) %>%
-    summarise(mean = log(mean(Spawners)))
-  
-  yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
-    filter(cal_year >= year_min#, 
-           #cal_year <= year_max_cal
-    )%>%
-    select(2) %>% 
-    summarise(mean = log(mean(harvest)))
-  
-  yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
-    filter(cal_year >= year_min) %>%
-    select(2) %>%
-    dplyr::summarise(mean = log(mean(total_run)))
-  
-  ## Fall Juveniles ================================================
-  fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
-    filter(Year <= 2021) %>% # 1 year less than all spawners 
-    select(2) %>% 
-    dplyr::summarise(mean = log(mean(fall_abundance)))
-  
+simulation_fxn <- function(obs_error, # actual # for variance in observation error added to simulation, rnorm(0, obs_error). 
+                           obs_error_stage # stage at which the error is applied
+                           ){
+
   #### Simulating data 
   # Load data for baseline ============== 
   warmups <- 2000
@@ -76,20 +71,23 @@ simulation_fxn <- function(){
   #Bev Holt parameters ===================
   # p for alpha, and c for carrying capacity 
   
-  log_c_1 = 18
-  log_c_2 = 16
+  log_c_1 = 20
+  log_c_2 = 18
   
   c_1 = exp(log_c_1) # as.matrix(nrow = 1, ncol =1, exp(log_c_1)) 
   c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2)) 
   
   # SURVIVAL/COVARIATE ===================
-  ncovars1 =2
-  ncovars2 = 2
-  basal_p_1 = 0.1 #base survival
-  basal_p_2 = 0.4
+  ncovars1 = 1
+  ncovars2 = 1
   
-  cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rnorm(nByrs, 0, 1),rnorm(nByrs, 0, 1))   
-  cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rnorm(nByrs, 0, 1),rnorm(nByrs, 0, 1)) 
+  basal_p_1 =  0.1 #base survival 
+  basal_p_2 =  0.4
+  
+  cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
+  cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = ncovars2))
+  
+  # rnorm(1, 0,1.5^2)
   
   # only need sigma and mu coeff if they are set up hierarchically
   # sigma_coef1 <- as.matrix(nrow = 1, ncol =1, 0.1)
@@ -101,9 +99,12 @@ simulation_fxn <- function(){
   #  theta1 <- rnorm(1,mu_coef1,sigma_coef1[1,1])
   #  theta2 <- rnorm(1,mu_coef2,sigma_coef2[1,1])
   
-  theta1 <- c(0.5,0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
-  theta2 <- c(-0.5,-0.9)#, -0.6) #relationship for simulated data
-  
+  theta1 <- c(0.5 ) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+  theta2 <- c(-0.5 )#, -0.6) #relationship for simulated data
+  # 
+  # theta1 <- c(0.5,0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+  #  theta2 <- c(-0.5,-0.9)#, -0.6) #relationship for simulated data
+  #    
   p_1 = as.vector(NA) #matrix(nrow=nByrs,ncol=1,NA)
   p_2 = as.vector(NA) #matrix(nrow=nByrs,ncol=K,NA)
   
@@ -186,7 +187,7 @@ simulation_fxn <- function(){
   N_e_sum_start = exp(rnorm(1,14,1))
   
   for(t in 1:t_start){
-    N_recruit_start[t,] = exp(rnorm(1,yukon_fall_harvest$mean,1))*p
+    N_recruit_start[t,] = exp(rnorm(1,yukon_fall_recruits$mean,1))*p
     N_ocean_start[t,] = exp(rnorm(1,13.6,1))*p
     N_sp_start[t,] = exp(rnorm(1,yukon_fall_spawners$mean,1))*p 
     N_catch_start[t,] = exp(rnorm(1,yukon_fall_harvest$mean,1))*p 
@@ -209,7 +210,7 @@ simulation_fxn <- function(){
   # translates from predicted juveniles to observed juveniles 
   # catch_q = -2  #exp(rnorm(1,0,0.5))
   
-  log_catch_q = -2
+  log_catch_q = -1
   
   # Harvest =============
   # fishing mortality by age 
@@ -221,19 +222,14 @@ simulation_fxn <- function(){
   M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
   M = matrix(ncol = A, nrow = nRyrs_T, 
              c(NA,0.06, 0.06, 0.06) , byrow = TRUE)
-  
-  # c_1 = exp(18)
-  # N_e_sum[t-1] = exp(14)
+ 
   
   # POPULATION MODEL ============ 
   for (t in 2:nByrs){ # loop for each brood year 
     
     kappa_j[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t-1])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
-    kappa_j[t]
     
     N_j[t] = kappa_j[t]*N_e_sum[t-1] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
-    log(N_j[t])
-    N_j[t]
     
     kappa_marine[t] =  p_2[t]/ (1 + ((p_2[t]*N_j[t])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
     
@@ -252,19 +248,15 @@ simulation_fxn <- function(){
     }
     # sum across age classes and transition back to brood years 
     N_e_sum[t] = sum(N_e[t,1:A]) 
-  } 
-  
-  log(N_e_sum[1:5])
-  log(N_e_sum_start)
-  
+  }  
   # calculate Obs Run Comp  ============
   o_run_comp = array(data = NA, dim = c(nRyrs,A))
   o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
   for (t in 1:nRyrs) {
     for (a in 1:A) {
       if(t< nByrs+1){
+        # o_run_comp[t,a] = N_ocean[t,a]/sum(N_ocean[t,1:A])
         o_run_comp[t,a] = N_ocean[t,a]/sum(N_ocean[t,1:A])
-        o_run_comp_sp[t,a] = N_sp[t,a]/sum(N_sp[t,1:A])
       }
     }
   }
@@ -273,37 +265,25 @@ simulation_fxn <- function(){
   for(t in 1:6){
     for (a in 1:A) {
       o_run_comp[t,a]  = p[[a]]
-      o_run_comp[t+(nByrs-1),a] = p[[a]]
+      o_run_comp[26,a] = p[[a]]
     }
   }
-  
-  barplot(t(o_run_comp))
-  barplot(t(o_run_comp_sp))
-  barplot(t(N_j))
-  barplot(t(N_sp))
-  
-  colMeans(o_run_comp)
-  p
-  
-  barplot(t(p_1))
-  barplot(t(kappa_j))
-  
-  
+   
   # Fix ESS ============= 
   ess_age_comp = rep(300, times = nByrs)
   
   # PROCESS MODEL ============= 
-  N_j[1] = mean(N_j[2:nByrs]) #mean(N_j[2:n,1:n.pop]) # just so i don't get yelled at about NA's later down the road 
-  N_j_sim_hat <- vector()# matrix(nrow=nByrs,ncol=K,NA)
+  N_j[1] = mean(N_j[2:nByrs])  # just so i don't get yelled at about NA's later down the road 
+  N_j_sim_hat <- vector() 
   
-  N_sp_sim <- vector() #array(data = NA, dim = c(nRyrs, K ))
-  N_sp_sim_s <-  vector() #array(data = NA, dim = c(nRyrs, K))
+  N_sp_sim <- vector()  
+  N_sp_sim_s <-  vector()  
   
   N_catch_sim <- vector()
   N_catch_sim_s <- vector()
   
-  N_recruit_sim <-  vector() #array(data = NA, dim = c(nRyrs, K))
-  N_recruit_sim_s <-  vector() #array(data = NA, dim = c(nRyrs, K))
+  N_recruit_sim <-  vector() 
+  N_recruit_sim_s <-  vector() 
   
   N_recruit[is.na(N_recruit)] <- 0
   
@@ -317,37 +297,63 @@ simulation_fxn <- function(){
   N_sp[is.na(N_sp)] <- 0
   N_sp_sim[1:nRyrs_T]<- N_sp[1:nRyrs_T,1] + N_sp[1:nRyrs_T,2] + N_sp[1:nRyrs_T,3]+N_sp[1:nRyrs_T,4]
   
-  
-  # incorporate Q, to connect different data sources in population model 
+ # add observation error stage dependent =========
+  ## all ============
+  if(obs_error_stage == "all"){
+    N_j_sim_observed=exp(log_catch_q)*N_j
+    N_j_sim_hat  =  (rnorm(nByrs,  (N_j_sim_observed), process_error_j)) +  (rnorm(n = length(N_j_sim_observed), 0,obs_error))
+    
+    N_catch_sim_s =   (rnorm(nRyrs_T,  (N_catch_sim), process_error_c)) +  (rnorm(n = length(N_catch_sim), 0,obs_error))
+    N_recruit_sim_s  =  (rnorm(nRyrs_T,  (N_recruit_sim), process_error_r))+  (rnorm(n = length(N_recruit_sim), 0,obs_error))
+    N_sp_sim_s  =  (rnorm(nRyrs_T,  (N_sp_sim), process_error_sp))+  (rnorm(n = length(N_sp_sim), 0,obs_error))
+  }
+  ## N_j ============
+  if(obs_error_stage == "N_j"){
   N_j_sim_observed=exp(log_catch_q)*N_j
-  N_j_sim_hat  =  (rnorm(nByrs,  (N_j_sim_observed), process_error_j))
-  
-  N_catch_sim_s =   (rnorm(nRyrs_T,  (N_catch_sim), process_error_c))
+  N_j_sim_hat  =  (rnorm(nByrs,  (N_j_sim_observed), process_error_j)) +  (rnorm(n = length(N_j_sim_observed), 0,obs_error))
+
+  N_catch_sim_s =   (rnorm(nRyrs_T,  (N_catch_sim), process_error_c)) 
   N_recruit_sim_s  =  (rnorm(nRyrs_T,  (N_recruit_sim), process_error_r))
   N_sp_sim_s  =  (rnorm(nRyrs_T,  (N_sp_sim), process_error_sp))
+  }
+  ## N_catch ============
+  if(obs_error_stage == "N_catch"){
+    N_j_sim_observed=exp(log_catch_q)*N_j
+    N_j_sim_hat  =  (rnorm(nByrs,  (N_j_sim_observed), process_error_j)) 
+    
+    N_catch_sim_s =   (rnorm(nRyrs_T,  (N_catch_sim), process_error_c)) + rnorm(n = length(N_catch_sim), 0,obs_error)
+    N_recruit_sim_s  =  (rnorm(nRyrs_T,  (N_recruit_sim), process_error_r))
+    N_sp_sim_s  =  (rnorm(nRyrs_T,  (N_sp_sim), process_error_sp))
+  }
   
-  barplot(t(N_sp_sim_s))
+  ## recruitment ============
+  if(obs_error_stage == "N_recruit"){
+    N_j_sim_observed=exp(log_catch_q)*N_j
+    N_j_sim_hat  =  (rnorm(nByrs,  (N_j_sim_observed), process_error_j)) 
+    
+    N_catch_sim_s =   (rnorm(nRyrs_T,  (N_catch_sim), process_error_c)) 
+    N_recruit_sim_s  =  (rnorm(nRyrs_T,  (N_recruit_sim), process_error_r)) + rnorm(n = length(N_recruit_sim), 0,obs_error)
+    N_sp_sim_s  =  (rnorm(nRyrs_T,  (N_sp_sim), process_error_sp))
+  }
   
-  sd(log(N_j_sim_hat))
-  sd(log(N_recruit_sim_s[1:nByrs]))
-  sd(log(N_sp_sim_s[1:nByrs]))
+  ## Spawners ============
+  if(obs_error_stage == "N_sp"){
+    N_j_sim_observed=exp(log_catch_q)*N_j
+    N_j_sim_hat  =  (rnorm(nByrs,  (N_j_sim_observed), process_error_j)) 
+    
+    N_catch_sim_s =   (rnorm(nRyrs_T,  (N_catch_sim), process_error_c)) 
+    N_recruit_sim_s  =  (rnorm(nRyrs_T,  (N_recruit_sim), process_error_r))
+    N_sp_sim_s  =  (rnorm(nRyrs_T,  (N_sp_sim), process_error_sp)) + rnorm(n = length(N_sp_sim), 0,obs_error)
+  }
   
   # STAN STARTING VALUES ==========
-  kappa_j_start =  basal_p_1 # runif(1, 0.2, 0.2)
-  kappa_marine_start = basal_p_2 #runif(1, 0.4, 0.4)
+  kappa_j_start =  basal_p_1  
+  kappa_marine_start = basal_p_2  
   
   nByrs_stan = nByrs-5
   nRyrs_stan = nRyrs-5    
   nRyrs_T_stan = nRyrs_T-5
-  
-  barplot(N_recruit_sim[6:nByrs])
-  barplot(N_recruit_sim_s[6:nRyrs])
-  
-  barplot(N_j[6:nByrs])
-  barplot(N_j_sim_observed[6:nRyrs])
-  exp(5)
-  
-  
+   
   # STAN data ==========
   data_list_stan <- list(nByrs=nByrs_stan,
                          nRyrs=nRyrs_stan,
@@ -367,7 +373,7 @@ simulation_fxn <- function(){
                          # N_ocean_start = N_ocean_start,
                          # N_egg_start = N_egg_start,
                          # N_j_start =  N_j_start, 
-                         N_e_sum_start = N_e_sum_start,
+                         #N_e_sum_start = N_e_sum_start,
                          
                          kappa_marine_start = basal_p_2,
                          kappa_j_start = basal_p_1,
@@ -391,6 +397,62 @@ simulation_fxn <- function(){
     iter = total_iterations,
     cores = n_cores)   
   
+  # create rmse DF =========
+   obs_df <- data.frame(rowname =c("log_c_1", "log_c_2",
+                                     "D_scale", "log_catch_q"),
+                        obs = c(log_c_1, log_c_2,
+                        D_scale, log_catch_q))
+   
+   param_df <- summary(bh_fit, pars = c("log_c_1", "log_c_2",
+                                     "D_scale", "log_catch_q"), 
+                       probs = c(0.1, 0.9))$summary %>%
+    data.frame() %>%
+    rownames_to_column() %>%   
+    left_join(obs_df) %>% 
+    dplyr::mutate(rmse = (mean - obs)^2/nRyrs_stan,
+                  obs_error = obs_error,
+                  obs_error_stage = obs_error_stage) 
+list_all <- list(bh_fit,param_df)
   #write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
-   return( )
+   return(list_all)
 }
+
+# call function  =================
+#obs_error = 1
+#obs_error_stage = "N_j"
+
+# all ================
+
+# all_stages_error = list()
+# obs_error_list = c(1,5,10,50)
+# 
+# for(i in 1:length(obs_error_list)){
+#   mod_error = obs_error_list[[i]]
+#   all_stages_error[[i]]<- simulation_fxn(obs_error = mod_error,
+#                                   obs_error_stage = "all")
+# }
+
+# take out data frame for each one and then plot
+# 
+# all_error_df<- rbind(all_stages_error[[1]][[2]],
+#                      all_stages_error[[2]][[2]],
+#                      all_stages_error[[3]][[2]],
+#                      all_stages_error[[4]][[2]])
+#  
+## N_j ===========================
+N_j_error = list()
+obs_error_list = c(1,5,10,50)
+
+for(i in 1:length(obs_error_list)){
+          mod_error = obs_error_list[[i]]
+          N_j_error[[i]]<- simulation_fxn(obs_error = mod_error,
+                                        obs_error_stage = "N_j")
+       }
+
+# take out dataframe for each one and then plot
+# 
+# n_j_error_df<- rbind(N_j_error[[1]][[2]],
+#                      N_j_error[[2]][[2]],
+#                      N_j_error[[3]][[2]],
+#                      N_j_error[[4]][[2]])
+

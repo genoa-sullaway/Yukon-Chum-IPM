@@ -31,7 +31,8 @@ traceplot(bh_fit,pars=  c("N_sp_start_log"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "D_scale", "theta1[1]","theta1[2]","theta2[1]","theta2[2]"),
+     pars=  c( "D_scale", "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+               "theta2[1]","theta2[2]"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -83,17 +84,16 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:25, each=4),
                 age = rep(1:4, length.out = nrow(.))) %>%
-  filter(!time>21) # remove years without full return estiamtes 
+  filter(!time>21) # remove years without full return estimates 
 
-# plt proportions 
-# sum to comarpe with data 
+# plot proportions 
+# sum to compare with data 
 summ_n_sp <- pred_N_SP %>%
   group_by(time) %>%
   summarise(pred_n_sp = sum(mean),
             pred_se = mean(se_mean)) %>% 
   cbind(obs = data_list_stan$data_stage_sp)  
   
-
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = pred_n_sp)) +
@@ -141,7 +141,7 @@ summ_n_harvest <- pred_N_harvest %>%
   group_by(time) %>%
   summarise(pred_n_harvest = sum(mean),
             pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_harvest)
+  cbind(obs = data_list_stan$data_stage_harvest)  
 
 ggplot(data = summ_n_harvest) +
   geom_point(aes(x=time, y = obs)) +
@@ -149,6 +149,15 @@ ggplot(data = summ_n_harvest) +
   geom_ribbon(aes(x=time, ymin = pred_n_harvest-pred_se,
                   ymax = pred_n_harvest+pred_se))+
   ggtitle(("Harvest, est and observed"))
+
+
+
+ggplot(data = summ_n_harvest) +
+  geom_line(aes(x=time, y = obs)) +
+ # geom_line(aes(x=time, y = pred_n_harvest)) +
+  # geom_ribbon(aes(x=time, ymin = pred_n_harvest-pred_se,
+  #                 ymax = pred_n_harvest+pred_se))+
+  ggtitle(("Harvest, observed"))
 
 ## juveniles ====== 
 # multiply by catch q to fit observations

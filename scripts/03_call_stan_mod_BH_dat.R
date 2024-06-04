@@ -93,23 +93,25 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   filter(Year >= year_min, 
-         Year <= year_max_brood
-         ) %>%
+         Year <= year_max_brood) %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+                # gelatinous_zoop = as.numeric(scale(gelatinous_zoop)),
+                # large_zoop = as.numeric(scale(large_zoop)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
-  dplyr::select(yukon_mean_discharge,SST_CDD_NBS) %>%
+  dplyr::select(yukon_mean_discharge,SST_CDD_NBS, Cnideria, Large_zoop) %>%
   as.matrix()
  
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood
          ) %>% 
-  dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS))) %>% 
+  dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS)),
+                Chum_hatchery= as.numeric(scale(SST_CDD_SEBS))) %>% 
   dplyr::select(SST_CDD_SEBS,Chum_hatchery) %>% 
   as.matrix()
 
 # number covariates for each life stage 
-ncovars1 = 2
+ncovars1 = 4
 ncovars2 = 2
 
 # Organize data call inputs ================================================

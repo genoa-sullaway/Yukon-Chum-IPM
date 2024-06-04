@@ -92,8 +92,7 @@ ggplot(data = large_pred_df, aes(x=YEAR, y = pred,
 
 # mean scale ===========
 large_pred_df <- large_pred_df %>%
-  mutate(pred_scale = as.numeric(scale(pred)),
-         id = "Large_zoop")
+  mutate(id = "Large_zoop")
 
 ggplot(data = large_pred_df, aes(x=YEAR, y = pred_scale,
                            group =DATA_SOURCE)) +
@@ -115,7 +114,7 @@ cnideria_zoop<- zoop %>%
           stringr::str_detect(TAXON_NAME, 
                               paste(c('Cnidaria_small', 'Cnidaria_large'), collapse = '|')))
  
- zoop_cnideria_summ <- zoop_cnideria %>% 
+ zoop_cnideria_summ <- cnideria_zoop %>% 
    filter(!YEAR <1999) %>% 
    group_by(DATA_SOURCE, YEAR) %>%
    dplyr::summarise(mean = mean(EST_NUM_PERM3),
@@ -158,12 +157,33 @@ cnideria_zoop<- zoop %>%
  cnideria_pred_df$se <-   exp(temp[[2]])
  
  cnideria_pred_df <- cnideria_pred_df %>%
-                         dplyr::mutate(pred_scale = as.numeric(scale(pred)),
-                                id = "Cnideria")
+                         dplyr::mutate( id = "Cnideria")
  
-pred_df <- large_pred_df%>%
-             rbind(cnideria_pred_df)
-           
+ 
+# years in covariate timeseries to expand the TS that need it  =====
+ YEAR <-data.frame(YEAR = seq(from = 2002, to = 2021, by =1))
+ 
+ temp <-large_pred_df %>%
+   rbind(cnideria_pred_df) %>% 
+   dplyr::select(YEAR, pred, id) %>% 
+   spread(id, pred) %>% 
+   dplyr::summarise(mean_cnideria = mean(Cnideria),
+             mean_largezoop = mean(Large_zoop))
+ 
+pred_df <- large_pred_df %>%
+              rbind(cnideria_pred_df) %>%
+              dplyr::select(YEAR, pred, id) %>% 
+              spread(id, pred)  %>% 
+              dplyr::mutate(YEAR = as.numeric(as.character(YEAR))) %>% 
+              right_join(YEAR) %>% 
+              dplyr::mutate(Cnideria = case_when(is.na(Cnideria) ~ mean(temp$mean_cnideria),
+                                          TRUE ~ Cnideria),
+                            Large_zoop = case_when(is.na(Large_zoop) ~ mean(temp$mean_largezoop),
+                                          TRUE ~ Large_zoop),
+                            Large_zoop = as.numeric(scale(Large_zoop)),
+                            Cnideria = as.numeric(scale(Cnideria)))       
+
+# plots =============
  ggplot(data = pred_df, aes(x=YEAR, y = pred,
                             group =id, color=id)) +
    geom_point()+
@@ -180,7 +200,8 @@ pred_df <- large_pred_df%>%
    ggtitle("Scale Modeled Index") + 
    theme_classic() +
    geom_hline(yintercept = 0, linetype = 2)
-
+ 
+ # save data  =============
  write_csv(pred_df, "data/processed_covariates/Stage_A_Zooplankton_Index.csv")
  
  # Estimate Spatial Temporal Fields? ============================ 

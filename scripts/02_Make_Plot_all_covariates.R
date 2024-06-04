@@ -2,20 +2,27 @@
 library(tidyverse)
 library(here)
 
+# years in covariate timeseries to expand the TS that need it 
+YEAR <-data.frame(YEAR = seq(from = 2002, to = 2021, by =1))
+
 # Stage A - Load data ============= 
 sst_a <- read_csv("data/processed_covariates/Stage_A_CDD.csv") %>%
   dplyr::rename(SST_CDD_NBS = "CDD",
                 Year = "year")
 
-large_zoop_a <- read_csv("data/processed_covariates/covariate_large_zooplankton.csv") %>%
-  dplyr::rename(large_zoop_NBS = "mean",
-         Year = "YEAR")  %>%
-  dplyr::select(Year, large_zoop_NBS)
+# this is a GAM zoop index
+zoop <- read_csv("data/processed_covariates/Stage_A_Zooplankton_Index.csv")  %>% 
+  rename(Year = "YEAR")
 
-gelatinous_zoop_a <- read_csv("data/processed_covariates/covariate_gelatinous_zooplankton.csv") %>%
-  dplyr::rename(gelatinous_zoop_NBS = "mean",
-                Year = "YEAR")  %>%
-  dplyr::select(Year, gelatinous_zoop_NBS)
+# large_zoop_a <- read_csv("data/processed_covariates/covariate_large_zooplankton.csv") %>%
+#   dplyr::rename(large_zoop_NBS = "mean",
+#          Year = "YEAR")  %>%
+#   dplyr::select(Year, large_zoop_NBS)
+# 
+# gelatinous_zoop_a <- read_csv("data/processed_covariates/covariate_gelatinous_zooplankton.csv") %>%
+#   dplyr::rename(gelatinous_zoop_NBS = "mean",
+#                 Year = "YEAR")  %>%
+#   dplyr::select(Year, gelatinous_zoop_NBS)
 
 river_discharge_a <- read_csv("data/processed_covariates/Stage_A_YK_Discharge.csv") %>%
   dplyr::select(Year, mean_discharge,id) %>%
@@ -34,8 +41,8 @@ air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
 # Stage A - One DF for model ============= 
 stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
               left_join(air_temp_a) %>%
-              left_join(gelatinous_zoop_a) %>%
-              left_join(large_zoop_a)
+              left_join(zoop) # %>%
+              
 
 # Stage A - Save DF ============= 
 write_csv(stage_a_cov, "data/processed_covariates/stage_a_all.csv")

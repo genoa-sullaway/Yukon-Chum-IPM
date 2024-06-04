@@ -31,11 +31,11 @@ data { // all equation references are from proposal numbering
   int<lower=0> ncovars1; //number of covariates for first lifestage  
   int<lower=0> ncovars2; //number of covariates for second lifestage  
 
-  vector [nByrs] cov1; // covariate data in a matrix format 
-  vector [nByrs] cov2; // covariate data in a matrix format 
-  
-  // matrix [nByrs, ncovars1] cov1; // covariate data in a matrix format 
-  // matrix [nByrs, ncovars2] cov2; // covariate data in a matrix format 
+  vector [nByrs] cov1; // covariate data in a matrix format
+  vector [nByrs] cov2; // covariate data in a matrix format
+  // 
+  // matrix [nByrs, ncovars1] cov1; // covariate data in a matrix format
+  // matrix [nByrs, ncovars2] cov2; // covariate data in a matrix format
   // 
   matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
   vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
@@ -69,10 +69,11 @@ real <lower=12 > log_c_2; // log carrying capacity
 real theta1[ncovars1]; // covariate estimated for each covariate and each population 
 real theta2[ncovars2];
   
-vector <lower=0>[A-1] prob; 
-real<lower=0.2,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
-vector<lower=0> [A] g; // gamma random draws
-real <upper= - 0.7> log_catch_q;
+vector <lower=0> [A-1] prob; 
+real <lower=0.2, upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
+vector <lower=0> [A] g; // gamma random draws
+//real <upper= -0.7> log_catch_q;
+ real <upper= 0> log_catch_q;
 vector [nRyrs_T] log_F;
 real basal_p_1; // mean alpha for covariate survival stage 1 
 real basal_p_2; // mean alpha for covariate survival stage 2
@@ -106,7 +107,7 @@ real N_j_start;
 vector [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine 
 vector [nByrs] p_2; // productivity in bev holt transition funciton, 1 = FW early marine 
  
-vector [nByrs] kappa_j ; // predicted survival for juvenile fish (FW and early marine)
+vector [nByrs] kappa_j; // predicted survival for juvenile fish (FW and early marine)
 vector [nByrs] kappa_marine; // predicted survival for marine fish
 vector [nByrs] kappa_marine_mortality; // converting kappa marine survival to mortality 
 
@@ -245,7 +246,7 @@ model {
   // sigma_y_sp ~ normal(0,10); 
   // sigma_y_h ~ normal(0,10); 
   
-    log_catch_q ~ normal(-1,1); // Estimate Q - this will translate # of recruits to # of spawners 
+    log_catch_q ~ normal(-1,2); // Estimate Q - this will translate # of recruits to # of spawners 
 
     log_c_1 ~  normal(20, 5); // carrying capacity prior - stage 1  
     log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
@@ -260,27 +261,27 @@ model {
     N_ocean_start_log[t] ~ normal(13.6,5);
     N_egg_start_log[t] ~  normal(14, 5); // starting value for eggs, initiates pop model 
 }
-  print("N_e_sum_start_log:", N_e_sum_start_log);
+  // print("N_e_sum_start_log:", N_e_sum_start_log);
       // print("N_catch_start_log:", N_catch_start_log);
       // print("N_sp_start_log:", N_sp_start_log);
- 
-  theta1 ~ normal(0.5,0.25); // normal(0.5,5); // environmental covariate coefficient stage 1
-    
-  theta2 ~ normal(-0.5,0.25); 
+
+  theta1 ~ normal(0.5,1); // normal(0.5,5); // environmental covariate coefficient stage 1
+
+  theta2 ~ normal(-0.5,1);
  
     // theta1[1] ~ normal(0.5,0.5); // normal(0.5,5); // environmental covariate coefficient stage 1
     // theta1[2] ~ normal(0.1,0.5); // environmental covariate coefficient stage 1
     // 
-    // theta2[1] ~ normal(-0.5,0.5); 
+    // theta2[1] ~ normal(-0.5,0.5);
     // theta2[2] ~ normal(-0.9,0.5); // environmental covariate coefficient stage 1
     // 
-    D_scale ~ beta(0.3,0.5);  
+    D_scale ~ beta(0.3,2);  
     
-    basal_p_1 ~ normal(0.1,0.5); // mean survival stage 1 
-    basal_p_2 ~ normal(0.4,0.5); // mean survivial stage 2
+    // basal_p_1 ~ normal(0.1,1); // mean survival stage 1 
+    // basal_p_2 ~ normal(0.4,1); // mean survivial stage 2
     
-    // basal_p_1 ~ normal(0,1); // mean survival stage 1 
-    // basal_p_2 ~ normal(0,1); // mean survivial stage 2
+    basal_p_1 ~ normal(0,5); // mean survival stage 1 
+    basal_p_2 ~ normal(0,5); // mean survivial stage 2
     
 // age comp 
     for (a in 1:A) {
@@ -289,7 +290,7 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
+ log_F[t] ~ normal(-1.5,2); //  best I have gotten so far: -1.5,0.7);
  }
 
  // age comp priors -- maturity schedules
@@ -299,8 +300,8 @@ model {
  
 // printing these for trouble shooting 
   // print("kappa_marine_mortality:", kappa_marine_mortality);
-   print("log_catch_q:", log_catch_q);
-  
+   // print("log_catch_q:", log_catch_q);
+   // 
 // Likelilihoods --  
   // Observation model
   for (t in 1:nByrs) {

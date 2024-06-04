@@ -275,6 +275,8 @@ model {
  
     theta1[1]  ~ normal(0,2); //normal(0.5,5); // environmental covariate coefficient stage 1
     theta1[2] ~ normal(0,2); // environmental covariate coefficient stage 1
+    theta1[3]  ~ normal(0,2); //normal(0.5,5); // environmental covariate coefficient stage 1
+    theta1[4] ~ normal(0,2); // environmental covariate coefficient stage 1
  
     theta2[1]  ~ normal(0,2); 
     theta2[2] ~ normal(0,2); // environmental covariate coefficient stage 1
@@ -287,8 +289,8 @@ model {
     // 
     D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(0,1.5^2); // mean survival stage 1 
-    basal_p_2 ~ normal(0,1.5^2); // mean survivial stage 2
+    basal_p_1 ~ normal(0,1.5); // currys model: normal(0,1.5^2); // mean survival stage 1 
+    basal_p_2 ~ normal(0,1.5); // mean survivial stage 2
     
     // currys model: rnorm(1, 0,1.5^2)
     // simulation:  basal_p_1 ~ normal(0.1,0.5);
@@ -304,11 +306,11 @@ model {
  
  // log fishing mortality for each calendar year 
   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
- //normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
- 
+ log_F[t] ~ normal(-1.5,0.7);
+ // log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
+ // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
 }
-
+ 
  // age comp priors -- maturity schedules
   prob[1] ~ beta(1,1); 
   prob[2] ~ beta(1,1);  
