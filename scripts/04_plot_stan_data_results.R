@@ -34,6 +34,14 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "D_scale", "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
                "theta2[1]","theta2[2]"),
      fill_color = "blue")
+ 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_F_mean"),
+     fill_color = "blue")
+ 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_F_dev_y"),
+     fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_1"),
@@ -187,19 +195,31 @@ ggplot(data = summ_n_j) +
  
 
 # estimated fishing mortality ======
-fishing <- summary(bh_fit, pars = c("log_F"), 
+fishing <- summary(bh_fit, pars = c("F"), 
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
   mutate(mean = exp(mean),
          time = 1:nrow(.)) %>% 
-  filter(!time<4)
+  filter(!time> 21)
 
 ggplot(data = fishing) + 
-  geom_line(aes(x=time, y = mean)) +
-  # geom_ribbon(aes(x=time, ymin = mean-se_mean,
-  #                 ymax = mean+se_mean), alpha = 0.5) +
+  geom_line(aes(x=time, y = mean)) + 
   ylab("Fm")
+
+fishing <- summary(bh_fit, pars = c("F"), 
+                   probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  mutate(mean = exp(mean),
+         time = 1:nrow(.)) %>% 
+  filter(!time <6 & !time> 21)
+
+ggplot(data = fishing) + 
+  geom_line(aes(x=time, y = mean)) + 
+  ylab("Fm")
+
+ 
 
 # plot  estimated survival ======
 survival <- summary(bh_fit, pars = c("p_1", "p_2"), 

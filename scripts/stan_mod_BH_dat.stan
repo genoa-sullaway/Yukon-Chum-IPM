@@ -76,7 +76,10 @@ real<lower=0.0001,upper=0.9> D_scale;     // Variability of age proportion vecto
 vector<lower=0> [A] g; // gamma random draws
 real log_catch_q;
 //vector<lower= -3>[nRyrs_T] log_F;
-vector<lower= -3>[19] log_F;
+//vector<lower= -3>[19] log_F;
+vector [nRyrs_T]  log_F_dev_y; 
+real log_F_mean; 
+
 real basal_p_1; // mean alpha for covariate survival stage 1 
 real basal_p_2; // mean alpha for covariate survival stage 2
 
@@ -130,8 +133,8 @@ matrix[nRyrs,A] q;
 // vector<lower=0, upper=1> [A] pi;
 vector [A] pi;
 
-vector [19] F; //
-//vector [nRyrs_T] F; // instantaneous fishing mortality           
+//vector [19] F; //
+vector [nRyrs_T] F; // instantaneous fishing mortality           
 
 // starting value transformations ======
   kappa_marine[1] = kappa_marine_start; 
@@ -161,13 +164,14 @@ for(t in 1:t_start){
   N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
   N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
      }
-
-  for(t in 1:19){//  
-  //for(t in 1:nRyrs_T){
+ 
+  //for(t in 1:19){//  
+  for(t in 1:nRyrs_T){
   // instant fishing mortality 
-  F[t]  = exp(log_F[t]);
+  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
+ // F[t]  = exp(log_F[t]);
  }
-
+ 
   // transform log carrying capacity to normal scale
    c_1 = exp(log_c_1);
    c_2 = exp(log_c_2);
@@ -224,12 +228,12 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         if(a>1){
         N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:(a-1)])+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
            } 
-           if(t+a<20){
+          // if(t+a<20){
         N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t+a]));
-           }
-           if (t+a>19){
-             N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.02));
-       }
+       //     }
+       //     if (t+a>19){
+       //       N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.02));
+       // }
        
         N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
          
@@ -313,9 +317,11 @@ model {
  }
  
  // log fishing mortality for each calendar year 
- for(t in 1:19){ //
- // for(t in 1:nRyrs_T){
- log_F[t] ~ normal(1,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
+  log_F_mean ~ normal(0,1);
+ //for(t in 1:19){ //
+  for(t in 1:nRyrs_T){
+ log_F_dev_y[t] ~ normal(0, 5); 
+ //log_F[t] ~ normal(1,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
  // log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
  // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
 }
