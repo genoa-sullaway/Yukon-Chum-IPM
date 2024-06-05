@@ -56,9 +56,9 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c(  "log_F" ),
-     fill_color = "blue")
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+#      pars=  c(  "log_F" ),
+#      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c("log_catch_q"),
@@ -263,8 +263,7 @@ ggplot(data = survival, aes(x=time, y = mean, group = variable ,color = variable
   geom_line( ) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) 
-
-
+ 
 # plot sigma  ======
 # sigma <- summary(bh_fit, pars = c("sigma_y_h", 
 #                                   "sigma_y_r", 

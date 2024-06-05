@@ -19,6 +19,9 @@ data { // all equation references are from proposal numbering
    vector[nByrs] data_j_cv; 
    vector[nRyrs] data_sp_cv; // from run reconstruciton 
     
+ real basal_p_1; 
+ real basal_p_2; 
+ 
  // starting values for popualtion stages  
   // real N_sp_start [t_start,A];  
   // real N_catch_start [t_start,A];  
@@ -31,6 +34,7 @@ data { // all equation references are from proposal numbering
 // kappa is marine and juvenile survival estimated via beverton holt transition fxn 
   real kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
   real kappa_j_start;
+  real kappa_marine_mort_start;
   
   int  ncovars1; //number of covariates for first lifestage  
   int  ncovars2; //number of covariates for second lifestage  
@@ -84,8 +88,8 @@ real log_catch_q;
 vector [nRyrs_T]  log_F_dev_y; 
 real log_F_mean; 
 
-real<lower=-1,upper=1>  basal_p_1; // mean alpha for covariate survival stage 1 
-real<lower=-1,upper=1>  basal_p_2; // mean alpha for covariate survival stage 2
+// real<lower=-2,upper=2>  basal_p_1; // mean alpha for covariate survival stage 1 
+// real<lower=-2,upper=2>  basal_p_2; // mean alpha for covariate survival stage 2
 
 real sigma_y_j;
 //real sigma_y_r;
@@ -118,7 +122,7 @@ vector [nByrs] p_1; // productivity in bev holt transition funciton,
 vector [nByrs] p_2; // productivity in bev holt transition funciton,  
  
 vector [nByrs] kappa_j_survival ; // predicted survival for juvenile fish (FW and early marine)
-vector<lower=0, upper =1> [nByrs] kappa_marine_survival; // predicted survival for marine fish
+vector<lower=0> [nByrs] kappa_marine_survival; // predicted survival for marine fish
 vector <lower=0> [nByrs] kappa_marine_mortality; // converting kappa marine survival to mortality 
 
 matrix [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine covariate effects by brood year and stock
@@ -137,11 +141,12 @@ matrix[nRyrs,A] q;
 // vector<lower=0, upper=1> [A] pi;
 vector [A] pi;
 
-//vector [19] F; //
-vector [nRyrs_T] F; // instantaneous fishing mortality           
+ vector [19] F; //
+//vector [nRyrs_T] F; // instantaneous fishing mortality           
 
 // starting value transformations ======
   kappa_marine_survival[1] = kappa_marine_start; 
+  kappa_marine_mortality[1] = kappa_marine_mort_start; 
   kappa_j_survival[1]= kappa_j_start; 
  
 for(t in 1:t_start){
@@ -169,8 +174,8 @@ for(t in 1:t_start){
   N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
      }
  
-  //for(t in 1:19){//  
-  for(t in 1:nRyrs_T){
+ for(t in 1:19){//  
+ // for(t in 1:nRyrs_T){
   // instant fishing mortality 
   F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  // F[t]  = exp(log_F[t]);
@@ -233,12 +238,12 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         if(a>1){
         N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:(a-1)])+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
            } 
-          // if(t+a<20){
+        if(t+a<20){
         N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t+a]));
-       //     }
-       //     if (t+a>19){
-       //       N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.02));
-       // }
+           }
+           if (t+a>19){
+             N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.02));
+       }
        
         N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
          
@@ -306,8 +311,8 @@ model {
     // 
     D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(0,1); // currys model: normal(0,1.5^2); // mean survival stage 1 
-    basal_p_2 ~ normal(0,1); // mean survivial stage 2
+    // basal_p_1 ~ normal(0,1); // currys model: normal(0,1.5^2); // mean survival stage 1 
+    // basal_p_2 ~ normal(0,1); // mean survivial stage 2
     
     // currys model: rnorm(1, 0,1.5^2)
     // simulation:  basal_p_1 ~ normal(0.1,0.5);
@@ -323,8 +328,8 @@ model {
  
  // log fishing mortality for each calendar year 
   log_F_mean ~ normal(0,1);
- //for(t in 1:19){ //
-  for(t in 1:nRyrs_T){
+ for(t in 1:19){ //
+ // for(t in 1:nRyrs_T){
  log_F_dev_y[t] ~ normal(0, 5); 
  //log_F[t] ~ normal(1,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
  // log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);

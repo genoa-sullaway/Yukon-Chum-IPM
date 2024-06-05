@@ -136,9 +136,9 @@ t_start = 5 # to fill starting values
 
 # mean productivity rate =====
  # estimating this now
-basal_p_1 = 0.1#,0.05,
+basal_p_1 = 0.6#0.1#,0.05,
               #0.05) # straight from simulation
-basal_p_2 = 0.4#,
+basal_p_2 = 0.5#0.4#,
               # 0.15,
               # 0.15) # straight from simulation
 # fix marine mortality =======
@@ -202,9 +202,11 @@ data_list_stan <- list(nByrs=nByrs,
                        N_j_start =  N_j_start,
                       # N_recruit_start = N_recruit_start,
                        N_e_sum_start = N_e_sum_start,
-                                        
+                       kappa_marine_mort_start = -log(basal_p_2),                
                        kappa_marine_start = basal_p_2,
                        kappa_j_start = basal_p_1,
+                       basal_p_2 = basal_p_2,
+                       basal_p_1 =basal_p_1,
                                        
                        ncovars1=ncovars1,
                        ncovars2=ncovars2,
