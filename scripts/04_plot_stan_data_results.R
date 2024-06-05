@@ -25,7 +25,8 @@ traceplot(bh_fit,pars=  c( "D_scale", "theta1[1]","theta1[2]","theta2[1]"))
 
 traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"))
 
-traceplot(bh_fit,pars=  c("log_F","log_catch_q","g"))
+traceplot(bh_fit,pars=  c(#"log_F",
+                          "log_catch_q","g"))
 
 traceplot(bh_fit,pars=  c("N_sp_start_log"))
 
@@ -68,8 +69,8 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "sigma_y_j",
-               "sigma_y_sp"#,
+     pars=  c( "sigma_y_j"
+               #"sigma_y_sp"#,
                #"sigma_y_r", 
                #"sigma_y_h"
                ),
@@ -88,7 +89,20 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff2"),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "kappa_marine_survival"),
+     fill_color = "blue")
+ 
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+#      pars=  c( "kappa_marine_mortality"),
+#      fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "kappa_j_survival"),
+     fill_color = "blue")
+
 # Plot Observed vs Predicted ========
+
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
               probs = c(0.1, 0.9))$summary %>%
@@ -182,18 +196,35 @@ pred_N_j <- summary(bh_fit, pars = c("N_j"),
 summ_n_j <- pred_N_j %>%
  dplyr::mutate(mean_J_Q = mean*catch_q$mean,
                se_mean = se_mean*catch_q$mean) %>% 
-  cbind(obs = data_list_stan$data_stage_j) %>%
-  filter(!time<5)
+  cbind(obs = data_list_stan$data_stage_j) #%>%
+#  filter(!time<5)
 #  dplyr::mutate(obs = obs*catch_q$mean) 
 
 ggplot(data = summ_n_j) +
   geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = mean_J_Q)) +
+ # geom_line(aes(x=time, y = mean), color = "green") +
   geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
  
 
+# estimated kappa marine mortality ======
+kappa_marine_mortality <- summary(bh_fit, pars = c("kappa_marine_mortality"), 
+                                         probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  mutate(mean = exp(mean),
+         time = 1:nrow(.)) 
+
+kappa_marine_survival <- summary(bh_fit, pars = c("kappa_marine_survival"), 
+                                  probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  mutate(mean = exp(mean),
+         time = 1:nrow(.),
+         mort = -log(mean))
+  
 # estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("F"), 
                    probs = c(0.1, 0.9))$summary %>%
@@ -201,7 +232,7 @@ fishing <- summary(bh_fit, pars = c("F"),
   rownames_to_column()  %>% 
   mutate(mean = exp(mean),
          time = 1:nrow(.)) %>% 
-  filter(!time> 21)
+  filter(!time> 21 & !time<5)
 
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) + 
@@ -219,9 +250,7 @@ ggplot(data = fishing) +
   geom_line(aes(x=time, y = mean)) + 
   ylab("Fm")
 
- 
-
-# plot  estimated survival ======
+ # plot  estimated survival ======
 survival <- summary(bh_fit, pars = c("p_1", "p_2"), 
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%

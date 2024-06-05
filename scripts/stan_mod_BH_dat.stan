@@ -15,6 +15,10 @@ data { // all equation references are from proposal numbering
   vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
  
+  // vector[nRyrs] data_recruit_cv;// from run reconstruciton 
+   vector[nByrs] data_j_cv; 
+   vector[nRyrs] data_sp_cv; // from run reconstruciton 
+    
  // starting values for popualtion stages  
   // real N_sp_start [t_start,A];  
   // real N_catch_start [t_start,A];  
@@ -80,10 +84,10 @@ real log_catch_q;
 vector [nRyrs_T]  log_F_dev_y; 
 real log_F_mean; 
 
-real basal_p_1; // mean alpha for covariate survival stage 1 
-real basal_p_2; // mean alpha for covariate survival stage 2
+real<lower=-1,upper=1>  basal_p_1; // mean alpha for covariate survival stage 1 
+real<lower=-1,upper=1>  basal_p_2; // mean alpha for covariate survival stage 2
 
- real sigma_y_j;
+real sigma_y_j;
 //real sigma_y_r;
 real sigma_y_sp;
 //real sigma_y_h;
@@ -113,9 +117,9 @@ real N_e_sum_start;
 vector [nByrs] p_1; // productivity in bev holt transition funciton,  
 vector [nByrs] p_2; // productivity in bev holt transition funciton,  
  
-vector [nByrs] kappa_j ; // predicted survival for juvenile fish (FW and early marine)
-vector [nByrs] kappa_marine; // predicted survival for marine fish
-vector [nByrs] kappa_marine_mortality; // converting kappa marine survival to mortality 
+vector [nByrs] kappa_j_survival ; // predicted survival for juvenile fish (FW and early marine)
+vector<lower=0, upper =1> [nByrs] kappa_marine_survival; // predicted survival for marine fish
+vector <lower=0> [nByrs] kappa_marine_mortality; // converting kappa marine survival to mortality 
 
 matrix [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine covariate effects by brood year and stock
 matrix [nByrs, ncovars2] cov_eff2; // array that holds FW and early marine covariate effects by brood year and stock
@@ -137,8 +141,8 @@ vector [A] pi;
 vector [nRyrs_T] F; // instantaneous fishing mortality           
 
 // starting value transformations ======
-  kappa_marine[1] = kappa_marine_start; 
-  kappa_j[1]= kappa_j_start; 
+  kappa_marine_survival[1] = kappa_marine_start; 
+  kappa_j_survival[1]= kappa_j_start; 
  
 for(t in 1:t_start){
  for(a in 1:A){
@@ -211,14 +215,15 @@ for(t in 1:t_start){
 catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
 
   for (t in 2:nByrs){ 
-    kappa_j[t] =  p_1[t]/(1 + ((p_1[t]*N_e_sum[t-1])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+    kappa_j_survival[t] =  p_1[t]/(1 + ((p_1[t]*N_e_sum[t-1])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
      
-    N_j[t] = kappa_j[t]*N_e_sum[t-1]; // Eq 4.4  generated estiamte for the amount of fish each year and stock that survive to a juvenile stage
+    N_j[t] = kappa_j_survival[t]*N_e_sum[t-1]; // Eq 4.4  generated estiamte for the amount of fish each year and stock that survive to a juvenile stage
    
-    kappa_marine[t] =  p_2[t]/ (1 + ((p_2[t]*N_j[t])/c_2)); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+    kappa_marine_survival[t] =  p_2[t]/ (1 + ((p_2[t]*N_j[t])/c_2)); // Eq 4.1   - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
   
     // convert survival to mortality for next equation
-    kappa_marine_mortality[t] = -log(kappa_marine[t]);
+    kappa_marine_mortality[t] = -log(kappa_marine_survival[t]);
+    
       for (a in 1:A) {  
         N_ocean[t+a,a] =  N_j[t]*p[a]; //convert to calendar year 
         
@@ -256,9 +261,9 @@ for(t in 1:nByrs){
 }
 
 model {
-  sigma_y_j ~ uniform(0,5); //normal(0,8);
+  sigma_y_j ~ uniform(0,2); //normal(0,8);
   //sigma_y_r ~ normal(0,8);
-  sigma_y_sp ~ uniform(0,5);//normal(0,8);
+  //sigma_y_sp ~ uniform(0,5);//normal(0,8);
   //sigma_y_h ~ normal(0,8);
   //  sigma_y_j ~ normal(0,10); 
   // sigma_y_r ~ normal(0,10); 
@@ -301,8 +306,8 @@ model {
     // 
     D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(0,1.5); // currys model: normal(0,1.5^2); // mean survival stage 1 
-    basal_p_2 ~ normal(0,1.5); // mean survivial stage 2
+    basal_p_1 ~ normal(0,1); // currys model: normal(0,1.5^2); // mean survival stage 1 
+    basal_p_2 ~ normal(0,1); // mean survivial stage 2
     
     // currys model: rnorm(1, 0,1.5^2)
     // simulation:  basal_p_1 ~ normal(0.1,0.5);
@@ -332,13 +337,14 @@ model {
   prob[3] ~ beta(1,1);  
  
 // printing these for trouble shooting 
-  // print("kappa_marine_mortality:", kappa_marine_mortality);
+print("kappa_marine_mortality:", kappa_marine_mortality);
+print("kappa_marine_survival:", kappa_marine_survival);
   // print("log_F:", log_F);
    
 // Likelilihoods --  
   // Observation model
   for (t in 1:nByrs) {
-     log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j); //sqrt(log((0.08^2) + 1)));
+     log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j); // sqrt(log((data_j_cv[t]) + 1)));//sigma_y_j); //sqrt(log((0.08^2) + 1)));
     } 
 
   for(t in 1:nRyrs){ // calendar years 
@@ -347,7 +353,7 @@ model {
      
      target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])), sqrt(log((0.04^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
      target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.01^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
-     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_y_sp);
+     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((data_sp_cv[t]) + 1))); // sigma_y_sp);
  }
   }
 }  

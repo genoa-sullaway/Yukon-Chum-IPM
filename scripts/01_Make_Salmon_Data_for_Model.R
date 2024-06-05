@@ -102,7 +102,7 @@ write_csv(yukon_fall_ages, "data/processed_data/yukon_fall_age_comp.csv")
 
 # Juveniles ========================================================
 juv <- read_csv("data/Juv_Index_CC_aug2023/Index2.csv") %>%
-  dplyr::select(Time, Estimate) %>%
+  dplyr::select(Time, Estimate,CV) %>%
   rename(Year = "Time") 
 
 # Proportion of juveniles per run ======================================
@@ -126,7 +126,7 @@ fall_juv <- left_join(juv, fall_juv_proportions)  %>%
          Estimate = case_when(Estimate==0 ~  mean(fall_juv$Estimate, na.rm=TRUE),
                           TRUE ~ Estimate ),
          fall_abundance = Estimate * Mean) %>%
-  dplyr::select(Year, fall_abundance)
+  dplyr::select(Year, fall_abundance,CV)
  
 # SAVE HERE ============
 write_csv(fall_juv, "data/processed_data/tidy_juv_fall_yukon.csv")

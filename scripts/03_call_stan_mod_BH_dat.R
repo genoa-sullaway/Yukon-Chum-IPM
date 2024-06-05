@@ -40,7 +40,7 @@ yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv"
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min #, 
          #cal_year <= year_max_cal
-         )%>%
+         ) %>%
   select(2) %>%
   as.vector()
 
@@ -64,7 +64,18 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
   select(2) %>% 
   as.vector()
 
-## Summer ================================================
+
+# CV ========================================
+spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>% 
+  filter(year >= year_min, 
+         year <= 2022)  
+
+fall_juv_cv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
+  filter(Year <= 2021) %>% # 1 year less than all spawners 
+  dplyr::select(3) %>% 
+  as.vector()
+
+# Summer ================================================
 # summer_age_comp<-read_csv("data/age_comps/processed_age_comps_summer_yukon.csv")  %>% 
 #   filter(!cal_year < 2005 )
 # summer_brood <- read_csv("output/yukon_summer_broodyear.csv")%>%
@@ -176,6 +187,8 @@ data_list_stan <- list(nByrs=nByrs,
                        M = M_fill_stan,
                        # basal_p_1=basal_p_1,
                        # basal_p_2=basal_p_2, estimating these now 
+                       data_sp_cv = spawner_cv$fall_spawner_cv, 
+                       data_j_cv = fall_juv_cv$CV,
                        
                        data_stage_j = as.vector(fall_juv$fall_abundance), 
                        data_stage_return = as.vector(yukon_fall_recruits$total_run),
