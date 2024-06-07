@@ -36,15 +36,20 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "theta1[1]","theta1[2]","theta2[1]","theta2[2]"),
+     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+               "theta2[1]","theta2[2]","theta2[3]","theta2[4]"),
      fill_color = "blue")
 
 plot(bh_fit,  ci_level = 0.95, 
-     pars=  c( "kappa_marine"),
+     pars=  c( "kappa_marine_survival"),
+     fill_color = "blue")
+
+plot(bh_fit,  ci_level = 0.95, 
+     pars=  c( "kappa_marine_mortality"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "kappa_j"),
+     pars=  c( "kappa_j_survival"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -52,11 +57,11 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c("log_c_1", "log_c_2"),
+     pars=  c( "p_2"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "p_2"),
+     pars=  c("log_c_1", "log_c_2"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -76,7 +81,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "sigma_y_j","sigma_y_sp","sigma_y_r", "sigma_y_h"),
+     pars=  c( "sigma_y_j"), #,"sigma_y_sp","sigma_y_r", "sigma_y_h"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -228,8 +233,34 @@ ggplot(data = survival, aes(x=time, y = mean, group = variable ,color = variable
                   ymax = mean+se_mean), alpha = 0.5) 
 
 # kappa marine =====
-kappa_m <- summary(bh_fit, pars = c("kappa_marine"), 
+kappa_m <- summary(bh_fit, pars = c("kappa_marine_mortality"), 
                     probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:20, length.out = nrow(.))) %>% 
+  filter(!time<5)
+
+ggplot(data = kappa_m, aes(x=time, y = mean)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) 
+
+# kappa marine survival =====
+kappa_marine_survival <- summary(bh_fit, pars = c("kappa_marine_survival"), 
+                            probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:20, length.out = nrow(.))) %>% 
+  filter(!time<5)
+
+ggplot(data = kappa_marine_survival, aes(x=time, y = mean)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) 
+
+# kappa j =====
+kappa_j_survival <- summary(bh_fit, pars = c("kappa_j_survival"), 
+                   probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
   dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
@@ -237,7 +268,7 @@ kappa_m <- summary(bh_fit, pars = c("kappa_marine"),
                                      TRUE ~ "p_2")) %>% 
   filter(!time<5)
 
-ggplot(data = kappa_m, aes(x=time, y = mean, group = variable ,color = variable)) + 
+ggplot(data = kappa_j_survival, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) 
