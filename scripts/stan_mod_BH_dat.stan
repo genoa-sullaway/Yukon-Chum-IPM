@@ -88,8 +88,8 @@ real log_catch_q;
 vector [nRyrs_T]  log_F_dev_y; 
 real log_F_mean; 
 
-real  basal_p_1; // mean alpha for covariate survival stage 1
-real  basal_p_2; // mean alpha for covariate survival stage 2
+real  basal_p_1_log; // mean alpha for covariate survival stage 1
+real  basal_p_2_log; // mean alpha for covariate survival stage 2
 
 real sigma_y_j;
 //real sigma_y_r;
@@ -117,6 +117,9 @@ real N_egg_start[t_start,A];
 real N_j_start;
 real N_e_sum_start;
 
+real <lower =0.001> basal_p_1;
+real <lower =0.001> basal_p_2; 
+
 // survival and covariate section 
 vector [nByrs] p_1; // productivity in bev holt transition funciton,  
 vector [nByrs] p_2; // productivity in bev holt transition funciton,  
@@ -141,7 +144,7 @@ matrix[nRyrs,A] q;
 // vector<lower=0, upper=1> [A] pi;
 vector [A] pi;
 
- vector [19] F; //
+vector [19] F; //
 //vector [nRyrs_T] F; // instantaneous fishing mortality           
 
 // starting value transformations ======
@@ -173,6 +176,9 @@ for(t in 1:t_start){
   N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
   N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
      }
+ 
+ basal_p_1 = exp(basal_p_1_log);
+ basal_p_2 = exp(basal_p_2_log);
  
  for(t in 1:19){//  
  // for(t in 1:nRyrs_T){
@@ -312,8 +318,8 @@ model {
     // 
     D_scale ~ beta(1,1); // 
     
-    basal_p_1 ~ normal(0,1.5); // currys model: normal(0,1.5^2); // mean survival stage 1
-    basal_p_2 ~ normal(0,1.5); // mean survivial stage 2
+    basal_p_1_log ~ normal(0,1.5); // currys model: normal(0,1.5^2); // mean survival stage 1
+    basal_p_2_log ~ normal(0,1.5); // mean survivial stage 2
     
     // currys model: rnorm(1, 0,1.5^2)
     // simulation:  basal_p_1 ~ normal(0.1,0.5);
