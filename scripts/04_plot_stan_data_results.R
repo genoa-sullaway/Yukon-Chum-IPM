@@ -4,19 +4,7 @@ library(here)
 library(rstan)
 library(bayesplot)
 library(rstanarm)
-
-# functions for tidying ===========
-# Function to remove '[' character
-remove_bracket <- function(lst) {
-  sapply(lst, function(x) gsub("\\[", "", x))
-}
-remove_bracket2 <- function(lst) {
-  sapply(lst, function(x) gsub("\\]", "", x))
-}
-remove_comma <- function(lst) {
-  sapply(lst, function(x) gsub("\\,", "", x))
-}
-
+ 
 # load model ==============
 bh_fit<- read_rds("output/stan_fit_DATA.RDS")
 
@@ -29,6 +17,8 @@ traceplot(bh_fit,pars=  c(#"log_F",
                           "log_catch_q","g"))
 
 traceplot(bh_fit,pars=  c("N_sp_start_log"))
+
+traceplot(bh_fit,pars=  c("N_j"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -200,46 +190,36 @@ ggplot(data = summ_n_j) +
   ggtitle(("Juveniles, est and observed"))
  
 
-# estimated kappa marine mortality ======
-kappa_marine_mortality <- summary(bh_fit, pars = c("kappa_marine_mortality"), 
-                                         probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  mutate(mean = exp(mean),
-         time = 1:nrow(.)) 
-
-kappa_marine_survival <- summary(bh_fit, pars = c("kappa_marine_survival"), 
-                                  probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  mutate(mean = exp(mean),
-         time = 1:nrow(.),
-         mort = -log(mean))
-  
 # estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("F"), 
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  mutate(mean = exp(mean),
+  mutate(mean =  (mean),
          time = 1:nrow(.)) %>% 
   filter(!time> 21 & !time<5)
 
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) + 
-  ylab("Fm")
+  ylab("Instantaneous fishing mortality")
 
 fishing <- summary(bh_fit, pars = c("F"), 
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  mutate(mean = exp(mean),
-         time = 1:nrow(.)) %>% 
-  filter(!time <6 & !time> 21)
+  mutate(log = mean,
+         mean = exp(mean),
+         time = 1:nrow(.))# %>% 
+#  filter(!time <6 & !time> 19)
 
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) + 
   ylab("Fm")
+
+ggplot(data = fishing %>% filter(!time <6 & !time> 21)
+         ) + 
+  geom_line(aes(x=time, y = log)) + 
+  ylab("log_Fm")
 
  # plot  estimated survival ======
 survival <- summary(bh_fit, pars = c("p_1", "p_2"), 
@@ -254,6 +234,27 @@ ggplot(data = survival, aes(x=time, y = mean, group = variable ,color = variable
   geom_line( ) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) 
+
+# plot  estimated kappas survival ======
+kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
+                    probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
+                variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
+                                     TRUE ~ "kappa_j_survival"))
+
+ggplot(data = kappasurvival, aes(x=time, y = mean, group = variable ,color = variable)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) 
+
+ggplot(data = kappasurvival, aes(x=time, y = mean, group = variable ,color = variable)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) +
+  facet_wrap(~variable, scales = "free")
+
 
 # plot  estimated marine mort ======
 kappa_marine_mortality <- summary(bh_fit, pars = c("kappa_marine_mortality"), 
@@ -331,3 +332,19 @@ params %>%
   #geom_point(aes(x=rowname, y = mean_obs), color = "red") + 
   facet_wrap(~rowname, scales = 'free')  
 
+
+# estimated kappa marine mortality ======
+kappa_marine_mortality <- summary(bh_fit, pars = c("kappa_marine_mortality"), 
+                                  probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  mutate(mean = exp(mean),
+         time = 1:nrow(.)) 
+
+kappa_marine_survival <- summary(bh_fit, pars = c("kappa_marine_survival"), 
+                                 probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  mutate(mean = exp(mean),
+         time = 1:nrow(.),
+         mort = -log(mean))

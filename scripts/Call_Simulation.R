@@ -53,8 +53,8 @@ adapt_delta <- 0.95
 
 # Init =================== 
 A = 4 # age classes 
-nByrs= 25
-nRyrs = 26   
+nByrs= 20
+nRyrs = 21  
 nRyrs_T = nRyrs + 4
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 

@@ -167,19 +167,21 @@ cnideria_zoop<- zoop %>%
    rbind(cnideria_pred_df) %>% 
    dplyr::select(YEAR, pred, id) %>% 
    spread(id, pred) %>% 
-   dplyr::summarise(mean_cnideria = mean(Cnideria),
-             mean_largezoop = mean(Large_zoop))
- 
+   dplyr::summarise(mean_cnideria = mean(Cnideria), #rnorm(mean(Cnideria), 0.001), 
+             mean_largezoop = mean(Large_zoop)) #rnorm(mean(Large_zoop), 0.001))
+# a<- rnorm(1,0, 0.1)
+# b<-rnorm(2,mean(temp$mean_largezoop), 0.1)
+
 pred_df <- large_pred_df %>%
               rbind(cnideria_pred_df) %>%
               dplyr::select(YEAR, pred, id) %>% 
               spread(id, pred)  %>% 
               dplyr::mutate(YEAR = as.numeric(as.character(YEAR))) %>% 
               right_join(YEAR) %>% 
-              dplyr::mutate(Cnideria = case_when(is.na(Cnideria) ~ mean(temp$mean_cnideria),
+              dplyr::mutate(Cnideria = case_when(is.na(Cnideria) ~ mean(temp$mean_cnideria)  ,
                                           TRUE ~ Cnideria),
                             Large_zoop = case_when(is.na(Large_zoop) ~ mean(temp$mean_largezoop),
-                                          TRUE ~ Large_zoop),
+                                          TRUE ~ Large_zoop)) 
                             Large_zoop = as.numeric(scale(Large_zoop)),
                             Cnideria = as.numeric(scale(Cnideria)))       
 
@@ -204,7 +206,10 @@ pred_df <- large_pred_df %>%
  # save data  =============
  write_csv(pred_df, "data/processed_covariates/Stage_A_Zooplankton_Index.csv")
  
- # Estimate Spatial Temporal Fields? ============================ 
+ 
+ 
+ # these are not used in model ============
+ ## Estimate Spatial Temporal Fields? ============================ 
  largezoop_ST_index <- mgcv::gam(sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
                                             s(LON,LAT, by = YEAR) + s(DOY),
                                           data = mod_df_largezoop, 

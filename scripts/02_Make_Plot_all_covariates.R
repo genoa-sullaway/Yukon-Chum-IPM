@@ -12,7 +12,11 @@ sst_a <- read_csv("data/processed_covariates/Stage_A_CDD.csv") %>%
 
 # this is a GAM zoop index
 zoop <- read_csv("data/processed_covariates/Stage_A_Zooplankton_Index.csv")  %>% 
-  rename(Year = "YEAR")
+  rename(Year = "YEAR") %>% 
+  dplyr::mutate(Large_zoop = case_when(Year == 2021 ~ Large_zoop + 0.02, # add small constant until I can get more recent data!!! 
+                                       TRUE ~ Large_zoop),
+                Cnideria = case_when(Year == 2021 ~ Cnideria + 0.02,
+                                       TRUE ~ Cnideria))
 
 # large_zoop_a <- read_csv("data/processed_covariates/covariate_large_zooplankton.csv") %>%
 #   dplyr::rename(large_zoop_NBS = "mean",

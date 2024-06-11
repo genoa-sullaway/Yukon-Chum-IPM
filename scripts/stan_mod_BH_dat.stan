@@ -85,7 +85,8 @@ vector<lower=0> [A] g; // gamma random draws
 real log_catch_q;
 //vector<lower= -3>[nRyrs_T] log_F;
 //vector<lower= -3>[19] log_F;
-vector [nRyrs_T]  log_F_dev_y; 
+//vector [nRyrs_T] sigma_F_deviation;
+vector [nRyrs_T] log_F_dev_y; 
 real log_F_mean; 
 
 real  basal_p_1_log; // mean alpha for covariate survival stage 1
@@ -144,8 +145,8 @@ matrix[nRyrs,A] q;
 // vector<lower=0, upper=1> [A] pi;
 vector [A] pi;
 
-vector [19] F; //
-//vector [nRyrs_T] F; // instantaneous fishing mortality           
+//vector [19] F; //
+vector [nRyrs_T] F; // instantaneous fishing mortality           
 
 // starting value transformations ======
   kappa_marine_survival[1:2] = kappa_marine_start; 
@@ -180,8 +181,8 @@ for(t in 1:t_start){
  basal_p_1 = exp(basal_p_1_log);
  basal_p_2 = exp(basal_p_2_log);
  
- for(t in 1:19){//  
- // for(t in 1:nRyrs_T){
+ // for(t in 1:19){//  
+  for(t in 1:nRyrs_T){
   // instant fishing mortality 
   F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  // F[t]  = exp(log_F[t]);
@@ -223,7 +224,7 @@ for(t in 1:t_start){
     p[a] = g[a]/sum(g[1:A]);
   }
 
-catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
+catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data 
 
   for (t in 2:nByrs){ 
     kappa_j_survival[t] =  p_1[t]/(1 + ((p_1[t]*N_e_sum[t-1])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
@@ -244,12 +245,12 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         if(a>1){
         N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:(a-1)])+kappa_marine_mortality[t+1])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
            } 
-        if(t+a<20){
+       // if(t+a<20){
         N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t+a]));
-           }
-           if (t+a>19){
-             N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.02));
-       }
+        //   }
+       //     if (t+a>19){
+       //       N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.02));
+       // }
        
         N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
          
@@ -289,7 +290,7 @@ model {
     // log_c_1 ~  normal(18, 10); // carrying capacity prior - stage 1  
     // log_c_2 ~  normal(15, 10); // carrying capacity prior - stage 2
 
-    N_j_start_log ~ normal(13.7,6); 
+    N_j_start_log ~ normal(13.8,6); 
     N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
     
  for(t in 1:t_start){
@@ -334,10 +335,14 @@ model {
  }
  
  // log fishing mortality for each calendar year 
-  log_F_mean ~ normal(0,1);
- for(t in 1:19){ //
- // for(t in 1:nRyrs_T){
- log_F_dev_y[t] ~ normal(0, 5); 
+log_F_mean ~ normal(0,1); //uniform(-2,-0.5);  //
+ 
+ // for(t in 1:19){ //
+for(t in 1:nRyrs_T){
+  //sigma_F_deviation[t] ~ normal(5,0.1); 
+// log_F_dev_y[t] ~ normal(0,sigma_F_deviation[t]); 
+ //log_F_dev_y[t] ~ normal(0,5);
+ log_F_dev_y[t] ~ normal(0,1); // sigma_F_deviation[t]); 
  //log_F[t] ~ normal(1,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
  // log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
  // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
@@ -349,8 +354,8 @@ model {
   prob[3] ~ beta(1,1);  
  
 // printing these for trouble shooting 
-print("kappa_marine_mortality:", kappa_marine_mortality);
-print("kappa_marine_survival:", kappa_marine_survival);
+// print("kappa_marine_mortality:", kappa_marine_mortality);
+// print("kappa_marine_survival:", kappa_marine_survival);
   // print("log_F:", log_F);
    
 // Likelilihoods --  

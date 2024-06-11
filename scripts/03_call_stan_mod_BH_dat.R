@@ -7,6 +7,8 @@ library(rstanarm)
 library(tidync)
 library(lubridate) 
 library(readxl)
+# log_f = runif(1,-4,-1)
+# 1-exp(-exp(log_f))
 
 # Things to look into  =======================================================
 # sigma for both life stages in estimates so I can fix it instead of have model estimate it 
@@ -35,6 +37,10 @@ yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv"
          ) %>%
   dplyr::select(2:ncol(.)) %>%
   as.matrix()
+
+barplot(t(yukon_fall_obs_agecomp))
+
+plot(rowMeans(yukon_fall_obs_agecomp))
 
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
@@ -154,7 +160,7 @@ basal_p_2 = 0.2#0.4#,
 M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(300, times = nByrs))
+ess_age_comp = as.vector(rep(80, times = nByrs))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  basal_p_1  
@@ -232,4 +238,3 @@ bh_fit <- stan(
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
  
-
