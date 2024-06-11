@@ -93,6 +93,10 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
                 age = rep(1:4, length.out = nrow(.))) %>%
   filter(!time>21) # remove years without full return estimates 
 
+ggplot(data = pred_N_SP %>% mutate(age = factor(age))) +
+  geom_line(aes(x=time, y= mean, group = age, color = age))+
+  facet_wrap(~age, scales = "free")
+
 # plot proportions 
 # sum to compare with data 
 summ_n_sp <- pred_N_SP %>%
@@ -242,7 +246,8 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
   rownames_to_column()  %>% 
   dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
                 variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
-                                     TRUE ~ "kappa_j_survival"))
+                                     TRUE ~ "kappa_j_survival"))%>%
+  filter(!time<6)
 
 ggplot(data = kappasurvival, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +

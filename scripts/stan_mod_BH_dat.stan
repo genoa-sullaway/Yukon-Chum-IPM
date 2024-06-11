@@ -19,6 +19,7 @@ data { // all equation references are from proposal numbering
    vector[nByrs] data_j_cv; 
    vector[nRyrs] data_sp_cv; // from run reconstruciton 
     
+  //  real F; 
  // real basal_p_1; 
  // real basal_p_2; 
  
@@ -86,8 +87,8 @@ real log_catch_q;
 //vector<lower= -3>[nRyrs_T] log_F;
 //vector<lower= -3>[19] log_F;
 //vector [nRyrs_T] sigma_F_deviation;
-vector [nRyrs_T] log_F_dev_y; 
-real log_F_mean; 
+vector [nRyrs_T] log_F_dev_y;
+real log_F_mean;
 
 real  basal_p_1_log; // mean alpha for covariate survival stage 1
 real  basal_p_2_log; // mean alpha for covariate survival stage 2
@@ -183,7 +184,7 @@ for(t in 1:t_start){
  
  // for(t in 1:19){//  
   for(t in 1:nRyrs_T){
-  // instant fishing mortality 
+  // instant fishing mortality
   F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  // F[t]  = exp(log_F[t]);
  }
@@ -246,7 +247,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:(a-1)])+kappa_marine_mortality[t+1])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
            } 
        // if(t+a<20){
-        N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t+a]));
+        N_catch[t+a,a] = N_recruit[t+a,a]*(1-(exp(-F[t+a])));
         //   }
        //     if (t+a>19){
        //       N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-0.02));
@@ -262,7 +263,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
   // Calculate age proportions by return year
   for (t in 1:nByrs) {
     for(a in 1:A){
-     q[t,a] = N_ocean[t,a]/(sum(N_ocean[t,1:A]));
+     q[t,a] = N_sp[t,a]/(sum(N_sp[t,1:A]));
     }
   }
 
@@ -336,16 +337,16 @@ model {
  
  // log fishing mortality for each calendar year 
 log_F_mean ~ normal(0,1); //uniform(-2,-0.5);  //
- 
- // for(t in 1:19){ //
+
+//for(t in 1:19){ //
 for(t in 1:nRyrs_T){
-  //sigma_F_deviation[t] ~ normal(5,0.1); 
-// log_F_dev_y[t] ~ normal(0,sigma_F_deviation[t]); 
+  //sigma_F_deviation[t] ~ normal(5,0.1);
+// log_F_dev_y[t] ~ normal(0,sigma_F_deviation[t]);
  //log_F_dev_y[t] ~ normal(0,5);
- log_F_dev_y[t] ~ normal(0,1); // sigma_F_deviation[t]); 
+ log_F_dev_y[t] ~ normal(0,1); // sigma_F_deviation[t]);
  //log_F[t] ~ normal(1,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
  // log_F[t] ~ normal(-1.5,0.7); //  best I have gotten so far: -1.5,0.7);
- // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean 
+ // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean
 }
  
  // age comp priors -- maturity schedules

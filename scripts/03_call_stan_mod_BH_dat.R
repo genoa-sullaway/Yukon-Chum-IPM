@@ -37,10 +37,10 @@ yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv"
          ) %>%
   dplyr::select(2:ncol(.)) %>%
   as.matrix()
-
-barplot(t(yukon_fall_obs_agecomp))
-
-plot(rowMeans(yukon_fall_obs_agecomp))
+# 
+# barplot(t(yukon_fall_obs_agecomp))
+# 
+# plot(rowMeans(yukon_fall_obs_agecomp))
 
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
@@ -225,9 +225,11 @@ data_list_stan <- list(nByrs=nByrs,
                                         
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
-                       p_obs = p)
-                 
-# call mod  ===========================
+                       p_obs = p,
+                       
+                       F = 0.3)
+
+     # call mod  ===========================
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
