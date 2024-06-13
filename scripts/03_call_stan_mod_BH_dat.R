@@ -153,7 +153,7 @@ basal_p_1 = 0.03  # these are values it estimates at when allowed to
 basal_p_2 = 0.3 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
-M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
+M_fill_stan = c(0.0001,0.06, 0.06, 0.06) # will be cumulative 
 
 #ess age comp =======
 ess_age_comp = as.vector(rep(80, times = nByrs))
@@ -221,7 +221,7 @@ data_list_stan <- list(nByrs=nByrs,
                                         
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
-                       p_obs = p,
+                       p_obs = p#,
                       # basal_p_1_log = log(0.03),
                        #basal_p_2_log = log(0.3),
                        #theta1 = c(-0.5, -0.5)

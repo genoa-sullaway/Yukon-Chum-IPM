@@ -113,7 +113,8 @@ ggplot(data = summ_n_sp) +
   geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = pred_n_sp)) +
   geom_ribbon(aes(x=time, ymin = pred_n_sp-pred_se,
-                  ymax = pred_n_sp+pred_se))
+                  ymax = pred_n_sp+pred_se)) +
+  ggtitle("spawners: obs and predicted")
 
 ## recruits ====== 
 pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
@@ -138,7 +139,7 @@ ggplot(data = summ_n_rec) +
   geom_line(aes(x=time, y = pred_n_rec)) +
   geom_ribbon(aes(x=time, ymin = pred_n_rec-pred_se,
                   ymax = pred_n_rec+pred_se))+
-  ggtitle(("Recruits, est and observed"))
+  ggtitle(("recruits: obs and predicted"))
 
 ## harvest ====== 
 pred_N_harvest <- summary(bh_fit, pars = c("N_catch"), 
@@ -255,7 +256,7 @@ ggplot(data = kappa_marine_survival, aes(x=time, y = mean )) +
                   ymax = mean+se_mean), alpha = 0.5) 
 
 # plot estimated productivity ======
-survival <- summary(bh_fit, pars = c("p_1", "p_2"), 
+productivity <- summary(bh_fit, pars = c("p_1", "p_2"), 
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
@@ -263,7 +264,7 @@ survival <- summary(bh_fit, pars = c("p_1", "p_2"),
                 variable = case_when(grepl("p_1",rowname) ~ "p_1",
                                      TRUE ~ "p_2"))
 
-ggplot(data = survival, aes(x=time, y = mean, group = variable ,color = variable)) + 
+ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) 
