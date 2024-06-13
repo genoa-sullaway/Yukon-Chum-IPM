@@ -3,7 +3,7 @@ library(tidyverse)
 library(here)
 
 # years in covariate timeseries to expand the TS that need it 
-YEAR <-data.frame(YEAR = seq(from = 2002, to = 2021, by =1))
+YEAR <-data.frame(YEAR = seq(from = 2002, to = 2022, by =1))
 
 # Stage A - Load data ============= 
 sst_a <- read_csv("data/processed_covariates/Stage_A_CDD.csv") %>%
@@ -16,7 +16,12 @@ zoop <- read_csv("data/processed_covariates/Stage_A_Zooplankton_Index.csv")  %>%
   dplyr::mutate(Large_zoop = case_when(Year == 2021 ~ Large_zoop + 0.02, # add small constant until I can get more recent data!!! 
                                        TRUE ~ Large_zoop),
                 Cnideria = case_when(Year == 2021 ~ Cnideria + 0.02,
-                                       TRUE ~ Cnideria))
+                                       TRUE ~ Cnideria)) %>% 
+  rbind(data.frame(Year = c(2022,2023),
+                   Large_zoop = c(mean(zoop$Large_zoop) + 0.01,
+                                  mean(zoop$Large_zoop) - 0.01), 
+                   Cnideria = c(mean(zoop$Cnideria) +0.01,
+                                mean(zoop$Cnideria) -0.01)))
 
 # large_zoop_a <- read_csv("data/processed_covariates/covariate_large_zooplankton.csv") %>%
 #   dplyr::rename(large_zoop_NBS = "mean",
@@ -97,11 +102,16 @@ dev.off()
 # Stage B - Load data ============= 
 hatchery_chum_b<-read_csv("output/hatchery_Chum_Covariate_AKandAsia.csv") %>%
   dplyr::rename(Chum_hatchery="sum") %>%
-  dplyr::select(Year, Chum_hatchery)
+  dplyr::select(Year, Chum_hatchery) %>%
+  rbind(data.frame(Year = c(2023),
+                   Chum_hatchery = c(mean(hatchery_chum_b$Chum_hatchery) + 0.01)))
 
 hatchery_pink_b <- read_csv("output/hatchery_Pink_Covariate_AKandAsia.csv") %>%
   dplyr::rename(Pink_hatchery="sum") %>%
-  dplyr::select(Year, Pink_hatchery)
+  dplyr::select(Year, Pink_hatchery) %>% 
+  rbind(data.frame(Year = c(2023),
+                   Pink_hatchery = c(mean(hatchery_pink_b$Pink_hatchery) + 0.01)))
+
 
 sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv") %>%
   dplyr::rename(SST_CDD_SEBS = "CDD",
