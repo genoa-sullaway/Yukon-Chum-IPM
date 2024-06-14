@@ -21,7 +21,7 @@ data { // all equation references are from proposal numbering
   
      
   real  basal_p_1_log;
-    // real  basal_p_2_log;
+  real  basal_p_2_log;
   //  real F; 
  // real basal_p_1; 
  // real basal_p_2; 
@@ -81,7 +81,7 @@ real <lower=12 > log_c_2; // log carrying capacity
 // real <lower=-2, upper = 2> theta1[ncovars1]; // covariate estimated for each covariate and each population 
 // real <lower=-2, upper = 2> theta2[ncovars2];
 real  theta1[ncovars1]; // covariate estimated for each covariate and each population 
- //real  theta2[ncovars2];
+real  theta2[ncovars2];
   
 vector <lower=0>[A-1] prob; 
 real<lower=0.0001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
@@ -95,7 +95,8 @@ real log_F_mean;
 
 // survival and covariate section 
 // vector [nByrs] log_p_1; // productivity in bev holt transition funciton,  
-vector [nByrs] log_p_2; // productivity in bev holt transition funciton,  
+//vector [nByrs] log_p_2; // productivity in bev holt transition funciton,  
+//vector<lower=0, upper=1> [nByrs] p_2; // productivity in bev holt transition funciton,  
  
  
 // real  basal_p_1; // mean alpha for covariate survival stage 1
@@ -105,7 +106,7 @@ vector [nByrs] log_p_2; // productivity in bev holt transition funciton,
 // real  basal_p_2_log; // mean alpha for covariate survival stage 1
  // real  theta ; // mean alpha for covariate survival stage 2
 
-//real sigma_y_j;
+ real sigma_y_j;
 //real sigma_y_r;
 //real sigma_y_sp;
 //real sigma_y_h;
@@ -132,7 +133,7 @@ real N_j_start;
 real N_e_sum_start;
 
  real basal_p_1;
-// real <lower =0.001> basal_p_2; 
+ real basal_p_2; 
  
 vector [nByrs] kappa_j_survival ; // predicted survival for juvenile fish (FW and early marine)
 vector  [nByrs] kappa_marine_survival; // predicted survival for marine fish
@@ -191,7 +192,7 @@ for(t in 1:t_start){
      }
  
  basal_p_1 = exp(basal_p_1_log);
- // basal_p_2 = exp(basal_p_2_log);
+ basal_p_2 = exp(basal_p_2_log);
  
  // for(t in 1:19){//  
   for(t in 1:nRyrs_T){
@@ -205,19 +206,19 @@ for(t in 1:t_start){
    c_2 = exp(log_c_2);
    
    // p_1 = exp(log_p_1);
-   p_2 = exp(log_p_2);
+  // p_2 = exp(log_p_2);
  
 //the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
 for(t in 1:nByrs){
  for (c in 1:ncovars1) {
 cov_eff1[t,c] = theta1[c]*cov1[t,c];
  }
-//  for (c in 1:ncovars2) {
-// cov_eff2[t,c] = theta2[c]*cov2[t,c];
-//  }
+ for (c in 1:ncovars2) {
+cov_eff2[t,c] = theta2[c]*cov2[t,c];
+ }
 
   p_1[t]  = 1 / (1 + exp(-basal_p_1- sum(cov_eff1[t,1:ncovars1])));
-  // p_2[t]  = 1 / (1 + exp(-basal_p_2- sum(cov_eff2[t,1:ncovars2])));
+  p_2[t]  = 1 / (1 + exp(-basal_p_2- sum(cov_eff2[t,1:ncovars2])));
 }
  
  // Maturity schedule: use a common maturation schedule to draw the brood year specific schedules
@@ -282,7 +283,7 @@ for(t in 1:nByrs){
 }
 
 model {
-  // sigma_y_j ~ uniform(0,5); //normal(0,8);
+  sigma_y_j ~ uniform(0,5); //normal(0,8);
   //sigma_y_r ~ normal(0,8);
   //sigma_y_sp ~ uniform(0,5);//normal(0,8);
   //sigma_y_h ~ normal(0,8);
@@ -299,15 +300,15 @@ model {
     // log_c_1 ~  normal(18, 10); // carrying capacity prior - stage 1  
     // log_c_2 ~  normal(15, 10); // carrying capacity prior - stage 2
 
-    N_j_start_log ~ normal(13.8,8); 
-    N_e_sum_start_log ~  normal(14, 8); // starting value for eggs, initiates pop model 
+    N_j_start_log ~ normal(13.6,5); //13.8
+    N_e_sum_start_log ~  normal(13.65, 5); //normal(14, 8);  starting value for eggs, initiates pop model 
     
  for(t in 1:t_start){
     N_sp_start_log[t] ~ normal(13.48,5);
     N_recruit_start_log[t] ~  normal(13.5,5);
     N_catch_start_log[t] ~ normal(12.3,5);
-    N_ocean_start_log[t] ~ normal(13.7,5);
-    N_egg_start_log[t] ~  normal(14, 5); // starting value for eggs, initiates pop model 
+    N_ocean_start_log[t] ~ normal(13.55,5);
+    N_egg_start_log[t] ~  normal(13.65, 5); // starting value for eggs, initiates pop model 
 }
   //print("N_e_sum_start_log:", N_e_sum_start_log);
  
@@ -316,7 +317,7 @@ model {
     // theta1[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta1[4] ~ normal(0,1.5); // environmental covariate coefficient stage 1
  
-    // theta2[1]  ~ normal(0,1.5);
+    theta2[1]  ~ normal(0,1.5);
     // theta2[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
     // theta2[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
     // 
@@ -326,8 +327,8 @@ model {
    // basal_p_2 ~ normal(0,1); // me
    
    // log_p_1 ~ normal(0,1); // currys model: normal(0,1.5^2); // mean survival stage 1
-   log_p_2 ~ normal(0,1); // me
-   
+  // log_p_2 ~ normal(0,1); // me
+   //   p_2 ~ beta(1,1); // me
    // basal_p_1_log ~ normal(0,1); // currys model: normal(0,1.5^2); // mean survival stage 1
    // basal_p_2_log ~ normal(0,1); // mean survivial stage 2
    //  
@@ -344,14 +345,14 @@ model {
  }
  
  // log fishing mortality for each calendar year 
-log_F_mean ~ normal(-1,2); //uniform(-2,-0.5);  //
+log_F_mean ~ normal(-1,1); //uniform(-2,-0.5);  //
 
 //for(t in 1:19){ //
 for(t in 1:nRyrs_T){
   //sigma_F_deviation[t] ~ normal(5,0.1);
 // log_F_dev_y[t] ~ normal(0,sigma_F_deviation[t]);
  //log_F_dev_y[t] ~ normal(0,5);
- log_F_dev_y[t] ~ normal(0,5); // sigma_F_deviation[t]);
+ log_F_dev_y[t] ~ normal(0,1); // sigma_F_deviation[t]);
  //log_F[t] ~ normal(1,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
  // log_F[t] ~ normal(-1.5,0.7); //  best have gotten so far: -1.5,0.7);
  // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean
@@ -370,7 +371,7 @@ for(t in 1:nRyrs_T){
 // Likelilihoods --  
   // Observation model
   for (t in 1:nByrs) {
-     log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sqrt(log((0.06^2) + 1))); //sigma_y_j); // sqrt(log((data_j_cv[t]) + 1)));//sigma_y_j); //sqrt(log((0.08^2) + 1)));
+     log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j); //sqrt(log((0.06^2) + 1))); //sigma_y_j); // sqrt(log((data_j_cv[t]) + 1)));//sigma_y_j); //sqrt(log((0.08^2) + 1)));
     } 
 
   for(t in 1:nRyrs){ // calendar years 

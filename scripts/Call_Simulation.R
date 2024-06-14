@@ -269,7 +269,7 @@ o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
 for(t in 1:6){
   for (a in 1:A) {
   o_run_comp[t,a]  = p[[a]]
-  o_run_comp[26,a] = p[[a]]
+  o_run_comp[21,a] = p[[a]]
   }
 }
 

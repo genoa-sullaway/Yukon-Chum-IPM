@@ -26,8 +26,9 @@ traceplot(bh_fit,pars=  c("N_j_start_log"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "D_scale", #"theta1[1]","theta1[2]",#"theta1[3]","theta1[4]",
-               "theta2[1]","theta2[2]","theta2[3]" ),
+     pars=  c( "D_scale",  "theta1[1]",#,"theta1[2]",#"theta1[3]","theta1[4]",
+               "theta2[1]"#,"theta2[2]","theta2[3]" 
+               ),
      fill_color = "blue")
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -47,7 +48,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"),
+     pars=  c( "prob[1]", "prob[2]","prob[3]", "basal_p_1"),#, "basal_p_2"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
@@ -62,22 +63,18 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "g"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "N_sp_start_log", #"N_ocean_start_log",
-               "N_catch_start_log", "N_recruit_start_log"),
+# 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c( "cov_eff1"),
      fill_color = "blue")
-# 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-#      pars=  c( "cov_eff1"),
-#      fill_color = "blue")
-# 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-#      pars=  c( "cov_eff2"),
-#      fill_color = "blue") 
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c( "cov_eff2"),
+     fill_color = "blue")
+
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "sigma_y_j"),
      fill_color = "blue")
-
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_1"),
@@ -268,8 +265,7 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
   rownames_to_column()  %>% 
   dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
                 variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
-                                     TRUE ~ "kappa_j_survival"))%>%
-  filter(!time<6)
+                                     TRUE ~ "kappa_j_survival"))
 
 ggplot(data = kappasurvival, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
@@ -318,7 +314,9 @@ productivity <- summary(bh_fit, pars = c("p_1", "p_2"),
 ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) 
+                  ymax = mean+se_mean), alpha = 0.5) +
+  facet_wrap(~variable, scales = "free")
+
 # plot sigma  ======
 # sigma <- summary(bh_fit, pars = c("sigma_y_h", 
 #                                   "sigma_y_r", 
