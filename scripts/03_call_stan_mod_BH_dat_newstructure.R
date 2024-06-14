@@ -109,7 +109,7 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
          Year <= year_max_brood) %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
-  dplyr::select(yukon_mean_discharge) %>%#,SST_CDD_NBS) %>% #, Cnideria, Large_zoop) %>%
+  dplyr::select(yukon_mean_discharge,SST_CDD_NBS) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
  
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
@@ -132,7 +132,7 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
 
 
 # number covariates for each life stage 
-ncovars1 = 1
+ncovars1 = 2
 ncovars2 = 3
 
 # Organize data call inputs ================================================
@@ -153,7 +153,7 @@ basal_p_1 = 0.03  # these are values it estimates at when allowed to
 basal_p_2 = 0.3 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
-M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
+M_fill_stan = c(0.0001,0.06, 0.06, 0.06) # will be cumulative 
 
 #ess age comp =======
 ess_age_comp = as.vector(rep(80, times = nByrs))
@@ -221,8 +221,8 @@ data_list_stan <- list(nByrs=nByrs,
                                         
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
-                       p_obs = p,
-                     basal_p_1_log = log(0.03)
+                       p_obs = p#,
+                      # basal_p_1_log = log(0.03),
                        #basal_p_2_log = log(0.3),
                        #theta1 = c(-0.5, -0.5)
                        #theta2 = c(0.5, 0.5, 0.5)
@@ -231,7 +231,7 @@ data_list_stan <- list(nByrs=nByrs,
 
 # call mod  ===========================
 bh_fit <- stan(
-  file = here::here("scripts", "stan_mod_BH_dat.stan"),
+  file = here::here("scripts", "stan_mod_BH_dat_newstructure.stan"),
   data = data_list_stan,
   chains = 1,#n_chains,
   warmup = warmups,

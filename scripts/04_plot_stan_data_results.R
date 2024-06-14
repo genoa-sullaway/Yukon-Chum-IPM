@@ -105,15 +105,16 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
 # sum to compare with data 
 summ_n_sp <- pred_N_SP %>%
   group_by(time) %>%
-  summarise(pred_n_sp = sum(mean),
-            pred_se = mean(se_mean)) %>%
-  cbind(obs = data_list_stan$data_stage_sp)
+  summarise(mean = sum(mean),
+            se_mean = mean(se_mean)) %>%
+  cbind(obs = data_list_stan$data_stage_sp) %>%
+  mutate(rowname = "sp")
   
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=time, y = obs)) +
-  geom_line(aes(x=time, y = pred_n_sp)) +
-  geom_ribbon(aes(x=time, ymin = pred_n_sp-pred_se,
-                  ymax = pred_n_sp+pred_se)) +
+  geom_line(aes(x=time, y = mean)) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean)) +
   ggtitle("spawners: obs and predicted")
 
 ## recruits ====== 
@@ -125,20 +126,20 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                 age = rep(1:4, length.out = nrow(.))) %>%
   filter(!time>21) 
 
-# plt proportions 
-
-# sum to compare with data 
+# plot proportions 
+  # sum to compare with data 
 summ_n_rec <- pred_N_recruit %>%
   group_by(time) %>%
-  summarise(pred_n_rec = sum(mean),
-            pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_return) 
+  summarise(mean = sum(mean),
+            se_mean = mean(se_mean)) %>% 
+  cbind(obs = data_list_stan$data_stage_return)  %>%
+  mutate(rowname = "recruit")
 
 ggplot(data = summ_n_rec) +
   geom_point(aes(x=time, y = obs)) +
-  geom_line(aes(x=time, y = pred_n_rec)) +
-  geom_ribbon(aes(x=time, ymin = pred_n_rec-pred_se,
-                  ymax = pred_n_rec+pred_se))+
+  geom_line(aes(x=time, y = mean)) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean))+
   ggtitle(("recruits: obs and predicted"))
 
 ## harvest ====== 
@@ -151,19 +152,19 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
   filter(!time>21) 
 
 # plt proportions 
-
 # sum to compare with data 
 summ_n_harvest <- pred_N_harvest %>%
   group_by(time) %>%
-  summarise(pred_n_harvest = sum(mean),
-            pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_harvest)  
+  summarise(mean = sum(mean),
+            se_mean = mean(se_mean)) %>% 
+  cbind(obs = data_list_stan$data_stage_harvest)  %>%
+mutate(rowname = "harvest")
 
 ggplot(data = summ_n_harvest) +
   geom_point(aes(x=time, y = obs)) +
-  geom_line(aes(x=time, y = pred_n_harvest)) +
-  geom_ribbon(aes(x=time, ymin = pred_n_harvest-pred_se,
-                  ymax = pred_n_harvest+pred_se))+
+  geom_line(aes(x=time, y = mean)) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean))+
   ggtitle(("Harvest, est and observed"))
 
 ## juveniles ====== 
@@ -185,7 +186,9 @@ pred_N_j <- summary(bh_fit, pars = c("N_j"),
 summ_n_j <- pred_N_j %>%
  dplyr::mutate(mean_J_Q = mean*catch_q$mean,
                se_mean = se_mean*catch_q$mean) %>% 
-  cbind(obs = data_list_stan$data_stage_j) #%>%
+  cbind(obs = data_list_stan$data_stage_j) %>%
+  mutate(rowname = "juv")
+ 
 #  filter(!time<5)
 #  dplyr::mutate(obs = obs*catch_q$mean) 
 
@@ -197,6 +200,54 @@ ggplot(data = summ_n_j) +
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
  
+## eggs =============================
+pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"), 
+                          probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:21, each=1)) %>%
+  filter(!time<5)  %>% 
+  mutate(rowname = "eggs") %>%
+  select(rowname,time,mean,se_mean)
+
+ggplot(data = pred_N_eggs_sum) + 
+  geom_line(aes(x=time, y = mean)) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean))+
+  ggtitle(("eggs: obs and predicted"))
+
+# eggs before sum =======
+pred_N_eggs <- summary(bh_fit, pars = c("N_e"), 
+                           probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:25, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>% 
+  
+  filter(!time<6)  
+
+ggplot(data = pred_N_eggs) + 
+  geom_line(aes(x=time, y = mean)) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean))+
+  facet_wrap(~age, scales = "free") + 
+  ggtitle(("eggs: obs and predicted"))
+
+# align all stages on one plot to look at scale. =====
+all_stages<- rbind(summ_n_sp %>% select(-obs),
+                   summ_n_rec%>% select(-obs),
+                   summ_n_harvest%>% select(-obs),
+                   summ_n_j%>% select(time, rowname,mean,se_mean)#,
+                   #pred_N_eggs_sum
+                   )
+
+ggplot(data = all_stages) + 
+  geom_line(aes(x=time, y = mean, group = rowname, color = rowname)) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean))+
+#  facet_wrap(~rowname, scales = "free") + 
+  ggtitle(("all stages compare"))
+
 # estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("F"), 
                    probs = c(0.1, 0.9))$summary %>%
@@ -262,7 +313,7 @@ productivity <- summary(bh_fit, pars = c("p_1", "p_2"),
   rownames_to_column()  %>% 
   dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
                 variable = case_when(grepl("p_1",rowname) ~ "p_1",
-                                     TRUE ~ "p_2"))
+                                     TRUE ~ "p_2"))  
 
 ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
