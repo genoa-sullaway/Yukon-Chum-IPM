@@ -264,13 +264,13 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         // N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-kappa_marine_mortality[t]); // convert from survival to mortality 
         //    } 
         // if(a>1){
-        N_recruit[t+a+2,a] = N_ocean[t+a,a]*exp(-(sum(M[1:a]))); //+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
+        N_recruit[t+a+1,a] = N_ocean[t+a,a]*exp(-(sum(M[1:a]))); //+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
          
-        N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-(exp(-F[t+a+2])));
+        N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-(exp(-F[t+a+1])));
          
-        N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
+        N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a]; // fishing occurs before spawning -- 
          
-        N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+        N_e[t+a+1,a] = fs[a]*Ps*N_sp[t+a+1,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
    }
       N_e_sum[t+1] = N_e[t,1] + N_e[t,2] + N_e[t,3] +N_e[t,4]; // here the +1 is to get to seed the next year in the loop, not related to brood year. 
   }

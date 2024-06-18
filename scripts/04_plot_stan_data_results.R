@@ -72,9 +72,13 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff2"),
      fill_color = "blue")
 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-#      pars=  c( "sigma_y_j"),
-#      fill_color = "blue")
+  plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+      pars=  c( "N_first_winter_start_log",
+                "N_j_start_log",
+                "N_sp_start_log",
+                "N_egg_start_log",
+                "N_recruit_start_log"),
+       fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_1"),
@@ -90,7 +94,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
               probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   filter(!time>21) # remove years without full return estimates 
 
@@ -120,7 +124,7 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
    filter(!time>21) 
 
@@ -146,7 +150,7 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>% 
   filter(!time>21) 
 
@@ -187,9 +191,8 @@ summ_n_j <- pred_N_j %>%
  dplyr::mutate(mean_J_Q = mean*catch_q$mean,
                se_mean = se_mean*catch_q$mean) %>% 
   cbind(obs = data_list_stan$data_stage_j) %>%
-  mutate(rowname = "juv")# %>% 
- 
- # filter(!time<7)
+  mutate(rowname = "juv") #%>% 
+#  filter(!time<7)
 #  dplyr::mutate(obs = obs*catch_q$mean) 
 
 ggplot(data = summ_n_j) +
@@ -225,7 +228,7 @@ pred_N_eggs <- summary(bh_fit, pars = c("N_e"),
                            probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>% 
   
   filter(!time<6)  
@@ -269,7 +272,7 @@ brood <- summary(bh_fit, pars = c("N_sp"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
  # filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 
@@ -314,7 +317,7 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 
