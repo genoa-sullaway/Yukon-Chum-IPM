@@ -21,6 +21,7 @@ traceplot(bh_fit,pars=  c("N_sp_start_log"))
 traceplot(bh_fit,pars=  c("N_sp"))
 
 traceplot(bh_fit,pars=  c("N_j"))
+traceplot(bh_fit,pars=  c("N_j_predicted"))
 
 traceplot(bh_fit,pars=  c("N_j_start_log"))
 
@@ -94,7 +95,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
               probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   filter(!time>21) # remove years without full return estimates 
 
@@ -109,8 +110,7 @@ summ_n_sp <- pred_N_SP %>%
   summarise(mean = sum(mean),
             se_mean = mean(se_mean)) %>%
   cbind(obs = data_list_stan$data_stage_sp) %>%
-  mutate(rowname = "sp") %>%
-  filter(!time<7)
+  mutate(rowname = "sp")  
   
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=time, y = obs)) +
@@ -124,7 +124,7 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
    filter(!time>21) 
 
@@ -135,8 +135,7 @@ summ_n_rec <- pred_N_recruit %>%
   summarise(mean = sum(mean),
             se_mean = mean(se_mean)) %>% 
   cbind(obs = data_list_stan$data_stage_return)  %>%
-  mutate(rowname = "recruit") %>%
-  filter(!time<7) 
+  mutate(rowname = "recruit")  
 
 ggplot(data = summ_n_rec) +
   geom_point(aes(x=time, y = obs)) +
@@ -150,7 +149,7 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>% 
   filter(!time>21) 
 
@@ -161,8 +160,7 @@ summ_n_harvest <- pred_N_harvest %>%
   summarise(mean = sum(mean),
             se_mean = mean(se_mean)) %>% 
   cbind(obs = data_list_stan$data_stage_harvest)  %>%
-mutate(rowname = "harvest") %>% 
-  filter(!time < 7)
+mutate(rowname = "harvest")  
 
 ggplot(data = summ_n_harvest) +
   geom_point(aes(x=time, y = obs)) +
@@ -211,14 +209,13 @@ pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"),
   dplyr::mutate(time = rep(1:22, each=1)) %>%
   filter(!time == 22) %>% 
   cbind(obs = data_list_stan$data_stage_j) %>% 
-  filter(!time<7)  %>% 
+   filter(!time<5)  %>% 
   mutate(rowname = "eggs") %>%
   select(rowname,time,mean,obs)  
    
-
 ggplot(data = pred_N_eggs_sum) + 
   geom_line(aes(x=time, y = mean)) +
-  geom_line(aes(x=time, y = obs*100000), color = "green") + 
+  geom_line(aes(x=time, y = obs*10000), color = "green") + 
   # geom_ribbon(aes(x=time, ymin = mean-se_mean,
   #                 ymax = mean+se_mean))+
   ggtitle(("eggs: obs and predicted"))
@@ -228,7 +225,7 @@ pred_N_eggs <- summary(bh_fit, pars = c("N_e"),
                            probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>% 
   
   filter(!time<6)  
@@ -244,7 +241,8 @@ ggplot(data = pred_N_eggs) +
 all_stages<- rbind(summ_n_sp %>% select(-obs),
                    summ_n_rec%>% select(-obs),
                    summ_n_harvest%>% select(-obs),
-                   summ_n_j%>% select(time, rowname,mean,se_mean)#,
+                   summ_n_j%>% select(time, rowname,mean,se_mean) %>% 
+                     mutate(mean = mean/10 )#,
                    #pred_N_eggs_sum
 )
 
@@ -272,7 +270,7 @@ brood <- summary(bh_fit, pars = c("N_sp"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
  # filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 
@@ -312,12 +310,11 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
   group_by(brood) %>%
   dplyr::summarise(obs = sum(abundance))  
                 
-  
   brood_pred <- summary(bh_fit, pars = c("N_sp"), 
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 

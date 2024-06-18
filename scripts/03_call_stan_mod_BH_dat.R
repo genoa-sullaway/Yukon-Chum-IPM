@@ -110,7 +110,7 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
          Year <= year_max_brood) %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
-  dplyr::select(SST_CDD_NBS) %>%#,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
+  dplyr::select(SST_CDD_NBS,Cnideria) %>%#,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
 
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
@@ -122,8 +122,8 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                 Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
                 ) %>% 
-  dplyr::select(SST_CDD_SEBS
-                #Chum_hatchery
+  dplyr::select(SST_CDD_SEBS,
+                Chum_hatchery
                 #,Pink_hatchery
                 ) %>% 
   #,yukon_mean_discharge_summer) %>% 
@@ -136,18 +136,18 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
 
 
 # number covariates for each life stage 
-ncovars1 = 1
-ncovars2 = 1
+ncovars1 = 2
+ncovars2 = 2
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
 nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
-nRyrs_T = nByrs + 4 + 1
+nRyrs_T = nByrs + 4 +2
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = A+1 # to fill starting values 
+t_start = A +2 # to fill starting values 
   
 
 # mean productivity rate =====
@@ -160,7 +160,7 @@ basal_p_2 = 0.3
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(200, times = nByrs))
+ess_age_comp = as.vector(rep(80, times = nByrs))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  basal_p_1  

@@ -172,15 +172,56 @@ vector [nRyrs_T] F; // instantaneous fishing mortality
  // kappa_marine_mortality[1] = kappa_marine_mort_start; 
   kappa_j_survival[1]= kappa_j_start; 
  
-for(t in 1:t_start){
- for(a in 1:A){
-  N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
-  N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
-  N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
-  N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
-  N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
-  } 
- }
+// for(t in 1:t_start){
+//  for(a in 1:A){
+//   N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+//   N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+//   N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+//   N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+//   N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+//   } 
+//  }
+ 
+ // try adding starting values specific to ages .... 
+for(a in 1:A){
+  if(a==1){
+   for(t in 1:3){
+      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+     N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+   }
+  }
+   if(a==2){
+   for(t in 1:4){
+     N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+     N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+     N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+     N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+     N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+    }
+   }
+    if(a==3){
+   for(t in 1:5){
+      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+   }
+    }
+   
+    if(a==4){
+   for(t in 1:6){
+      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+   }
+   }
+  }
  
  N_j_start = exp(N_j_start_log);
  N_j[1] = N_j_start;
@@ -191,15 +232,56 @@ N_first_winter[1] = N_first_winter_start;
  N_e_sum_start = exp(N_e_sum_start_log);
  N_e_sum[1] = N_e_sum_start;
  
-    for(a in 1:A){
-   // add starting values to the whole population array 
-  N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-  N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-  N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-  N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
-  N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
-     }
- 
+  //   for(a in 1:A){
+  //  // add starting values to the whole population array 
+  // N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+  // N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+  // N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+  // N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
+  // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+  //    }
+  
+  for(a in 1:A){
+  if(a==1){
+   for(t in 1:3){
+      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+   }
+  }
+   if(a==2){
+   for(t in 1:4){
+     N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a]; 
+   }
+   }
+    if(a==3){
+   for(t in 1:5){
+      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+   }
+    }
+    if(a==4){
+   for(t in 1:6){
+      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];  
+   }
+   }
+  }
+  
+  
+  
  basal_p_1 = exp(basal_p_1_log);
  basal_p_2 = exp(basal_p_2_log);
  
@@ -264,13 +346,13 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         // N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-kappa_marine_mortality[t]); // convert from survival to mortality 
         //    } 
         // if(a>1){
-        N_recruit[t+a+1,a] = N_ocean[t+a,a]*exp(-(sum(M[1:a]))); //+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
+        N_recruit[t+a+2,a] = N_ocean[t+a,a]*exp(-(sum(M[1:a]))); //+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
          
-        N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-(exp(-F[t+a+1])));
+        N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-(exp(-F[t+a+2])));
          
-        N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a]; // fishing occurs before spawning -- 
+        N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
          
-        N_e[t+a+1,a] = fs[a]*Ps*N_sp[t+a+1,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+        N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
    }
       N_e_sum[t+1] = N_e[t,1] + N_e[t,2] + N_e[t,3] +N_e[t,4]; // here the +1 is to get to seed the next year in the loop, not related to brood year. 
   }
@@ -378,7 +460,7 @@ for(t in 1:nRyrs_T){
 // Likelilihoods --  
   // Observation model
   for (t in 1:nByrs) {
-     log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sqrt(log((0.06^2) + 1))); //sigma_y_j); //sqrt(log((0.06^2) + 1))); //sigma_y_j); // sqrt(log((data_j_cv[t]) + 1)));//sigma_y_j); //sqrt(log((0.08^2) + 1)));
+     log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j);////sqrt(log((0.06^2) + 1))); // sqrt(log((data_j_cv[t]) + 1)));//sigma_y_j);  
     } 
 
   for(t in 1:nRyrs){ // calendar years 
