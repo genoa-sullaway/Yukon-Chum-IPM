@@ -110,7 +110,8 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
          Year <= year_max_brood) %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
-  dplyr::select(SST_CDD_NBS,Cnideria) %>%#,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
+  dplyr::select(yukon_mean_discharge,SST_CDD_NBS,Cnideria,
+                Large_zoop) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
 
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
@@ -123,21 +124,14 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
                 ) %>% 
   dplyr::select(SST_CDD_SEBS,
-                Chum_hatchery
-                #,Pink_hatchery
+                Chum_hatchery,
+                Pink_hatchery
                 ) %>% 
-  #,yukon_mean_discharge_summer) %>% 
   as.matrix()
-# 
-# plot(stage_b_cov[,1])
-# plot(stage_b_cov[,2])
-# plot(stage_b_cov[,3])
-# plot(stage_b_cov[,4])
-
 
 # number covariates for each life stage 
-ncovars1 = 2
-ncovars2 = 2
+ncovars1 = 4
+ncovars2 = 3
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                

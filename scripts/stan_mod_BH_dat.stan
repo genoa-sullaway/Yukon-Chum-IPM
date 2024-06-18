@@ -22,18 +22,6 @@ data { // all equation references are from proposal numbering
      
   real  basal_p_1_log;
   real  basal_p_2_log;
-  //  real F; 
- // real basal_p_1; 
- // real basal_p_2; 
- 
- // starting values for popualtion stages  
-  // real N_sp_start [t_start,A];  
-  // real N_catch_start [t_start,A];  
-  // real N_ocean_start[t_start,A];
-  // real N_egg_start [t_start,A];
-  // real N_j_start;
-  // //real N_recruit_start[t_start,A];
-  // real N_e_sum_start;
 
 // kappa is marine and juvenile survival estimated via beverton holt transition fxn 
   vector [2] kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
@@ -54,10 +42,10 @@ data { // all equation references are from proposal numbering
 }
   
 parameters {
+// real c_1; // log carrying capacity
+// real c_2; // log carrying capacity
 real log_c_1; // log carrying capacity
 real log_c_2; // log carrying capacity
-// real <lower=13 > log_c_1; // log carrying capacity
-// real <lower=12 > log_c_2; // log carrying capacity
  
 //starting values 
  real<lower=5> N_j_start_log; 
@@ -75,13 +63,6 @@ real log_c_2; // log carrying capacity
  // vector<lower=5>[t_start]N_catch_start_log;
  //vector<lower=12>[t_start] N_ocean_start_log;
 
- //real<lower=13> N_j_start_log;
- //vector [t_start] N_egg_start_log;
-//vector [t_start] N_egg_start_log;  
-// real <lower=25> N_e_sum_start_log; 
-// covariate parameters 
-// real <lower=-2, upper = 2> theta1[ncovars1]; // covariate estimated for each covariate and each population 
-// real <lower=-2, upper = 2> theta2[ncovars2];
 real  theta1[ncovars1]; // covariate estimated for each covariate and each population 
 real  theta2[ncovars2];
   
@@ -149,8 +130,8 @@ matrix [nByrs, ncovars2] cov_eff2;
 // matrix <lower=-3, upper = 3> [nByrs, ncovars2] cov_eff2; // array that holds FW and early marine covariate effects by brood year and stock
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
 
-real<lower=0> c_1; // estimate on log, transform back to normal scale 
-real<lower=0> c_2; // estimate on log, transform back to normal scale 
+real<lower=0> c_1; // estimate on log, transform back to normal scale
+real<lower=0> c_2; // estimate on log, transform back to normal scale
   
 vector [nByrs] p_1; // productivity in bev holt transition funciton,  
 vector [nByrs] p_2; // productivity in bev holt transition funciton,  
@@ -223,7 +204,7 @@ for(a in 1:A){
    }
   }
  
- N_j_start = exp(N_j_start_log);
+  N_j_start = exp(N_j_start_log);
  N_j[1] = N_j_start;
  
 N_first_winter_start = exp(N_first_winter_start_log);
@@ -382,9 +363,8 @@ model {
   
     log_catch_q ~ normal(0,10);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
 
-    log_c_1 ~  normal(20, 6); // carrying capacity prior - stage 1 
-    // uniform(10^3, 10^7)
-    log_c_2 ~  normal(16, 6); // carrying capacity prior - stage 2
+    log_c_1 ~ normal(20, 6); // carrying capacity prior - stage 1
+    log_c_2 ~ normal(16, 6); // carrying capacity prior - stage 2
 
     // log_c_1 ~  normal(18, 10); // carrying capacity prior - stage 1  
     // log_c_2 ~  normal(15, 10); // carrying capacity prior - stage 2
@@ -401,14 +381,14 @@ model {
 }
   //print("N_e_sum_start_log:", N_e_sum_start_log);
  
-    theta1[1]  ~ normal(0,1.5^2); //normal(0.5,5); // environmental covariate coefficient stage 1
-    // theta1[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
-    // theta1[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
-    // theta1[4] ~ normal(0,1.5); // environmental covariate coefficient stage 1
+    theta1[1]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
+    theta1[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
+    theta1[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
+    theta1[4] ~ normal(0,1.5); // environmental covariate coefficient stage 1
  
-    theta2[1]  ~ normal(0,1.5^2);
-    // theta2[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
-    // theta2[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
+    theta2[1]  ~ normal(0,1.5);
+    theta2[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
+    theta2[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
 
     D_scale ~ beta(1,1); // 
     

@@ -27,9 +27,15 @@ traceplot(bh_fit,pars=  c("N_j_start_log"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "D_scale",  "theta1[1]",#,"theta1[2]",#"theta1[3]","theta1[4]",
-               "theta2[1]"#,"theta2[2]","theta2[3]" 
+     pars=  c( "D_scale",  "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+               "theta2[1]","theta2[2]","theta2[3]" 
                ),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+               "theta2[1]","theta2[2]","theta2[3]" 
+     ),
      fill_color = "blue")
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -64,7 +70,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "g"),
      fill_color = "blue")
 
-# 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff1"),
      fill_color = "blue")
@@ -82,7 +87,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
        fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "p_1"),
+     pars=  c( "sigma_y_j"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -197,6 +202,15 @@ ggplot(data = summ_n_j) +
   geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = mean_J_Q)) +
  # geom_line(aes(x=time, y = mean), color = "green") +
+  geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
+                  ymax = mean_J_Q+se_mean), alpha = 0.5)+
+  ggtitle(("Juveniles, est and observed"))
+
+
+ggplot(data = summ_n_j) +
+ # geom_point(aes(x=time, y = obs)) +
+  geom_line(aes(x=time, y = mean_J_Q)) +
+  # geom_line(aes(x=time, y = mean), color = "green") +
   geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
