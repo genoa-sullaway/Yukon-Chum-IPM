@@ -120,15 +120,41 @@ fall_juv_proportions <- read_excel("data/BeringSea_Chum_Juv_annual_2003-2023_ana
   dplyr::select(1:4) %>%
   filter(reporting_group %in% c("Yukon_Fall"))
  
+rollingmean_2020 <- juv %>% 
+  filter(Year %in% c(2019,2021)) %>% 
+  summarise(Mean = mean(Estimate))
+
+# stand in guess! 
+rollingmean_GSI_2020 <- 0.15 # fall_juv_proportions %>% 
+  # filter(Year %in% c(2019,2021)) %>% 
+  # summarise(Mean = mean(Mean))
+
+rollingmean_GSI_2013 <- fall_juv_proportions %>% 
+  filter(Year %in% c(2010,2011,2012)) %>% 
+  summarise(Mean = mean(Mean))
+
+rollingmean_GSI_2002 <- fall_juv_proportions %>% 
+  filter(Year %in% c(2003,2004,2005)) %>% 
+  dplyr::summarise(Mean = mean(Mean))
+
+rollingmean_GSI_2008 <- fall_juv_proportions %>%  
+  dplyr::summarise(Mean = mean(Mean))
+
 fall_juv <- left_join(juv, fall_juv_proportions)  %>%
-  mutate(Mean = case_when(is.na(Mean) ~  mean(fall_juv$Mean, na.rm=TRUE),
-                          TRUE ~ Mean ),
-         Estimate = case_when(Estimate==0 ~  mean(fall_juv$Estimate, na.rm=TRUE),
-                          TRUE ~ Estimate ),
+  mutate(Mean = case_when(Year == 2013 ~ rollingmean_GSI_2013$Mean,
+                          Year == 2002 ~ rollingmean_GSI_2002$Mean,
+                          Year == 2020 ~ 0.15,
+                          Year %in% c(2008, 2009) ~  rollingmean_GSI_2008$Mean, 
+                          TRUE ~ Mean),
+         Estimate = case_when(Estimate==0 ~  rollingmean_2020$Mean,
+                          TRUE ~ Estimate),
          fall_abundance = Estimate * Mean) %>%
   dplyr::select(Year, fall_abundance,CV)
- 
-# SAVE HERE ============
+
+ ggplot(data = fall_juv) +
+   geom_line(aes(x=Year ,y = fall_abundance))
+
+ # SAVE HERE ============
 write_csv(fall_juv, "data/processed_data/tidy_juv_fall_yukon.csv")
 
 # QAQC PLOTS =========== 

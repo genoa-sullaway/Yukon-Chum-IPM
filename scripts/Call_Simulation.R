@@ -55,12 +55,12 @@ adapt_delta <- 0.95
 A = 4 # age classes 
 nByrs= 20
 nRyrs = 21  
-nRyrs_T = nRyrs + 4
+nRyrs_T = nRyrs + 4 +1
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = 5 # to fill starting values 
+t_start = 5+1 # to fill starting values 
  
 #Bev Holt parameters ===================
 # p for alpha, and c for carrying capacity 
@@ -161,13 +161,15 @@ kappa_j =  vector( )
 kappa_marine = vector( )
 
 N_j =  matrix(nrow=nByrs,ncol=1,NA)
+N_first_winter = matrix(NA, nrow = nByrs)
+
 N_e_sum = matrix(nrow=nByrs,ncol=1,NA)
 N_e  = matrix(NA, nrow = nRyrs_T,ncol=A)
 N_recruit =  matrix(NA, nrow = nRyrs_T,ncol=A)
 N_catch =  matrix(NA, nrow = nRyrs_T,ncol=A)
 N_ocean = matrix(NA, nrow = nRyrs_T,ncol=A)
-N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
-
+N_sp = matrix(NA, nrow = nRyrs_T,ncol=A) 
+ 
  ## make starting values ========
  N_e_sum_start = as.vector(0)
 
@@ -179,7 +181,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
 
  N_j_start = exp(rnorm(1,13.7,1)) 
  N_e_sum_start = exp(rnorm(1,14,1))
-
+ 
  for(t in 1:t_start){
    N_recruit_start[t,] = exp(rnorm(1,yukon_fall_recruits$mean,1))*p
    N_ocean_start[t,] = exp(rnorm(1,13.6,1))*p
@@ -197,7 +199,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
   N_recruit[1:t_start,] = N_recruit_start
   N_ocean[1:t_start,] = N_ocean_start
   N_sp[1:t_start,] = N_sp_start
-  N_catch[1:t_start,] = N_catch_start
+  #N_catch[1:t_start,] = N_catch_start
   N_e[1:t_start,] = N_egg_start
 
   # catch Q ===========
@@ -215,43 +217,42 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
   F  = exp(log_F_mean +log_F_dev_y) 
  
 # age specific marine mortality =============== 
-M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
+M_fill_stan = c(0.06,0.06, 0.06, 0.06) # will be cumulative 
 M = matrix(ncol = A, nrow = nRyrs_T, 
-           c(NA,0.06, 0.06, 0.06) , byrow = TRUE)
+           c(0.06,0.06, 0.06, 0.06) , byrow = TRUE)
 
  # c_1 = exp(18)
  # N_e_sum[t-1] = exp(14)
  
 # POPULATION MODEL ============ 
-     for (t in 2:nByrs){ # loop for each brood year 
+     for (t in 1:nByrs){ # loop for each brood year 
         
-         kappa_j[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t-1])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+         kappa_j[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
          
-         N_j[t] = kappa_j[t]*N_e_sum[t-1] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
+         N_j[t] = kappa_j[t]*N_e_sum[t] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
         
          kappa_marine[t] =  p_2[t]/(1 + ((p_2[t]*N_j[t])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
-         M[t,1] = -log(kappa_marine[t]) # fill in the age 1 survival for the next stage  
-
-         for (a in 1:A) { 
-           N_ocean[t+a,a] =  N_j[t]*p[a] # add age structure, p is proportion per age class
+         # M[t,1] = -log(kappa_marine[t]) # fill in the age 1 survival for the next stage  
+         N_first_winter[t] = N_j[t]*kappa_marine[t] 
          
-           N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-sum(M[t,1:a])) #add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
+         for (a in 1:A) { 
+           N_ocean[t+a,a] =  N_first_winter[t]*p[a] # add age structure, p is proportion per age class
+         
+           N_recruit[t+a+2,a] = N_ocean[t+a,a]*exp(-sum(M[t,1:a])) #add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
           
-           N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t+a]))
+           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-F[t+a+2]))
            
-           N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a] # fishing occurs before spawning -- 
+           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a] # fishing occurs before spawning -- 
              
-           N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a] 
+           N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a] 
          }
         # sum across age classes and transition back to brood years 
-         N_e_sum[t] = sum(N_e[t,1:A]) 
+         N_e_sum[t+1] = sum(N_e[t,1:A]) 
      } 
 
-  
- M[,1]
- kappa_marine
- -log(kappa_marine)
+   View(N_sp)
+   View(N_catch)
  
 # calculate Obs Run Comp  ============
 o_run_comp = array(data = NA, dim = c(nRyrs,A))

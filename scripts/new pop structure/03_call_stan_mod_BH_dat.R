@@ -27,7 +27,8 @@ adapt_delta <- 0.95
 
 year_min = 2002
 year_max_cal = 2022
-year_max_brood = 2022
+year_max_brood = 2021
+year_max_cov2 = year_max_brood+1
 
 # load salmon data ==============================================
 ## Fall age comp ================================================
@@ -109,19 +110,22 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
          Year <= year_max_brood) %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
-  dplyr::select(yukon_mean_discharge,SST_CDD_NBS) %>% #, Cnideria, Large_zoop) %>%
+  dplyr::select(SST_CDD_NBS) %>%#,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
  
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(Year >= year_min, 
-         Year <= year_max_brood
+         Year <= year_max_cov2
          ) %>% 
   dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS)),
                 Chum_hatchery= as.numeric(scale(Chum_hatchery)),
                 Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
                 ) %>% 
-  dplyr::select(SST_CDD_SEBS,Chum_hatchery,Pink_hatchery) %>% 
+  dplyr::select(SST_CDD_SEBS
+                #Chum_hatchery
+                #,Pink_hatchery
+                ) %>% 
   #,yukon_mean_discharge_summer) %>% 
   as.matrix()
 # 
@@ -132,18 +136,18 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
 
 
 # number covariates for each life stage 
-ncovars1 = 2
-ncovars2 = 3
+ncovars1 = 1
+ncovars2 = 1
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
 nRyrs = nrow(yukon_fall_harvest)  # Number of CAL/RETURN  
-nRyrs_T = nRyrs + 4
+nRyrs_T = nRyrs + 4 + 1
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = 5 # to fill starting values 
+t_start = 6 # to fill starting values 
   
 
 # mean productivity rate =====
@@ -153,10 +157,10 @@ basal_p_1 = 0.03  # these are values it estimates at when allowed to
 basal_p_2 = 0.3 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
-M_fill_stan = c(0.0001,0.06, 0.06, 0.06) # will be cumulative 
+M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(80, times = nByrs))
+ess_age_comp = as.vector(rep(300, times = nRyrs))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  basal_p_1  
@@ -221,9 +225,9 @@ data_list_stan <- list(nByrs=nByrs,
                                         
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
-                       p_obs = p#,
-                      # basal_p_1_log = log(0.03),
-                       #basal_p_2_log = log(0.3),
+                       p_obs = p,
+                       basal_p_1_log = log(0.03),
+                       basal_p_2_log = log(0.3)
                        #theta1 = c(-0.5, -0.5)
                        #theta2 = c(0.5, 0.5, 0.5)
                        #F = 0.3
@@ -231,7 +235,7 @@ data_list_stan <- list(nByrs=nByrs,
 
 # call mod  ===========================
 bh_fit <- stan(
-  file = here::here("scripts", "stan_mod_BH_dat_newstructure.stan"),
+  file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
   chains = 1,#n_chains,
   warmup = warmups,

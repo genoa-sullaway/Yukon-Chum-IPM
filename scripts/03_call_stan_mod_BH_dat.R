@@ -67,6 +67,7 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
   select(2) %>% 
   as.vector()
 
+#plot(fall_juv$fall_abundance, type ="l")
 # CV ========================================
 spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>% 
   filter(year >= year_min, 
@@ -111,7 +112,7 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
   dplyr::select(SST_CDD_NBS) %>%#,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
- 
+
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood
@@ -140,13 +141,13 @@ ncovars2 = 1
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
-nRyrs = nrow(yukon_fall_harvest)  # Number of CAL/RETURN  
-nRyrs_T = nRyrs + 4
+nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
+nRyrs_T = nByrs + 4 + 2
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = 5 # to fill starting values 
+t_start = A+2 # to fill starting values 
   
 
 # mean productivity rate =====
@@ -156,10 +157,10 @@ basal_p_1 = 0.03  # these are values it estimates at when allowed to
 basal_p_2 = 0.3 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
-M_fill_stan = c(0.06, 0.06, 0.06) # will be cumulative 
+M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(80, times = nByrs))
+ess_age_comp = as.vector(rep(200, times = nByrs))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  basal_p_1  
@@ -201,6 +202,7 @@ data_list_stan <- list(nByrs=nByrs,
                        # basal_p_1=basal_p_1,
                        # basal_p_2=basal_p_2, estimating these now 
                        data_sp_cv = spawner_cv$fall_spawner_cv, 
+                       data_recruit_cv = spawner_cv$summer_recruit_cv, 
                      #  data_j_cv = fall_juv_cv$CV,
                        
                        data_stage_j = as.vector(fall_juv$fall_abundance), 
