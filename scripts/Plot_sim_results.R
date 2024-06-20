@@ -30,10 +30,7 @@ traceplot(bh_fit,pars=  c("log_F","log_catch_q","g"))
 
 traceplot(bh_fit,pars=  c("N_sp_start_log", "N_j_start_log","N_egg_start_log"))
 
-# parameter plots ======== 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "D_scale"),
-     fill_color = "blue")
+# parameter plots ========  
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
@@ -43,21 +40,17 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit,  ci_level = 0.95, 
      pars=  c( "kappa_marine_survival"),
      fill_color = "blue")
-
-plot(bh_fit,  ci_level = 0.95, 
-     pars=  c( "kappa_marine_mortality"),
-     fill_color = "blue")
-
+ 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "kappa_j_survival"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "p_1"),
+     pars=  c( "p_1","p_2"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "p_2"),
+     pars=  c( "basal_p_1", "basal_p_2"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 

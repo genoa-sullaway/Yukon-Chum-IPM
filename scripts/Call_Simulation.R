@@ -78,6 +78,10 @@ ncovars2 = 4
 basal_p_1 = 0.08#-1.820463 # (0.1) #base survival 
 basal_p_2 = 0.2 #-0.2369558 # (0.4)
 
+ p_1 = 0.08#-1.820463 # (0.1) #base survival 
+ p_2 = 0.2 #-0.2369558 # (0.4)
+
+
 cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
 cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = ncovars2))
 
@@ -93,8 +97,8 @@ cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = nc
  #  theta1 <- rnorm(1,mu_coef1,sigma_coef1[1,1])
  #  theta2 <- rnorm(1,mu_coef2,sigma_coef2[1,1])
 
-theta1 <- c(0.5, 0.1,0.6,0.8) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
-theta2 <- c(-0.5, 0.1, 0.6, -0.6)#, -0.6) #relationship for simulated data
+theta1 <- c(0.05, 0.1,0.06,0.08) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+theta2 <- c(-0.05, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
  
 # theta1 <- c(0.5,0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
 #  theta2 <- c(-0.5,-0.9)#, -0.6) #relationship for simulated data
@@ -116,9 +120,11 @@ theta2 <- c(-0.5, 0.1, 0.6, -0.6)#, -0.6) #relationship for simulated data
     }
     p_1[t]  = 1 / 1+ exp(-basal_p_1 - (sum(cov_eff1[t,1:c]))) # covariate impacts survival, impact is measured through theta
     p_2[t]  = 1 / 1+ exp(-basal_p_2 - (sum(cov_eff2[t,1:c]))) # covariate impacts survival, impact is measured through theta
-    }
+  }
+ 
+ 
 
-# AGE STRUCTURE =========
+ # AGE STRUCTURE =========
   Dir_alpha = c(NA)
   p = c(NA) #matrix(nrow=K,ncol=A,NA)
   g = c(NA) #matrix(nrow=K,ncol=A,NA)
@@ -159,10 +165,12 @@ process_error_sp = exp(rnorm(n = nRyrs, -3, 0.5))   # matrix(nrow=K,ncol=1,rep(1
 # make pop model matricies  ========= 
 kappa_j =  vector( )
 kappa_marine = vector( )
+kappa_marine_mortality = vector( )
 
 N_j =  matrix(nrow=nByrs,ncol=1,NA)
-N_first_winter = matrix(NA, nrow = nByrs)
+#N_first_winter = matrix(NA, nrow = nByrs)
 
+N_first_winter = matrix(nrow=nRyrs_T,ncol=A,NA)
 N_e_sum = matrix(nrow=nByrs,ncol=1,NA)
 N_e  = matrix(NA, nrow = nRyrs_T,ncol=A)
 N_recruit =  matrix(NA, nrow = nRyrs_T,ncol=A)
@@ -199,7 +207,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
   N_recruit[1:t_start,] = N_recruit_start
   N_ocean[1:t_start,] = N_ocean_start
   N_sp[1:t_start,] = N_sp_start
-  #N_catch[1:t_start,] = N_catch_start
+ N_catch[1:t_start,] = N_catch_start
  N_e[1:t_start,] = N_egg_start
 
   # catch Q ===========
@@ -212,7 +220,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
 # fishing mortality by age 
   
   log_F_dev_y = rnorm(nRyrs_T, 0,0.5)  
-  log_F_mean = -0.5
+  log_F_mean = -0.1
  
   F  = exp(log_F_mean +log_F_dev_y) 
  
@@ -224,37 +232,53 @@ M = matrix(ncol = A, nrow = nRyrs_T,
  # c_1 = exp(18)
  # N_e_sum[t-1] = exp(14)
  
+# 
+# p_1 =  rbeta(n=nByrs,1,1)
+# p_2=rbeta(n=nByrs,1,1)
+p_1 = 0.08#-1.820463 # (0.1) #base survival 
+p_2 = 0.2 #-0.2369558 # (0.4)
+
+    
 # POPULATION MODEL ============ 
      for (t in 1:nByrs){ # loop for each brood year 
         
-         kappa_j[t+1] =  p_1[t]/(1+((p_1[t]*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
-         
-         N_j[t+1] = kappa_j[t+1]*N_e_sum[t] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
+         # kappa_j[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+        kappa_j[t] =  p_1/(1+((p_1*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+       
+         N_j[t ] = kappa_j[t]*N_e_sum[t] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
         
-         kappa_marine[t+1] =  p_2[t+1]/(1 + ((p_2[t+1]*N_j[t+1])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+         # kappa_marine[t ] =  p_2[t ]/(1 + ((p_2[t]*N_j[t])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+          kappa_marine[t ] =  p_2/(1 + ((p_2*N_j[t])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
          # M[t,1] = -log(kappa_marine[t]) # fill in the age 1 survival for the next stage  
-         N_first_winter[t+1] = N_j[t+1]*kappa_marine[t+1] 
-         
+         kappa_marine_mortality[t] = -log(kappa_marine[t])
+ 
          for (a in 1:A) { 
-           N_ocean[t+a+1,a] =  N_first_winter[t+1]*p[a] # add age structure, p is proportion per age class
-         
-           N_recruit[t+a+1,a] = N_ocean[t+a+1,a]*exp(-sum(M[t,1:a])) #add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
-          
-           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-F[t+a+1]))
+           N_first_winter[t+a,a] =  N_j[t]*p[a] #add age structure, p is proportion per age class
            
-           N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+2,a] # fishing occurs before spawning -- 
+           if(a==1){
+             N_recruit[t+a,a] = N_first_winter[t+a,a]*exp(-kappa_marine_mortality[t]) # convert from survival to mortality
+           }
+           if(a>1){
+             N_recruit[t+a,a] = N_first_winter[t+a,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])) # add age specific mortality, 
+           }  
+           
+           N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t+a]))
+           
+           N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a] # fishing occurs before spawning -- 
              
-           N_e[t+a+1,a] = fs[a]*Ps*N_sp[t+a+1,a] 
+           N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a] 
          }
         # sum across age classes and transition back to brood years 
          N_e_sum[t+1] = sum(N_e[t,1:A]) 
      } 
 
-   View(N_sp)
-   View(N_catch)
-   View(N_e)
-   View(N_recruit)
+   #  View(N_sp)
+   # View(N_catch)
+   # View(N_e)
+   # View(N_recruit)
+   # 
+   # plot(p_2)
    
 # calculate Obs Run Comp  ============
 o_run_comp = array(data = NA, dim = c(nRyrs,A))
@@ -262,7 +286,7 @@ o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
   for (t in 1:nRyrs) {
     for (a in 1:A) {
         if(t< nByrs+1){
-          o_run_comp[t,a] = N_ocean[t,a]/sum(N_ocean[t,1:A])
+          o_run_comp[t,a] = N_recruit[t,a]/sum(N_recruit[t,1:A])
     }
   }
 }
@@ -279,8 +303,9 @@ for(t in 1:6){
 barplot(t(o_run_comp))
 #barplot(t(o_run_comp_sp))
 barplot(t(N_j))
-barplot(t(N_sp))
-
+barplot(t(kappa_j))
+barplot(t(kappa_marine))
+ 
 colMeans(o_run_comp)
 p
 
@@ -296,7 +321,7 @@ barplot(t(kappa_marine[5:22]))
 
  
 # Fix ESS ============= 
-ess_age_comp = rep(300, times = nByrs)
+ess_age_comp = rep(80, times = nByrs)
 
 # PROCESS MODEL ============= 
 #N_j[1] = mean(N_j[2:nByrs]) #mean(N_j[2:n,1:n.pop]) # just so i don't get yelled at about NA's later down the road 
@@ -349,7 +374,18 @@ N_sp_sim_s  =   (rnorm(nRyrs_T,   (N_sp_sim), process_error_sp))
         barplot(kappa_j[6:nByrs])
         barplot(kappa_marine[6:nByrs])
         
-     # STAN data ==========
+     # PLOT all simulated data together  ==========
+        dat <- data.frame(data_stage_j = N_j_sim_hat[6:nByrs],
+                          data_stage_return = N_recruit_sim_s[6:(nRyrs-1)],
+                          data_stage_sp = N_sp_sim_s[6:(nRyrs-1)],
+                          data_stage_harvest = N_catch_sim_s[6:(nRyrs-1)])%>%
+          mutate(time = 1:nrow(.)) %>% 
+          gather(1:4, key = "id", value = "value")
+        
+        ggplot(data = dat) +
+          geom_line(aes(x=time, y =value, group = id, color = id))
+     
+        # STAN data ==========
    data_list_stan <- list(nByrs=nByrs_stan,
                           nRyrs=nRyrs_stan,
                           nRyrs_T = nRyrs_T_stan, 
@@ -373,6 +409,9 @@ N_sp_sim_s  =   (rnorm(nRyrs_T,   (N_sp_sim), process_error_sp))
                           kappa_marine_start = c(basal_p_2, basal_p_2), 
                    
                           kappa_j_start = basal_p_1,
+               
+                          basal_p_1 = basal_p_1,
+                          basal_p_2 = basal_p_2,
                           
                           ncovars1=ncovars1,
                           ncovars2=ncovars2,
@@ -439,4 +478,8 @@ bh_fit <- stan(
   cores = n_cores)  
         
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
+
+
+
+
  

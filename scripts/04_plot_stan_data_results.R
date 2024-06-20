@@ -26,14 +26,10 @@ traceplot(bh_fit,pars=  c("N_j_predicted"))
 traceplot(bh_fit,pars=  c("N_j_start_log"))
 
 # parameter plots ======== 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "D_scale", # "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
-               "theta2[1]","theta2[2]"#,"theta2[3]" 
-               ),
-     fill_color = "blue")
+
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+     pars=  c(# "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
                "theta2[1]","theta2[2]","theta2[3]" 
      ),
      fill_color = "blue")
@@ -112,7 +108,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
               probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   filter(!time>21) # remove years without full return estimates 
 
@@ -141,7 +137,7 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
    filter(!time>21) 
 
@@ -166,7 +162,7 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>% 
   filter(!time>21) 
 
@@ -300,7 +296,7 @@ brood <- summary(bh_fit, pars = c("N_sp"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
  # filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 
@@ -347,7 +343,7 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 
@@ -384,7 +380,7 @@ brood_pred <- summary(bh_fit, pars = c("N_recruit"),
                       probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 
@@ -421,7 +417,7 @@ brood_pred <- summary(bh_fit, pars = c("N_catch"),
                       probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 

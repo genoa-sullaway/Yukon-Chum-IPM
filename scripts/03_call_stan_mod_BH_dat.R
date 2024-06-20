@@ -130,12 +130,12 @@ ncovars2 = 3
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
 nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
-nRyrs_T = nByrs + 4 +2
+nRyrs_T = nByrs + 4 + 1
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = A + 2 # to fill starting values 
+t_start = A + 1 # to fill starting values 
 
 
 # mean productivity rate =====
@@ -215,9 +215,8 @@ data_list_stan <- list(nByrs=nByrs,
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,
-                       basal_p_1_log = log(0.03),
-                       basal_p_2_log = log(0.3)
-)
+                       basal_p_1 = 0.03,
+                       basal_p_2 = 0.3)
 
 # call mod  ===========================
 bh_fit <- stan(

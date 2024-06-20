@@ -16,12 +16,11 @@ data { // all equation references are from proposal numbering
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
  
    vector[nRyrs] data_recruit_cv;// from run reconstruciton 
-   //vector[nByrs] data_j_cv; 
+   // vector[nByrs] data_j_cv; 
    vector[nRyrs] data_sp_cv; // from run reconstruciton 
   
-     
  // real  basal_p_1_log;
-  real  basal_p_2_log;
+  real  basal_p_2;
 
 // kappa is marine and juvenile survival estimated via beverton holt transition fxn 
   vector [2] kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
@@ -69,7 +68,7 @@ vector [nRyrs_T] log_F_dev_y;
 real log_F_mean;
 
 // survival and covariate section 
-vector [nByrs] log_p_1; // productivity in bev holt transition funciton,  
+vector [nByrs] p_1; // productivity in bev holt transition funciton,  
 //vector [nByrs] log_p_2; // productivity in bev holt transition funciton,  
 //vector<lower=0, upper=1> [nByrs] p_2; // productivity in bev holt transition funciton,  
  
@@ -108,7 +107,7 @@ real N_first_winter_start;
 real N_e_sum_start;
 
 real basal_p_1;
-real basal_p_2;
+// real basal_p_2;
  
 vector [nByrs] kappa_j_survival ; // predicted survival for juvenile fish (FW and early marine)
 vector [nByrs] kappa_marine_survival; // predicted survival for marine fish
@@ -123,7 +122,7 @@ real <lower=0>  catch_q; // related juvebile data to spawner data (on different 
 real<lower=0> c_1; // estimate on log, transform back to normal scale
 real<lower=0> c_2; // estimate on log, transform back to normal scale
   
-vector [nByrs] p_1; // productivity in bev holt transition funciton,
+// vector [nByrs] p_1; // productivity in bev holt transition funciton,
 vector [nByrs] p_2; // productivity in bev holt transition funciton,
 //  
 // Age related transformed params ====== 
@@ -261,9 +260,9 @@ vector [nRyrs_T] F; // instantaneous fishing mortality
   //  }
   // }
 
-   p_1 = exp(log_p_1);
+   // p_1 = exp(log_p_1);
  //basal_p_1 = exp(basal_p_1_log);
- basal_p_2 = exp(basal_p_2_log);
+ // basal_p_2 = exp(basal_p_2_log);
 
  // for(t in 1:19){//  
   for(t in 1:nRyrs_T){
@@ -364,26 +363,26 @@ model {
     // log_c_1 ~  normal(18, 10); // carrying capacity prior - stage 1  
     // log_c_2 ~  normal(15, 10); // carrying capacity prior - stage 2
     N_first_winter_start_log ~ normal(13.57,5);
-    N_j_start_log ~ normal(13.6,5); //13.8
-    N_e_sum_start_log ~  normal(13.8, 5); //normal(14, 8);  starting value for eggs, initiates pop model 
+    N_j_start_log ~ normal(13.78,5); //13.8
+    N_e_sum_start_log ~  normal(13.9, 5); //normal(14, 8);  starting value for eggs, initiates pop model 
     
  for(t in 1:t_start){
     N_sp_start_log[t] ~ normal(13.48,5);
     N_recruit_start_log[t] ~  normal(13.5,5);
     N_catch_start_log[t] ~ normal(12.3,5);
     N_ocean_start_log[t] ~ normal(13.6,5);
-    N_egg_start_log[t] ~  normal(13.8, 5); // starting value for eggs, initiates pop model 
+    N_egg_start_log[t] ~  normal(13.9, 5); // starting value for eggs, initiates pop model 
 }
   //print("N_e_sum_start_log:", N_e_sum_start_log);
  
-    // theta1[1]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
-    // theta1[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
-    // theta1[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
-    // theta1[4] ~ normal(0,1.5); // environmental covariate coefficient stage 1
+    // theta1[1]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
+    // theta1[2] ~ normal(0,1); // environmental covariate coefficient stage 1
+    // theta1[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
+    // theta1[4] ~ normal(0,1); // environmental covariate coefficient stage 1
 
-    theta2[1]  ~ normal(0,1.5);
-    theta2[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
-    theta2[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
+    theta2[1]  ~ normal(0,1);
+    theta2[2] ~ normal(0,1); // environmental covariate coefficient stage 1
+    theta2[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
 
     D_scale ~ beta(1,1); // 
  
@@ -391,7 +390,8 @@ model {
    // basal_p_2 ~ beta(1,1); // me
    
  for(t in 1:nByrs){
-   log_p_1[t] ~ normal(2,2); // me
+    p_1[t] ~ beta(1,1); // me
+  // log_p_1[t] ~ normal(0,1); // me
    // p_2[t] ~ beta(1,1); // me
  }
     // currys model: rnorm(1, 0,1.5^2)
@@ -400,24 +400,20 @@ model {
     
     // basal_p_1_log ~ normal(0,1); // mean survival stage 1
     // basal_p_2_log ~ normal(0,1); // mean survivial stage 2
-    // 
-// age comp 
+ 
+    // basal_p_1 ~ beta(1,1); 
+    // basal_p_2 ~ beta(1,1); 
+    
+// age comps 
     for (a in 1:A) {
    target += gamma_lpdf(g[a]|Dir_alpha[a],1);
  }
  
  // log fishing mortality for each calendar year 
-log_F_mean ~ normal(0,1); //uniform(-2,-0.5);  //
-
-//for(t in 1:19){ //
+log_F_mean ~ normal(0,1);  
+ 
 for(t in 1:nRyrs_T){
-  //sigma_F_deviation[t] ~ normal(5,0.1);
-// log_F_dev_y[t] ~ normal(0,sigma_F_deviation[t]);
- //log_F_dev_y[t] ~ normal(0,5);
- log_F_dev_y[t] ~ normal(0,1); // sigma_F_deviation[t]);
- //log_F[t] ~ normal(1,3); // 1,2 does p good, 1,3 does better normal(-1.5,0.7);
- // log_F[t] ~ normal(-1.5,0.7); //  best have gotten so far: -1.5,0.7);
- // normal(1,0.1); //-1.5,3);//log fishing mortatliy 0.1 penalizes toward the mean
+ log_F_dev_y[t] ~ normal(0,1); // sigma_F_deviation[t]); 
 }
  
  // age comp priors -- maturity schedules
