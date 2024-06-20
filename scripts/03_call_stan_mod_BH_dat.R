@@ -34,36 +34,35 @@ year_max_brood = 2022
 yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv") %>%
   filter(cal_year >= year_min, 
          cal_year <= 2022
-         ) %>%
+  ) %>%
   dplyr::select(2:ncol(.)) %>%
   as.matrix()
- 
+
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min #, 
          #cal_year <= year_max_cal
-         ) %>%
+  ) %>%
   select(2) %>%
   as.vector()
 
 yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
   filter(cal_year >= year_min#, 
          #cal_year <= year_max_cal
-         )%>%
+  )%>%
   select(2) %>%
   as.vector()
 
 yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
   filter(cal_year >= year_min#, 
          #cal_year <= year_max_cal
-         ) %>%
+  ) %>%
   select(2) %>%
   as.vector()
 
 ## Fall Juveniles ================================================
 fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
   filter(Year <= year_max_brood) %>% 
-  # filter(Year <= 2021) %>% # 1 year less than all spawners 
   select(2) %>% 
   as.vector()
 
@@ -72,12 +71,7 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
 spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>% 
   filter(year >= year_min, 
          year <= 2022)  
-# 
-# fall_juv_cv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
-#   filter(Year <= 2021) %>% # 1 year less than all spawners 
-#   dplyr::select(3) %>% 
-#   as.vector()
-
+ 
 # Summer ================================================
 # summer_age_comp<-read_csv("data/age_comps/processed_age_comps_summer_yukon.csv")  %>% 
 #   filter(!cal_year < 2005 )
@@ -117,16 +111,16 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood
-         ) %>% 
+  ) %>% 
   dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS)),
                 Chum_hatchery= as.numeric(scale(Chum_hatchery)),
                 Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
-                ) %>% 
+  ) %>% 
   dplyr::select(SST_CDD_SEBS,
                 Chum_hatchery,
                 Pink_hatchery
-                ) %>% 
+  ) %>% 
   as.matrix()
 
 # number covariates for each life stage 
@@ -141,13 +135,13 @@ A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = A +2 # to fill starting values 
-  
+t_start = A + 2 # to fill starting values 
+
 
 # mean productivity rate =====
- # estimating this now
+# estimating this now
 basal_p_1 = 0.03  # these are values it estimates at when allowed to
-            
+
 basal_p_2 = 0.3 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
@@ -189,7 +183,7 @@ data_list_stan <- list(nByrs=nByrs,
                        nRyrs_T = nRyrs_T, 
                        A=A,
                        t_start = t_start,
-                      
+                       
                        Ps=Ps,
                        fs=fs,
                        M = M_fill_stan,
@@ -197,13 +191,13 @@ data_list_stan <- list(nByrs=nByrs,
                        # basal_p_2=basal_p_2, estimating these now 
                        data_sp_cv = spawner_cv$fall_spawner_cv, 
                        data_recruit_cv = spawner_cv$summer_recruit_cv, 
-                     #  data_j_cv = fall_juv_cv$CV,
+                       #  data_j_cv = fall_juv_cv$CV,
                        
                        data_stage_j = as.vector(fall_juv$fall_abundance), 
                        data_stage_return = as.vector(yukon_fall_recruits$total_run),
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
-                  
+                       
                        # N_ocean_start = N_ocean_start,
                        # N_egg_start = N_egg_start,
                        # N_j_start =  N_j_start,
@@ -211,22 +205,19 @@ data_list_stan <- list(nByrs=nByrs,
                        kappa_marine_mort_start = c(-log(basal_p_2), -log(basal_p_2)),                
                        kappa_marine_start = c(basal_p_2, basal_p_2),
                        kappa_j_start = basal_p_1, 
-                                       
+                       
                        ncovars1=ncovars1,
                        ncovars2=ncovars2,
-
+                       
                        cov1=stage_a_cov,
                        cov2=stage_b_cov,
-                                        
+                       
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,
                        basal_p_1_log = log(0.03),
                        basal_p_2_log = log(0.3)
-                       #theta1 = c(-0.5, -0.5)
-                       #theta2 = c(0.5, 0.5, 0.5)
-                       #F = 0.3
-                       )
+)
 
 # call mod  ===========================
 bh_fit <- stan(
@@ -238,4 +229,3 @@ bh_fit <- stan(
   cores = n_cores)
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
- 

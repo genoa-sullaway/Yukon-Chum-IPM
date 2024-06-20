@@ -20,7 +20,7 @@ data { // all equation references are from proposal numbering
    vector[nRyrs] data_sp_cv; // from run reconstruciton 
   
      
-  real  basal_p_1_log;
+ // real  basal_p_1_log;
   real  basal_p_2_log;
 
 // kappa is marine and juvenile survival estimated via beverton holt transition fxn 
@@ -58,33 +58,23 @@ real log_c_2; // log carrying capacity
  vector [t_start]N_ocean_start_log;
  vector <lower=5>[t_start]N_egg_start_log; 
  
- // vector<lower=12, upper=20> [t_start] N_sp_start_log;
- // vector<lower=12>[t_start]N_recruit_start_log;
- // vector<lower=5>[t_start]N_catch_start_log;
- //vector<lower=12>[t_start] N_ocean_start_log;
-
-real  theta1[ncovars1]; // covariate estimated for each covariate and each population 
+// real  theta1[ncovars1]; // covariate estimated for each covariate and each population
 real  theta2[ncovars2];
-  
+
 vector <lower=0>[A-1] prob; 
 real<lower=0.0001,upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
 vector<lower=0> [A] g; // gamma random draws
-real log_catch_q;
-//vector<lower= -3>[nRyrs_T] log_F;
-//vector<lower= -3>[19] log_F;
-//vector [nRyrs_T] sigma_F_deviation;
+real log_catch_q; 
 vector [nRyrs_T] log_F_dev_y;
 real log_F_mean;
 
 // survival and covariate section 
-// vector [nByrs] log_p_1; // productivity in bev holt transition funciton,  
+vector [nByrs] log_p_1; // productivity in bev holt transition funciton,  
 //vector [nByrs] log_p_2; // productivity in bev holt transition funciton,  
 //vector<lower=0, upper=1> [nByrs] p_2; // productivity in bev holt transition funciton,  
  
- 
-// real  basal_p_1; // mean alpha for covariate survival stage 1
-// real  basal_p_2; // mean alpha for covariate survival stage 1
-
+//  real basal_p_1;
+// real basal_p_2;
 // real  basal_p_1_log; // mean alpha for covariate survival stage 1
 // real  basal_p_2_log; // mean alpha for covariate survival stage 1
  // real  theta ; // mean alpha for covariate survival stage 2
@@ -118,7 +108,7 @@ real N_first_winter_start;
 real N_e_sum_start;
 
 real basal_p_1;
-real basal_p_2; 
+real basal_p_2;
  
 vector [nByrs] kappa_j_survival ; // predicted survival for juvenile fish (FW and early marine)
 vector [nByrs] kappa_marine_survival; // predicted survival for marine fish
@@ -133,9 +123,9 @@ real <lower=0>  catch_q; // related juvebile data to spawner data (on different 
 real<lower=0> c_1; // estimate on log, transform back to normal scale
 real<lower=0> c_2; // estimate on log, transform back to normal scale
   
-vector [nByrs] p_1; // productivity in bev holt transition funciton,  
-vector [nByrs] p_2; // productivity in bev holt transition funciton,  
- 
+vector [nByrs] p_1; // productivity in bev holt transition funciton,
+vector [nByrs] p_2; // productivity in bev holt transition funciton,
+//  
 // Age related transformed params ====== 
 vector<lower=0>[A] p;  
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
@@ -164,135 +154,140 @@ vector [nRyrs_T] F; // instantaneous fishing mortality
 //  }
  
  // try adding starting values specific to ages .... 
-for(a in 1:A){
-  if(a==1){
-   for(t in 1:3){
-      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
-      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
-      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
-      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
-     N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
-   }
-  }
-   if(a==2){
-   for(t in 1:4){
-     N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
-     N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
-     N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
-     N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
-     N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
-    }
-   }
-    if(a==3){
-   for(t in 1:5){
-      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
-      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
-      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
-      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
-      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
-   }
-    }
-   
-    if(a==4){
-   for(t in 1:6){
-      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
-      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
-      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
-      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
-      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
-   }
-   }
-  }
+// for(a in 1:A){
+//   if(a==1){
+//    for(t in 1:3){
+//       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+//       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+//       N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+//       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+//      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+//    }
+//   }
+//    if(a==2){
+//    for(t in 1:4){
+//      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+//      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+//      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+//      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+//      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+//     }
+//    }
+//     if(a==3){
+//    for(t in 1:5){
+//       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+//       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+//       N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+//       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+//       N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+//    }
+//     }
+//    
+//     if(a==4){
+//    for(t in 1:6){
+//       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+//       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+//       N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+//       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+//       N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+//     }
+//    }
+//   }
  
-  N_j_start = exp(N_j_start_log);
+ N_j_start = exp(N_j_start_log);
  N_j[1] = N_j_start;
  
-N_first_winter_start = exp(N_first_winter_start_log);
-N_first_winter[1] = N_first_winter_start;
+ N_first_winter_start = exp(N_first_winter_start_log);
+ N_first_winter[1] = N_first_winter_start;
  
  N_e_sum_start = exp(N_e_sum_start_log);
  N_e_sum[1] = N_e_sum_start;
  
-  //   for(a in 1:A){
-  //  // add starting values to the whole population array 
-  // N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-  // N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-  // N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-  // N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
-  // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
-  //    }
-  
-  for(a in 1:A){
-  if(a==1){
-   for(t in 1:3){
-      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
-   }
-  }
-   if(a==2){
-   for(t in 1:4){
-     N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a]; 
-   }
-   }
-    if(a==3){
-   for(t in 1:5){
-      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
-   }
-    }
-    if(a==4){
-   for(t in 1:6){
-      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];  
-   }
-   }
-  }
-  
-  
-  
- basal_p_1 = exp(basal_p_1_log);
- basal_p_2 = exp(basal_p_2_log);
+ for(t in 1:t_start){
+ for(a in 1:A){
+  N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
+  N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
+  N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
+  N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+  N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];  
+  } 
+ }
  
+    for(a in 1:A){
+   // add starting values to the whole population array 
+  N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+  N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+  N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+  N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
+  N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+     }
+  // 
+  // for(a in 1:A){
+  // if(a==1){
+  //  for(t in 1:3){
+  //     N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+  //     N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+  //     N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+  //     N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+  //     N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+  //  }
+  // }
+  //  if(a==2){
+  //  for(t in 1:4){
+  //    N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+  //     N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+  //     N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+  //     N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+  //     N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a]; 
+  //  }
+  //  }
+  //   if(a==3){
+  //  for(t in 1:5){
+  //     N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+  //     N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+  //     N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+  //     N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+  //     N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+  //  }
+  //   }
+  //   if(a==4){
+  //  for(t in 1:6){
+  //     N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+  //     N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+  //     N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+  //     N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+  //     N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];  
+  //  }
+  //  }
+  // }
+
+   p_1 = exp(log_p_1);
+ //basal_p_1 = exp(basal_p_1_log);
+ basal_p_2 = exp(basal_p_2_log);
+
  // for(t in 1:19){//  
   for(t in 1:nRyrs_T){
   // instant fishing mortality
-  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
- // F[t]  = exp(log_F[t]);
+  F[t]  = exp(log_F_mean +log_F_dev_y[t]); 
  }
  
   // transform log carrying capacity to normal scale
    c_1 = exp(log_c_1);
    c_2 = exp(log_c_2);
-   
-   // p_1 = exp(log_p_1);
-  // p_2 = exp(log_p_2);
- 
+    
 //the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
 for(t in 1:nByrs){
- for (c in 1:ncovars1) {
-cov_eff1[t,c] = theta1[c]*cov1[t,c];
- }
+//  for (c in 1:ncovars1) {
+// cov_eff1[t,c] = theta1[c]*cov1[t,c];
+//  }
  for (c in 1:ncovars2) {
 cov_eff2[t,c] = theta2[c]*cov2[t,c];
  }
 
-  p_1[t]  = 1 / (1 + exp(-basal_p_1- sum(cov_eff1[t,1:ncovars1])));
+ // p_1[t]  = 1 / (1 + exp(-basal_p_1- sum(cov_eff1[t,1:ncovars1])));
   p_2[t]  = 1 / (1 + exp(-basal_p_2- sum(cov_eff2[t,1:ncovars2])));
 }
- 
+//  
  // Maturity schedule: use a common maturation schedule to draw the brood year specific schedules
   pi[1] = prob[1];
   pi[2] = prob[2] * (1 - pi[1]);
@@ -327,13 +322,13 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         // N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-kappa_marine_mortality[t]); // convert from survival to mortality 
         //    } 
         // if(a>1){
-        N_recruit[t+a+2,a] = N_ocean[t+a,a]*exp(-(sum(M[1:a]))); //+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
+        N_recruit[t+a+1,a] = N_ocean[t+a,a]*exp(-(sum(M[1:a]))); //+kappa_marine_mortality[t])); // add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
          
-        N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-(exp(-F[t+a+2])));
+        N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-(exp(-F[t+a+1])));
          
-        N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
+        N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a]; // fishing occurs before spawning -- 
          
-        N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
+        N_e[t+a+1,a] = fs[a]*Ps*N_sp[t+a+1,a]; // Eq 4.3 generated estimate for the amount of eggs produced that year for that stock.
    }
       N_e_sum[t+1] = N_e[t,1] + N_e[t,2] + N_e[t,3] +N_e[t,4]; // here the +1 is to get to seed the next year in the loop, not related to brood year. 
   }
@@ -352,7 +347,7 @@ for(t in 1:nByrs){
 }
 
 model {
- // sigma_y_j ~ uniform(0,5); //normal(0,8);
+     sigma_y_j ~ uniform(0,5); //normal(0,8);
   //sigma_y_r ~ normal(0,8);
   //sigma_y_sp ~ uniform(0,5);//normal(0,8);
   //sigma_y_h ~ normal(0,8);
@@ -363,8 +358,8 @@ model {
   
     log_catch_q ~ normal(0,10);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
 
-    log_c_1 ~ normal(20, 6); // carrying capacity prior - stage 1
-    log_c_2 ~ normal(16, 6); // carrying capacity prior - stage 2
+    log_c_1 ~ normal(20, 10); // carrying capacity prior - stage 1
+    log_c_2 ~ normal(16, 10); // carrying capacity prior - stage 2
 
     // log_c_1 ~  normal(18, 10); // carrying capacity prior - stage 1  
     // log_c_2 ~  normal(15, 10); // carrying capacity prior - stage 2
@@ -381,33 +376,31 @@ model {
 }
   //print("N_e_sum_start_log:", N_e_sum_start_log);
  
-    theta1[1]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
-    theta1[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
-    theta1[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
-    theta1[4] ~ normal(0,1.5); // environmental covariate coefficient stage 1
- 
+    // theta1[1]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
+    // theta1[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
+    // theta1[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
+    // theta1[4] ~ normal(0,1.5); // environmental covariate coefficient stage 1
+
     theta2[1]  ~ normal(0,1.5);
     theta2[2] ~ normal(0,1.5); // environmental covariate coefficient stage 1
     theta2[3]  ~ normal(0,1.5); //normal(0.5,5); // environmental covariate coefficient stage 1
 
     D_scale ~ beta(1,1); // 
-    
-   // basal_p_1 ~ normal(0,1); // currys model: normal(0,1.5^2); // mean survival stage 1
-   // basal_p_2 ~ normal(0,1); // me
+ 
+   // basal_p_1 ~ beta(1,1); // me // currys model: normal(0,1.5^2); // mean survival stage 1
+   // basal_p_2 ~ beta(1,1); // me
    
-   // log_p_1 ~ normal(0,1); // currys model: normal(0,1.5^2); // mean survival stage 1
-   // log_p_2 ~ normal(0,1); // me
-   //   p_2 ~ beta(1,1); // me
-   // basal_p_1_log ~ normal(0,1); // currys model: normal(0,1.5^2); // mean survival stage 1
-   // basal_p_2_log ~ normal(0,1); // mean survivial stage 2
-   //  
+ for(t in 1:nByrs){
+   log_p_1[t] ~ normal(2,2); // me
+   // p_2[t] ~ beta(1,1); // me
+ }
     // currys model: rnorm(1, 0,1.5^2)
     // simulation:  basal_p_1 ~ normal(0.1,0.5);
     // before: normal(0.5,1)
     
-    // basal_p_1 ~ normal(0,1); // mean survival stage 1 
-    // basal_p_2 ~ normal(0,1); // mean survivial stage 2
-    
+    // basal_p_1_log ~ normal(0,1); // mean survival stage 1
+    // basal_p_2_log ~ normal(0,1); // mean survivial stage 2
+    // 
 // age comp 
     for (a in 1:A) {
    target += gamma_lpdf(g[a]|Dir_alpha[a],1);

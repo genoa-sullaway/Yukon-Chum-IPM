@@ -27,8 +27,8 @@ traceplot(bh_fit,pars=  c("N_j_start_log"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "D_scale",  "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
-               "theta2[1]","theta2[2]","theta2[3]" 
+     pars=  c( "D_scale", # "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+               "theta2[1]","theta2[2]"#,"theta2[3]" 
                ),
      fill_color = "blue")
 
@@ -36,6 +36,14 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
                "theta2[1]","theta2[2]","theta2[3]" 
      ),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "p_1"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "p_2"),
      fill_color = "blue")
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -91,6 +99,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "p_1"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_2"),
      fill_color = "blue")
 
@@ -100,7 +112,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
               probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   filter(!time>21) # remove years without full return estimates 
 
@@ -129,7 +141,7 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
    filter(!time>21) 
 
@@ -154,7 +166,7 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>% 
   filter(!time>21) 
 
@@ -220,8 +232,8 @@ pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:22, each=1)) %>%
-  filter(!time == 22) %>% 
+  dplyr::mutate(time = rep(1:21, each=1)) %>%
+ # filter(!time == 21) %>% 
   cbind(obs = data_list_stan$data_stage_j) %>% 
    filter(!time<5)  %>% 
   mutate(rowname = "eggs") %>%
@@ -239,10 +251,10 @@ pred_N_eggs <- summary(bh_fit, pars = c("N_e"),
                            probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
-                age = rep(3:6, length.out = nrow(.))) %>% 
+  dplyr::mutate(time = rep(1:26, each=4),
+                age = rep(3:6, length.out = nrow(.))) # %>% 
   
-  filter(!time<6)  
+  #filter(!time<6)  
 
 ggplot(data = pred_N_eggs) + 
   geom_line(aes(x=time, y = mean)) +
@@ -256,16 +268,20 @@ all_stages<- rbind(summ_n_sp %>% select(-obs),
                    summ_n_rec%>% select(-obs),
                    summ_n_harvest%>% select(-obs),
                    summ_n_j%>% select(time, rowname,mean,se_mean) %>% 
-                     mutate(mean = mean/10 )#,
+                     mutate(mean = mean,
+                            time = time-1)#,
                    #pred_N_eggs_sum
-)
+) %>% 
+  group_by(rowname) %>%
+  mutate(mean = as.numeric(scale(mean)))
 
 ggplot(data = all_stages) + 
   geom_line(aes(x=time, y = mean, group = rowname, color = rowname)) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean))+
+  # geom_ribbon(aes(x=time, ymin = mean-se_mean,
+  #                 ymax = mean+se_mean))+
   #  facet_wrap(~rowname, scales = "free") + 
-  ggtitle(("all stages compare"))
+  ggtitle(("all stages compare - mean scaled")) +
+  ylab("mean scaled")
 
 
 # convert adults back to brood year
@@ -277,14 +293,14 @@ rec_brood <- pred_N_recruit %>%
 
 # juv obs 
 juv_obs <- data.frame(brood = 1:21,
-  mean= c(data_list_stan$data_stage_j *100), 
+  mean= c(data_list_stan$data_stage_j), 
   rowname = "obs_j")
 
 brood <- summary(bh_fit, pars = c("N_sp"), 
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
  # filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 
@@ -298,14 +314,17 @@ brood <- summary(bh_fit, pars = c("N_sp"),
         #   dplyr::select(brood, rowname,mean)
         )  %>% 
    rbind(juv_obs) %>%
-  filter(!brood < 2)
+  filter(!brood < 2) %>% 
+  group_by(rowname) %>%
+  mutate(mean = as.numeric(scale(mean)))
           
 # rename(brood = "time") %>% 
    # mutate(mean = mean /10))  
 
 ggplot(data = brood) + 
   geom_line(aes(x=brood, y = mean, group = rowname, color = rowname)) +
-   ggtitle(("all stages compare")) # +
+   ggtitle(("all stages compare - observed juveniles")) +
+  ylab("mean scaled")
   #facet_wrap(~rowname,scales = "free")
 
 # Spawners by brood Year ============
@@ -328,7 +347,7 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
   mutate(brood =  time-age) %>% 
@@ -340,11 +359,84 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
   gather(2:3, key = "id", value = "value") %>%
   filter(!brood<2)
 
+ggplot(data = brood_pred) + 
+  geom_line(aes(x=brood, y = value, group = id, color = id)) +
+  ggtitle(("Comapre spawners by brood year")) # +
+#facet_wrap(~rowname,scales = "free")
+
+# recruits by brood Year ============
+age_comp = (data_list_stan$p_obs)
+
+recruit_obs_brood <- data.frame(obs = data_list_stan$data_stage_return) %>%
+  dplyr::mutate("3" = obs*age_comp[1],
+                "4" = obs*age_comp[2],
+                "5" = obs*age_comp[3],
+                "6" = obs*age_comp[4]) %>%
+  dplyr::select(2:5) %>%
+  dplyr::mutate(time = 1:nrow(.)) %>%
+  gather(1:4, key = "age", value = "abundance") %>% 
+  dplyr::mutate(age = as.numeric(age),
+                brood = time - age) %>% 
+  group_by(brood) %>%
+  dplyr::summarise(obs = sum(abundance))  
+
+brood_pred <- summary(bh_fit, pars = c("N_recruit"), 
+                      probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:26, each=4),
+                age = rep(3:6, length.out = nrow(.))) %>%
+  #filter(!time>23) %>% 
+  mutate(brood =  time-age) %>% 
+  group_by(brood) %>%
+  summarise(pred = sum(mean)) %>% 
+  mutate(rowname = "recruit") %>%
+  left_join(recruit_obs_brood) %>% 
+  dplyr::select(-rowname) %>% 
+  gather(2:3, key = "id", value = "value") %>%
+  filter(!brood<2)
 
 ggplot(data = brood_pred) + 
   geom_line(aes(x=brood, y = value, group = id, color = id)) +
-  ggtitle(("all stages compare")) # +
+  ggtitle(("Comapre recruits by brood year")) # +
 #facet_wrap(~rowname,scales = "free")
+
+# catch by brood Year ============
+age_comp = (data_list_stan$p_obs)
+
+harvest_obs_brood <- data.frame(obs = data_list_stan$data_stage_harvest) %>%
+  dplyr::mutate("3" = obs*age_comp[1],
+                "4" = obs*age_comp[2],
+                "5" = obs*age_comp[3],
+                "6" = obs*age_comp[4]) %>%
+  dplyr::select(2:5) %>%
+  dplyr::mutate(time = 1:nrow(.)) %>%
+  gather(1:4, key = "age", value = "abundance") %>% 
+  dplyr::mutate(age = as.numeric(age),
+                brood = time - age) %>% 
+  group_by(brood) %>%
+  dplyr::summarise(obs = sum(abundance))  
+
+brood_pred <- summary(bh_fit, pars = c("N_catch"), 
+                      probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:26, each=4),
+                age = rep(3:6, length.out = nrow(.))) %>%
+  #filter(!time>23) %>% 
+  mutate(brood =  time-age) %>% 
+  group_by(brood) %>%
+  summarise(pred = sum(mean)) %>% 
+  mutate(rowname = "harvest") %>%
+  left_join(harvest_obs_brood) %>% 
+  dplyr::select(-rowname) %>% 
+  gather(2:3, key = "id", value = "value") %>%
+  filter(!brood<2)
+
+ggplot(data = brood_pred) + 
+  geom_line(aes(x=brood, y = value, group = id, color = id)) +
+  ggtitle(("Comapre harvest by brood year"))  
+
 
 # Add juveniles by brood Year ============
 brood_year_j <- summ_n_j %>%
@@ -382,7 +474,7 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
+  dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
                 variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
                                      TRUE ~ "kappa_j_survival"))
 
@@ -402,7 +494,7 @@ productivity <- summary(bh_fit, pars = c("p_1", "p_2"),
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
+  dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
                 variable = case_when(grepl("p_1",rowname) ~ "p_1",
                                      TRUE ~ "p_2"))  
 

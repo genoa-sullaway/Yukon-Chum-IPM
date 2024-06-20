@@ -58,12 +58,12 @@ write_csv(stage_a_cov, "data/processed_covariates/stage_a_all.csv")
 
 # Stage A - Plot values =============
 stage_a_cov_plot<-stage_a_cov %>%
-  gather(2:7, key = "id", value = "value") %>%
-  dplyr::mutate(id = factor(id, levels = c("kusko_mean_discharge", "yukon_mean_discharge",
-                                           "kusko_aniak_mean_airtemp", "yukon_chena_mean_airtemp",
-                                           "SST_CDD_NBS", "gelatinous_zoop_NBS", "large_zoop_NBS")))
+  gather(2:ncol(.), key = "id", value = "value") #%>%
+  # dplyr::mutate(id = factor(id, levels = c("kusko_mean_discharge", "yukon_mean_discharge",
+  #                                          "kusko_aniak_mean_airtemp", "yukon_chena_mean_airtemp",
+  #                                          "SST_CDD_NBS", "gelatinous_zoop_NBS", "large_zoop_NBS")))
 
-plota <- ggplot(data = stage_a_cov_plot, aes(x=Year, y = value, color = id, group = id)) +
+plota <- ggplot(data = stage_a_cov_plot %>% filter(!Year<2000), aes(x=Year, y = value, color = id, group = id)) +
   geom_point( ) +
   geom_line( ) +
   scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Starfish",n=7)) + 
@@ -81,7 +81,10 @@ dev.off()
 # Stage A - Plot, scaled =============
 stage_a_cov_plot_scale<-stage_a_cov_plot %>%
   group_by(id) %>% 
-  mutate(scale = scale(value))
+  filter(!Year<2003) %>% 
+  mutate(scale = scale(value)) %>% 
+  filter(!id%in% c("kusko_mean_discharge",
+                   "kusko_aniak_mean_airtemp"))
   
 plota <- ggplot(data = stage_a_cov_plot_scale, aes(x=Year, y = scale, color = id, group = id)) +
   geom_point( ) +
@@ -135,11 +138,14 @@ write_csv(stage_b_cov, "data/processed_covariates/stage_b_all.csv")
 
 stage_b_cov_plot<-stage_b_cov %>%
   gather(2:6, key = "id", value = "value") %>%
-  dplyr::mutate(id = factor(id, levels = c("SST_CDD_SEBS", 
-                                           "Chum_hatchery",
-                                           "Pink_hatchery",
-                                           "kusko_mean_discharge_summer", 
-                                           "yukon_mean_discharge_summer" )))
+  filter(!id %in% c( "yukon_mean_discharge_summer",
+                     "kusko_mean_discharge_summer"),
+         !Year <2003)
+  # dplyr::mutate(id = factor(id, levels = c("SST_CDD_SEBS", 
+  #                                          "Chum_hatchery",
+  #                                          "Pink_hatchery",
+  #                                          "kusko_mean_discharge_summer", 
+  #                                          "yukon_mean_discharge_summer" )))
 
 plotb <- ggplot(data = stage_b_cov_plot, aes(x=Year, y = value, color = id, group = id)) +
   geom_point( ) +

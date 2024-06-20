@@ -55,12 +55,12 @@ adapt_delta <- 0.95
 A = 4 # age classes 
 nByrs= 20
 nRyrs = 21  
-nRyrs_T = nRyrs + 4 +1
+nRyrs_T = nRyrs + 4 + 2
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = 5+1 # to fill starting values 
+t_start = A + 2 # to fill starting values 
  
 #Bev Holt parameters ===================
 # p for alpha, and c for carrying capacity 
@@ -200,7 +200,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
   N_ocean[1:t_start,] = N_ocean_start
   N_sp[1:t_start,] = N_sp_start
   #N_catch[1:t_start,] = N_catch_start
-  N_e[1:t_start,] = N_egg_start
+ N_e[1:t_start,] = N_egg_start
 
   # catch Q ===========
   # translates from predicted juveniles to observed juveniles 
@@ -227,25 +227,25 @@ M = matrix(ncol = A, nrow = nRyrs_T,
 # POPULATION MODEL ============ 
      for (t in 1:nByrs){ # loop for each brood year 
         
-         kappa_j[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+         kappa_j[t+1] =  p_1[t]/(1+((p_1[t]*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
          
-         N_j[t] = kappa_j[t]*N_e_sum[t] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
+         N_j[t+1] = kappa_j[t+1]*N_e_sum[t] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
         
-         kappa_marine[t] =  p_2[t]/(1 + ((p_2[t]*N_j[t])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+         kappa_marine[t+1] =  p_2[t+1]/(1 + ((p_2[t+1]*N_j[t+1])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
          # M[t,1] = -log(kappa_marine[t]) # fill in the age 1 survival for the next stage  
-         N_first_winter[t] = N_j[t]*kappa_marine[t] 
+         N_first_winter[t+1] = N_j[t+1]*kappa_marine[t+1] 
          
          for (a in 1:A) { 
-           N_ocean[t+a,a] =  N_first_winter[t]*p[a] # add age structure, p is proportion per age class
+           N_ocean[t+a+1,a] =  N_first_winter[t+1]*p[a] # add age structure, p is proportion per age class
          
-           N_recruit[t+a+2,a] = N_ocean[t+a,a]*exp(-sum(M[t,1:a])) #add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
+           N_recruit[t+a+1,a] = N_ocean[t+a+1,a]*exp(-sum(M[t,1:a])) #add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
           
-           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-F[t+a+2]))
+           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-F[t+a+1]))
            
-           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a] # fishing occurs before spawning -- 
+           N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+2,a] # fishing occurs before spawning -- 
              
-           N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a] 
+           N_e[t+a+1,a] = fs[a]*Ps*N_sp[t+a+1,a] 
          }
         # sum across age classes and transition back to brood years 
          N_e_sum[t+1] = sum(N_e[t,1:A]) 
@@ -253,14 +253,15 @@ M = matrix(ncol = A, nrow = nRyrs_T,
 
    View(N_sp)
    View(N_catch)
- 
+   View(N_e)
+   View(N_recruit)
+   
 # calculate Obs Run Comp  ============
 o_run_comp = array(data = NA, dim = c(nRyrs,A))
 o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
   for (t in 1:nRyrs) {
     for (a in 1:A) {
         if(t< nByrs+1){
-   # o_run_comp[t,a] = N_ocean[t,a]/sum(N_ocean[t,1:A])
           o_run_comp[t,a] = N_ocean[t,a]/sum(N_ocean[t,1:A])
     }
   }
