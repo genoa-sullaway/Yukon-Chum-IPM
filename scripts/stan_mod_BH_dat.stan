@@ -49,32 +49,31 @@ real   log_c_2; // log carrying capacity
  vector [t_start]N_sp_start_log;
  vector [t_start]N_recruit_start_log;
  vector [t_start]N_catch_start_log;
- vector [t_start]N_ocean_start_log;
+ // vector [t_start]N_ocean_start_log;
  vector <lower=5>[t_start]N_egg_start_log; 
  
 // covariate parameters 
-// real theta1[ncovars1]; // covariate estimated for each covariate and each population
-// real theta2[ncovars2];
+real <lower= -2, upper = 2> theta1 [ncovars1]; // covariate estimated for each covariate and each population
+real <lower= -2, upper = 2> theta2 [ncovars2];
 
 vector <lower=0> [A-1] prob; 
 real <lower=0.2, upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
 vector <lower=0> [A] g; // gamma random draws
-//real <upper= -0.7> log_catch_q;
- real <upper= 0> log_catch_q;
+real <upper= 0> log_catch_q;
  
 vector [nRyrs_T]  log_F_dev_y; 
 real log_F_mean; 
 
-// real <lower=0.001, upper = 0.99> basal_p_1; // mean alpha for covariate survival stage 1
-// real <lower=0.001, upper = 0.99> basal_p_2; // mean alpha for covariate survival stage 2
+real <lower=0.001, upper = 0.99> basal_p_1; // mean alpha for covariate survival stage 1
+real <lower=0.001, upper = 0.99> basal_p_2; // mean alpha for covariate survival stage 2
 
 real sigma_y_j;
 
 // real <lower=0.001, upper = 0.99>  p_1; // productivity in bev holt transition funciton, 1 = FW early marine
 // real <lower=0.001, upper = 0.99>  p_2;
 
-vector <lower=0.001, upper = 0.99> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
-vector <lower=0.001, upper = 0.99> [nByrs] p_2;
+// vector <lower=0.001, upper = 0.99> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
+// vector <lower=0.001, upper = 0.99> [nByrs] p_2;
 }
 
 transformed parameters { 
@@ -92,22 +91,24 @@ transformed parameters {
 real N_sp_start [t_start,A];
 real N_recruit_start [t_start,A];
 real N_catch_start [t_start,A];
-real N_ocean_start[t_start,A];
+// real N_ocean_start[t_start,A];
 real N_egg_start[t_start,A];
 real N_first_winter_start[t_start,A];
 real N_j_start;
 real N_e_sum_start;
 
 // survival and covariate section 
-// vector <lower=0.001, upper = 0.99> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
-// vector <lower=0.001, upper = 0.99> [nByrs] p_2;
- 
-vector [nByrs] kappa_j_survival ; // predicted survival for juvenile fish (FW and early marine)
+vector <lower=0.001, upper = 0.99> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
+vector <lower=0.001, upper = 0.99> [nByrs] p_2;
+
+vector [nByrs] kappa_j_survival; // predicted survival for juvenile fish (FW and early marine)
+//vector <lower=0.001, upper = 0.5> [nByrs] kappa_j_survival; // predicted survival for juvenile fish (FW and early marine)
 vector [nByrs+1] kappa_marine_survival; // predicted survival for marine fish
 vector [nByrs+1] kappa_marine_mortality; // converting kappa marine survival to mortality 
 
-// matrix [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine covariate effects by brood year and stock
-// matrix [nByrs, ncovars2] cov_eff2; // array that holds FW and early marine covariate effects by brood year and stock
+matrix [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine covariate effects by brood year and stock
+matrix [nByrs, ncovars2] cov_eff2; 
+
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
 
 real<lower=0> c_1; // estimate on log, transform back to normal scale 
@@ -150,7 +151,7 @@ for(a in 1:A){
    for(t in 1:3){
       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
+      // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
    }
@@ -159,7 +160,7 @@ for(a in 1:A){
    for(t in 1:4){
      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-     N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
+     // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
     }
@@ -168,7 +169,7 @@ for(a in 1:A){
    for(t in 1:5){
       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
+      // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
       N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
    }
@@ -178,7 +179,7 @@ for(a in 1:A){
    for(t in 1:6){
       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-      N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
+      // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
       N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
     }
@@ -209,7 +210,7 @@ for(a in 1:A){
       N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
       N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
       N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+      // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
    }
   }
    if(a==2){
@@ -218,7 +219,7 @@ for(a in 1:A){
       N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
       N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
       N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+      // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
    }
    }
     if(a==3){
@@ -227,7 +228,7 @@ for(a in 1:A){
       N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
       N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
       N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+      // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
    }
     }
     if(a==4){
@@ -236,7 +237,7 @@ for(a in 1:A){
       N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
       N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
       N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+      // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
    }
    }
   }
@@ -246,16 +247,16 @@ for(a in 1:A){
    c_2 = exp(log_c_2);
 
 // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
-  // for(t in 1:nByrs){
-  //  for (c in 1:ncovars1) {
-  // cov_eff1[t,c] = theta1[c]*cov1[t];
-  //  }
-  //  for (c in 1:ncovars2) {
-  // cov_eff2[t,c] = theta2[c]*cov2[t];
-  //  }
-  //   p_1[t]  = 1 / (1 + exp(basal_p_1+ sum(cov_eff1[t,1:ncovars1])));
-  //   p_2[t]  = 1 / (1 + exp(basal_p_2+ sum(cov_eff2[t,1:ncovars2])));
-  // }
+  for(t in 1:nByrs){
+   for (c in 1:ncovars1) {
+  cov_eff1[t,c] = theta1[c]*cov1[t,c];
+   }
+   for (c in 1:ncovars2) {
+  cov_eff2[t,c] = theta2[c]*cov2[t,c];
+   }
+    p_1[t]  = 1 / (1 + exp(basal_p_1+ sum(cov_eff1[t,1:ncovars1])));
+    p_2[t]  = 1 / (1 + exp(basal_p_2+ sum(cov_eff2[t,1:ncovars2])));
+  }
 
  // Maturity schedule: use a common maturation schedule to draw the brood year specific schedules
   pi[1] = prob[1];
@@ -326,40 +327,36 @@ model {
     // p_1 ~ beta(0.08,1); //normal(0,1);//beta(1,1);
   //   p_2  ~ beta(0.2,1); 
   // 
-  for(t in 1:nByrs){
-    p_1[t] ~ beta(1,1); //normal(0,1);//beta(1,1);
-    p_2[t] ~ beta(1,1);
-  }
+  // for(t in 1:nByrs){
+  //   p_1[t] ~ beta(1,1); //normal(0,1);//beta(1,1);
+  //   p_2[t] ~ beta(1,1);
+  // }
   
   log_catch_q ~ normal(0,5);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
 
   log_c_1 ~  normal(20, 6); // carrying capacity prior - stage 1  
   log_c_2 ~  normal(16, 6); // carrying capacity prior - stage 2
-
-    // log_c_1 ~  normal(18, 10); // carrying capacity prior - stage 1  
-    // log_c_2 ~  normal(15, 10); // carrying capacity prior - stage 2
-
-   N_j_start_log ~ normal(13.7,6); 
+ 
+   N_j_start_log ~ normal(13.6,6); 
    N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
-   // N_first_winter_start_log ~ normal(13.57,5);
  
  for(t in 1:t_start){
     N_first_winter_start_log[t] ~ normal(13.57,5);
     N_sp_start_log[t] ~ normal(13.48,5);
-    N_recruit_start_log[t] ~  normal(13.7,5);
+    N_recruit_start_log[t] ~  normal(13.5,5);
     N_catch_start_log[t] ~ normal(12.3,5);
-    N_ocean_start_log[t] ~ normal(13.6,5);
+    // N_ocean_start_log[t] ~ normal(13.6,5);
     N_egg_start_log[t] ~  normal(14, 5); // starting value for eggs, initiates pop model 
 }
   // print("N_e_sum_start_log:", N_e_sum_start_log);
       // print("N_catch_start_log:", N_catch_start_log);
       // print("N_sp_start_log:", N_sp_start_log);
-    // theta1[1]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
+ theta1  ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta1[2] ~ normal(0,1); // environmental covariate coefficient stage 1
     // theta1[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta1[4] ~ normal(0,1); // environmental covariate coefficient stage 1
     // 
-    // theta2[1]  ~ normal(0,1);
+  theta2 ~ normal(0,0.01);
     // theta2[2] ~ normal(0,1); // environmental covariate coefficient stage 1
     // theta2[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta2[4] ~ normal(0,1);
@@ -369,8 +366,8 @@ model {
   // p_1 ~ beta(1,1); 
   // p_2 ~ beta(1,1);  
   
-    // basal_p_1 ~ beta(0.3,1); // mean survival stage 1
-    // basal_p_2 ~ beta(0.4,1); // mean survivial stage 2
+    basal_p_1 ~ beta(1,1); // mean survival stage 1
+    basal_p_2 ~ beta(1,1); // mean survivial stage 2
   
 // age comp 
     for (a in 1:A) {
