@@ -81,7 +81,6 @@ basal_p_2 = 0.2 #-0.2369558 # (0.4)
  p_1 = 0.08#-1.820463 # (0.1) #base survival 
  p_2 = 0.2 #-0.2369558 # (0.4)
 
-
 cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
 cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = ncovars2))
 
@@ -233,7 +232,8 @@ M = matrix(ncol = A, nrow = nRyrs_T,
  # N_e_sum[t-1] = exp(14)
  
 # 
-# p_1 =  rbeta(n=nByrs,1,1)
+ # p_1 =  rbeta(n=nByrs,0.08,1)
+ 
 # p_2=rbeta(n=nByrs,1,1)
 p_1 = 0.08#-1.820463 # (0.1) #base survival 
 p_2 = 0.2 #-0.2369558 # (0.4)

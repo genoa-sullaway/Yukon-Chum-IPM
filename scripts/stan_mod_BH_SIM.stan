@@ -92,8 +92,8 @@ real log_F_mean;
 
 real sigma_y_j;
 
-real <lower=0, upper = 1> p_1; // productivity in bev holt transition funciton, 1 = FW early marine
-real <lower=0, upper = 1> p_2; 
+vector <lower=0.001, upper = 0.99> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
+vector <lower=0.001, upper = 0.99> [nByrs+1] p_2; 
 
 // vector [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
 // vector [nByrs] p_2; // productivity in bev holt transition funciton, 1 = FW early marine
@@ -222,12 +222,12 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
    for (t in 1:nByrs){ // loop for each brood year 
         
          //kappa_j_survival[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
-         kappa_j_survival[t] =  p_1/(1+((p_1*N_e_sum[t])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+         kappa_j_survival[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
          
          N_j[t+1] = kappa_j_survival[t]*N_e_sum[t]; // Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
         
-         kappa_marine_survival[t+1] =  p_2/(1 + ((p_2*N_j[t+1])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
-        //  kappa_marine_survival[t ] =  p_2[t]/(1 + ((p_2[t]*N_j[t])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+         //kappa_marine_survival[t+1] =  p_2/(1 + ((p_2*N_j[t+1])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+         kappa_marine_survival[t+1] =  p_2[t+1]/(1 + ((p_2[t+1]*N_j[t+1])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
           // N_first_winter[t ] = N_j[t ]*kappa_marine_survival[t ]; 
           
@@ -270,14 +270,13 @@ for(t in 1:nByrs){
 
 model {
   sigma_y_j ~ uniform(0,5); //normal 
- 
-    p_1 ~ beta(0.08,1); //normal(0,1);//beta(1,1);
+    // p_1 ~ beta(0.08,1); //normal(0,1);//beta(1,1);
     p_2  ~ beta(0.2,1); 
 
-  // for(t in 1:nByrs){
-  //   p_1[t] ~ beta(0.08,1); //normal(0,1);//beta(1,1);
+  for(t in 1:nByrs){
+    p_1[t] ~ beta(0.08,1); //normal(0,1);//beta(1,1);
   //   p_2[t] ~ beta(0.2,1); 
-  // }
+  }
   
   log_catch_q ~ normal(0,5);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
 
