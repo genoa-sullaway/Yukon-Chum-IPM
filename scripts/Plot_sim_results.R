@@ -89,6 +89,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "cov_eff2"),
      fill_color = "blue")
+ 
 
 # Plot Observed vs Predicted ========
 ## Spawners ==========
@@ -96,7 +97,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:25, each=4),
+  dplyr::mutate(time = rep(1:23, each=4),
                 age = rep(1:4, length.out = nrow(.))) %>% 
   filter(!time > 21)
 
@@ -287,24 +288,27 @@ obs <- data.frame(log_c_1 = data_list_plot$log_c_1,
                   log_c_2 = data_list_plot$log_c_2,
                   log_catch_q = data_list_plot$catch_q,
                   D_scale = data_list_plot$D_scale,
-                  theta1_1 = data_list_plot$`theta1[1]`, 
-                  theta1_2 = data_list_plot$`theta1[2]`,
-                  theta2_1 = data_list_plot$`theta2[1]`, 
-                  theta2_2 = data_list_plot$`theta2[2]`) %>% 
+                  p_1 = 0.02
+                  
+                  # theta1_1 = data_list_plot$`theta1[1]`, 
+                  # theta1_2 = data_list_plot$`theta1[2]`,
+                  # theta2_1 = data_list_plot$`theta2[1]`, 
+                  # theta2_2 = data_list_plot$`theta2[2]`
+                  ) %>% 
   gather(1:ncol(.), key = "rowname", value = "obs")
 
 params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
-                                   "D_scale", "theta1", "theta2"
+                                   "D_scale", "p_1"# "theta1", "theta2"
                                   # "N_catch_start_log", "N_egg_start_log" 
                                   ), 
                   probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column() %>%
-  dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1_1",
-                                    rowname == "theta1[2]"~ "theta1_2",
-                                    rowname == "theta2[1]"~ "theta2_1",
-                                    rowname == "theta2[2]"~ "theta2_2",
-                                    TRUE ~ rowname)) %>%
+  # dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1_1",
+  #                                   rowname == "theta1[2]"~ "theta1_2",
+  #                                   rowname == "theta2[1]"~ "theta2_1",
+  #                                   rowname == "theta2[2]"~ "theta2_2",
+  #                                   TRUE ~ rowname)) %>%
   left_join(obs)
 
 params %>% 

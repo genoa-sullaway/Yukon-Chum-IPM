@@ -100,16 +100,16 @@ real <lower=0, upper = 1> p_2;
 }
 
 transformed parameters { 
- vector[nByrs] N_j; // predicted juveniles 
- vector[nByrs] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
+ vector[nByrs+1] N_j; // predicted juveniles 
+ vector[nByrs+1] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
  vector[nByrs+1] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
 
- real N_first_winter [nRyrs_T,A]; 
- real N_recruit [nRyrs_T,A]; 
- real N_sp [nRyrs_T,A];
- real N_catch [nRyrs_T,A];
- real N_ocean[nRyrs_T,A];
- real N_e [nRyrs_T,A];
+ real N_first_winter [nRyrs_T+1,A]; 
+ real N_recruit [nRyrs_T+1,A]; 
+ real N_sp [nRyrs_T+1,A];
+ real N_catch [nRyrs_T+1,A];
+ real N_ocean[nRyrs_T+1,A];
+ real N_e [nRyrs_T+1,A];
 
 real N_sp_start [t_start,A];
 real N_recruit_start [t_start,A];
@@ -125,8 +125,8 @@ real N_e_sum_start;
 // vector [nByrs] p_2; // productivity in bev holt transition funciton, 1 = FW early marine 
  
 vector [nByrs] kappa_j_survival ; // predicted survival for juvenile fish (FW and early marine)
-vector  [nByrs] kappa_marine_survival; // predicted survival for marine fish
- vector  [nByrs] kappa_marine_mortality; // converting kappa marine survival to mortality 
+vector  [nByrs+1] kappa_marine_survival; // predicted survival for marine fish
+vector  [nByrs+1] kappa_marine_mortality; // converting kappa marine survival to mortality 
 
 // matrix [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine covariate effects by brood year and stock
 // matrix [nByrs, ncovars2] cov_eff2; // array that holds FW and early marine covariate effects by brood year and stock
@@ -224,38 +224,36 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
          //kappa_j_survival[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
          kappa_j_survival[t] =  p_1/(1+((p_1*N_e_sum[t])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
          
-         N_j[t ] = kappa_j_survival[t]*N_e_sum[t]; // Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
+         N_j[t+1] = kappa_j_survival[t]*N_e_sum[t]; // Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
         
-         kappa_marine_survival[t ] =  p_2/(1 + ((p_2*N_j[t])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+         kappa_marine_survival[t+1] =  p_2/(1 + ((p_2*N_j[t+1])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
         //  kappa_marine_survival[t ] =  p_2[t]/(1 + ((p_2[t]*N_j[t])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
           // N_first_winter[t ] = N_j[t ]*kappa_marine_survival[t ]; 
-          // 
-         
+          
     // convert survival to mortality for next equation
-         kappa_marine_mortality[t] = -log(kappa_marine_survival[t]);
+         kappa_marine_mortality[t+1] = -log(kappa_marine_survival[t+1]);
      
         for (a in 1:A) { 
-           N_first_winter[t+a,a] =  N_j[t]*p[a]; // add age structure, p is proportion per age class
+           N_first_winter[t+a+1,a] =  N_j[t+1]*p[a]; // add age structure, p is proportion per age class
        
         if(a==1){
-        N_recruit[t+a,a] = N_first_winter[t+a,a]*exp(-kappa_marine_mortality[t]); // convert from survival to mortality
+        N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-kappa_marine_mortality[t+1]); // convert from survival to mortality
            }
         if(a>1){
-        N_recruit[t+a,a] = N_first_winter[t+a,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
-                  } 
+        N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+1])); // add age specific mortality, 
+           } 
            // N_recruit[t+a,a] = N_ocean[t+a,a]*exp(-(sum(M[1:a])));//add age specific age mortality, kappa marine, survival in first winter gets put into the year 1 slot and then mortality is summer across larger age classes
           
-           N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-F[t+a]));
+        N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-F[t+a+1]));
            
-           N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
+        N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a]; // fishing occurs before spawning -- 
              
-           N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a]; 
+        N_e[t+a+1,a] = fs[a]*Ps*N_sp[t+a+1,a]; 
          }
         // sum across age classes and transition back to brood years 
          N_e_sum[t+1] = sum(N_e[t,1:A]); 
      }
-     
      
   // Calculate age proportions by return year
   for (t in 1:nByrs) {
@@ -272,9 +270,14 @@ for(t in 1:nByrs){
 
 model {
   sigma_y_j ~ uniform(0,5); //normal 
-  
-  p_1 ~ beta(0.08,1); //normal(0,1);//beta(1,1);
-  p_2 ~ beta(0.2,1); 
+ 
+    p_1 ~ beta(0.08,1); //normal(0,1);//beta(1,1);
+    p_2  ~ beta(0.2,1); 
+
+  // for(t in 1:nByrs){
+  //   p_1[t] ~ beta(0.08,1); //normal(0,1);//beta(1,1);
+  //   p_2[t] ~ beta(0.2,1); 
+  // }
   
   log_catch_q ~ normal(0,5);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
 
