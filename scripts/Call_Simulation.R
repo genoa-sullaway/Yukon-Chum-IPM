@@ -75,10 +75,10 @@ c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2))
 ncovars1 = 4
 ncovars2 = 4
 
-basal_p_1 = 0.08#-1.820463 # (0.1) #base survival 
-basal_p_2 = 0.2 #-0.2369558 # (0.4)
+basal_p_1 = 0.3#-1.820463 # (0.1) #base survival 
+basal_p_2 = 0.4 #-0.2369558 # (0.4)
 
- p_1 = 0.08#-1.820463 # (0.1) #base survival 
+ p_1 = 0.08 #-1.820463 # (0.1) #base survival 
  p_2 = 0.2 #-0.2369558 # (0.4)
 
 cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
