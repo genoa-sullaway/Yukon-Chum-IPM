@@ -15,7 +15,6 @@ year_min = 2002
 year_max_cal = 2022
 year_max_brood = 2021
  
-
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min #, 
