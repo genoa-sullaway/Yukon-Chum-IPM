@@ -27,6 +27,7 @@ traceplot(bh_fit,pars=  c("N_j_start_log"))
 
 # parameter plots ======== 
 
+  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
                "theta2[1]"#,"theta2[2]","theta2[3]" 
@@ -261,7 +262,8 @@ all_stages<- rbind(summ_n_sp %>% select(-obs),
                    summ_n_harvest%>% select(-obs),
                    summ_n_j%>% select(time, rowname,mean,se_mean) %>% 
                      mutate(mean = mean,
-                            time = time-1)#,
+                            time = time-1
+                            )#,
                    #pred_N_eggs_sum
 ) %>% 
   group_by(rowname) %>%
@@ -278,7 +280,7 @@ ggplot(data = all_stages) +
 
 # convert adults back to brood year
 rec_brood <- pred_N_recruit %>% 
-  mutate(brood =  time-age) %>% 
+  mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
   summarise(mean = sum(mean)) %>% 
   mutate(rowname = "recruit")  
@@ -295,7 +297,7 @@ brood <- summary(bh_fit, pars = c("N_sp"),
   dplyr::mutate(time = rep(1:28, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
  # filter(!time>23) %>% 
-  mutate(brood =  time-age) %>% 
+  mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
   summarise(mean = sum(mean)) %>% 
   mutate(rowname = "spawner") %>% 
@@ -342,7 +344,7 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
   dplyr::mutate(time = rep(1:28, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
-  mutate(brood =  time-age) %>% 
+  mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
   summarise(pred = sum(mean)) %>% 
   mutate(rowname = "spawner") %>%
@@ -379,7 +381,7 @@ brood_pred <- summary(bh_fit, pars = c("N_recruit"),
   dplyr::mutate(time = rep(1:28, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
-  mutate(brood =  time-age) %>% 
+  mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
   summarise(pred = sum(mean)) %>% 
   mutate(rowname = "recruit") %>%
@@ -416,7 +418,7 @@ brood_pred <- summary(bh_fit, pars = c("N_catch"),
   dplyr::mutate(time = rep(1:28, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
-  mutate(brood =  time-age) %>% 
+  mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
   summarise(pred = sum(mean)) %>% 
   mutate(rowname = "harvest") %>%
@@ -527,6 +529,29 @@ ggplot(data = age_comp) +
   geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
   theme_classic()
 
+# plot theta ========
+theta <- summary(bh_fit, pars = c("theta1[1]","theta2[1]"), 
+                 probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column() 
+
+ggplot(data = theta,aes(x= mean, y = rowname, group = rowname, color = rowname)) +
+  geom_point() + 
+  theme_classic() +
+  geom_errorbar(aes(xmin =X10., xmax = X90.),width = 0.1) + 
+  facet_wrap(~rowname,scales = "free") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  geom_vline(xintercept=0)
+# 
+# library(bayesplot)
+# mcmc_intervals(bh_fit, pars = c("theta1[1]","theta2[1]"))
+# mcmc_areas(
+#   bh_fit, 
+#   pars = c("theta1[1]","theta2[1]"), 
+#   prob = 0.8, # 80% intervals
+#   prob_outer = 0.99, # 99%
+#   point_est = "mean"
+# )
 # PLOT PARAMS  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 

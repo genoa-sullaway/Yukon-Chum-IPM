@@ -334,8 +334,8 @@ model {
   
   log_catch_q ~ normal(0,5);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
 
-  log_c_1 ~  normal(20, 6); // carrying capacity prior - stage 1  
-  log_c_2 ~  normal(16, 6); // carrying capacity prior - stage 2
+  log_c_1 ~  normal(20, 10); // carrying capacity prior - stage 1  
+  log_c_2 ~  normal(16, 10); // carrying capacity prior - stage 2
  
    N_j_start_log ~ normal(13.6,6); 
    N_e_sum_start_log ~  normal(14, 10); // starting value for eggs, initiates pop model 
@@ -375,9 +375,11 @@ model {
  }
  
 // log fishing mortality for each calendar year 
-  log_F_mean ~ normal(0,1);
+    log_F_mean ~ normal(0,1);
+ 
   for(t in 1:nRyrs_T){
- log_F_dev_y[t] ~ normal(0, 1); }
+    log_F_dev_y[t] ~ normal(0, 1); 
+ }
 
  // age comp priors -- maturity schedules
   prob[1] ~ beta(1,1); 

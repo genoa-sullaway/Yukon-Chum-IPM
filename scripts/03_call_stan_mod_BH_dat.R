@@ -149,7 +149,7 @@ basal_p_2 = 0.3
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(80, times = nByrs))
+ess_age_comp = as.vector(rep(50, times = nByrs))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  basal_p_1  
@@ -223,7 +223,7 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 1,#n_chains,
+  chains = 4,#n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores)
