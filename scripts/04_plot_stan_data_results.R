@@ -27,10 +27,16 @@ traceplot(bh_fit,pars=  c("N_j_start_log"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
-               "theta2[1]","theta2[2]"#,"theta2[3]" 
+     pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
+               "theta2[1]"#,"theta2[2]"#,"theta2[3]" 
      ),
      fill_color = "blue")
+#  
+# plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
+#      pars=  c( "kappa_marine_start",#"theta1[2]","theta1[3]","theta1[4]",
+#                "kappa_j_start"#,"theta2[2]"#,"theta2[3]" 
+#      ),
+#      fill_color = "blue")
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_1" ),
@@ -87,20 +93,27 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
                 "N_egg_start_log",
                 "N_recruit_start_log"),
        fill_color = "blue")
+  
+  
+  plot(bh_fit, show_density = TRUE, ci_level = 0.95,
+       pars=  c( #"N_e_sum_start_log",
+                 "N_egg_start_log"),
+       fill_color = "blue")
 
+  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "sigma_y_j"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "basal_p_1", "basal_p_2"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "theta_1_1_sim","theta_1_2_sim",
-               "theta_1_3_sim","theta_1_4_sim",
+plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
+     pars=  c( "theta_1_1_sim",#"theta_1_2_sim",
+              # "theta_1_3_sim","theta_1_4_sim",
                #"theta1[2]","theta1[3]","theta1[4]",
-               "theta_2_1_sim","theta_2_2_sim"#,"theta2[2]","theta2[3]" 
+               "theta_2_1_sim"#,"theta_2_2_sim"#,"theta2[2]","theta2[3]" 
      ),
      fill_color = "blue")
 
@@ -210,6 +223,13 @@ summ_n_j <- pred_N_j %>%
 #  dplyr::mutate(obs = obs*catch_q$mean) 
 
 ggplot(data = summ_n_j) +
+  geom_line(aes(x=time, y = mean)) + 
+  # geom_line(aes(x=time, y = mean), color = "green") +
+  # geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
+  #                 ymax = mean_J_Q+se_mean), alpha = 0.5)+
+  ggtitle(("Juveniles, est "))
+
+ggplot(data = summ_n_j) +
   geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = mean_J_Q)) +
  # geom_line(aes(x=time, y = mean), color = "green") +
@@ -232,18 +252,17 @@ pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"),
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:22, each=1)) %>%
- # filter(!time == 21) %>% 
-  cbind(obs = data_list_stan$data_stage_j) %>% 
-   filter(!time<5)  %>% 
+  filter(!time == 22) %>% 
+  cbind(obs_j = data_list_stan$data_stage_j,
+       pred_j = pred_N_j$mean) %>% 
+  # filter(!time<7)  %>% 
   mutate(rowname = "eggs") %>%
-  select(rowname,time,mean,obs)  
+  select(rowname,time,mean,obs_j,pred_j)  
    
 ggplot(data = pred_N_eggs_sum) + 
-  geom_line(aes(x=time, y = mean)) +
-  geom_line(aes(x=time, y = obs*10000), color = "green") + 
-  # geom_ribbon(aes(x=time, ymin = mean-se_mean,
-  #                 ymax = mean+se_mean))+
-  ggtitle(("eggs: obs and predicted"))
+ geom_line(aes(x=time, y = mean)) +
+ # geom_line(aes(x=time, y = mean*10), color = "green") +  
+  geom_line(aes(x=time, y = pred_j), color = "blue")  
 
 # eggs before sum =======
 pred_N_eggs <- summary(bh_fit, pars = c("N_e"), 
@@ -263,19 +282,38 @@ ggplot(data = pred_N_eggs) +
   ggtitle(("eggs: obs and predicted"))
 
 # align all stages on one plot to look at scale. =====
+summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"), 
+                           probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:22, each=1)) %>%
+  filter(!time == 22) %>% 
+  mutate(rowname = "eggs")  %>%
+    select(rowname, mean, se_mean,time)
+  
 all_stages<- rbind(summ_n_sp %>% select(-obs),
                    summ_n_rec%>% select(-obs),
                    summ_n_harvest%>% select(-obs),
+                   summ_n_eggs,
                    summ_n_j%>% select(time, rowname,mean,se_mean) %>% 
-                     mutate(mean = mean,
-                            time = time-1
-                            )#,
-                   #pred_N_eggs_sum
-) %>% 
+                     mutate(mean = mean#,
+                            #time = time-1
+                            ))  %>%
+  filter(!time<6)
+
+ggplot(data = all_stages) + 
+  geom_line(aes(x=time, y = mean, group = rowname, color = rowname)) +
+  # geom_ribbon(aes(x=time, ymin = mean-se_mean,
+  #                 ymax = mean+se_mean))+
+  #  facet_wrap(~rowname, scales = "free") + 
+  ggtitle(("all stages compare")) +
+  ylab("all stages")
+ 
+all_stages_scale <- all_stages %>% 
   group_by(rowname) %>%
   mutate(mean = as.numeric(scale(mean)))
 
-ggplot(data = all_stages) + 
+ggplot(data = all_stages_scale) + 
   geom_line(aes(x=time, y = mean, group = rowname, color = rowname)) +
   # geom_ribbon(aes(x=time, ymin = mean-se_mean,
   #                 ymax = mean+se_mean))+
@@ -413,7 +451,7 @@ harvest_obs_brood <- data.frame(obs = data_list_stan$data_stage_harvest) %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
   gather(1:4, key = "age", value = "abundance") %>% 
   dplyr::mutate(age = as.numeric(age),
-                brood = time - age) %>% 
+                brood = time - age-1) %>% 
   group_by(brood) %>%
   dplyr::summarise(obs = sum(abundance))  
 

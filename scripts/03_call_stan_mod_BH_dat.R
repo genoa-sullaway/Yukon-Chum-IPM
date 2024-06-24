@@ -104,8 +104,8 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
          Year <= year_max_brood) %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
-  dplyr::select(SST_CDD_NBS, yukon_mean_discharge,Cnideria,
-                Large_zoop
+  dplyr::select(SST_CDD_NBS#, yukon_mean_discharge,Cnideria,
+               # Large_zoop
                 ) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
 
@@ -118,15 +118,15 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                 Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
   ) %>% 
-  dplyr::select(SST_CDD_SEBS,
-                 Chum_hatchery
+  dplyr::select(SST_CDD_SEBS#,
+                # Chum_hatchery
                 # Pink_hatchery
   ) %>% 
   as.matrix()
 
 # number covariates for each life stage 
-ncovars1 = 4
-ncovars2 = 2
+ncovars1 = 1
+ncovars2 = 1
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
@@ -135,9 +135,8 @@ nRyrs_T = nByrs + 4 + 2
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = A + 2 # to fill starting values 
-
 
 # mean productivity rate =====
 # estimating this now
@@ -149,11 +148,11 @@ basal_p_2 = 0.3
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(50, times = nByrs))
+ess_age_comp = as.vector(rep(200, times = nByrs))
 
 # STAN STARTING VALUES ==========
-kappa_j_start =  basal_p_1  
-kappa_marine_start = basal_p_2  
+kappa_j_start =  basal_p_1
+kappa_marine_start = basal_p_2
 
 # N_j_start =  as.vector(NA)
 # N_e_sum_start = as.vector(NA)
@@ -203,9 +202,9 @@ data_list_stan <- list(nByrs=nByrs,
                        # N_egg_start = N_egg_start,
                        # N_j_start =  N_j_start,
                        # N_e_sum_start = N_e_sum_start,
-                       kappa_marine_mort_start = c(-log(basal_p_2), -log(basal_p_2)),                
-                       kappa_marine_start = c(basal_p_2, basal_p_2),
-                       kappa_j_start = basal_p_1, 
+                       kappa_marine_mort_start = -log(kappa_marine_start),
+                       kappa_marine_start = kappa_marine_start,
+                       kappa_j_start = kappa_j_start,
                        
                        ncovars1=ncovars1,
                        ncovars2=ncovars2,
@@ -216,8 +215,8 @@ data_list_stan <- list(nByrs=nByrs,
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,
-                       basal_p_1 = 0.01,
-                       basal_p_2 = 0.3)
+                       basal_p_1 =basal_p_1,
+                       basal_p_2 = basal_p_2)
 
 # call mod  ===========================
 bh_fit <- stan(
