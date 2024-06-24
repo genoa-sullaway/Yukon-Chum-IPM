@@ -351,12 +351,13 @@ model {
   // print("N_e_sum_start_log:", N_e_sum_start_log);
       // print("N_catch_start_log:", N_catch_start_log);
       // print("N_sp_start_log:", N_sp_start_log);
- theta1  ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
-    // theta1[2] ~ normal(0,1); // environmental covariate coefficient stage 1
-    // theta1[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
-    // theta1[4] ~ normal(0,1); // environmental covariate coefficient stage 1
+ theta1[1]  ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
+ theta1[2] ~ normal(0,0.01); // environmental covariate coefficient stage 1
+ theta1[3]  ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
+ theta1[4] ~ normal(0,0.01); // environmental covariate coefficient stage 1
     // 
- theta2 ~ normal(0,0.01);
+ theta2[1] ~ normal(0,0.01);
+ theta2[2] ~ normal(0,0.01);
     // theta2[2] ~ normal(0,1); // environmental covariate coefficient stage 1
     // theta2[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta2[4] ~ normal(0,1);
@@ -414,11 +415,21 @@ model {
 }  
 
 generated quantities{
-real  theta_1_1_sim [ncovars1]; // covariate estimated for each covariate and each population
-real  theta_2_1_sim [ncovars2];
+real  theta_1_1_sim ;  
+real  theta_1_2_sim ;  
+real  theta_1_3_sim ;  
+real  theta_1_4_sim ;  
 
-  theta_1_1_sim = normal_rng(theta1,0.5);
-  theta_2_1_sim = normal_rng(theta2,0.5);
+real  theta_2_1_sim ;
+real  theta_2_2_sim ;
+
+  theta_1_1_sim = normal_rng(theta1[1],0.25);
+  theta_1_2_sim = normal_rng(theta1[2],0.25);
+  theta_1_3_sim = normal_rng(theta1[3],0.25);
+  theta_1_4_sim = normal_rng(theta1[4],0.25);
+  
+  theta_2_1_sim = normal_rng(theta2[1],0.25);
+  theta_2_2_sim = normal_rng(theta2[2],0.25);
   
 }
 
