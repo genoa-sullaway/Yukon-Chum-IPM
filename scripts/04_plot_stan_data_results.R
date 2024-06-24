@@ -27,8 +27,7 @@ traceplot(bh_fit,pars=  c("N_j_start_log"))
 
 # parameter plots ======== 
 
-  
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
                "theta2[1]"#,"theta2[2]","theta2[3]" 
      ),
@@ -98,6 +97,11 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "basal_p_1", "basal_p_2"),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "theta_1_1_sim",#"theta1[2]","theta1[3]","theta1[4]",
+               "theta_2_1_sim"#,"theta2[2]","theta2[3]" 
+     ),
+     fill_color = "blue")
 # Plot Observed vs Predicted ========
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 

@@ -223,7 +223,7 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 4,#n_chains,
+  chains = 1,  
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores)

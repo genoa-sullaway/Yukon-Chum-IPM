@@ -356,7 +356,7 @@ model {
     // theta1[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta1[4] ~ normal(0,1); // environmental covariate coefficient stage 1
     // 
-  theta2 ~ normal(0,0.01);
+ theta2 ~ normal(0,0.01);
     // theta2[2] ~ normal(0,1); // environmental covariate coefficient stage 1
     // theta2[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta2[4] ~ normal(0,1);
@@ -412,3 +412,13 @@ model {
  //}
   }
 }  
+
+generated quantities{
+real  theta_1_1_sim [ncovars1]; // covariate estimated for each covariate and each population
+real  theta_2_1_sim [ncovars2];
+
+  theta_1_1_sim = normal_rng(theta1,0.5);
+  theta_2_1_sim = normal_rng(theta2,0.5);
+  
+}
+
