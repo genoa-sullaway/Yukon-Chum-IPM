@@ -25,19 +25,24 @@ traceplot(bh_fit,pars=  c("N_j_predicted"))
 
 traceplot(bh_fit,pars=  c("N_j_start_log"))
 
+
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
                "theta2[1]"#,"theta2[2]"#,"theta2[3]" 
      ),
      fill_color = "blue")
-#  
-# plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-#      pars=  c( "kappa_marine_start",#"theta1[2]","theta1[3]","theta1[4]",
-#                "kappa_j_start"#,"theta2[2]"#,"theta2[3]" 
-#      ),
-#      fill_color = "blue")
+#   
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "kappa_j_survival"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "kappa_marine_survival"),
+     fill_color = "blue")
  
+
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_1" ),
      fill_color = "blue")
@@ -45,14 +50,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_2"),
      fill_color = "blue")
- 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "kappa_marine_survival"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "kappa_j_survival"),
-     fill_color = "blue")
+  
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_mean"),
@@ -95,19 +93,11 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
        fill_color = "blue")
   
   
-  plot(bh_fit, show_density = TRUE, ci_level = 0.95,
-       pars=  c( #"N_e_sum_start_log",
-                 "N_egg_start_log"),
-       fill_color = "blue")
-
   
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "sigma_y_j"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-     pars=  c( "basal_p_1", "basal_p_2"),
-     fill_color = "blue")
 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta_1_1_sim",#"theta_1_2_sim",
@@ -263,6 +253,9 @@ ggplot(data = pred_N_eggs_sum) +
  geom_line(aes(x=time, y = mean)) +
  # geom_line(aes(x=time, y = mean*10), color = "green") +  
   geom_line(aes(x=time, y = pred_j), color = "blue")  
+
+ggplot(data = pred_N_eggs_sum) + 
+  geom_line(aes(x=time, y = mean)) 
 
 # eggs before sum =======
 pred_N_eggs <- summary(bh_fit, pars = c("N_e"), 
@@ -514,7 +507,8 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
   rownames_to_column()  %>% 
   dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
                 variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
-                                     TRUE ~ "kappa_j_survival"))
+                                     TRUE ~ "kappa_j_survival")) %>% 
+  filter(!time<7)
 
 ggplot(data = kappasurvival, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +

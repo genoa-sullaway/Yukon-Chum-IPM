@@ -148,7 +148,7 @@ basal_p_2 = 0.3
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(200, times = nByrs))
+ess_age_comp = as.vector(rep(300, times = nByrs))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  basal_p_1
