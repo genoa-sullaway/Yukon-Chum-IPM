@@ -42,7 +42,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "kappa_marine_survival"),
      fill_color = "blue")
  
-
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "p_1" ),
      fill_color = "blue")
@@ -51,7 +50,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "p_2"),
      fill_color = "blue")
   
-
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_mean"),
      fill_color = "blue")
@@ -65,7 +63,11 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "log_c_1", "log_c_2" ),
+     pars=  c(  "log_c_1"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "log_c_2"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -81,6 +83,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c( "sigma_y_j"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff2"),
      fill_color = "blue")
 
@@ -91,13 +97,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
                 "N_egg_start_log",
                 "N_recruit_start_log"),
        fill_color = "blue")
-  
-  
-  
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "sigma_y_j"),
-     fill_color = "blue")
-
+   
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+#      pars=  c( "sigma_y_j"),
+#      fill_color = "blue")
 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta_1_1_sim",#"theta_1_2_sim",
@@ -287,7 +290,7 @@ summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"),
 all_stages<- rbind(summ_n_sp %>% select(-obs),
                    summ_n_rec%>% select(-obs),
                    summ_n_harvest%>% select(-obs),
-                   summ_n_eggs,
+                 #  summ_n_eggs,
                    summ_n_j%>% select(time, rowname,mean,se_mean) %>% 
                      mutate(mean = mean#,
                             #time = time-1
