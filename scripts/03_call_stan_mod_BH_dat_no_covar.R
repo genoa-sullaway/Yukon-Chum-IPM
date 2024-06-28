@@ -135,7 +135,7 @@ nRyrs_T = nByrs + 4 + 2
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1000, 1000, 1000, 1000)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(1500, 1500, 1500, 1500)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = A + 2 # to fill starting values 
 
 # mean productivity rate =====
@@ -151,8 +151,8 @@ M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative
 ess_age_comp = as.vector(rep(300, times = nByrs))
 
 # STAN STARTING VALUES ==========
-kappa_j_start =  basal_p_1
-kappa_marine_start = basal_p_2
+kappa_j_start =  0.005
+kappa_marine_start = 0.3
 
 # N_j_start =  as.vector(NA)
 # N_e_sum_start = as.vector(NA)
@@ -211,7 +211,8 @@ data_list_stan <- list(nByrs=nByrs,
                        
                        cov1=stage_a_cov,
                        cov2=stage_b_cov,
-                       
+                       c_1 =  exp(18),
+                       c_2 =  exp(16),
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,

@@ -15,6 +15,8 @@ data { // all equation references are from proposal numbering
   vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
  
+ real   c_1;
+ real   c_2; 
  
 real kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
 real kappa_j_start;
@@ -39,16 +41,16 @@ vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "obse
 parameters {
  // real <lower=5, upper = 20> log_c_1; // log carrying capacity
  // real<lower=5, upper = 14> log_c_2; // log carrying capacity
- real  log_c_1;
- real  log_c_2; // log carrying capacity
+ // real  log_c_1;
+ // real  log_c_2; // log carrying capacity
 
 // starting values 
  real<lower=5> N_j_start_log; 
  // real<lower=5, upper=18> N_e_sum_start_log; 
 
-vector  [t_start]N_first_winter_start_log;
-vector  [t_start]N_sp_start_log;
-vector  [t_start]N_recruit_start_log;
+vector  [t_start] N_first_winter_start_log;
+vector  [t_start] N_sp_start_log;
+vector  [t_start] N_recruit_start_log;
 vector  [t_start] N_catch_start_log;
 vector  [t_start] N_egg_start_log;
 // 
@@ -113,8 +115,8 @@ vector [nByrs+1] kappa_marine_mortality; // converting kappa marine survival to 
 
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
 
-real c_1; // estimate on log, transform back to normal scale 
-real c_2; // estimate on log, transform back to normal scale 
+// real c_1; // estimate on log, transform back to normal scale 
+// real c_2; // estimate on log, transform back to normal scale 
   
 // Age related transformed params ====== 
 vector<lower=0.001>[A] p;  
@@ -126,9 +128,9 @@ vector<lower=0, upper=1> [A] pi;
 vector [nRyrs_T] F; // instantaneous fishing mortality           
 
 // starting value transformations ======
-  kappa_marine_survival[1] = kappa_marine_start; 
-  kappa_marine_mortality[1] = kappa_marine_mort_start; 
-  kappa_j_survival[1]= kappa_j_start; 
+  kappa_marine_survival[1] = kappa_marine_start;
+  kappa_marine_mortality[1] = kappa_marine_mort_start;
+  kappa_j_survival[1]= kappa_j_start;
 
   for(t in 1:nRyrs_T){//  
   // instant fishing mortality 
@@ -245,8 +247,8 @@ for(a in 1:A){
   }
 
   // transform log carrying capacity to normal scale
-   c_1 = exp(log_c_1);
-   c_2 = exp(log_c_2);
+   // c_1 = exp(log_c_1);
+   // c_2 = exp(log_c_2);
 
 // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
   // for(t in 1:nByrs){
@@ -333,8 +335,8 @@ model {
 
   // log_c_1 ~  normal(16, 5); // carrying capacity prior - stage 1
   // log_c_2 ~  normal(15, 5); // carrying capacity prior - stage 2
-  log_c_1 ~  normal(21, 2); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(15, 2); // carrying capacity prior - stage 2
+  // log_c_1 ~  normal(21, 2); // carrying capacity prior - stage 1
+  // log_c_2 ~  normal(15, 2); // carrying capacity prior - stage 2
 
   // log_c_1 ~ normal(20, 10); // carrying capacity prior - stage 1
   // log_c_2 ~ normal(16, 10); // carrying capacity prior - stage 2
