@@ -148,7 +148,7 @@ basal_p_2 = 0.3
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(300, times = nByrs))
+ess_age_comp = as.vector(rep(400, times = nByrs))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  basal_p_1
@@ -215,8 +215,8 @@ data_list_stan <- list(nByrs=nByrs,
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,
-                        c_1 = exp(17),
-                        c_2 = exp(16),
+                        c_1 = exp(17.7), # works using 18,16 (in PPT notes) with no covar, close with covar but flattens in the middle of the timeseries...
+                        c_2 = exp(17.3),
                        basal_p_1 =basal_p_1,
                        basal_p_2 = basal_p_2)
 
@@ -230,3 +230,4 @@ bh_fit <- stan(
   cores = n_cores)
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
+

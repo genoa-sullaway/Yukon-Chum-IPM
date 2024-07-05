@@ -31,7 +31,6 @@ traceplot(bh_fit,pars=  c("N_j_predicted"))
 traceplot(bh_fit,pars=  c("N_j_start_log"))
 
 # parameter plots ======== 
-  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, na.rm = TRUE,
      pars=  c( "kappa_j_survival"),
      fill_color = "blue")
@@ -65,14 +64,14 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"),
      fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "log_c_1"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "log_c_2"),
-     fill_color = "blue")
+# 
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+#      pars=  c(  "log_c_1"),
+#      fill_color = "blue")
+# 
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+#      pars=  c(  "log_c_2"),
+#      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c("log_catch_q"),
@@ -84,6 +83,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff1"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c( "cov_eff2"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
@@ -150,8 +153,6 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                 age = rep(3:6, length.out = nrow(.))) %>%
    filter(!time>21) 
 
-# plot proportions  ====== 
-  # sum to compare with data 
 summ_n_rec <- pred_N_recruit %>%
   group_by(time) %>%
   summarise(mean = sum(mean),
@@ -499,7 +500,6 @@ ggplot(data = fishing) +
   ylab("Instantaneous fishing mortality")
   
 # plot  estimated kappas survival ======
-
 kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
@@ -597,7 +597,7 @@ ggplot(data = theta,aes(x= mean, y = rowname, group = rowname, color = rowname))
   facet_wrap(~rowname,scales = "free") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
   geom_vline(xintercept=0)
-# 
+ 
 # library(bayesplot)
 # mcmc_intervals(bh_fit, pars = c("theta1[1]","theta2[1]"))
 # mcmc_areas(

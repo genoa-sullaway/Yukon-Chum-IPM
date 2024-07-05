@@ -50,12 +50,11 @@ parameters {
  real<lower=5> N_j_start_log; 
  // real<lower=5, upper=18> N_e_sum_start_log; 
 
- vector  [t_start]N_first_winter_start_log;
- vector  [t_start]N_sp_start_log;
- vector  [t_start]N_recruit_start_log;
- vector  [t_start] N_catch_start_log;
- vector <lower=5, upper = 15> [t_start] N_egg_start_log;
- 
+ vector  [t_start] N_first_winter_start_log;
+ vector  [t_start] N_sp_start_log;
+ vector  [t_start] N_recruit_start_log;
+ vector  [t_start] N_catch_start_log; 
+ vector  [t_start] N_egg_start_log;
 //  vector <lower=5, upper = 15>[t_start]N_first_winter_start_log;
 //  vector <lower=5, upper = 15>[t_start]N_sp_start_log;
 //  vector <lower=5, upper = 15>[t_start]N_recruit_start_log;
@@ -127,21 +126,22 @@ vector [nRyrs_T] F; // instantaneous fishing mortality
   kappa_marine_survival[1] = kappa_marine_start; 
   kappa_marine_mortality[1] = kappa_marine_mort_start; 
   kappa_j_survival[1]= kappa_j_start; 
+  // p_2[1] = 0.2;
 
   for(t in 1:nRyrs_T){//  
   // instant fishing mortality 
   F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  }
-//  
+// 
 // for(t in 1:t_start){
 //  for(a in 1:A){
-//   N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a]; 
-//   N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a]; 
-//   N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];   
-//   N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a]; 
+//   N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
+//   N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
+//   // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
+//   N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
 //   N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
 //   N_first_winter_start[t,a] = exp(N_first_winter_start_log[t])*p_obs[a];
-//   } 
+//   }
 //  }
 
 
@@ -185,7 +185,7 @@ for(a in 1:A){
     }
    }
   }
- 
+
  
  N_j_start = exp(N_j_start_log);
  N_j[1] = N_j_start;
@@ -194,16 +194,15 @@ for(a in 1:A){
  // N_e_sum[1] = N_e_sum_start;
  
   //   for(a in 1:A){
-  //  // add starting values to the whole population array 
+  //  // add starting values to the whole population array
   // N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
   // N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
   // N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-  // N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
-  // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+  // N_e[1:t_start,a] = N_egg_start[1:t_start,a];
   // N_first_winter[1:t_start,a] = N_first_winter_start[1:t_start,a];
   //    }
   
-  for(a in 1:A){
+for(a in 1:A){
   if(a==1){
    for(t in 1:3){
       N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
@@ -337,14 +336,15 @@ model {
   // log_c_1 ~ normal(20, 10); // carrying capacity prior - stage 1
   // log_c_2 ~ normal(16, 10); // carrying capacity prior - stage 2
  
-   N_j_start_log ~ normal(13.6,5);
+   N_j_start_log ~ normal(13.6,2);
 
  for(t in 1:t_start){
-    N_first_winter_start_log[t] ~ normal(13.57,5);
-    N_sp_start_log[t] ~ normal(13.48,5);
-    N_recruit_start_log[t] ~  normal(13.5,5);
-    N_catch_start_log[t] ~ normal(12.3,5);
-    N_egg_start_log[t] ~  normal(13.7, 5); // starting value for eggs, initiates pop model
+    N_first_winter_start_log[t] ~ normal(13.57,2);
+    N_sp_start_log[t] ~ normal(13.48,2);
+    N_recruit_start_log[t] ~  normal(13.5,2);
+    N_catch_start_log[t] ~ normal(12.3,2);
+    N_egg_start_log[t] ~  normal(14.5, 2);
+//    N_egg_start_log[t] ~  normal(13.7, 0.1); // starting value for eggs, initiates pop model
 }
 
 
@@ -365,9 +365,6 @@ model {
  
     D_scale ~ beta(1,1);  
     
-  // p_1 ~ beta(1,1); 
-  // p_2 ~ beta(1,1);  
-  
     basal_p_1 ~ beta(1,1); // mean survival stage 1
     basal_p_2 ~ beta(1,1); // mean survivial stage 2
   
@@ -380,7 +377,7 @@ model {
     log_F_mean ~ normal(0,1);
  
   for(t in 1:nRyrs_T){
-    log_F_dev_y[t] ~ normal(0, 1); 
+    log_F_dev_y[t] ~ normal(0, 5); 
  }
 
  // age comp priors -- maturity schedules
@@ -388,10 +385,6 @@ model {
   prob[2] ~ beta(1,1);  
   prob[3] ~ beta(1,1);  
  
-// printing these for trouble shooting 
-  // print("kappa_marine_mortality:", kappa_marine_mortality);
-   // print("log_catch_q:", log_catch_q);
-   // 
 // Likelilihoods --  
   // Observation model
   for (t in 1:nByrs) {
@@ -404,27 +397,23 @@ model {
 //      log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j);////sqrt(log((0.06^2) + 1))); // sqrt(log((data_j_cv[t]) + 1)));//sigma_y_j);  
 //     } 
 
-  for(t in 1:nRyrs){ // calendar years 
- //if(t<nByrs){
+  for(t in 1:nRyrs-1){ // calendar years 
+
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
      target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])),sqrt(log((data_recruit_cv[t]^2) + 1))); // sqrt(log((0.06^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
      target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.01^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((data_sp_cv[t]^2) + 1))); // sigma_y_sp);
- //}
+
   }
 }  
 
 generated quantities{
-real  theta_1_1_sim ;  
-// real  theta_1_2_sim ;  
-// real  theta_1_3_sim ;  
-// real  theta_1_4_sim ;  
+real  theta_1_1_sim ;   
 
 real  theta_2_1_sim ;
-// real  theta_2_2_sim ;
 
-  theta_1_1_sim = normal_rng(theta1[1],0.25);
+theta_1_1_sim = normal_rng(theta1[1],0.25);
   // theta_1_2_sim = normal_rng(theta1[2],0.25);
   // theta_1_3_sim = normal_rng(theta1[3],0.25);
   // theta_1_4_sim = normal_rng(theta1[4],0.25);
