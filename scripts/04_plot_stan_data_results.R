@@ -41,7 +41,8 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,  na.rm = TRUE,
 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
-               "theta2[1]"#,"theta2[2]"#,"theta2[3]" 
+               "theta2[1]",
+               "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
      ),
      fill_color = "blue")
 # 
@@ -151,21 +152,23 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:28, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
-   filter(!time>21) 
+   filter(!time>21) %>%
+  left_join(years) 
 
 summ_n_rec <- pred_N_recruit %>%
-  group_by(time) %>%
+  group_by(cal_year) %>%
   summarise(mean = sum(mean),
             se_mean = mean(se_mean)) %>% 
   cbind(obs = data_list_stan$data_stage_return)  %>%
   mutate(rowname = "recruit")  
 
 ggplot(data = summ_n_rec) +
-  geom_point(aes(x=time, y = obs)) +
-  geom_line(aes(x=time, y = mean)) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+  geom_point(aes(x=cal_year, y = obs)) +
+  geom_line(aes(x=cal_year, y = mean)) +
+  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
                   ymax = mean+se_mean))+
-  ggtitle(("recruits: obs and predicted"))
+  ggtitle(("recruits: obs and predicted"))+
+  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020))
 
 ## harvest ====== 
 pred_N_harvest <- summary(bh_fit, pars = c("N_catch"), 
@@ -191,7 +194,6 @@ ggplot(data = summ_n_harvest) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean))+
   ggtitle(("Harvest, est and observed"))
-
 
 ## juveniles ====== 
 # multiply by catch q to fit observations

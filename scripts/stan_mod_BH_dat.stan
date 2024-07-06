@@ -47,19 +47,20 @@ parameters {
  // real  log_c_2; // log carrying capacity
 
 // starting values 
- real<lower=5> N_j_start_log; 
+ real  N_j_start_log; 
  // real<lower=5, upper=18> N_e_sum_start_log; 
 
- vector  [t_start] N_first_winter_start_log;
- vector  [t_start] N_sp_start_log;
- vector  [t_start] N_recruit_start_log;
- vector  [t_start] N_catch_start_log; 
- vector  [t_start] N_egg_start_log;
-//  vector <lower=5, upper = 15>[t_start]N_first_winter_start_log;
-//  vector <lower=5, upper = 15>[t_start]N_sp_start_log;
-//  vector <lower=5, upper = 15>[t_start]N_recruit_start_log;
-//  vector [t_start] N_catch_start_log;
-//  vector <lower=5, upper = 15>[t_start] N_egg_start_log;
+ vector <lower= 0> [t_start] N_first_winter_start_log;
+ vector <lower= 0> [t_start] N_sp_start_log;
+ vector <lower= 0> [t_start] N_recruit_start_log;
+ vector <lower= 0> [t_start] N_catch_start_log;
+ vector <lower= 0> [t_start] N_egg_start_log;
+ 
+ // vector <lower=5, upper = 17>[t_start]N_first_winter_start_log;
+ // vector <lower=5, upper = 16>[t_start]N_sp_start_log;
+ // vector <lower=5, upper = 16>[t_start]N_recruit_start_log;
+ // vector [t_start] N_catch_start_log;
+ // vector <lower=5, upper = 17>[t_start] N_egg_start_log;
  
 // covariate parameters 
 real <lower= -2, upper = 2> theta1 [ncovars1]; // covariate estimated for each covariate and each population
@@ -73,8 +74,8 @@ real log_catch_q;
 vector [nRyrs_T]  log_F_dev_y; 
 real log_F_mean; 
 
-real <lower=0.001, upper = 0.99> basal_p_1; // mean alpha for covariate survival stage 1
-real <lower=0.001, upper = 0.99> basal_p_2; // mean alpha for covariate survival stage 2
+real <lower=0.001, upper = 0.9> basal_p_1; // mean alpha for covariate survival stage 1
+real <lower=0.001, upper = 0.9> basal_p_2; // mean alpha for covariate survival stage 2
 
  real sigma_y_j;
 }
@@ -126,120 +127,114 @@ vector [nRyrs_T] F; // instantaneous fishing mortality
   kappa_marine_survival[1] = kappa_marine_start; 
   kappa_marine_mortality[1] = kappa_marine_mort_start; 
   kappa_j_survival[1]= kappa_j_start; 
-  // p_2[1] = 0.2;
-
+ 
   for(t in 1:nRyrs_T){//  
   // instant fishing mortality 
   F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  }
-// 
-// for(t in 1:t_start){
-//  for(a in 1:A){
-//   N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-//   N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-//   // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
-//   N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-//   N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-//   N_first_winter_start[t,a] = exp(N_first_winter_start_log[t])*p_obs[a];
-//   }
-//  }
-
+ 
+for(t in 1:t_start){
+ for(a in 1:A){
+  N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
+  N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
+  N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
+  N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
+  N_first_winter_start[t,a] = exp(N_first_winter_start_log[t])*p_obs[a];
+  }
+ }
 
 // try adding starting values specific to ages ....
-for(a in 1:A){
-  if(a==1){
-   for(t in 1:3){
-      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-      // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
-      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-     N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-   }
-  }
-   if(a==2){
-   for(t in 1:4){
-     N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-     N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-     // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
-     N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-     N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-    }
-   }
-    if(a==3){
-   for(t in 1:5){
-      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-      // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
-      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-   }
-    }
-
-    if(a==4){
-   for(t in 1:6){
-      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-      // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
-      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-    }
-   }
-  }
+// for(a in 1:A){
+//   if(a==1){
+//    for(t in 1:3){
+//       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
+//       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
+//       // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
+//       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
+//      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
+//    }
+//   }
+//    if(a==2){
+//    for(t in 1:4){
+//      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
+//      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
+//      // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
+//      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
+//      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
+//     }
+//    }
+//     if(a==3){
+//    for(t in 1:5){
+//       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
+//       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
+//       // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
+//       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
+//       N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
+//    }
+//     }
+// 
+//     if(a==4){
+//    for(t in 1:6){
+//       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
+//       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
+//       // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
+//       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
+//       N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
+//     }
+//    }
+//   }
 
  
  N_j_start = exp(N_j_start_log);
  N_j[1] = N_j_start;
  
- // N_e_sum_start = exp(N_e_sum_start_log);
- // N_e_sum[1] = N_e_sum_start;
- 
-  //   for(a in 1:A){
-  //  // add starting values to the whole population array
-  // N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-  // N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-  // N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-  // N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-  // N_first_winter[1:t_start,a] = N_first_winter_start[1:t_start,a];
-  //    }
-  
-for(a in 1:A){
-  if(a==1){
-   for(t in 1:3){
-      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
-   }
-  }
-   if(a==2){
-   for(t in 1:4){
-     N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
-   }
-   }
-    if(a==3){
-   for(t in 1:5){
-      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
-   }
-    }
-    if(a==4){
-   for(t in 1:6){
-      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
-      N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
-      N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
-      N_e[1:t_start,a] = N_egg_start[1:t_start,a];
-      // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
-   }
-   }
-  }
+    for(a in 1:A){
+   // add starting values to the whole population array
+  N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+  N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+  N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+  N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+  N_first_winter[1:t_start,a] = N_first_winter_start[1:t_start,a];
+     }
+//   
+// for(a in 1:A){
+//   if(a==1){
+//    for(t in 1:3){
+//       N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+//       N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+//       N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+//       N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+//       // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+//    }
+//   }
+//    if(a==2){
+//    for(t in 1:4){
+//      N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+//       N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+//       N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+//       N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+//       // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+//    }
+//    }
+//     if(a==3){
+//    for(t in 1:5){
+//       N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+//       N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+//       N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+//       N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+//       // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+//    }
+//     }
+//     if(a==4){
+//    for(t in 1:6){
+//       N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
+//       N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
+//       N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
+//       N_e[1:t_start,a] = N_egg_start[1:t_start,a];
+//       // N_ocean[1:t_start,a] = N_ocean_start[1:t_start,a];
+//    }
+//    }
+//   }
 
   // transform log carrying capacity to normal scale
    // c_1 = exp(log_c_1);
@@ -311,7 +306,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
      }
      
   // Calculate age proportions by return year
-  for (t in 1:nByrs) {
+  for (t in 1:nRyrs) {
     for(a in 1:A){
      q[t,a] = N_recruit[t,a]/(sum(N_recruit[t,1:A]));
     }
@@ -336,14 +331,14 @@ model {
   // log_c_1 ~ normal(20, 10); // carrying capacity prior - stage 1
   // log_c_2 ~ normal(16, 10); // carrying capacity prior - stage 2
  
-   N_j_start_log ~ normal(13.6,2);
+   N_j_start_log ~ normal(13.6,10); //1
 
  for(t in 1:t_start){
-    N_first_winter_start_log[t] ~ normal(13.57,2);
-    N_sp_start_log[t] ~ normal(13.48,2);
-    N_recruit_start_log[t] ~  normal(13.5,2);
-    N_catch_start_log[t] ~ normal(12.3,2);
-    N_egg_start_log[t] ~  normal(14.5, 2);
+    N_first_winter_start_log[t] ~ normal(13.57,10);//1
+    N_sp_start_log[t] ~ normal(13.48,10);//2
+    N_recruit_start_log[t] ~  normal(13.5,10);//2
+    N_catch_start_log[t] ~ normal(12.3,10);//1
+    N_egg_start_log[t] ~  normal(14.5, 10);//2
 //    N_egg_start_log[t] ~  normal(13.7, 0.1); // starting value for eggs, initiates pop model
 }
 
@@ -358,7 +353,7 @@ model {
  // theta1[4] ~ normal(0,0.01); // environmental covariate coefficient stage 1
     // 
  theta2[1] ~ normal(0,0.01);
- // theta2[2] ~ normal(0,0.01);
+ theta2[2] ~ normal(0,0.01);
     // theta2[2] ~ normal(0,1); // environmental covariate coefficient stage 1
     // theta2[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
     // theta2[4] ~ normal(0,1);
@@ -397,7 +392,7 @@ model {
 //      log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j);////sqrt(log((0.06^2) + 1))); // sqrt(log((data_j_cv[t]) + 1)));//sigma_y_j);  
 //     } 
 
-  for(t in 1:nRyrs-1){ // calendar years 
+  for(t in 1:nRyrs){ // calendar years 
 
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      

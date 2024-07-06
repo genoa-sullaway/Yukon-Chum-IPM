@@ -118,15 +118,15 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                 Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
   ) %>% 
-  dplyr::select(SST_CDD_SEBS#,
-                # Chum_hatchery
+  dplyr::select(SST_CDD_SEBS,
+                 Chum_hatchery
                 # Pink_hatchery
   ) %>% 
   as.matrix()
 
 # number covariates for each life stage 
 ncovars1 = 1
-ncovars2 = 1
+ncovars2 = 2
 
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
@@ -135,7 +135,7 @@ nRyrs_T = nByrs + 4 + 2
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(1500, 1500, 1500, 1500))#as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = A + 2 # to fill starting values 
 
 # mean productivity rate =====
@@ -148,7 +148,7 @@ basal_p_2 = 0.3
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(400, times = nByrs))
+ess_age_comp = as.vector(rep(300, times = nByrs))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  basal_p_1
@@ -215,8 +215,8 @@ data_list_stan <- list(nByrs=nByrs,
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,
-                        c_1 = exp(17.7), # works using 18,16 (in PPT notes) with no covar, close with covar but flattens in the middle of the timeseries...
-                        c_2 = exp(17.3),
+                        c_1 = exp(17.3), # works using 18,16 (in PPT notes) with no covar, close with covar but flattens in the middle of the timeseries...
+                        c_2 = exp(15),
                        basal_p_1 =basal_p_1,
                        basal_p_2 = basal_p_2)
 
