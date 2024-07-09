@@ -104,8 +104,8 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
          Year <= year_max_brood) %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
-  dplyr::select(SST_CDD_NBS#, yukon_mean_discharge,Cnideria,
-               # Large_zoop
+  dplyr::select(SST_CDD_NBS,# yukon_mean_discharge,Cnideria,
+                Large_zoop
                 ) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
 
@@ -125,7 +125,7 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   as.matrix()
 
 # number covariates for each life stage 
-ncovars1 = 1
+ncovars1 = 2
 ncovars2 = 2
 
 # Organize data call inputs ================================================
@@ -135,14 +135,14 @@ nRyrs_T = nByrs + 4 + 2
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1500, 1500, 1500, 1500))#as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = A + 2 # to fill starting values 
 
 # mean productivity rate =====
 # estimating this now
-basal_p_1 = 0.03  # these are values it estimates at when allowed to
+basal_p_1 = 0.1  # these are values it estimates at when allowed to
 
-basal_p_2 = 0.3 
+basal_p_2 = 0.4
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
@@ -197,11 +197,7 @@ data_list_stan <- list(nByrs=nByrs,
                        data_stage_return = as.vector(yukon_fall_recruits$total_run),
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
-                       
-                       # N_ocean_start = N_ocean_start,
-                       # N_egg_start = N_egg_start,
-                       # N_j_start =  N_j_start,
-                       # N_e_sum_start = N_e_sum_start,
+                      
                        kappa_marine_mort_start = -log(kappa_marine_start),
                        kappa_marine_start = kappa_marine_start,
                        kappa_j_start = kappa_j_start,
@@ -215,8 +211,8 @@ data_list_stan <- list(nByrs=nByrs,
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,
-                        c_1 = exp(17.3), # works using 18,16 (in PPT notes) with no covar, close with covar but flattens in the middle of the timeseries...
-                        c_2 = exp(15),
+                        # c_1 = exp(16.1), # works using 18,16 (in PPT notes) with no covar, close with covar but flattens in the middle of the timeseries...
+                        # c_2 = exp(14),
                        basal_p_1 =basal_p_1,
                        basal_p_2 = basal_p_2)
 

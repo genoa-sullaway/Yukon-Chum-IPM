@@ -211,11 +211,11 @@ data_list_stan <- list(nByrs=nByrs,
                        
                        cov1=stage_a_cov,
                        cov2=stage_b_cov,
-                       c_1 =  exp(18),
-                       c_2 =  exp(16),
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,
+                       # c_1 = exp(16.1), 
+                       # c_2 = exp(14),
                        basal_p_1 =basal_p_1,
                        basal_p_2 = basal_p_2)
 

@@ -41,8 +41,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,  na.rm = TRUE,
 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
+               "theta1[2]",
                "theta2[1]",
-               "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
+               "theta2[2]"#,
+             #  "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
      ),
      fill_color = "blue")
 # 
@@ -65,14 +67,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"),
      fill_color = "blue")
-# 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-#      pars=  c(  "log_c_1"),
-#      fill_color = "blue")
-# 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-#      pars=  c(  "log_c_2"),
-#      fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "log_c_1","log_c_2"),
+     fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c("log_catch_q"),
@@ -92,10 +90,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "sigma_y_j"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "cov_eff2"),
      fill_color = "blue")
 
   plot(bh_fit, show_density = FALSE, ci_level = 0.95,
@@ -480,9 +474,7 @@ brood_year_j <- summ_n_j %>%
   gather(1:2, key = "id", value = "value") 
 
 brood_pred2 <- brood_pred %>% 
-  #mutate(brood = brood+1) %>% 
   rbind(brood_year_j) 
-
 
 ggplot(data = brood_pred2) + 
   geom_line(aes(x=brood, y = value, group = id, color = id)) +
@@ -512,13 +504,14 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
   left_join(years)# %>% 
   #filter(!time<5 & !time>20)
 
-ggplot(data = kappasurvival, aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
+ggplot(data = kappasurvival%>%   filter(!time<2),aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
 
-ggplot(data = kappasurvival, aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
+ggplot(data = kappasurvival %>%   filter(!time<2),
+       aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) +
@@ -554,6 +547,11 @@ ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = vari
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) +
   facet_wrap(~variable, scales = "free")
+
+ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5)
 
 # plot sigma  ======
 # sigma <- summary(bh_fit, pars = c("sigma_y_h", 
