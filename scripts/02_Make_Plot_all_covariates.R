@@ -103,23 +103,24 @@ plota
 dev.off()
 
 # Stage B - Load data ============= 
-hatchery_chum_b<-read_csv("output/hatchery_Chum_Covariate_AKandAsia.csv") %>%
+hatchery_chum_df<-read_csv("data/hatchery_Chum_Covariate_AKandAsia.csv") 
+hatchery_chum_b<-hatchery_chum_df %>%
   dplyr::rename(Chum_hatchery="sum") %>%
   dplyr::select(Year, Chum_hatchery) %>%
   rbind(data.frame(Year = c(2023),
-                   Chum_hatchery = c(mean(hatchery_chum_b$Chum_hatchery) + 0.01)))
+                   Chum_hatchery = c(mean(hatchery_chum_df$sum) + 0.01)))
 
-hatchery_pink_b <- read_csv("output/hatchery_Pink_Covariate_AKandAsia.csv") %>%
+hatchery_pink_df <- read_csv("data/hatchery_Pink_Covariate_AKandAsia.csv") 
+hatchery_pink_b <- hatchery_pink_df%>%
   dplyr::rename(Pink_hatchery="sum") %>%
   dplyr::select(Year, Pink_hatchery) %>% 
   rbind(data.frame(Year = c(2023),
-                   Pink_hatchery = c(mean(hatchery_pink_b$Pink_hatchery) + 0.01)))
-
+                   Pink_hatchery = c(mean(hatchery_pink_df$sum) + 0.01)))
 
 sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv") %>%
-  dplyr::rename(SST_CDD_SEBS = "CDD",
+  dplyr::rename(SST_CDD_GOA = "CDD",
                 Year = "year") %>%
-  dplyr::select(Year, SST_CDD_SEBS)
+  dplyr::select(Year, SST_CDD_GOA)
   
 river_discharge_b <- read_csv("data/processed_covariates/Stage_B_YK_Discharge.csv") %>%
   dplyr::select(Year, mean_discharge,id) %>%
@@ -129,7 +130,9 @@ river_discharge_b <- read_csv("data/processed_covariates/Stage_B_YK_Discharge.cs
   
 stage_b_cov<- left_join(river_discharge_b,sst_b)  %>%
   left_join(hatchery_pink_b) %>%
-  left_join(hatchery_chum_b)  
+  left_join(hatchery_chum_b) %>%
+  dplyr::rename(brood_year = "Year") %>%
+  dplyr::mutate(index_year_brood_plus1 = brood_year+1)
 
 # Stage B - Save DF ============= 
 write_csv(stage_b_cov, "data/processed_covariates/stage_b_all.csv")

@@ -108,17 +108,17 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
                 Large_zoop
                 ) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
-
+ 
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-  filter(Year >= year_min, 
-         Year <= year_max_brood
+  filter(index_year_brood_plus1 >= year_min, 
+         index_year_brood_plus1 <= year_max_brood
   ) %>% 
-  dplyr::mutate(SST_CDD_SEBS = as.numeric(scale(SST_CDD_SEBS)),
+  dplyr::mutate(SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
                 Chum_hatchery= as.numeric(scale(Chum_hatchery)),
                 Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
   ) %>% 
-  dplyr::select(SST_CDD_SEBS,
+  dplyr::select(SST_CDD_GOA,
                  Chum_hatchery
                 # Pink_hatchery
   ) %>% 
