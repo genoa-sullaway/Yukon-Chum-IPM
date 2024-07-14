@@ -48,7 +48,7 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
      ),
      fill_color = "blue")
 # 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "p_1" ),
      fill_color = "blue")
 
@@ -100,11 +100,11 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
                 "N_recruit_start_log"),
        fill_color = "blue")
 
-plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-     pars=  c( "theta_1_1_sim",#"theta_1_2_sim",
+plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
+     pars=  c( "theta_1_1_pp","theta_1_2_pp",#"theta_1_2_sim",
               # "theta_1_3_sim","theta_1_4_sim",
                #"theta1[2]","theta1[3]","theta1[4]",
-               "theta_2_1_sim"#,"theta_2_2_sim"#,"theta2[2]","theta2[3]" 
+               "theta_2_1_pp","theta_2_2_pp" #"theta_2_2_sim"#,"theta2[2]","theta2[3]" 
      ),
      fill_color = "blue")
 
@@ -215,8 +215,8 @@ summ_n_j <- pred_N_j %>%
 #  filter(!time<7)
 #  dplyr::mutate(obs = obs*catch_q$mean) 
 
-ggplot(data = summ_n_j) +
-  geom_line(aes(x=cal_year, y = mean)) + 
+ggplot(data = summ_n_j %>% filter(!cal_year ==2002)) +
+  geom_line(aes(x=cal_year, y = mean_J_Q)) + 
   # geom_line(aes(x=time, y = mean), color = "green") +
   # geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
   #                 ymax = mean_J_Q+se_mean), alpha = 0.5)+
@@ -310,7 +310,7 @@ ggplot(data = all_stages_scale) +
   ylab("mean scaled")
 
 
-# convert adults back to brood year
+# convert adults back to brood year==============
 rec_brood <- pred_N_recruit %>% 
   mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
@@ -365,7 +365,7 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
   gather(1:4, key = "age", value = "abundance") %>% 
   dplyr::mutate(age = as.numeric(age),
-                brood = time - age) %>% 
+                brood = time - age-1) %>% 
   group_by(brood) %>%
   dplyr::summarise(obs = sum(abundance))  
                 
@@ -382,12 +382,12 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
   mutate(rowname = "spawner") %>%
   left_join(sp_obs_brood) %>% 
   dplyr::select(-rowname) %>% 
-  gather(2:3, key = "id", value = "value") %>%
-  filter(!brood<2)
+  gather(2:3, key = "id", value = "value") #%>%
+#  filter(!brood<2)
 
 ggplot(data = brood_pred) + 
   geom_line(aes(x=brood, y = value, group = id, color = id)) +
-  ggtitle(("Comapre spawners by brood year")) # +
+  ggtitle(("Compare spawners by brood year")) # +
 #facet_wrap(~rowname,scales = "free")
 
 # recruits by brood Year ============
@@ -402,7 +402,7 @@ recruit_obs_brood <- data.frame(obs = data_list_stan$data_stage_return) %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
   gather(1:4, key = "age", value = "abundance") %>% 
   dplyr::mutate(age = as.numeric(age),
-                brood = time - age) %>% 
+                brood = time - age-1) %>% 
   group_by(brood) %>%
   dplyr::summarise(obs = sum(abundance))  
 
@@ -419,8 +419,8 @@ brood_pred <- summary(bh_fit, pars = c("N_recruit"),
   mutate(rowname = "recruit") %>%
   left_join(recruit_obs_brood) %>% 
   dplyr::select(-rowname) %>% 
-  gather(2:3, key = "id", value = "value") %>%
-  filter(!brood<2)
+  gather(2:3, key = "id", value = "value") #%>%
+  # filter(!brood<2)
 
 ggplot(data = brood_pred) + 
   geom_line(aes(x=brood, y = value, group = id, color = id)) +
@@ -498,7 +498,7 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
+  dplyr::mutate(time = rep(1:22, length.out = nrow(.)), 
                 variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
                                      TRUE ~ "kappa_j_survival")) %>% 
   left_join(years)# %>% 
@@ -533,14 +533,40 @@ ggplot(data = kappasurvival %>%
   xlab("Calendar Year") + 
   ylab("Survival Rate")
 
+
+
+# calculate rolling correlation in productivity....
+# make a list of 5 year chunks .... 
+n <- 5
+kappasurvival_group <- kappasurvival %>% 
+  dplyr::select(9:11, 2) %>% 
+  spread(variable, mean) %>% 
+  filter(!time %in% c(21,22)) %>% 
+  mutate(id = rep(1:n, times=1, each=4)) 
+
+corr <- list()
+
+for (i in 1:n) {
+  temp <- kappasurvival_group %>% 
+    filter(id == i)
+  
+  corr[[i]]<- cor.test(temp$kappa_j_survival,temp$kappa_marine_survival)
+  
+}
+
+corr
+ 
 # plot estimated productivity ======
 productivity <- summary(bh_fit, pars = c("p_1", "p_2"), 
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
-                variable = case_when(grepl("p_1",rowname) ~ "p_1",
-                                     TRUE ~ "p_2"))  
+  dplyr::mutate( variable = case_when(grepl("p_1",rowname) ~ "p_1",
+                                      TRUE ~ "p_2"),
+                 time = case_when(variable == "p_1" ~ 1:22, #rep(1:22, length.out = 22), #nrow(.)), 
+                                  variable == "p_2" ~ 1:23)) #rep(1:23, length.out = 23))) #nrow(.))))
+                # variable = case_when(grepl("p_1",rowname) ~ "p_1",
+                #                      TRUE ~ "p_2"))  
 
 ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
@@ -552,6 +578,44 @@ ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = vari
   geom_line( ) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5)
+
+# calculate correlation in productivity ...
+productivity_split <- productivity %>% 
+  select(time, variable,mean) %>% 
+  spread(variable, mean)
+
+cor.test(productivity_split$p_1,productivity_split$p_2)
+
+# calculate rolling correlation in productivity....
+# make a list of 5 year chunks .... 
+n <- 5
+productivity_group <- productivity %>% 
+  select(time, variable,mean) %>% 
+  spread(variable, mean) %>% 
+   filter(!time == 21) %>% 
+  mutate(id = rep(1:n, times=1, each=4)) 
+ 
+corr <- list()
+
+for (i in 1:n) {
+  temp <- productivity_group %>% 
+    filter(id == i)
+  
+  corr[[i]]<- cor.test(temp$p_1,temp$p_2)
+  
+}
+
+corr
+
+
+# productivity_late <- productivity %>% 
+#   select(time, variable,mean) %>% 
+#   spread(variable, mean) %>% 
+#   filter(time>9)
+# 
+# cor.test(productivity_early$p_1,productivity_early$p_2)
+# cor.test(productivity_late$p_1,productivity_late$p_2)
+
 
 # plot sigma  ======
 # sigma <- summary(bh_fit, pars = c("sigma_y_h", 
@@ -585,7 +649,9 @@ ggplot(data = age_comp) +
   theme_classic()
 
 # plot theta ========
-theta <- summary(bh_fit, pars = c("theta1[1]","theta2[1]"), 
+theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]",
+                                  "theta2[1]","theta2[2]"
+                                  ), 
                  probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column() 

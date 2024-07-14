@@ -6,9 +6,7 @@ library(rstanarm)
 
 library(tidync)
 library(lubridate) 
-library(readxl)
-# log_f = runif(1,-4,-1)
-# 1-exp(-exp(log_f))
+library(readxl) 
 
 # Things to look into  =======================================================
 # sigma for both life stages in estimates so I can fix it instead of have model estimate it 
@@ -101,18 +99,18 @@ spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   filter(Year >= year_min, 
-         Year <= year_max_brood) %>%
+         Year <= year_max_brood+1) %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
   dplyr::select(SST_CDD_NBS,# yukon_mean_discharge,Cnideria,
-                Large_zoop
+                Large_zoop,
+                #,yukon_mean_discharge 
                 ) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
  
-stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-  filter(index_year_brood_plus1 >= year_min, 
-         index_year_brood_plus1 <= year_max_brood
-  ) %>% 
+temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+  filter(brood_year >= year_min, 
+         brood_year <= year_max_brood+2) %>% 
   dplyr::mutate(SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
                 Chum_hatchery= as.numeric(scale(Chum_hatchery)),
                 Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
@@ -120,9 +118,16 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   ) %>% 
   dplyr::select(SST_CDD_GOA,
                  Chum_hatchery
-                # Pink_hatchery
-  ) %>% 
-  as.matrix()
+                #,Pink_hatchery
+                )  
+
+
+bind <- temp_b_cov %>% slice(22)
+
+stage_b_cov <- temp_b_cov %>%
+                    rbind(bind) %>% 
+                    as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
+
 
 # number covariates for each life stage 
 ncovars1 = 2

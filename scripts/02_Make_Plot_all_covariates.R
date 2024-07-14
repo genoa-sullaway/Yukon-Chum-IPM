@@ -131,8 +131,8 @@ river_discharge_b <- read_csv("data/processed_covariates/Stage_B_YK_Discharge.cs
 stage_b_cov<- left_join(river_discharge_b,sst_b)  %>%
   left_join(hatchery_pink_b) %>%
   left_join(hatchery_chum_b) %>%
-  dplyr::rename(brood_year = "Year") %>%
-  dplyr::mutate(index_year_brood_plus1 = brood_year+1)
+  dplyr::rename(brood_year = "Year") #%>%
+  #dplyr::mutate(index_year_brood_plus1 = brood_year+2)
 
 # Stage B - Save DF ============= 
 write_csv(stage_b_cov, "data/processed_covariates/stage_b_all.csv")
@@ -143,14 +143,14 @@ stage_b_cov_plot<-stage_b_cov %>%
   gather(2:6, key = "id", value = "value") %>%
   filter(!id %in% c( "yukon_mean_discharge_summer",
                      "kusko_mean_discharge_summer"),
-         !Year <2003)
+         !brood_year <2002)
   # dplyr::mutate(id = factor(id, levels = c("SST_CDD_SEBS", 
   #                                          "Chum_hatchery",
   #                                          "Pink_hatchery",
   #                                          "kusko_mean_discharge_summer", 
   #                                          "yukon_mean_discharge_summer" )))
 
-plotb <- ggplot(data = stage_b_cov_plot, aes(x=Year, y = value, color = id, group = id)) +
+plotb <- ggplot(data = stage_b_cov_plot, aes(x=brood_year, y = value, color = id, group = id)) +
   geom_point( ) +
   geom_line( ) +
   scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Sunset2",n=5)) + 
@@ -165,6 +165,9 @@ pdf("output/plot_covariates_b.pdf", width = 7, height = 12)
 plotb
 dev.off()
 
+
+
+# Old / Plots ===============
 # Covariates B - scale ========== 
 stage_b_cov_plot <- stage_b_cov_plot %>%
   group_by(id) %>% 
