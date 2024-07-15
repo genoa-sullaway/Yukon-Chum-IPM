@@ -114,7 +114,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
               probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
+  dplyr::mutate(time = rep(1:29, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   filter(!time>21) %>% # remove years without full return estimates 
   left_join(years)  
@@ -144,8 +144,8 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
-                age = rep(3:6, length.out = nrow(.))) %>%
+  dplyr::mutate(time = rep(1:29, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>%
    filter(!time>21) %>%
   left_join(years) 
 
@@ -169,7 +169,7 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
+  dplyr::mutate(time = rep(1:29, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>% 
   filter(!time>21) 
 
@@ -312,7 +312,7 @@ ggplot(data = all_stages_scale) +
 
 # convert adults back to brood year==============
 rec_brood <- pred_N_recruit %>% 
-  mutate(brood =  time-age-1) %>% 
+  mutate(brood =  time-age-2) %>% 
   group_by(brood) %>%
   summarise(mean = sum(mean)) %>% 
   mutate(rowname = "recruit")  
@@ -326,10 +326,10 @@ brood <- summary(bh_fit, pars = c("N_sp"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
-                age = rep(3:6, length.out = nrow(.))) %>%
+  dplyr::mutate(time = rep(1:29, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>%
  # filter(!time>23) %>% 
-  mutate(brood =  time-age-1) %>% 
+  mutate(brood =  time-age-2) %>% 
   group_by(brood) %>%
   summarise(mean = sum(mean)) %>% 
   mutate(rowname = "spawner") %>% 
@@ -365,7 +365,7 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
   gather(1:4, key = "age", value = "abundance") %>% 
   dplyr::mutate(age = as.numeric(age),
-                brood = time - age-1) %>% 
+                brood = time - age) %>% 
   group_by(brood) %>%
   dplyr::summarise(obs = sum(abundance))  
                 
@@ -373,10 +373,10 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
-                age = rep(3:6, length.out = nrow(.))) %>%
+  dplyr::mutate(time = rep(1:29, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
-  mutate(brood =  time-age-1) %>% 
+  mutate(brood =  time-age-2) %>% 
   group_by(brood) %>%
   summarise(pred = sum(mean)) %>% 
   mutate(rowname = "spawner") %>%
@@ -402,7 +402,7 @@ recruit_obs_brood <- data.frame(obs = data_list_stan$data_stage_return) %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
   gather(1:4, key = "age", value = "abundance") %>% 
   dplyr::mutate(age = as.numeric(age),
-                brood = time - age-1) %>% 
+                brood = time - age) %>% 
   group_by(brood) %>%
   dplyr::summarise(obs = sum(abundance))  
 
@@ -410,10 +410,10 @@ brood_pred <- summary(bh_fit, pars = c("N_recruit"),
                       probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
-                age = rep(3:6, length.out = nrow(.))) %>%
+  dplyr::mutate(time = rep(1:29, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
-  mutate(brood =  time-age-1) %>% 
+  mutate(brood =  time-age-2) %>% 
   group_by(brood) %>%
   summarise(pred = sum(mean)) %>% 
   mutate(rowname = "recruit") %>%
@@ -439,7 +439,7 @@ harvest_obs_brood <- data.frame(obs = data_list_stan$data_stage_harvest) %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
   gather(1:4, key = "age", value = "abundance") %>% 
   dplyr::mutate(age = as.numeric(age),
-                brood = time - age-1) %>% 
+                brood = time - age) %>% 
   group_by(brood) %>%
   dplyr::summarise(obs = sum(abundance))  
 
@@ -448,7 +448,7 @@ brood_pred <- summary(bh_fit, pars = c("N_catch"),
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:28, each=4),
-                age = rep(3:6, length.out = nrow(.))) %>%
+                age = rep(1:4, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
   mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
@@ -522,7 +522,7 @@ ggplot(data = kappasurvival %>%   filter(!time<2),
   ylab("Survival Rate")
 
 ggplot(data = kappasurvival %>%
-         filter(!time<5 & !time>20), 
+         filter(!time<7 & !time>20), 
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
@@ -557,16 +557,21 @@ for (i in 1:n) {
 corr
  
 # plot estimated productivity ======
-productivity <- summary(bh_fit, pars = c("p_1", "p_2"), 
+productivity1 <- summary(bh_fit, pars = c("p_1"), 
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate( variable = case_when(grepl("p_1",rowname) ~ "p_1",
-                                      TRUE ~ "p_2"),
-                 time = case_when(variable == "p_1" ~ 1:22, #rep(1:22, length.out = 22), #nrow(.)), 
-                                  variable == "p_2" ~ 1:23)) #rep(1:23, length.out = 23))) #nrow(.))))
-                # variable = case_when(grepl("p_1",rowname) ~ "p_1",
-                #                      TRUE ~ "p_2"))  
+  dplyr::mutate( variable = "p_1",
+                 time =  1:nrow(.)) 
+  
+productivity2 <- summary(bh_fit, pars = c("p_2"), 
+                         probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate( variable = "p_2",
+                 time =  1:nrow(.)) 
+
+productivity <- rbind(productivity1,productivity2)
 
 ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
@@ -588,11 +593,12 @@ cor.test(productivity_split$p_1,productivity_split$p_2)
 
 # calculate rolling correlation in productivity....
 # make a list of 5 year chunks .... 
+# could also look at warm vs cold year productivity 
 n <- 5
 productivity_group <- productivity %>% 
   select(time, variable,mean) %>% 
   spread(variable, mean) %>% 
-   filter(!time == 21) %>% 
+   filter(!time %in% c(23,1,2)) %>% 
   mutate(id = rep(1:n, times=1, each=4)) 
  
 corr <- list()
@@ -647,76 +653,3 @@ age_comp <- summary(bh_fit, pars = c("p"),
 ggplot(data = age_comp) +
   geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
   theme_classic()
-
-# plot theta ========
-theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]",
-                                  "theta2[1]","theta2[2]"
-                                  ), 
-                 probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column() 
-
-ggplot(data = theta,aes(x= mean, y = rowname, group = rowname, color = rowname)) +
-  geom_point() + 
-  theme_classic() +
-  geom_errorbar(aes(xmin =X10., xmax = X90.),width = 0.1) + 
-  facet_wrap(~rowname,scales = "free") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
-  geom_vline(xintercept=0)
- 
-# library(bayesplot)
-# mcmc_intervals(bh_fit, pars = c("theta1[1]","theta2[1]"))
-# mcmc_areas(
-#   bh_fit, 
-#   pars = c("theta1[1]","theta2[1]"), 
-#   prob = 0.8, # 80% intervals
-#   prob_outer = 0.99, # 99%
-#   point_est = "mean"
-# )
-# PLOT PARAMS  ======================  
-# data_list - holds simulated values, this is from: simulate_data_age_structure.R
-params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
-                                   "D_scale", "theta1", "theta2",
-                                   "basal_p_1", "basal_p_2"), 
-                  probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column() %>%
-  dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1_1",
-                                    rowname == "theta1[2]"~ "theta1_2",
-                                    rowname == "theta2[1]"~ "theta2_1",
-                                    TRUE ~ rowname))
-
-params %>% 
-  ggplot() + 
-  geom_linerange(aes(rowname, ymin = X10.,ymax = X90.)) + 
-  geom_crossbar(aes(rowname, mean, ymin = X10.,ymax = X90.),  fill= 'grey') + 
-  #geom_point(aes(x=rowname, y = mean_obs), color = "red") + 
-  facet_wrap(~rowname, scales = 'free')  
-
-# estimated kappa marine mortality ======
-kappa_marine_mortality <- summary(bh_fit, pars = c("kappa_marine_mortality"), 
-                                  probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  mutate(mean = exp(mean),
-         time = 1:nrow(.)) 
-
-kappa_marine_survival <- summary(bh_fit, pars = c("kappa_marine_survival"), 
-                                 probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  mutate(mean = exp(mean),
-         time = 1:nrow(.),
-         mort = -log(mean))
-
-
-# calculate SR based one stiamted values========
-test <- summary(bh_fit, pars = c("kappa_j_survival", "p_1", "N_egg_start_log"), 
-                                 probs = c(0.1, 0.9))$summary  
-
-
-
-
-
-
-

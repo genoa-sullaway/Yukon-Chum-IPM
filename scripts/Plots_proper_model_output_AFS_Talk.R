@@ -170,6 +170,38 @@ ggplot(data = pred_N_eggs_sum) +
   geom_line(aes(x=time, y = mean)) 
   
 
+# Productivity =======
+productivity1 <- summary(bh_fit, pars = c("p_1"), 
+                         probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate( variable = "p_1",
+                 time =  1:nrow(.)) 
+
+productivity2 <- summary(bh_fit, pars = c("p_2"), 
+                         probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate( variable = "p_2",
+                 time =  1:nrow(.)) 
+
+productivity <- rbind(productivity1,productivity2)
+
+ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) +
+  facet_wrap(~variable, scales = "free")
+
+ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5)
+
+
+
+
+
 # estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("F"), 
                    probs = c(0.1, 0.9))$summary %>%
