@@ -522,7 +522,7 @@ ggplot(data = kappasurvival %>%   filter(!time<2),
   ylab("Survival Rate")
 
 ggplot(data = kappasurvival %>%
-         filter(!time<7 & !time>20), 
+         filter(!time<5 & !time>20), 
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
