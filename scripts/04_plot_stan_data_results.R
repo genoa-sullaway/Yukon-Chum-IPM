@@ -310,7 +310,7 @@ ggplot(data = all_stages_scale) +
   ylab("mean scaled")
 
 
-# convert adults back to brood year==============
+# brood year convert ==============
 rec_brood <- pred_N_recruit %>% 
   mutate(brood =  time-age-2) %>% 
   group_by(brood) %>%
@@ -447,10 +447,10 @@ brood_pred <- summary(bh_fit, pars = c("N_catch"),
                       probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
+  dplyr::mutate(time = rep(1:29, each=4),
                 age = rep(1:4, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
-  mutate(brood =  time-age-1) %>% 
+  mutate(brood =  time-age-2) %>% 
   group_by(brood) %>%
   summarise(pred = sum(mean)) %>% 
   mutate(rowname = "harvest") %>%
@@ -462,7 +462,6 @@ brood_pred <- summary(bh_fit, pars = c("N_catch"),
 ggplot(data = brood_pred) + 
   geom_line(aes(x=brood, y = value, group = id, color = id)) +
   ggtitle(("Comapre harvest by brood year"))  
-
 
 # Add juveniles by brood Year ============
 brood_year_j <- summ_n_j %>%

@@ -47,13 +47,7 @@ parameters {
  vector <lower= 0> [t_start] N_recruit_start_log;
  vector <lower= 0> [t_start] N_catch_start_log;
  vector <lower= 0> [t_start] N_egg_start_log;
- 
- // vector <lower=5, upper = 17>[t_start]N_first_winter_start_log;
- // vector <lower=5, upper = 16>[t_start]N_sp_start_log;
- // vector <lower=5, upper = 16>[t_start]N_recruit_start_log;
- // vector [t_start] N_catch_start_log;
- // vector <lower=5, upper = 17>[t_start] N_egg_start_log;
- 
+
 // covariate parameters 
 real <lower= -2, upper = 2> theta1 [ncovars1]; // covariate estimated for each covariate and each population
 real <lower= -2, upper = 2> theta2 [ncovars2];
@@ -69,7 +63,7 @@ real log_F_mean;
 real <lower=0.1, upper = 0.9> basal_p_1; // mean alpha for covariate survival stage 1
 real <lower=0.1, upper = 0.9> basal_p_2; // mean alpha for covariate survival stage 2
 
- real sigma_y_j;
+ // real sigma_y_j;
 }
 
 transformed parameters { 
@@ -77,7 +71,7 @@ transformed parameters {
  vector[nByrs+1] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
  vector[nByrs+1] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
 
- real N_first_winter [nRyrs_T+1,A]; 
+ real N_first_winter [nRyrs_T+2,A]; 
  real N_recruit [nRyrs_T+2,A]; 
  real N_sp [nRyrs_T+2,A];
  real N_catch [nRyrs_T+2,A];
@@ -283,9 +277,9 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
          kappa_marine_mortality[t+2] = -log(kappa_marine_survival[t+2]);
      
         for (a in 1:A) { 
-          N_first_winter[t+a+1,a] =  N_j[t+1]*p[a]; // add age structure, p is proportion per age class
+          N_first_winter[t+a+2,a] =  N_j[t+1]*p[a]; // add age structure, p is proportion per age class
        
-          N_recruit[t+a+2,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+2])); // add age specific mortality, 
+          N_recruit[t+a+2,a] = N_first_winter[t+a+2,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+2])); // add age specific mortality, 
 
           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-F[t+a+2]));
            
@@ -309,7 +303,7 @@ for(t in 1:nByrs){
 }
 
 model {
-  sigma_y_j ~ uniform(0,5); //normal 
+  // sigma_y_j ~ uniform(0,5); //normal 
  
   log_catch_q ~ normal(0,5);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
   
@@ -385,9 +379,9 @@ model {
 
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
-     target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])),sqrt(log((0.01^2) + 1))); //sqrt(log((data_recruit_cv[t]^2) + 1))); // sqrt(log((0.06^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])),sqrt(log((0.05^2) + 1))); //sqrt(log((data_recruit_cv[t]^2) + 1))); // sqrt(log((0.06^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
      target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.01^2) + 1)));    
-     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.01^2) + 1)));//sqrt(log((data_sp_cv[t]^2) + 1))); // sigma_y_sp);
+     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.05^2) + 1)));//sqrt(log((data_sp_cv[t]^2) + 1))); // sigma_y_sp);
 
   }
 }  
