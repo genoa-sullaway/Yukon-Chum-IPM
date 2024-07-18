@@ -104,8 +104,12 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.89,
      pars=  c( "theta_1_1_pp","theta_1_2_pp",#"theta_1_2_sim",
               # "theta_1_3_sim","theta_1_4_sim",
                #"theta1[2]","theta1[3]","theta1[4]",
-               "theta_2_1_pp","theta_2_2_pp" #"theta_2_2_sim"#,"theta2[2]","theta2[3]" 
-     ),
+               "theta_2_1_pp","theta_2_2_pp"),
+     fill_color = "blue")
+
+# plot juveniles PP =================
+plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
+     pars=  c("N_j_pp"),
      fill_color = "blue")
 
 # Plot Observed vs Predicted ========

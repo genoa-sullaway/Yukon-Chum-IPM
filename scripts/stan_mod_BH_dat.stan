@@ -63,7 +63,7 @@ real log_F_mean;
 real <lower=0.1, upper = 0.9> basal_p_1; // mean alpha for covariate survival stage 1
 real <lower=0.1, upper = 0.9> basal_p_2; // mean alpha for covariate survival stage 2
 
- // real sigma_y_j;
+real sigma_y_j;
 }
 
 transformed parameters { 
@@ -303,7 +303,7 @@ for(t in 1:nByrs){
 }
 
 model {
-  // sigma_y_j ~ uniform(0,5); //normal 
+  sigma_y_j ~ uniform(0,5); //normal 
  
   log_catch_q ~ normal(0,5);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
   
@@ -366,7 +366,7 @@ model {
 // Likelilihoods --  
   // Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.05^2) + 1))); //sigma_y_j); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sigma_y_j);//sqrt(log((0.05^2) + 1))); //sigma_y_j); // not sure if this is liklihood is right, returning here is escapement + harvest
     } 
 
 // // Likelilihoods --  
@@ -379,7 +379,7 @@ model {
 
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
-     target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])),sqrt(log((0.05^2) + 1))); //sqrt(log((data_recruit_cv[t]^2) + 1))); // sqrt(log((0.06^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])),sqrt(log((0.01^2) + 1))); //sqrt(log((data_recruit_cv[t]^2) + 1))); // sqrt(log((0.06^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
      target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.01^2) + 1)));    
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.05^2) + 1)));//sqrt(log((data_sp_cv[t]^2) + 1))); // sigma_y_sp);
 
@@ -410,7 +410,7 @@ N_sp_pp[t] = normal_rng(log(sum(N_sp[t,1:A]))- 0.5 * sqrt(log((data_sp_cv[t]^2) 
   }
   
 for(t in 1:nByrs){
- N_j_pp[t] = normal_rng(log(N_j_predicted[t])- 0.5 * 0.05^2, 0.05); // sigma_y_j^2, sigma_y_j);
+ N_j_pp[t] = normal_rng(log(N_j_predicted[t])- 0.5 *sigma_y_j^2, sigma_y_j); //0.05^2, 0.05); // 
   }
 }
 
