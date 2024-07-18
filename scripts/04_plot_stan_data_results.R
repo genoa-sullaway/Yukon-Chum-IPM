@@ -42,6 +42,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,  na.rm = TRUE,
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
                "theta1[2]",
+               "theta1[3]",
                "theta2[1]",
                "theta2[2]"#,
              #  "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
@@ -92,7 +93,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "sigma_y_j"),
      fill_color = "blue")
 
-  plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
       pars=  c( "N_first_winter_start_log",
                 "N_j_start_log",
                 "N_sp_start_log",

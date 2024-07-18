@@ -69,32 +69,6 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
 spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>% 
   filter(year >= year_min, 
          year <= 2022)  
- 
-# Summer ================================================
-# summer_age_comp<-read_csv("data/age_comps/processed_age_comps_summer_yukon.csv")  %>% 
-#   filter(!cal_year < 2005 )
-# summer_brood <- read_csv("output/yukon_summer_broodyear.csv")%>%
-#   filter(!brood_year < 2002) # for now to simplify matching with juveniles
-# yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", sheet = 2) %>%
-#   dplyr::select(1,11:14) %>% 
-#   janitor::row_to_names(row_number = 1) %>%
-#   dplyr::rename(cal_year = "Year")  %>%
-#   dplyr::mutate(age3=as.numeric(age3),
-#                 age4=as.numeric(age4),
-#                 age5=as.numeric(age5),
-#                 age6=as.numeric(age6)) %>% 
-#   filter(!cal_year < 2005)
-# ## harvest below weir 
-# harvest_escapement <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", sheet = 2) %>%
-#   dplyr::select(1:2,4) %>%  
-#   janitor::row_to_names(row_number = 1)  %>% 
-#   dplyr::rename(cal_year = "Year") %>% 
-#   dplyr::mutate(cal_year = as.numeric(cal_year), 
-#          Harvest = as.numeric(Harvest), 
-#          Escapement = as.numeric(Escapement)) %>% 
-#   filter(!cal_year < 2005) %>% # from brood year 2002 (first year of juvenile data), the first year that fish could return is 2005 if its a 3yo, the last yera it coudl return is 2007 if its a 6yo. 
-#   as.data.frame()  #%>%  
-#  #as.matrix()
 
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
@@ -102,35 +76,38 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
          Year <= year_max_brood+1) %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
-  dplyr::select(SST_CDD_NBS,# yukon_mean_discharge,Cnideria,
+  dplyr::select(SST_CDD_NBS,# yukon_mean_discharge,
+                Cnideria,
                 Large_zoop,
                 #,yukon_mean_discharge 
                 ) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
  
 temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-  filter(brood_year >= year_min, 
-         brood_year <= year_max_brood+2) %>% 
+  filter(brood_year >= year_min-1, 
+         brood_year <= year_max_brood+1) %>% 
+#         brood_year <= year_max_brood+2) %>% 
   dplyr::mutate(SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
                 Chum_hatchery= as.numeric(scale(Chum_hatchery)),
                 Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
   ) %>% 
   dplyr::select(SST_CDD_GOA,
-                 Chum_hatchery
-                #,Pink_hatchery
+                # Chum_hatchery
+                #,
+                Pink_hatchery
                 )  
 
 
-bind <- temp_b_cov %>% slice(22)
+#bind <- temp_b_cov %>% slice(22)
 
 stage_b_cov <- temp_b_cov %>%
-                    rbind(bind) %>% 
+                  #  rbind(bind) %>% 
                     as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
 
 # number covariates for each life stage 
-ncovars1 = 2
+ncovars1 = 3
 ncovars2 = 2
 
 # Organize data call inputs ================================================

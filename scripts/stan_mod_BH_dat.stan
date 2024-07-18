@@ -236,12 +236,15 @@ for(t in 1:t_start){
   cov_eff1[t+1,c] = theta1[c]*cov1[t+1,c]; // covariates for juveniles t+1 
    }
    for (c in 1:ncovars2) {
-     if(c==1){ // GOA temperature  
+      if(c==1){ // GOA temperature  
   cov_eff2[t+2,c] = theta2[c]*cov2[t+2,c]; // first winter, t+a+1, a=1 
      }
-     if(c==2){ // Chum hatchery - shouldn't be forwarding looking to compare the covariate, because they are hatchery releases, so releases during the brood year, will be competing in the ocean at t+2
-  cov_eff2[t+2,c] = theta2[c]*cov2[t,c]; //  
+     if(c==2){ // pink hatchery - shouldn't be forwarding looking to compare the covariate, because they are hatchery releases, so releases during the brood year, will be competing in the ocean at t+2
+  cov_eff2[t+2,c] = theta2[c]*cov2[t+1,c]; //  
      }
+  //    if(c==2){ // Chum hatchery - shouldn't be forwarding looking to compare the covariate, because they are hatchery releases, so releases during the brood year, will be competing in the ocean at t+2
+  // cov_eff2[t+2,c] = theta2[c]*cov2[t,c]; //  
+  //    }
      
    }
     p_1[t+1]  = 1 / (1 + exp(basal_p_1+ sum(cov_eff1[t+1,1:ncovars1])));
@@ -328,18 +331,19 @@ model {
   // print("N_e_sum_start_log:", N_e_sum_start_log);
       // print("N_catch_start_log:", N_catch_start_log);
       // print("N_sp_start_log:", N_sp_start_log);
- theta1[1] ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
- theta1[2] ~ normal(0,0.01); // environmental covariate coefficient stage 1
- // theta1[3] ~ normal(0,0.01); 
+ theta1[1] ~ normal(0,0.03); //normal(0.5,5); // environmental covariate coefficient stage 1
+ theta1[2] ~ normal(0,0.03); // environmental covariate coefficient stage 1
+ theta1[3] ~ normal(0,0.03);
  
- // theta1[3]  ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
- // theta1[4] ~ normal(0,0.01); // environmental covariate coefficient stage 1
-
- theta2[1] ~ normal(0,0.01);
- theta2[2] ~ normal(0,0.01);
-    // theta2[2] ~ normal(0,1); // environmental covariate coefficient stage 1
-    // theta2[3]  ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
-    // theta2[4] ~ normal(0,1);
+ theta2[1] ~ normal(0,0.03);
+ theta2[2] ~ normal(0,0.03);
+ // theta1[1] ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
+ // theta1[2] ~ normal(0,0.01); // environmental covariate coefficient stage 1
+ // theta1[3] ~ normal(0,0.01);
+ // 
+ // theta2[1] ~ normal(0,0.01);
+ // theta2[2] ~ normal(0,0.01);
+ 
  
     D_scale ~ beta(1,1);  
     
