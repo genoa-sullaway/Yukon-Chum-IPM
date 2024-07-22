@@ -74,15 +74,17 @@ spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   filter(Year >= year_min, 
          Year <= year_max_brood+1) %>%
+  # zoop are already mean scaled
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
   dplyr::select(SST_CDD_NBS,# yukon_mean_discharge,
-                Cnideria,
                 Large_zoop,
+                Cnideria
                 #,yukon_mean_discharge 
                 ) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
- 
+
+# the temp in 2001 is gonna effect fish from brood year 1999
 temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(brood_year >= year_min-1, 
          brood_year <= year_max_brood+1) %>% 
@@ -113,12 +115,12 @@ ncovars2 = 2
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
 nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
-nRyrs_T = nByrs + 4 + 2
+nRyrs_T = nByrs + 4 + 1
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = A + 2 # to fill starting values 
+t_start = A + 1 # to fill starting values 
 
 # mean productivity rate =====
 # estimating this now

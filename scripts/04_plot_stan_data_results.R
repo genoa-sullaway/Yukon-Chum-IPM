@@ -31,13 +31,6 @@ traceplot(bh_fit,pars=  c("N_j_predicted"))
 traceplot(bh_fit,pars=  c("N_j_start_log"))
 
 # parameter plots ======== 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, na.rm = TRUE,
-     pars=  c( "kappa_j_survival"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  na.rm = TRUE,
-     pars=  c( "kappa_marine_survival"),
-     fill_color = "blue")
 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
@@ -48,15 +41,7 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
              #  "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
      ),
      fill_color = "blue")
-# 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "p_1" ),
-     fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "p_2"),
-     fill_color = "blue")
-  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_mean"),
      fill_color = "blue")
@@ -100,7 +85,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
                 "N_egg_start_log",
                 "N_recruit_start_log"),
        fill_color = "blue")
-
+ 
 plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
      pars=  c( "theta_1_1_pp","theta_1_2_pp",#"theta_1_2_sim",
               # "theta_1_3_sim","theta_1_4_sim",
@@ -108,11 +93,7 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.89,
                "theta_2_1_pp","theta_2_2_pp"),
      fill_color = "blue")
 
-# plot juveniles PP =================
-plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
-     pars=  c("N_j_pp"),
-     fill_color = "blue")
-
+ 
 # Plot Observed vs Predicted ========
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
@@ -132,17 +113,18 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
 summ_n_sp <- pred_N_SP %>%
   group_by(cal_year) %>%
   summarise(mean = sum(mean),
-            se_mean = mean(se_mean)) %>%
+            sd = mean(sd) ) %>%
   cbind(obs = data_list_stan$data_stage_sp) %>%
   mutate(rowname = "sp")  
   
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=cal_year, y = obs)) +
   geom_line(aes(x=cal_year, y = mean)) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean)) +
-  ggtitle("spawners: obs and predicted")+
-  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020))
+  geom_ribbon(aes(x=cal_year, ymin = mean-sd,
+                  ymax = mean+sd)) +
+  ggtitle("Spawners: obs and predicted")+
+  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
+  theme_classic()
 
 ## recruits ====== 
 pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
@@ -235,13 +217,12 @@ ggplot(data = summ_n_j) +
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
 
- 
 ## eggs =============================
 pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"), 
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:22, each=1)) %>%
+  dplyr::mutate(time = rep(1:29, each=1)) %>%
   filter(!time == 22) %>% 
   cbind(obs_j = data_list_stan$data_stage_j,
        pred_j = pred_N_j$mean) %>% 
@@ -317,7 +298,7 @@ ggplot(data = all_stages_scale) +
 
 # brood year convert ==============
 rec_brood <- pred_N_recruit %>% 
-  mutate(brood =  time-age-2) %>% 
+  mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
   summarise(mean = sum(mean)) %>% 
   mutate(rowname = "recruit")  
@@ -331,10 +312,10 @@ brood <- summary(bh_fit, pars = c("N_sp"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:29, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(1:4, length.out = nrow(.))) %>%
  # filter(!time>23) %>% 
-  mutate(brood =  time-age-2) %>% 
+  mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
   summarise(mean = sum(mean)) %>% 
   mutate(rowname = "spawner") %>% 
@@ -379,16 +360,18 @@ sp_obs_brood <- data.frame(obs = data_list_stan$data_stage_sp) %>%
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:29, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>%
-  #filter(!time>23) %>% 
-  mutate(brood =  time-age-2) %>% 
+                age = rep(3:6, length.out = nrow(.))) %>%
+    #filter(!time>23) %>% 
+  dplyr::mutate(brood =  time-age) %>% 
+  #  age = rep(1:4, length.out = nrow(.))) %>%
+  # #filter(!time>23) %>% 
+  # mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
-  summarise(pred = sum(mean)) %>% 
+  dplyr::summarise(pred = sum(mean)) %>% 
   mutate(rowname = "spawner") %>%
   left_join(sp_obs_brood) %>% 
   dplyr::select(-rowname) %>% 
-  gather(2:3, key = "id", value = "value") #%>%
-#  filter(!brood<2)
+  gather(2:3, key = "id", value = "value")  
 
 ggplot(data = brood_pred) + 
   geom_line(aes(x=brood, y = value, group = id, color = id)) +
@@ -416,21 +399,22 @@ brood_pred <- summary(bh_fit, pars = c("N_recruit"),
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:29, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>%
+                age = rep(3:6, length.out = nrow(.))) %>%
   #filter(!time>23) %>% 
-  mutate(brood =  time-age-2) %>% 
+  dplyr::mutate(brood =  time-age) %>% 
+  #  age = rep(1:4, length.out = nrow(.))) %>%
+  # #filter(!time>23) %>% 
+  # mutate(brood =  time-age-1) %>% 
   group_by(brood) %>%
   summarise(pred = sum(mean)) %>% 
   mutate(rowname = "recruit") %>%
   left_join(recruit_obs_brood) %>% 
   dplyr::select(-rowname) %>% 
-  gather(2:3, key = "id", value = "value") #%>%
-  # filter(!brood<2)
+  gather(2:3, key = "id", value = "value")  
 
 ggplot(data = brood_pred) + 
   geom_line(aes(x=brood, y = value, group = id, color = id)) +
-  ggtitle(("Comapre recruits by brood year")) # +
-#facet_wrap(~rowname,scales = "free")
+  ggtitle(("Compare recruits by brood year"))  
 
 # catch by brood Year ============
 age_comp = (data_list_stan$p_obs)
@@ -453,9 +437,11 @@ brood_pred <- summary(bh_fit, pars = c("N_catch"),
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:29, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>%
+                # age = rep(1:4, length.out = nrow(.)),
+                age = rep(3:6, length.out = nrow(.)),
+                ) %>%
   #filter(!time>23) %>% 
-  mutate(brood =  time-age-2) %>% 
+  mutate(brood =  time-age) %>% 
   group_by(brood) %>%
   summarise(pred = sum(mean)) %>% 
   mutate(rowname = "harvest") %>%
@@ -474,7 +460,8 @@ brood_year_j <- summ_n_j %>%
   rename(brood = "time",
          mean_juv = "mean",
          obs_j = "obs") %>% 
-  mutate(obs_j = obs_j*100 ) %>% 
+  mutate(obs_j = obs_j*100,
+         brood = brood-1) %>% 
   gather(1:2, key = "id", value = "value") 
 
 brood_pred2 <- brood_pred %>% 
@@ -526,7 +513,7 @@ ggplot(data = kappasurvival %>%   filter(!time<2),
   ylab("Survival Rate")
 
 ggplot(data = kappasurvival %>%
-         filter(!time<5 & !time>20), 
+         filter(!time<7 & !time>20), 
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
@@ -657,3 +644,79 @@ age_comp <- summary(bh_fit, pars = c("p"),
 ggplot(data = age_comp) +
   geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
   theme_classic()
+
+
+# Plot covariates with respective salmon population ======
+cov_B_forplot <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+  rename(cov_year = "brood_year") %>%
+  filter(cov_year >= year_min-1, 
+         cov_year <= year_max_brood+1) %>% 
+  dplyr::mutate(SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
+                Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+                Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                brood_year = cov_year-2 # this is the effect year 
+                # the temp in 2001 is gonna effect fish from brood year 1999
+                #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
+  )  %>% 
+  dplyr::select(brood_year, cov_year,SST_CDD_GOA)
+
+brood_year_recruits <- summary(bh_fit, pars = c("N_recruit"), 
+                          probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:27, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>%
+  filter(!time>21) %>%
+  left_join(years)  %>%
+  # group_by(cal_year) %>%
+  # summarise(mean = sum(mean),
+  #           se_mean = mean((sd))) %>% 
+  mutate(rowname = "recruit",
+         brood_year =  cal_year-age-1) %>% 
+  group_by(brood_year) %>%
+  summarise(mean = sum(mean)) %>% 
+  mutate(mean = as.numeric(scale(mean))) %>% 
+  mutate(rowname = "recruit")  %>% 
+  left_join(cov_B_forplot) 
+ 
+# covariate effect2 and observed/ pred recruits 
+ ggplot(data =brood_year_recruits) +
+   geom_line(aes(x=brood_year, y = mean)) + 
+   geom_line(aes(x=brood_year, y = SST_CDD_GOA), color = "purple") +
+   labs(caption = "purple is the covariate")
+   
+
+
+# Covariates at time t+x with observed pred recruits 
+
+
+
+
+# covariate effect2 and observed/ pred spawners 
+
+
+
+# Covariates at time t+x with observed pred spawners 
+
+
+
+
+# look at theta posteriors =========== 
+fit_summary <- summary(bh_fit)
+print(names(fit_summary))
+print(fit_summary$summary)
+
+test <- rstan::extract(bh_fit)#, pars = 'theta1[1]') #c("theta1[1]"))
+theta_draws<-as.data.frame(test$theta1)
+sd(theta_draws[1,])
+
+mean(theta_draws[1,])
+
+plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
+     pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
+               "theta1[2]",
+               "theta1[3]",
+               "theta2[1]",
+               "theta2[2]"#,
+               #  "theta2[2]"#,"t
+ 
