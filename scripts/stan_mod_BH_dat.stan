@@ -15,9 +15,9 @@ data { // all equation references are from proposal numbering
   vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
 
-real kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
+vector [2] kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
+vector [2] kappa_marine_mort_start;
 real kappa_j_start;
-real kappa_marine_mort_start;
 
 vector[nRyrs] data_recruit_cv; 
 vector[nRyrs] data_sp_cv; // from run reconstruciton 
@@ -69,14 +69,14 @@ real sigma_y_j;
 transformed parameters { 
  vector[nByrs+1] N_j; // predicted juveniles 
  vector[nByrs+1] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
- vector[nByrs+1] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
+ vector[nByrs+2] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
 
- real N_first_winter [nRyrs_T+1,A]; 
- real N_recruit [nRyrs_T+1,A]; 
- real N_sp [nRyrs_T+1,A];
- real N_catch [nRyrs_T+1,A];
- real N_ocean[nRyrs_T+1,A];
- real N_e [nRyrs_T+1,A];
+ real N_first_winter [nRyrs_T+2,A]; 
+ real N_recruit [nRyrs_T+2,A]; 
+ real N_sp [nRyrs_T+2,A];
+ real N_catch [nRyrs_T+2,A];
+ real N_ocean[nRyrs_T+2,A];
+ real N_e [nRyrs_T+2,A];
 
 real N_sp_start [t_start,A];
 real N_recruit_start [t_start,A];
@@ -84,9 +84,10 @@ real N_catch_start [t_start,A];
 real N_egg_start[t_start,A];
 real N_first_winter_start[t_start,A];
 real N_j_start;
-// real N_e_sum_start;
+
 real c_1;
 real c_2;
+
 // survival and covariate section 
 vector   [nByrs+1] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
 vector   [nByrs+2] p_2;
@@ -114,9 +115,9 @@ vector<lower=0, upper=1> [A] pi;
 vector [nRyrs_T] F; // instantaneous fishing mortality           
 
 // starting value transformations ======
-  // kappa_marine_survival[1] = kappa_marine_start;
-  // kappa_marine_mortality[1] = kappa_marine_mort_start;
-  // kappa_j_survival[1]= kappa_j_start;
+  kappa_marine_survival[1:2] = kappa_marine_start;
+  kappa_marine_mortality[1:2] = kappa_marine_mort_start;
+  kappa_j_survival[1]= kappa_j_start;
  
   for(t in 1:nRyrs_T){//  
   // instant fishing mortality 
@@ -280,15 +281,15 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
          kappa_marine_mortality[t+2] = -log(kappa_marine_survival[t+2]);
      
         for (a in 1:A) { 
-          N_first_winter[t+a+1,a] =  N_j[t+1]*p[a]; // add age structure, p is proportion per age class
+          N_first_winter[t+a+2,a] =  N_j[t+1]*p[a]; // add age structure, p is proportion per age class
        
-          N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+2])); // add age specific mortality, 
+          N_recruit[t+a+2,a] = N_first_winter[t+a+2,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+2])); // add age specific mortality, 
 
-          N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-F[t+a+1]));
+          N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-F[t+a+2]));
            
-          N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a]; // fishing occurs before spawning -- 
+          N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
              
-          N_e[t+a+1,a] = fs[a]*Ps*N_sp[t+a+1,a]; 
+          N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; 
          }
      }
      
@@ -370,7 +371,7 @@ model {
 // Likelilihoods --  
   // Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sigma_y_j);//sqrt(log((0.05^2) + 1))); //sigma_y_j); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.2^2) + 1)));//sigma_y_j);//sqrt(log((0.05^2) + 1))); //sigma_y_j); // not sure if this is liklihood is right, returning here is escapement + harvest
     } 
 
 // // Likelilihoods --  
@@ -393,28 +394,35 @@ model {
 generated quantities{
 real  theta_1_1_pp ;   
 real  theta_1_2_pp ; 
-// real  theta_1_3_pp ; 
+real  theta_1_3_pp ; 
 
 real  theta_2_1_pp ;
 real  theta_2_2_pp ;
 
+// real log_N_sp_pp [nRyrs];
 real N_sp_pp [nRyrs];
+real N_catch_pp [nRyrs];
+real N_rec_pp [nRyrs];
 real N_j_pp [nByrs];
 
 // added log normal correcrtions 
-theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.01);
-theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.01);
-// theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.25^2,0.25);
+theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.1);
+theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.1);
+theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.1);
  
-theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.01);
-theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.01);
+theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.1);
+theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.1);
 
 for(t in 1:nRyrs){
-N_sp_pp[t] = normal_rng((sum(N_sp[t,1:A]))- 0.5 * sqrt((data_sp_cv[t]^2) + 1)^2, sqrt((data_sp_cv[t]^2) + 1)); 
+// log_N_sp_pp[t] = lognormal_rng(log(sum(N_sp[t,1:A]))), 1); //(sqrt(log(data_sp_cv[t]^2) + 1))); 
+N_sp_pp[t] = normal_rng((sum(N_sp[t,1:A]))- 0.5 * sqrt((data_sp_cv[t]^2) + 1)^2, 1); //(sqrt(log(data_sp_cv[t]^2) + 1))); 
+N_catch_pp[t] = normal_rng((sum(N_catch[t,1:A]))- 0.5 * sqrt((0.1^2) + 1)^2, 1);//(0.1)); 
+N_rec_pp[t] = normal_rng((sum(N_recruit[t,1:A]))- 0.5 * sqrt((data_recruit_cv[t]^2) + 1)^2, 1);//(sqrt(log(data_recruit_cv[t]^2) + 1))); 
+
   }
   
 for(t in 1:nByrs){
- N_j_pp[t] = normal_rng((N_j_predicted[t])- 0.5 *sigma_y_j^2, sigma_y_j); //0.05^2, 0.05); // 
+ N_j_pp[t] = normal_rng((N_j_predicted[t])- 0.5 *0.5^2, 0.5); //0.05^2, 0.05); // 
   }
 }
 

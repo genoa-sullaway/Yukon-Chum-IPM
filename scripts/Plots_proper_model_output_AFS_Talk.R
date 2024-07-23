@@ -7,13 +7,11 @@ library(rstanarm)
 
 # load model ==============
 bh_fit<- read_rds("output/stan_fit_DATA.RDS")
-
+year_min = 2002
 years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min) %>%
   dplyr::select(cal_year) %>%
   dplyr::mutate(time = c(1:nrow(.)))
-
-
 
 # Spawners PP ====== 
 pred_N_SP_sim <- summary(bh_fit, pars = c("N_sp_pp"), 
@@ -22,11 +20,8 @@ pred_N_SP_sim <- summary(bh_fit, pars = c("N_sp_pp"),
   rownames_to_column()  %>%
   dplyr::mutate(time = 1:nrow(.),
                  mean=  (mean),
-                 # ci_10 =  (X10.),
-                 # ci_90 =  (X90.)
                  ci_10 =  (X10.),
-                 ci_90 =  (X90.)
-                ) %>%
+                 ci_90 =  (X90.)) %>%
   left_join(years) %>%
   cbind(obs = data_list_stan$data_stage_sp) %>%
   dplyr::mutate(rowname = "sp")  
@@ -181,28 +176,15 @@ ggplot(data = productivity, aes(x=cal_year, y = mean, group = variable ,color = 
 
 ggplot(data = productivity, aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-sd,
-                  ymax = mean+sd#X90.
+  geom_ribbon(aes(x=cal_year, ymin = X10.,
+                  ymax = X90.,
                   ), alpha = 0.5) + 
   theme_classic() +
   xlab("Calendar Year") +
   ylab("Productivity") +
   theme(legend.title = element_blank())
 
-# estimated fishing mortality ======
-fishing <- summary(bh_fit, pars = c("F"), 
-                   probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  mutate(mean =  (mean),
-         time = 1:nrow(.)) %>% 
-  filter(!time> 21 & !time<5)
-
-ggplot(data = fishing) + 
-  geom_line(aes(x=time, y = mean)) + 
-  ylab("Instantaneous fishing mortality")
-
-# plot  estimated kappas survival ======
+# Survival ======
 kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
                          probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
@@ -210,14 +192,13 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
   dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
                 variable = case_when(grepl("kappa_marine_survival",rowname) ~ "Marine Survival",
                                      TRUE ~ "Juvenile Survival")) %>% 
-  left_join(years)# %>% 
-#filter(!time<5 & !time>20)
+  left_join(years)
 
 ggplot(data = kappasurvival,
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) + 
+  geom_ribbon(aes(x=cal_year, ymin = X10.,
+                  ymax = X90.), alpha = 0.5) + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
   theme_classic() +
   xlab("Calendar Year") +
@@ -228,8 +209,8 @@ ggplot(data = kappasurvival,
 ggplot(data = kappasurvival %>% filter(!time<2),
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) +
+  geom_ribbon(aes(x=cal_year, ymin = X10.,
+                  ymax = X90.), alpha = 0.5) +
   facet_wrap(~variable, scales = "free") + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
   theme_classic() + 
@@ -241,45 +222,38 @@ ggplot(data = kappasurvival %>%
          filter(!time<8 & !time>20), 
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) +
+  geom_ribbon(aes(x=cal_year, ymin = X10.,
+                  ymax = X90.), alpha = 0.5) +
   facet_wrap(~variable, scales = "free") + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
   theme_classic() + 
   xlab("Calendar Year") + 
   ylab("Survival Rate")
 
-# plot estimated productivity ======
-productivity <- summary(bh_fit, pars = c("p_1", "p_2"), 
-                        probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
-                variable = case_when(grepl("p_1",rowname) ~ "p_1",
-                                     TRUE ~ "p_2"))  
-
-ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
-  geom_line( ) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) +
-  facet_wrap(~variable, scales = "free")
-
-ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
-  geom_line( ) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5)
-
 # plot theta ========
-theta <- summary(bh_fit, pars = c("theta_1_1_pp","theta_1_2_pp",
+theta <- summary(bh_fit, pars = c("theta_1_1_pp","theta_1_2_pp","theta_1_3_pp",
                                   "theta_2_1_pp","theta_2_2_pp"), 
                  probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
-  rownames_to_column() 
+  rownames_to_column() %>% 
+  dplyr::mutate(rowname = case_when(rowname=="theta_1_1_pp" ~ "NBS July/August Temperature",
+                                    rowname== "theta_1_2_pp" ~ "Large Zooplankton Index",
+                                    rowname=="theta_1_3_pp" ~ "Gelatinous Zooplankton Index",
+                                    rowname== "theta_2_1_pp" ~ "GOA Winter Temperature",
+                                    rowname=="theta_2_2_pp" ~ "Pink Salmon Hatchery Release Abundance"),
+                rowname = factor(rowname, levels = rev(c("NBS July/August Temperature",
+                                                        "Large Zooplankton Index",
+                                                        "Gelatinous Zooplankton Index",
+                                                        "GOA Winter Temperature",
+                                                        "Pink Salmon Hatchery Release Abundance"))))
 
 ggplot(data = theta,aes(x= mean, y = rowname, group = rowname, color = rowname)) +
   geom_point() + 
   theme_classic() +
   geom_errorbar(aes(xmin =X10., xmax = X90.),width = 0.1) + 
-  facet_wrap(~rowname,scales = "free") +
+  # facet_wrap(~rowname,scales = "free",
+  #            ncol = 1) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
-  geom_vline(xintercept=0)
+  geom_vline(xintercept=0)+
+  ggtitle("Covariate Coefficients")+
+  ylab("")

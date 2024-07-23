@@ -87,7 +87,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
        fill_color = "blue")
  
 plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
-     pars=  c( "theta_1_1_pp","theta_1_2_pp",#"theta_1_2_sim",
+     pars=  c( "theta_1_1_pp","theta_1_2_pp","theta_1_3_pp",#"theta_1_2_sim",
               # "theta_1_3_sim","theta_1_4_sim",
                #"theta1[2]","theta1[3]","theta1[4]",
                "theta_2_1_pp","theta_2_2_pp"),

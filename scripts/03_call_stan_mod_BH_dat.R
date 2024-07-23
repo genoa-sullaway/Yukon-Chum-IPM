@@ -115,12 +115,12 @@ ncovars2 = 2
 # Organize data call inputs ================================================
 nByrs = nrow(fall_juv) # Number of BROOD years                
 nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
-nRyrs_T = nByrs + 4 + 1
+nRyrs_T = nByrs + 4 + 2
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = A + 1 # to fill starting values 
+t_start = A + 2 # to fill starting values 
 
 # mean productivity rate =====
 # estimating this now
@@ -136,11 +136,10 @@ ess_age_comp = as.vector(rep(300, times = nByrs))
 
 # STAN STARTING VALUES ==========
 kappa_j_start =  basal_p_1
-kappa_marine_start = basal_p_2
+kappa_marine_start = c(basal_p_2,basal_p_2)
+kappa_marine_mort_start = c(-log(basal_p_2),-log(basal_p_2))
 
-# N_j_start =  as.vector(NA)
-# N_e_sum_start = as.vector(NA)
-# 
+
 # N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
 # N_catch_start = matrix(NA,nrow=t_start, ncol=A)
 #  N_egg_start = matrix(NA,nrow=t_start, ncol=A)
