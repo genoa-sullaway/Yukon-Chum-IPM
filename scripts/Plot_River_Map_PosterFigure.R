@@ -165,7 +165,8 @@ p <-ggplot() +
   theme_minimal() +
   theme(
     text = element_text(family = "Montserrat"),
-    panel.background = element_blank(),
+    panel.background = element_rect(fill = "black", colour = NA),
+    plot.background = element_rect(fill = "black", colour = NA),
     legend.background = element_blank(),
     legend.position = "none",
     panel.border = element_blank(),

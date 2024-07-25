@@ -19,7 +19,7 @@ library(readxl)
 warmups <- 2000
 total_iterations <- 4000
 max_treedepth <-  15
-n_chains <- 4
+n_chains <- 1
 n_cores <- 4
 adapt_delta <- 0.95
 
@@ -104,8 +104,7 @@ temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
 #bind <- temp_b_cov %>% slice(22)
 
 stage_b_cov <- temp_b_cov %>%
-                  #  rbind(bind) %>% 
-                    as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
+               as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
 
 # number covariates for each life stage 
@@ -151,14 +150,43 @@ kappa_marine_mort_start = c(-log(basal_p_2),-log(basal_p_2))
 
 # use average age comp to distribute starting values
 p <- colMeans(yukon_fall_obs_agecomp[1:21,]) 
+
 # 
-# for(t in 1:t_start){
-#   N_recruit_start[t,] = exp(rnorm(1,12.9,2))*p
-#   N_ocean_start[t,] = exp(rnorm(1,13,2))*p
-#   N_sp_start[t,] = exp(rnorm(1,12.2,2))*p #exp(rnorm(1,log(398700),2))*p 
-#   N_catch_start[t,] = exp(rnorm(1,10.6,2))*p #exp(rnorm(1,log(27769),2))*p 
-#   N_egg_start[t,] = exp(rnorm(1,20,2))*p
-# }
+# # Initial values ========
+# init_fn <- function(chain_id=1) {
+#   list( 
+#        theta1=list(rnorm(1,-0.1,0.05),
+#                    rnorm(1,0.1,0.05),
+#                    rnorm(1,-0.1,0.05)), # list because there are 3 thetas 
+# 
+#        theta2=list(rnorm(1,-0.01,0.05),
+#                    rnorm(1,-0.01,0.05)), # list becaues two thetas 
+# 
+#        prob = list(rbeta(1,0.25,1),
+#                    rbeta(1,0.75,1),
+#                    rbeta(1,0.2,1)), 
+#        
+#        D_scale = runif(1,0.1,0.8),  
+#        
+#        g = list(runif(1,0.001,0.5),
+#                 runif(1,0.5,1),
+#                 runif(1,0.3,1),
+#                 runif(1,0.001,0.5)), 
+#        
+#        log_catch_q = rnorm(1,-5,0.01),
+#        
+#        log_F_dev_y = rnorm(nRyrs_T,0,2),
+#        log_F_mean = runif(1,0.2,2),
+#           
+#        basal_p_1 = runif(1,0.1,1), 
+#        basal_p_2 = runif(1,0.1,1), 
+#        
+#        sigma_y_j = runif(1,0.5,2)
+#        )
+#      }
+# 
+# init_ll <- lapply(1:n_chains, function(id) init_fn(chain_id = id))
+# 
 
 # ASSIGN DATA ==========
 data_list_stan <- list(nByrs=nByrs,
@@ -170,11 +198,9 @@ data_list_stan <- list(nByrs=nByrs,
                        Ps=Ps,
                        fs=fs,
                        M = M_fill_stan,
-                       # basal_p_1=basal_p_1,
-                       # basal_p_2=basal_p_2, estimating these now 
+                      
                        data_sp_cv = spawner_cv$fall_spawner_cv, 
                        data_recruit_cv = spawner_cv$summer_recruit_cv, 
-                       #  data_j_cv = fall_juv_cv$CV,
                        
                        data_stage_j = as.vector(fall_juv$fall_abundance), 
                        data_stage_return = as.vector(yukon_fall_recruits$total_run),
@@ -194,8 +220,7 @@ data_list_stan <- list(nByrs=nByrs,
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,
-                        # c_1 = exp(16.1), # works using 18,16 (in PPT notes) with no covar, close with covar but flattens in the middle of the timeseries...
-                        # c_2 = exp(14),
+                      
                        basal_p_1 =basal_p_1,
                        basal_p_2 = basal_p_2)
 
@@ -203,10 +228,11 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 1,  
+  chains = n_chains,  
   warmup = warmups,
   iter = total_iterations,
-  cores = n_cores)
+  cores = n_cores
+  )
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
 

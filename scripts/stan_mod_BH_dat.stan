@@ -53,15 +53,17 @@ real <lower= -1, upper = 1> theta1 [ncovars1]; // covariate estimated for each c
 real <lower= -0.25, upper = 0.25> theta2 [ncovars2];
 
 vector <lower=0> [A-1] prob; 
-real <lower=0.1, upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
+real <lower=0.001, upper=0.999> D_scale;     // Variability of age proportion vectors across cohorts
 vector <lower=0> [A] g; // gamma random draws
 real log_catch_q;
  
 vector [nRyrs_T]  log_F_dev_y; 
 real log_F_mean; 
 
-real <lower=0.1, upper = 0.9> basal_p_1; // mean alpha for covariate survival stage 1
-real <lower=0.1, upper = 0.9> basal_p_2; // mean alpha for covariate survival stage 2
+real <lower=0.001, upper = 0.999> basal_p_1; // mean alpha for covariate survival stage 1
+real <lower=0.001, upper = 0.999> basal_p_2; // mean alpha for covariate survival stage 2
+// real   basal_p_1; // mean alpha for covariate survival stage 1
+// real   basal_p_2; // mean alpha for covariate survival stage 2
 
 real sigma_y_j;
 }
@@ -106,7 +108,8 @@ matrix [nByrs+2, ncovars2] cov_eff2;
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
  
 // Age related transformed params ====== 
-vector<lower=0.001>[A] p;  
+vector [A] p;
+// vector<lower=0.001>[A] p;  
 real<lower=0.001> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0.001>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix[nRyrs,A] q; 
@@ -332,20 +335,20 @@ model {
   // print("N_e_sum_start_log:", N_e_sum_start_log);
       // print("N_catch_start_log:", N_catch_start_log);
       // print("N_sp_start_log:", N_sp_start_log);
- theta1[1] ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
- theta1[2] ~ normal(0,0.01); // environmental covariate coefficient stage 1
- theta1[3] ~ normal(0,0.01);
+ theta1[1] ~ normal(-0.1,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
+ theta1[2] ~ normal(0.1,0.01); // environmental covariate coefficient stage 1
+ theta1[3] ~ normal(-0.1,0.01);
  
- theta2[1] ~ normal(0,0.01);
- theta2[2] ~ normal(0,0.01);
+ theta2[1] ~ normal(-0.1,0.01);
+ theta2[2] ~ normal(-0.1,0.01);
+ 
  // theta1[1] ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
  // theta1[2] ~ normal(0,0.01); // environmental covariate coefficient stage 1
  // theta1[3] ~ normal(0,0.01);
  // 
  // theta2[1] ~ normal(0,0.01);
  // theta2[2] ~ normal(0,0.01);
- 
- 
+
     D_scale ~ beta(1,1);  
     
     basal_p_1 ~ beta(1,1); // mean survival stage 1
