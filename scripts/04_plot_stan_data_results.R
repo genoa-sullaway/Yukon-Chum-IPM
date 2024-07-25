@@ -222,20 +222,19 @@ pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:29, each=1)) %>%
-  filter(!time == 22) %>% 
-  cbind(obs_j = data_list_stan$data_stage_j,
-       pred_j = pred_N_j$mean) %>% 
+  dplyr::mutate(time = rep(1:23, each=1)) %>%
+  # filter(!time %in% c(22,23)) %>% 
+  # cbind(obs_j = data_list_stan$data_stage_j,
+  #      pred_j = pred_N_j$mean) %>% 
   # filter(!time<7)  %>% 
-  mutate(rowname = "eggs") %>%
-  select(rowname,time,mean,obs_j,pred_j)  
+  mutate(rowname = "eggs")  
    
 ggplot(data = pred_N_eggs_sum) + 
- geom_line(aes(x=time, y = mean)) +
+ geom_line(aes(x=time, y = mean)) #+
  # geom_line(aes(x=time, y = mean*10), color = "green") +  
-  geom_line(aes(x=time, y = pred_j), color = "blue")  
+  # geom_line(aes(x=time, y = pred_j), color = "blue")  
 
-ggplot(data = pred_N_eggs_sum) + 
+ggplot(data = pred_N_eggs_sum %>% filter(!time < 7)) + 
   geom_line(aes(x=time, y = mean)) 
 
 # eggs before sum =======
@@ -647,6 +646,25 @@ ggplot(data = age_comp) +
 
 
 # Plot covariates with respective salmon population ======
+brood_year_recruits <- summary(bh_fit, pars = c("N_recruit"), 
+                          probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:29, each=4),
+                age = rep(3:6, length.out = nrow(.))) %>%
+  # filter(!time>21) %>%
+  left_join(years)  %>%
+  # group_by(cal_year) %>%
+  # summarise(mean = sum(mean),
+  #           se_mean = mean((sd))) %>% 
+  mutate(rowname = "recruit",
+         brood_year =  cal_year-age) %>% 
+  group_by(brood_year) %>%
+  summarise(mean = sum(mean)) %>% 
+  mutate(mean = as.numeric(scale(mean))) %>% 
+  mutate(rowname = "recruit")  
+ 
+## Chum_hatchery ============ 
 cov_B_forplot <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   rename(cov_year = "brood_year") %>%
   filter(cov_year >= year_min-1, 
@@ -658,33 +676,39 @@ cov_B_forplot <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                 # the temp in 2001 is gonna effect fish from brood year 1999
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
   )  %>% 
-  dplyr::select(brood_year, cov_year,SST_CDD_GOA)
+  dplyr::select(brood_year, cov_year,Chum_hatchery)
 
-brood_year_recruits <- summary(bh_fit, pars = c("N_recruit"), 
-                          probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>%
-  filter(!time>21) %>%
-  left_join(years)  %>%
-  # group_by(cal_year) %>%
-  # summarise(mean = sum(mean),
-  #           se_mean = mean((sd))) %>% 
-  mutate(rowname = "recruit",
-         brood_year =  cal_year-age-1) %>% 
-  group_by(brood_year) %>%
-  summarise(mean = sum(mean)) %>% 
-  mutate(mean = as.numeric(scale(mean))) %>% 
-  mutate(rowname = "recruit")  %>% 
-  left_join(cov_B_forplot) 
+brood_year_recruits_chum <- brood_year_recruits %>% 
+                              left_join(cov_B_forplot) 
+
+ ggplot(data =brood_year_recruits_chum) +
+   geom_line(aes(x=brood_year, y = mean)) + 
+   geom_line(aes(x=brood_year, y = Chum_hatchery), color = "purple") +
+   labs(caption = "purple is the covariate")
+  
  
-# covariate effect2 and observed/ pred recruits 
- ggplot(data =brood_year_recruits) +
+ ## GOA temp =======
+ cov_B_forplot <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+   rename(cov_year = "brood_year") %>%
+   filter(cov_year >= year_min-1, 
+          cov_year <= year_max_brood+1) %>% 
+   dplyr::mutate(SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
+                 Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+                 Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                 brood_year = cov_year-2 # this is the effect year 
+                 # the temp in 2001 is gonna effect fish from brood year 1999
+                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
+   )  %>% 
+   dplyr::select(brood_year, cov_year,SST_CDD_GOA)
+ 
+ brood_year_recruits_goa <- brood_year_recruits %>% 
+   left_join(cov_B_forplot) 
+ 
+ ggplot(data =brood_year_recruits_goa) +
    geom_line(aes(x=brood_year, y = mean)) + 
    geom_line(aes(x=brood_year, y = SST_CDD_GOA), color = "purple") +
    labs(caption = "purple is the covariate")
-   
+ 
 
 
 # Covariates at time t+x with observed pred recruits 
@@ -700,23 +724,3 @@ brood_year_recruits <- summary(bh_fit, pars = c("N_recruit"),
 
 
 
-
-# look at theta posteriors =========== 
-fit_summary <- summary(bh_fit)
-print(names(fit_summary))
-print(fit_summary$summary)
-
-test <- rstan::extract(bh_fit)#, pars = 'theta1[1]') #c("theta1[1]"))
-theta_draws<-as.data.frame(test$theta1)
-sd(theta_draws[1,])
-
-mean(theta_draws[1,])
-
-plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-     pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
-               "theta1[2]",
-               "theta1[3]",
-               "theta2[1]",
-               "theta2[2]"#,
-               #  "theta2[2]"#,"t
- 

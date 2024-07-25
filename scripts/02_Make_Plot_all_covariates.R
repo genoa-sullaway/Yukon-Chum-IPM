@@ -118,9 +118,9 @@ hatchery_pink_b <- hatchery_pink_df%>%
                    Pink_hatchery = c(mean(hatchery_pink_df$sum) + 0.01)))
 
 sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv") %>%
-  dplyr::rename(SST_CDD_GOA = "CDD",
+  dplyr::rename(SST_CDD_Aleut = "CDD",
                 Year = "year") %>%
-  dplyr::select(Year, SST_CDD_GOA)
+  dplyr::select(Year, SST_CDD_Aleut)
   
 river_discharge_b <- read_csv("data/processed_covariates/Stage_B_YK_Discharge.csv") %>%
   dplyr::select(Year, mean_discharge,id) %>%

@@ -89,12 +89,12 @@ temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(brood_year >= year_min-1, 
          brood_year <= year_max_brood+1) %>% 
 #         brood_year <= year_max_brood+2) %>% 
-  dplyr::mutate(SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
+  dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                 Chum_hatchery= as.numeric(scale(Chum_hatchery)),
                 Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
   ) %>% 
-  dplyr::select(SST_CDD_GOA,
+  dplyr::select(SST_CDD_Aleut,
                 # Chum_hatchery
                 #,
                 Pink_hatchery
