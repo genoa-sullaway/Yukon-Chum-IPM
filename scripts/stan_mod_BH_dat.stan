@@ -42,7 +42,7 @@ parameters {
  real <lower= 0> N_j_start_log; 
  // real<lower=5, upper=18> N_e_sum_start_log; 
 
- vector <lower= 0> [t_start] N_first_winter_start_log;
+ // vector <lower= 0> [t_start] N_first_winter_start_log;
  vector <lower= 0> [t_start] N_sp_start_log;
  vector <lower= 0> [t_start] N_recruit_start_log;
  vector <lower= 0> [t_start] N_catch_start_log;
@@ -52,16 +52,16 @@ parameters {
 real <lower= -1, upper = 1> theta1 [ncovars1]; // covariate estimated for each covariate and each population
 real <lower= -0.3, upper = 0.3> theta2 [ncovars2];
 
-vector <lower=0.01> [A-1] prob; 
-real <lower=0.1, upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
+vector <lower=0> [A-1] prob; 
+real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 vector <lower=0> [A] g; // gamma random draws
 real log_catch_q;
  
 vector [nRyrs_T]  log_F_dev_y; 
 real log_F_mean; 
 
-real <lower=0.1, upper = 0.8> basal_p_1; // mean alpha for covariate survival stage 1
-real <lower=0.1, upper = 0.8> basal_p_2; // mean alpha for covariate survival stage 2
+real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
+real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
 // real   basal_p_1; // mean alpha for covariate survival stage 1
 // real   basal_p_2; // mean alpha for covariate survival stage 2
 
@@ -108,12 +108,11 @@ matrix [nByrs+2, ncovars2] cov_eff2;
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
  
 // Age related transformed params ====== 
-vector [A] p;
-// vector<lower=0.001>[A] p;  
-real<lower=0.001> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
-vector<lower=0.001>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
+vector<lower=0,upper =1> [A] p;
+real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
+vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix[nRyrs,A] q; 
-vector<lower=0, upper=1> [A] pi;
+vector<lower=0, upper=1> [A] pi; // actual age comps
 
 vector [nRyrs_T] F; // instantaneous fishing mortality           
 
@@ -133,7 +132,7 @@ for(t in 1:t_start){
   N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
   N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
   N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-  N_first_winter_start[t,a] = exp(N_first_winter_start_log[t])*p_obs[a];
+  // N_first_winter_start[t,a] = exp(N_first_winter_start_log[t])*p_obs[a];
   }
  }
 
@@ -312,7 +311,7 @@ for(t in 1:nByrs){
 model {
   sigma_y_j ~ uniform(0,5); //normal 
  
-  log_catch_q ~ normal(0,5);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
+  log_catch_q ~ normal(0,5);// Estimate Q - this will translate # of recruits to # of spawners 
   
   log_c_1 ~ normal(16, 10); // carrying capacity prior - stage 1 20
   log_c_2 ~ normal(20, 10); // carrying capacity prior - stage 2 16
@@ -323,7 +322,7 @@ model {
   N_j_start_log ~ normal(13.6,5); //1
 
  for(t in 1:t_start){
-    N_first_winter_start_log[t] ~ normal(13.57,5);//1
+    // N_first_winter_start_log[t] ~ normal(13.57,5);//1
     N_sp_start_log[t] ~ normal(13.48,5);//2
     N_recruit_start_log[t] ~  normal(13.5,5);//2
     N_catch_start_log[t] ~ normal(12.3,5);//1

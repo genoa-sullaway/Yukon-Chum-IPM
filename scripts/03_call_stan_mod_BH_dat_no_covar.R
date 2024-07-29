@@ -149,24 +149,14 @@ data_list_stan <- list(nByrs=nByrs,
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                        
-                       # N_ocean_start = N_ocean_start,
-                       # N_egg_start = N_egg_start,
-                       # N_j_start =  N_j_start,
-                       # N_e_sum_start = N_e_sum_start,
                        kappa_marine_mort_start = -log(kappa_marine_start),
                        kappa_marine_start = kappa_marine_start,
                        kappa_j_start = kappa_j_start,
                        
-                       ncovars1=ncovars1,
-                       ncovars2=ncovars2,
-                       
-                       cov1=stage_a_cov,
-                       cov2=stage_b_cov,
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
                        p_obs = p,
-                       # c_1 = exp(16.1), 
-                       # c_2 = exp(14),
+                       
                        basal_p_1 =basal_p_1,
                        basal_p_2 = basal_p_2)
 
@@ -174,9 +164,12 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat_no_covar.stan"),
   data = data_list_stan,
-  chains = 1,  
+  chains = 4,  
   warmup = warmups,
   iter = total_iterations,
-  cores = n_cores)
+  cores = n_cores,
+  verbose=FALSE,
+  # seed=101,
+  control = list(adapt_delta = 0.9))
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")

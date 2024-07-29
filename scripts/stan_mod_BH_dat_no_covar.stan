@@ -34,7 +34,7 @@ parameters {
  real  log_c_2; // log carrying capacity
 
 // starting values 
- real<lower=5> N_j_start_log; 
+ real<lower=0> N_j_start_log;
 
 vector <lower= 0> [t_start] N_first_winter_start_log;
 vector <lower= 0> [t_start] N_sp_start_log;
@@ -43,7 +43,7 @@ vector <lower= 0> [t_start] N_catch_start_log;
 vector <lower= 0> [t_start] N_egg_start_log;
 
 vector <lower=0> [A-1] prob; 
-real <lower=0.2, upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
+real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 vector <lower=0> [A] g; // gamma random draws
 real log_catch_q;
  
@@ -51,16 +51,17 @@ vector [nRyrs_T]  log_F_dev_y;
 
 real log_F_mean; 
 
-real <lower=0.001, upper = 0.9> basal_p_1; // mean alpha for covariate survival stage 1
-real <lower=0.001, upper = 0.9> basal_p_2; // mean alpha for covariate survival stage 2
+real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
+real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
 
 // vector <lower=0.001, upper = 0.99> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
 // vector <lower=0.001, upper = 0.99> [nByrs] p_2;
 
-vector <lower=0.001, upper = 0.9>  [nByrs+1] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
-vector <lower=0.001, upper = 0.9>  [nByrs+2] p_2;
+vector <lower=0, upper = 1>  [nByrs+1] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
+vector <lower=0, upper =1>  [nByrs+2] p_2;
 
  real sigma_y_j;
+ real sigma_catch;
 }
 
 transformed parameters { 
@@ -94,10 +95,10 @@ real c_1; // estimate on log, transform back to normal scale
 real c_2; // estimate on log, transform back to normal scale
 
 // Age related transformed params ====== 
-vector<lower=0.001>[A] p;  
-real<lower=0.001> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
-vector<lower=0.001>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
-matrix[nRyrs,A] q; 
+vector<lower=0>[A] p;  
+real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
+vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
+matrix<lower=0, upper=1>[nRyrs,A] q; 
 vector<lower=0, upper=1> [A] pi;
 
 vector [nRyrs_T] F; // instantaneous fishing mortality           
@@ -166,7 +167,7 @@ for(t in 1:t_start){
  
  N_j_start = exp(N_j_start_log);
  N_j[1] = N_j_start;
- 
+ // 
     for(a in 1:A){
    // add starting values to the whole population array
   N_recruit[1:t_start,a] = N_recruit_start[1:t_start,a];
@@ -275,13 +276,14 @@ for(t in 1:nByrs){
 
 model {
   sigma_y_j ~ uniform(0,5); //normal 
+  sigma_catch ~ uniform(0,5); //normal 
  
-  log_catch_q ~ normal(0,5);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
+  log_catch_q ~ normal(0,20);  // Estimate Q - this will translate # of recruits to # of spawners 
  
   log_c_1 ~ normal(16,10); // carrying capacity prior - stage 1
   log_c_2 ~ normal(20, 10); // carrying capacity prior - stage 2
  
-   N_j_start_log ~ normal(13.6,5);
+    N_j_start_log ~ normal(13.6,5);
 
  for(t in 1:t_start){
     N_first_winter_start_log[t] ~ normal(13.57,5);//1
@@ -309,7 +311,7 @@ model {
     log_F_mean ~ normal(0,1);
  
   for(t in 1:nRyrs_T){
-    log_F_dev_y[t] ~ normal(0, 5); 
+    log_F_dev_y[t] ~ normal(0, 20); 
  }
 
  // age comp priors -- maturity schedules
@@ -317,50 +319,40 @@ model {
   prob[2] ~ beta(1,1);  
   prob[3] ~ beta(1,1);  
  
-// printing these for trouble shooting 
-  // print("kappa_marine_mortality:", kappa_marine_mortality);
-   // print("log_catch_q:", log_catch_q);
-   // 
 // Likelilihoods --  
   // Observation model
   // for (t in 1:nByrs) {
   //    target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sigma_y_j); //sqrt(log((0.05^2) + 1))); //sigma_y_j); // not sure if this is liklihood is right, returning here is escapement + harvest
   //   } 
       for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.2^2) + 1))); //sigma_y_j); // not sure if this is liklihood is right, returning here is escapement + harvest
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sigma_y_j); //sqrt(log((0.2^2) + 1))); //sigma_y_j); // not sure if this is liklihood is right, returning here is escapement + harvest
     } 
-
-// // Likelilihoods --  
-//   // Observation model
-//   for (t in 1:nByrs) {
-//      log(data_stage_j[t]) ~ normal(log(N_j_predicted[t]), sigma_y_j);////sqrt(log((0.06^2) + 1))); // sqrt(log((data_j_cv[t]) + 1)));//sigma_y_j);  
-//     } 
  
   for(t in 1:nRyrs){ // calendar years 
 
      target += ess_age_comp[t]*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
      target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])),sqrt(log((data_recruit_cv[t]^2) + 1))); //sqrt(log((0.01^2) + 1))); // sqrt(log((0.06^2) + 1))); // not sure if this is liklihood is right, returning here is escapement + harvest
-     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.01^2) + 1)));    
+     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_catch);//sqrt(log((0.05^2) + 1)));    
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])),  sqrt(log((data_sp_cv[t]^2) + 1))); //sqrt(log((0.05^2) + 1)));// sigma_y_sp);
   }
 }  
  
 generated quantities{
-real N_sp_pp [nRyrs];
-real N_catch_pp [nRyrs];
-real N_rec_pp [nRyrs];
-real N_j_pp [nByrs];
- 
-for(t in 1:nRyrs){
-N_sp_pp[t] = normal_rng((sum(N_sp[t,1:A]))- 0.5 * sqrt((data_sp_cv[t]^2) + 1)^2, 1); //(sqrt(log(data_sp_cv[t]^2) + 1))); 
-N_catch_pp[t] = normal_rng((sum(N_catch[t,1:A]))- 0.5 * sqrt((0.1^2) + 1)^2, 1);//(0.1)); 
-N_rec_pp[t] = normal_rng((sum(N_recruit[t,1:A]))- 0.5 * sqrt((data_recruit_cv[t]^2) + 1)^2, 1);//(sqrt(log(data_recruit_cv[t]^2) + 1))); 
-
-  }
-  
-for(t in 1:nByrs){
- N_j_pp[t] = normal_rng((N_j_predicted[t])- 0.5 *0.5^2, 0.5); //0.05^2, 0.05); // 
-  }
+// real N_sp_pp [nRyrs];
+// real N_catch_pp [nRyrs];
+// real N_rec_pp [nRyrs];
+// real N_j_pp [nByrs];
+//  
+// for(t in 1:nRyrs){
+// N_sp_pp[t] = normal_rng((sum(N_sp[t,1:A]))- 0.5 * sqrt((data_sp_cv[t]^2) + 1)^2, 1); //(sqrt(log(data_sp_cv[t]^2) + 1))); 
+// N_catch_pp[t] = normal_rng((sum(N_catch[t,1:A]))- 0.5 * sqrt((0.1^2) + 1)^2, 1);//(0.1)); 
+// N_rec_pp[t] = normal_rng((sum(N_recruit[t,1:A]))- 0.5 * sqrt((data_recruit_cv[t]^2) + 1)^2, 1);//(sqrt(log(data_recruit_cv[t]^2) + 1))); 
+// 
+//   }
+//   
+// for(t in 1:nByrs){
+//  N_j_pp[t] = normal_rng((N_j_predicted[t])- 0.5 *sigma_y_j^2, sigma_y_j); //0.05^2, 0.05); // 
+//   }
 }
 

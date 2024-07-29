@@ -231,12 +231,15 @@ bh_fit <- stan(
   data = data_list_stan,
   chains = n_chains,  
   warmup = warmups,
+  # max_treedepth = 14, 
   iter = total_iterations,
+  # iter=11000,
+  # refresh=11000,
   cores = n_cores,
   # thin = n.thin,
   verbose=FALSE,
   seed=101,
-  control = list(adapt_delta = 0.99),
+  control = list(adapt_delta = 0.9),
   )
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")

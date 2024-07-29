@@ -45,8 +45,8 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
 # Load data for baseline ============== 
 warmups <- 2000
 total_iterations <- 4000
-max_treedepth <-  15
-n_chains <- 1
+max_treedepth <-  12
+n_chains <- 4
 n_cores <- 4
 adapt_delta <- 0.95
 
@@ -64,15 +64,15 @@ t_start = A + 2 # to fill starting values
 #Bev Holt parameters ===================
 # p for alpha, and c for carrying capacity 
 
-log_c_1 = 20
+log_c_1 = 16
 log_c_2 = 18
 
 c_1 = exp(log_c_1) # as.matrix(nrow = 1, ncol =1, exp(log_c_1)) 
 c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2)) 
 
 # SURVIVAL/COVARIATE ===================
-ncovars1 = 4
-ncovars2 = 4
+ncovars1 = 1
+ncovars2 = 1
 
 basal_p_1 = 0.3#-1.820463 # (0.1) #base survival 
 basal_p_2 = 0.4 #-0.2369558 # (0.4)
@@ -95,8 +95,8 @@ cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = nc
  #  theta1 <- rnorm(1,mu_coef1,sigma_coef1[1,1])
  #  theta2 <- rnorm(1,mu_coef2,sigma_coef2[1,1])
 
-theta1 <- c(0.05, 0.1,0.06,0.08) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
-theta2 <- c(-0.05, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
+theta1 <- c(0.2) #, 0.1,0.06,0.08) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
+theta2 <- c(-0.05)#, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
  
 # theta1 <- c(0.5,0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
 #  theta2 <- c(-0.5,-0.9)#, -0.6) #relationship for simulated data
@@ -116,8 +116,8 @@ theta2 <- c(-0.05, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
     for (c in 1:ncovars2) {
       cov_eff2[t,c] = theta2[c]*cov2[t,c]
     }
-    p_1[t]  = 1 / 1+ exp(-basal_p_1 - (sum(cov_eff1[t,1:c]))) # covariate impacts survival, impact is measured through theta
-    p_2[t]  = 1 / 1+ exp(-basal_p_2 - (sum(cov_eff2[t,1:c]))) # covariate impacts survival, impact is measured through theta
+    p_1[t]  = 1 / 1+ exp(basal_p_1 + (sum(cov_eff1[t,1:c]))) # covariate impacts survival, impact is measured through theta
+    p_2[t]  = 1 / 1+ exp(basal_p_2 + (sum(cov_eff2[t,1:c]))) # covariate impacts survival, impact is measured through theta
   }
  
  
@@ -156,7 +156,7 @@ prob = c(0.1548598, 0.7782258, 0.40537690)
 # Process error  ===================
 # error is fixed in model right now so fix it here. 
 process_error_j = 1 # matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nByrs,ncol=1,rep(1, times =nByrs )) #rnorm(nByrs*1,1,0.2))
-process_error_sp = exp(rnorm(n = nRyrs, -3, 0.5))   # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
+process_error_sp = 0.01#exp(rnorm(n = nRyrs, -3, 0.5))   # matrix(nrow=K,ncol=1,rep(1, times =K)) #matrix(nrow=nRyrs,ncol=1,rep(2, times =nRyrs )) #rnorm(nByrs*1,5, 1))
 # process_error_r = 1# matrix(nrow=K,ncol=1,rep(1, times =K))  #matrix(nrow=nRyrs,ncol=1,rep(3, times =nRyrs )) #rnorm(nByrs*1,5, 1))
 # process_error_c = 1
 
@@ -200,24 +200,24 @@ N_sp = matrix(NA, nrow = nRyrs_T+1,ncol=A)
  # N_egg_start[2,] = exp(rnorm(1,14,1))*p
 
 # fill starting values 
-  N_e_sum[1,1] = N_e_sum_start
-  N_j[1,1] = N_j_start
-  N_recruit[1:t_start,] = N_recruit_start
-  N_ocean[1:t_start,] = N_ocean_start
-  N_sp[1:t_start,] = N_sp_start
- N_catch[1:t_start,] = N_catch_start
+ #  N_e_sum[1,1] = N_e_sum_start
+ #  N_j[1,1] = N_j_start
+ #  N_recruit[1:t_start,] = N_recruit_start
+ #  N_ocean[1:t_start,] = N_ocean_start
+ #  N_sp[1:t_start,] = N_sp_start
+ # N_catch[1:t_start,] = N_catch_start
  N_e[1:t_start,] = N_egg_start
 
   # catch Q ===========
   # translates from predicted juveniles to observed juveniles 
   # catch_q = -2  #exp(rnorm(1,0,0.5))
   
- log_catch_q = -1
+ log_catch_q = -4
  
 # Harvest =============
 # fishing mortality by age 
   
-  log_F_dev_y = rnorm(nRyrs_T, 0,0.5)  
+  log_F_dev_y = rnorm(nRyrs_T, 0,2)  
   log_F_mean = -0.1
  
   F  = exp(log_F_mean +log_F_dev_y) 
@@ -227,52 +227,39 @@ M_fill_stan = c(0.06,0.06, 0.06, 0.06) # will be cumulative
 M = matrix(ncol = A, nrow = nRyrs_T, 
            c(0.06,0.06, 0.06, 0.06) , byrow = TRUE)
 
- # c_1 = exp(18)
- # N_e_sum[t-1] = exp(14)
- 
-# 
- # p_1 =  rbeta(n=nByrs,0.08,1)
- 
 # p_2=rbeta(n=nByrs,1,1)
-p_1 = 0.08#-1.820463 # (0.1) #base survival 
-p_2 = 0.2 #-0.2369558 # (0.4)
+# p_1 = 0.08#-1.820463 # (0.1) #base survival 
+# p_2 = 0.2 #-0.2369558 # (0.4)
 
     
 # POPULATION MODEL ============ 
      for (t in 1:nByrs){ # loop for each brood year 
         
-         # kappa_j[t] =  p_1[t]/(1+((p_1[t]*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
-        kappa_j[t] =  p_1/(1+((p_1*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+         N_e_sum[t] = sum(N_e[t,1:A])
+         
+         kappa_j[t] =  p_1/(1+((p_1*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
        
          N_j[t+1] = kappa_j[t]*N_e_sum[t] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
         
-         # kappa_marine[t ] =  p_2[t ]/(1 + ((p_2[t]*N_j[t])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
-          kappa_marine[t+1] =  p_2/(1 + ((p_2*N_j[t])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+         kappa_marine[t+2] =  p_2/(1 + ((p_2*N_j[t+1])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
-         # M[t,1] = -log(kappa_marine[t]) # fill in the age 1 survival for the next stage  
-         kappa_marine_mortality[t+1] = -log(kappa_marine[t+1])
+         kappa_marine_mortality[t+2] = -log(kappa_marine[t+2])
  
          for (a in 1:A) { 
-           N_first_winter[t+a+1,a] =  N_j[t+1]*p[a] #add age structure, p is proportion per age class
+           N_first_winter[t+a+2,a] =  N_j[t+1]*p[a] #add age structure, p is proportion per age class
            
-           if(a==1){
-             N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-kappa_marine_mortality[t+1]) # convert from survival to mortality
-           }
-           if(a>1){
-             N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+1])) # add age specific mortality, 
-           }  
+           N_recruit[t+a+2,a] = N_first_winter[t+a+2,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+2]));  
            
-           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-F[t+a+1]))
+           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-F[t+a+2]))
            
-           N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a] # fishing occurs before spawning -- 
+           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a] # fishing occurs before spawning -- 
              
-           N_e[t+a+1,a] = fs[a]*Ps*N_sp[t+a+1,a] 
+           N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a] 
          }
-        # sum across age classes and transition back to brood years 
-         N_e_sum[t+1] = sum(N_e[t,1:A]) 
+  
      } 
 
-  View(N_sp)
+   # View(N_sp)
    # View(N_catch)
    # View(N_e)
    # View(N_recruit)

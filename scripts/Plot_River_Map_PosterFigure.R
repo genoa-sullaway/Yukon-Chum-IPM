@@ -165,8 +165,8 @@ p <-ggplot() +
   theme_minimal() +
   theme(
     text = element_text(family = "Montserrat"),
-    panel.background = element_rect(fill = "black", colour = NA),
-    plot.background = element_rect(fill = "black", colour = NA),
+    panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+    plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
     legend.background = element_blank(),
     legend.position = "none",
     panel.border = element_blank(),
@@ -175,13 +175,14 @@ p <-ggplot() +
     axis.title.y = element_blank(),
     axis.ticks = element_blank(),
     axis.text.x = element_blank(),
-    axis.text.y = element_blank()
+    axis.text.y = element_blank(),
+    rect = element_rect(fill = "transparent")
   )
 
 ggsave(
   filename = "output/ak_rivers_nopoints.png",
   width = 9, height = 6, dpi = 600,
-  bg = "white", device = "png", p
+  bg = "transparent", device = "png", p
 )
 
 
