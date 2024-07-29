@@ -327,7 +327,7 @@ model {
     N_sp_start_log[t] ~ normal(13.48,5);//2
     N_recruit_start_log[t] ~  normal(13.5,5);//2
     N_catch_start_log[t] ~ normal(12.3,5);//1
-    N_egg_start_log[t] ~  normal(14.5, 5);//2
+    N_egg_start_log[t] ~  normal(14.5, 1);//2
 //    N_egg_start_log[t] ~  normal(13.7, 0.1); // starting value for eggs, initiates pop model
 }
 
