@@ -50,18 +50,18 @@ parameters {
 
 // covariate parameters 
 real <lower= -1, upper = 1> theta1 [ncovars1]; // covariate estimated for each covariate and each population
-real <lower= -0.25, upper = 0.25> theta2 [ncovars2];
+real <lower= -0.3, upper = 0.3> theta2 [ncovars2];
 
-vector <lower=0> [A-1] prob; 
-real <lower=0.001, upper=0.999> D_scale;     // Variability of age proportion vectors across cohorts
+vector <lower=0.01> [A-1] prob; 
+real <lower=0.1, upper=0.9> D_scale;     // Variability of age proportion vectors across cohorts
 vector <lower=0> [A] g; // gamma random draws
 real log_catch_q;
  
 vector [nRyrs_T]  log_F_dev_y; 
 real log_F_mean; 
 
-real <lower=0.001, upper = 0.999> basal_p_1; // mean alpha for covariate survival stage 1
-real <lower=0.001, upper = 0.999> basal_p_2; // mean alpha for covariate survival stage 2
+real <lower=0.1, upper = 0.8> basal_p_1; // mean alpha for covariate survival stage 1
+real <lower=0.1, upper = 0.8> basal_p_2; // mean alpha for covariate survival stage 2
 // real   basal_p_1; // mean alpha for covariate survival stage 1
 // real   basal_p_2; // mean alpha for covariate survival stage 2
 
@@ -409,12 +409,12 @@ real N_rec_pp [nRyrs];
 real N_j_pp [nByrs];
 
 // added log normal correcrtions 
-theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.1);
-theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.1);
-theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.1);
+theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.05);
+theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.05);
+theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.05);
  
-theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.1);
-theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.1);
+theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.05);
+theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.05);
 
 for(t in 1:nRyrs){
 // log_N_sp_pp[t] = lognormal_rng(log(sum(N_sp[t,1:A]))), 1); //(sqrt(log(data_sp_cv[t]^2) + 1))); 

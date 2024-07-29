@@ -223,10 +223,6 @@ pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"),
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:23, each=1)) %>%
-  # filter(!time %in% c(22,23)) %>% 
-  # cbind(obs_j = data_list_stan$data_stage_j,
-  #      pred_j = pred_N_j$mean) %>% 
-  # filter(!time<7)  %>% 
   mutate(rowname = "eggs")  
    
 ggplot(data = pred_N_eggs_sum) + 
@@ -237,50 +233,33 @@ ggplot(data = pred_N_eggs_sum) +
 ggplot(data = pred_N_eggs_sum %>% filter(!time < 7)) + 
   geom_line(aes(x=time, y = mean)) 
 
-# eggs before sum =======
-pred_N_eggs <- summary(bh_fit, pars = c("N_e"), 
-                           probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:26, each=4),
-                age = rep(3:6, length.out = nrow(.))) # %>% 
-  
-  #filter(!time<6)  
-
-ggplot(data = pred_N_eggs) + 
-  geom_line(aes(x=time, y = mean)) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean))+
-  facet_wrap(~age, scales = "free") + 
-  ggtitle(("eggs: obs and predicted"))
-
 # align all stages on one plot to look at scale. =====
 summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"), 
                            probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:22, each=1)) %>%
-  filter(!time == 22) %>% 
-  mutate(rowname = "eggs")  %>%
-    select(rowname, mean, se_mean,time)
+  dplyr::mutate(time = rep(1:23, each=1)) %>%
+  filter(!time<7 & !time>15)  %>% 
+  dplyr::mutate(rowname = "eggs",
+         mean = as.numeric(scale(mean)))  %>%
+  dplyr::select(rowname, mean, se_mean,time)
   
-all_stages<- rbind(summ_n_sp %>% select(-obs),
-                   summ_n_rec%>% select(-obs),
-                   summ_n_harvest%>% select(-obs),
-                 #  summ_n_eggs,
-                   summ_n_j%>% select(time, rowname,mean,se_mean) %>% 
-                     mutate(mean = mean#,
+comp_j_e<- rbind(#summ_n_sp %>% select(-obs),
+                   #summ_n_rec%>% select(-obs),
+                   #summ_n_harvest%>% select(-obs),
+                   summ_n_eggs,
+                   summ_n_j %>% filter(!time<7 & !time>15) %>% 
+                     select(time, rowname,mean,se_mean) %>% 
+                     mutate(mean = as.numeric(scale(mean))
                             #time = time-1
-                            ))  %>%
-  filter(!time<6)
+                            ))   
 
-ggplot(data = all_stages) + 
+ggplot(data = comp_j_e) + 
   geom_line(aes(x=time, y = mean, group = rowname, color = rowname)) +
   # geom_ribbon(aes(x=time, ymin = mean-se_mean,
   #                 ymax = mean+se_mean))+
   #  facet_wrap(~rowname, scales = "free") + 
-  ggtitle(("all stages compare")) +
-  ylab("all stages")
+  ggtitle(("juv eggs compare")) 
  
 all_stages_scale <- all_stages %>% 
   group_by(rowname) %>%
@@ -500,7 +479,7 @@ ggplot(data = kappasurvival%>%   filter(!time<2),aes(x=cal_year, y = mean, group
                   ymax = mean+se_mean), alpha = 0.5) + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
 
-ggplot(data = kappasurvival %>%   filter(!time<2),
+ggplot(data = kappasurvival,# %>%   filter(!time<2),
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
@@ -512,7 +491,7 @@ ggplot(data = kappasurvival %>%   filter(!time<2),
   ylab("Survival Rate")
 
 ggplot(data = kappasurvival %>%
-         filter(!time<7 & !time>20), 
+         filter(!time<8 & !time>16), 
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
@@ -687,26 +666,26 @@ brood_year_recruits_chum <- brood_year_recruits %>%
    labs(caption = "purple is the covariate")
   
  
- ## GOA temp =======
+ ## Aleutians temp =======
  cov_B_forplot <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
    rename(cov_year = "brood_year") %>%
    filter(cov_year >= year_min-1, 
           cov_year <= year_max_brood+1) %>% 
-   dplyr::mutate(SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
+   dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                  Chum_hatchery= as.numeric(scale(Chum_hatchery)),
                  Pink_hatchery= as.numeric(scale(Pink_hatchery)),
                  brood_year = cov_year-2 # this is the effect year 
                  # the temp in 2001 is gonna effect fish from brood year 1999
                  #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
    )  %>% 
-   dplyr::select(brood_year, cov_year,SST_CDD_GOA)
+   dplyr::select(brood_year, cov_year,SST_CDD_Aleut)
  
  brood_year_recruits_goa <- brood_year_recruits %>% 
    left_join(cov_B_forplot) 
  
  ggplot(data =brood_year_recruits_goa) +
    geom_line(aes(x=brood_year, y = mean)) + 
-   geom_line(aes(x=brood_year, y = SST_CDD_GOA), color = "purple") +
+   geom_line(aes(x=brood_year, y = SST_CDD_Aleut), color = "purple") +
    labs(caption = "purple is the covariate")
  
 

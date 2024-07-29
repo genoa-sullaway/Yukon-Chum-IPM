@@ -5,8 +5,8 @@ editor_options:
   chunk_output_type: inline
 ---
 
-
-Load packages to be used in the analysis
+- DK created this script to combine older Ecodaat and EMA data, for newer data, these steps are done before they go into the database.
+- SO, I am just going to keep the old data and cut on top the new data. 
 
 ```{r}
 library(here)
@@ -2260,16 +2260,103 @@ NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, PRODUCTION_MG_C_D_MEAN 
 
 NBS_Zoop_Process_Final <- mutate(NBS_Zoop_Process_Final, PRODUCTION_MG_C_D_SD = (IND_C_MG_CONVERTED_SD*EST_NUM_PERM3*GROWTH_RATE_SD)*24)
 
+```
+
+- Add in new data (as of July 2024)
+
+```{r}
+new_zoop <- read.csv("data/AllZoop_Raw_26JUL2024.csv") %>% 
+             filter(YEAR> 2019,
+                    !LAT<55.0473,
+                    !LAT>66.1) 
+```
+
+# Compare 2019 between both datasets to check
+- Big difference is a lat longitude filter, once I add that it's fine.
+
+```{r, eval = FALSE}
+new_zoop_2019 <- read.csv("data/AllZoop_Raw_26JUL2024.csv") %>% 
+             filter(YEAR %in% c(2017,2018, 2019),
+                    TAXON_NAME == "Calanus marshallae",
+                    !LAT<55.0473,
+                    !LAT>66.1)  
+  
+summ_NEW_NBS <- new_zoop_2019 %>% 
+    group_by(CRUISE,HAUL_ID,YEAR,MONTH,DAY,LAT,LON, DATA_SOURCE,TAXON_NAME) %>% # sum across life stages 
+    dplyr::summarise(EST_NUM_PERM3 =  sum(EST_NUM_PERM3)) %>%
+    filter(!LAT<58,
+           !LAT>65,
+           !LON> -155,
+           !LON< -172,
+           MONTH %in% c(7,8,9,10)) %>% 
+    unite("date", c(YEAR, MONTH, DAY), sep = "/", remove = FALSE) %>%
+    dplyr::mutate(date = as.Date(date, "%Y/%m/%d"),
+                  DOY = yday(date),
+                  TAXA_COARSE = case_when(grepl(pattern = "Themisto", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          grepl(pattern = "Calanus", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          grepl(pattern = "Copepod_large", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          grepl(pattern = "Neocalanus", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          
+                                          grepl(pattern = "Cnidaria_small", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                          grepl(pattern = "Cnidaria_large", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                              TRUE ~ "other")) %>% 
+    group_by(DATA_SOURCE,YEAR, DOY,LAT,LON) %>% # sum across species 
+  dplyr::summarise(sum_EST_NUM_PERM3 = sum(EST_NUM_PERM3))  %>% 
+  dplyr::mutate(YEAR = as.factor(YEAR),
+         DATA_SOURCE = as.factor(DATA_SOURCE)) %>% 
+  data.frame() %>% 
+  group_by(YEAR) %>% 
+  dplyr::summarise(mean = mean(sum_EST_NUM_PERM3))
+
+NBS_all_2019 <- NBS_Zoop_Process_Final %>% 
+             filter(YEAR== 2019,
+                    TAXON_NAME == "Calanus marshallae") 
+
+
+
+ summ_NBS <- NBS_all_2019 %>% 
+    group_by(CRUISE,HAUL_ID,YEAR,MONTH,DAY,LAT,LON, DATA_SOURCE,TAXON_NAME) %>% # sum across life stages 
+    dplyr::summarise(EST_NUM_PERM3 =  sum(EST_NUM_PERM3)) %>%
+    filter(!LAT<58,
+           !LAT>65,
+           !LON> -155,
+           !LON< -172,
+           MONTH %in% c(7,8,9,10)) %>% 
+    unite("date", c(YEAR, MONTH, DAY), sep = "/", remove = FALSE) %>%
+    dplyr::mutate(date = as.Date(date, "%Y/%m/%d"),
+                  DOY = yday(date),
+                  TAXA_COARSE = case_when(grepl(pattern = "Themisto", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          grepl(pattern = "Calanus", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          grepl(pattern = "Copepod_large", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          grepl(pattern = "Neocalanus", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          
+                                          grepl(pattern = "Cnidaria_small", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                          grepl(pattern = "Cnidaria_large", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                              TRUE ~ "other")) %>% 
+    group_by(DATA_SOURCE,YEAR, DOY,LAT,LON) %>% # sum across species 
+  dplyr::summarise(sum_EST_NUM_PERM3 = sum(EST_NUM_PERM3))  %>% 
+  mutate(YEAR = as.factor(YEAR),
+         DATA_SOURCE = as.factor(DATA_SOURCE)) %>% 
+  data.frame()
+
+ 
 
 ```
 
 
-Now write processed dataset after adding biomass information
+# Combine the two
+```{r}
+combo <- rbind(new_zoop %>% 
+                 dplyr::select(CRUISE, DAY, GEAR_NAME, HAUL_ID,LAT,LON,DATA_SOURCE,
+                               STAGE_NAME,TAXON_NAME, YEAR,MONTH,EST_NUM_PERM3),
+               NBS_Zoop_Process_Final %>% 
+                 dplyr::select(CRUISE, DAY, GEAR_NAME, HAUL_ID,LAT,LON,DATA_SOURCE,
+                               STAGE_NAME,TAXON_NAME,YEAR,MONTH,EST_NUM_PERM3))
+```
+
 
 ```{r}
-
-write.csv(NBS_Zoop_Process_Final, here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv"), row.names = FALSE)
-
+write.csv(combo, here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv"), row.names = FALSE)
 ```
 
 

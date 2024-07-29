@@ -12,27 +12,8 @@ sst_a <- read_csv("data/processed_covariates/Stage_A_CDD.csv") %>%
 
 # this is a GAM zoop index
 zoop <- read_csv("data/processed_covariates/Stage_A_Zooplankton_Index.csv")  %>% 
-  rename(Year = "YEAR") %>% 
-  dplyr::mutate(Large_zoop = case_when(Year == 2021 ~ Large_zoop + 0.02, # add small constant until I can get more recent data!!! 
-                                       TRUE ~ Large_zoop),
-                Cnideria = case_when(Year == 2021 ~ Cnideria + 0.02,
-                                       TRUE ~ Cnideria)) %>% 
-  rbind(data.frame(Year = c(2022,2023),
-                   Large_zoop = c(mean(zoop$Large_zoop) + 0.01,
-                                  mean(zoop$Large_zoop) - 0.01), 
-                   Cnideria = c(mean(zoop$Cnideria) +0.01,
-                                mean(zoop$Cnideria) -0.01)))
-
-# large_zoop_a <- read_csv("data/processed_covariates/covariate_large_zooplankton.csv") %>%
-#   dplyr::rename(large_zoop_NBS = "mean",
-#          Year = "YEAR")  %>%
-#   dplyr::select(Year, large_zoop_NBS)
-# 
-# gelatinous_zoop_a <- read_csv("data/processed_covariates/covariate_gelatinous_zooplankton.csv") %>%
-#   dplyr::rename(gelatinous_zoop_NBS = "mean",
-#                 Year = "YEAR")  %>%
-#   dplyr::select(Year, gelatinous_zoop_NBS)
-
+  rename(Year = "YEAR")  
+ 
 river_discharge_a <- read_csv("data/processed_covariates/Stage_A_YK_Discharge.csv") %>%
   dplyr::select(Year, mean_discharge,id) %>%
   spread(id, mean_discharge) %>%
@@ -52,7 +33,6 @@ stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
               left_join(air_temp_a) %>%
               left_join(zoop) # %>%
               
-
 # Stage A - Save DF ============= 
 write_csv(stage_a_cov, "data/processed_covariates/stage_a_all.csv")
 

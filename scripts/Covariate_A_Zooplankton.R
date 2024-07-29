@@ -11,8 +11,8 @@ library(mgcv)
  
 DF  <- read.csv(here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv")) 
 
-  zoop <- DF %>% 
-    group_by(DATA_SOURCE,CRUISE,HAUL_ID,YEAR,MONTH,DAY,LAT,LON, TAXON_NAME,TAXA_COARSE) %>% # sum across life stages 
+ zoop <- DF %>% 
+    group_by(CRUISE,HAUL_ID,YEAR,MONTH,DAY,LAT,LON, DATA_SOURCE,TAXON_NAME) %>% # sum across life stages 
     dplyr::summarise(EST_NUM_PERM3 =  sum(EST_NUM_PERM3)) %>%
     filter(!LAT<58,
            !LAT>65,
@@ -21,29 +21,36 @@ DF  <- read.csv(here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv"))
            MONTH %in% c(7,8,9,10)) %>% 
     unite("date", c(YEAR, MONTH, DAY), sep = "/", remove = FALSE) %>%
     dplyr::mutate(date = as.Date(date, "%Y/%m/%d"),
-                  DOY = yday(date)) 
+                  DOY = yday(date),
+                  TAXA_COARSE = case_when(grepl(pattern = "Themisto", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          grepl(pattern = "Calanus", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          grepl(pattern = "Copepod_large", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          grepl(pattern = "Neocalanus", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          
+                                          grepl(pattern = "Cnidaria", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                          grepl(pattern = "Larvacea", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                          grepl(pattern = "Medusozoa", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria", 
+                                          grepl(pattern = "Hydrozoa", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria", 
+                                          grepl(pattern = "Scyphozoa", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria", 
+                                          grepl(pattern = "Thaliacea", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria", 
+                                          grepl(pattern = "Ctenophora", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                          grepl(pattern = "Oikopleura", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                          TRUE ~ "other")) 
 
-names <- data.frame(unique(zoop$TAXA_COARSE))
+names <- data.frame(unique(zoop$TAXON_NAME))
 
 # Large zoop (Themisto, calanus, large copepods) ================
 large_zoop<- zoop %>% 
-  filter(stringr::str_detect(TAXA_COARSE, paste(c( 'Themisto', 
-                                                    'Calanus', 
-                                                    'Copepod_large', 
-                                                    'Neocalanus'), collapse = '|')) | 
-           stringr::str_detect(TAXA_COARSE, paste(c( 'Themisto', 
-                                                     'Calanus', 
-                                                     'Copepod_large', 
-                                                     'Neocalanus'), collapse = '|')))
+  filter(TAXA_COARSE == "large_zoop") 
 
-# plot raw dat ===========
+## plot raw data ===========
 # are there differences between EMA and ECOFOCI just based on plotting averages
-large_zoopsumm <- large_zoop %>% 
-  filter(!YEAR <1999) %>%  
+large_zoopsumm <- large_zoop %>%
+  filter(!YEAR <1999) %>%
   group_by(DATA_SOURCE,YEAR) %>%
   dplyr::summarise(mean = mean(EST_NUM_PERM3),
-                   n= nrow(.), 
-                  se= sd(EST_NUM_PERM3)/sqrt(n))  
+                   n= nrow(.),
+                  se= sd(EST_NUM_PERM3)/sqrt(n))
 
 
 ggplot(data = large_zoopsumm, aes(x=YEAR, y = mean, group =DATA_SOURCE, color =DATA_SOURCE )) +
@@ -52,7 +59,7 @@ ggplot(data = large_zoopsumm, aes(x=YEAR, y = mean, group =DATA_SOURCE, color =D
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se))  +
   ggtitle("Large Zoop")
 
-# Index Standardization for Large Zoop ================= 
+## Index Standardization for Large Zoop ================= 
 mod_df_largezoop <- large_zoop %>% 
   filter(!YEAR <1999) %>%  
   group_by(DATA_SOURCE,YEAR, DOY,LAT,LON) %>% # sum across species 
@@ -61,25 +68,24 @@ mod_df_largezoop <- large_zoop %>%
          DATA_SOURCE = as.factor(DATA_SOURCE)) %>% 
   data.frame()
  
-
 large_zoop_index <- mgcv::gam( sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
                                 s(LAT, LON) + s(DOY),
                               data = mod_df_largezoop, 
                               family = tw(link = "log"))
 summary(large_zoop_index)
-draw(large_zoop_index)
+gratia::draw(large_zoop_index)
 
 temp <- expand.grid(YEAR = c(unique(mod_df_largezoop$YEAR)),  
                        DATA_SOURCE = c("EcoDAAT"))
 
 large_pred_df <- cbind(temp, 
-                      data.frame(LAT = mean(mod_df_largezoop$LAT),#currently using M2, survey mean: rep(mean(scale_dat$LAT), times = nrow(DF1)),
-                                 LON = mean(mod_df_largezoop$LON), #rep(mean(scale_dat$LON), times = nrow(DF1)),
+                      data.frame(LAT = mean(mod_df_largezoop$LAT), 
+                                 LON = mean(mod_df_largezoop$LON),  
                                  DOY = mean(mod_df_largezoop$DOY)))  
 
-temp <- predict(large_zoop_index, large_pred_df, se.fit = TRUE )
+temp <- predict(large_zoop_index, large_pred_df, se.fit = TRUE, response = TRUE )
 
-large_pred_df$pred <-  exp(temp[[1]]) 
+large_pred_df$pred <- exp(temp[[1]]) 
 large_pred_df$se <-   exp(temp[[2]])
 
 ggplot(data = large_pred_df, aes(x=YEAR, y = pred,
@@ -89,31 +95,11 @@ ggplot(data = large_pred_df, aes(x=YEAR, y = pred,
   geom_errorbar(aes(ymin = pred-se, ymax = pred+se), width = 0.1)  +
   ggtitle("Large Zoop Modeled Index") + 
   theme_classic()
-
-# mean scale ===========
-large_pred_df <- large_pred_df %>%
-  mutate(id = "Large_zoop")
-
-ggplot(data = large_pred_df, aes(x=YEAR, y = pred_scale,
-                           group =DATA_SOURCE)) +
-  geom_point()+
-  geom_line() +
-  geom_errorbar(aes(ymin = pred_scale-se, ymax = pred_scale+se), width = 0.1)  +
-  ggtitle("Large Zoop Modeled Index") + 
-  ylab("Predicted Index") + 
-  theme_classic() +
-  geom_hline(yintercept =0, 
-             linetype = 2) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-  
-
+ 
  # Gelatinous Zoop - Cnideria ===============
 cnideria_zoop<- zoop %>% 
-   filter(stringr::str_detect(TAXA_COARSE, 
-                              paste(c('Cnidaria_small', 'Cnidaria_large'), collapse = '|')) | 
-          stringr::str_detect(TAXON_NAME, 
-                              paste(c('Cnidaria_small', 'Cnidaria_large'), collapse = '|')))
- 
+   filter(TAXA_COARSE == "Cnideria") 
+
  zoop_cnideria_summ <- cnideria_zoop %>% 
    filter(!YEAR <1999) %>% 
    group_by(DATA_SOURCE, YEAR) %>%
@@ -127,7 +113,7 @@ cnideria_zoop<- zoop %>%
    geom_line() +
    geom_errorbar(aes(ymin = mean-se, ymax = mean+se))  
 
- # Index Standardization for Cnideria ================= 
+ ## Index Standardization for Cnideria ================= 
  mod_df_cnideriazoop <-  cnideria_zoop %>% 
    filter(!YEAR <1999) %>%  
    group_by(DATA_SOURCE,YEAR, DOY,LAT,LON) %>% # sum across species 
@@ -141,7 +127,7 @@ cnideria_zoop<- zoop %>%
                                 data = mod_df_cnideriazoop, 
                                 family = tw(link = "log"))
  summary(cnideria_zoop_index)
- draw(cnideria_zoop_index)
+ gratia::draw(cnideria_zoop_index)
  
  temp <- expand.grid(YEAR = c(unique(mod_df_cnideriazoop$YEAR)),  
                      DATA_SOURCE = c("EcoDAAT"))
@@ -159,55 +145,33 @@ cnideria_zoop<- zoop %>%
  cnideria_pred_df <- cnideria_pred_df %>%
                          dplyr::mutate( id = "Cnideria")
  
- 
-# years in covariate timeseries to expand the TS that need it  =====
- YEAR <-data.frame(YEAR = seq(from = 2002, to = 2021, by =1))
- 
- temp <-large_pred_df %>%
-   rbind(cnideria_pred_df) %>% 
-   dplyr::select(YEAR, pred, id) %>% 
-   spread(id, pred) %>% 
-   dplyr::summarise(mean_cnideria = mean(Cnideria), #rnorm(mean(Cnideria), 0.001), 
-             mean_largezoop = mean(Large_zoop)) #rnorm(mean(Large_zoop), 0.001))
-# a<- rnorm(1,0, 0.1)
-# b<-rnorm(2,mean(temp$mean_largezoop), 0.1)
-
+add <-  data.frame(YEAR = c(as.factor(2023)),
+               Large_zoop = c(37.2),  
+               Cnideria = c(10.4))
+# bind both data sets ========== 
 pred_df <- large_pred_df %>%
+              dplyr::mutate( id = "Large_zoop") %>% 
               rbind(cnideria_pred_df) %>%
               dplyr::select(YEAR, pred, id) %>% 
               spread(id, pred)  %>% 
-              dplyr::mutate(YEAR = as.numeric(as.character(YEAR))) %>% 
-              right_join(YEAR) %>% 
-              dplyr::mutate(Cnideria = case_when(is.na(Cnideria) ~ mean(temp$mean_cnideria)  ,
-                                          TRUE ~ Cnideria),
-                            Large_zoop = case_when(is.na(Large_zoop) ~ mean(temp$mean_largezoop),
-                                          TRUE ~ Large_zoop)) 
+              rbind( add) %>% 
+              dplyr::mutate(YEAR = as.numeric(as.character(YEAR)),
                             Large_zoop = as.numeric(scale(Large_zoop)),
-                            Cnideria = as.numeric(scale(Cnideria)))       
+                            Cnideria = as.numeric(scale(Cnideria)))  
+   
 
-# plots =============
- ggplot(data = pred_df, aes(x=YEAR, y = pred,
-                            group =id, color=id)) +
-   geom_point()+
-   geom_line() +
-   geom_errorbar(aes(ymin = pred-se, ymax = pred+se), width = 0.1)  +
-   ggtitle("Cnideria Modeled Index") + 
+## plots =============
+ ggplot( ) +
+   geom_point(data = pred_df, aes(x=YEAR, y = Large_zoop), color = "orange")+
+   geom_point(data = pred_df, aes(x=YEAR, y = Cnideria), color = "green")+
+   # geom_errorbar(aes(ymin = pred-se, ymax = pred+se), width = 0.1)  +
+   ggtitle("mean scaled Modeled Index") + 
    theme_classic()
- 
- ggplot(data = pred_df, aes(x=YEAR, y = pred_scale,
-                            group =id, color=id)) +
-   geom_point()+
-   geom_line() +
-   geom_errorbar(aes(ymin = pred_scale-se, ymax = pred_scale+se), width = 0.1)  +
-   ggtitle("Scale Modeled Index") + 
-   theme_classic() +
-   geom_hline(yintercept = 0, linetype = 2)
  
  # save data  =============
  write_csv(pred_df, "data/processed_covariates/Stage_A_Zooplankton_Index.csv")
  
- 
- 
+ # OLD ======== 
  # these are not used in model ============
  ## Estimate Spatial Temporal Fields? ============================ 
  largezoop_ST_index <- mgcv::gam(sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
@@ -221,11 +185,11 @@ pred_df <- large_pred_df %>%
                                    family = tw(link = "log"))
  
  summary(cnideria_ST_index)
- 
  draw(largezoop_ST_index)
  draw(cnideria_ST_index)
+ 
 # mean scale ======= 
-  # OLD ============
+   ## OLD ============
   ## Themisto ================
 themisto<- zoop %>% filter(stringr::str_detect(TAXA_COARSE, 'Themisto') )
 
