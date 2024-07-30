@@ -49,7 +49,8 @@ real  N_egg_start_log[t_start,A];
 
 vector <lower=0> [A-1] prob; 
 real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
-vector <lower=0> [A] g; // gamma random draws
+// vector <lower=0> [A] g; // gamma random draws
+real <lower=0> g[nByrs+1,A]; // gamma random draws
 real log_catch_q;
  
 vector [nRyrs_T]  log_F_dev_y; 
@@ -99,8 +100,9 @@ real <lower=0>  catch_q; // related juvebile data to spawner data (on different 
 real c_1; // estimate on log, transform back to normal scale
 real c_2; // estimate on log, transform back to normal scale
 
-// Age related transformed params ====== 
-vector<lower=0>[A] p;  
+// // Age related transformed params ====== 
+// vector<lower=0>[A] p;  
+matrix<lower=0, upper=1>[nByrs+1, A] p;  // age at maturity proportions through time 
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix<lower=0, upper=1>[nRyrs,A] q; 
@@ -153,11 +155,13 @@ for(t in 1:t_start){
   pi[4] = 1 - pi[1] - pi[2] - pi[3];
 
   D_sum = 1/(D_scale^2);
-
+  
   for (a in 1:A) {
     Dir_alpha[a] = D_sum * pi[a];
-    p[a] = g[a]/sum(g[1:A]);
+for(t in 1:(nByrs+1)) {    
+    p[t,a] = g[t,a]/sum(g[t,1:A]);
   }
+}
 
 catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
 
@@ -175,7 +179,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
          kappa_marine_mortality[t+2] = -log(kappa_marine_survival[t+2]);
      
         for (a in 1:A) { 
-          N_first_winter[t+a+2,a] =  N_j[t+1]*p[a]; // add age structure, p is proportion per age class
+          N_first_winter[t+a+2,a] =  N_j[t+1]*p[t+1,a]; // add age structure, p is proportion per age class
        
           N_recruit[t+a+2,a] = N_first_winter[t+a+2,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+2])); // add age specific mortality, 
 
@@ -231,9 +235,11 @@ model {
   basal_p_2 ~ beta(1,1); // mean survivial stage 2
   
 // age comp 
+for(t in 1:(nByrs+1)){
     for (a in 1:A) {
-   target += gamma_lpdf(g[a]|Dir_alpha[a],1);
+   target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
  }
+}
  
 // log fishing mortality for each calendar year 
     log_F_mean ~ normal(0,1);
