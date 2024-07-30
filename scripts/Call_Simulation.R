@@ -20,25 +20,25 @@ yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>
   filter(cal_year >= year_min #, 
          #cal_year <= year_max_cal
   )%>%
-  select(2) %>%
+  dplyr::select(2) %>%
   summarise(mean = log(mean(Spawners)))
 
 yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
   filter(cal_year >= year_min#, 
          #cal_year <= year_max_cal
   )%>%
-  select(2) %>% 
+  dplyr::select(2) %>% 
   summarise(mean = log(mean(harvest)))
 
 yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
   filter(cal_year >= year_min) %>%
-  select(2) %>%
+  dplyr::select(2) %>%
   dplyr::summarise(mean = log(mean(total_run)))
 
 ## Fall Juveniles ================================================
 fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
   filter(Year <= 2021) %>% # 1 year less than all spawners 
-  select(2) %>% 
+  dplyr::select(2) %>% 
   dplyr::summarise(mean = log(mean(fall_abundance)))
 
 #### Simulating data 
@@ -80,46 +80,30 @@ basal_p_2 = 0.4 #-0.2369558 # (0.4)
  p_1 = 0.08 #-1.820463 # (0.1) #base survival 
  p_2 = 0.2 #-0.2369558 # (0.4)
 
-cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
-cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = ncovars2))
-
-# rnorm(1, 0,1.5^2)
- 
-# only need sigma and mu coeff if they are set up hierarchically
- # sigma_coef1 <- as.matrix(nrow = 1, ncol =1, 0.1)
- #  sigma_coef2 <- as.matrix(nrow = 1, ncol =1, 0.1)
- #   
- #  mu_coef1 <- 0.1 #rnorm(0, 10)
- #  mu_coef2 <- -0.2 #rnorm(0, 10)
- #  
- #  theta1 <- rnorm(1,mu_coef1,sigma_coef1[1,1])
- #  theta2 <- rnorm(1,mu_coef2,sigma_coef2[1,1])
+cov1 <- matrix(nrow = nByrs+1, ncol = ncovars1, rep(rnorm(nByrs+1, 0, 1), times = ncovars1))   
+cov2 <- matrix(nrow = nByrs+2, ncol = ncovars2, rep(rnorm(nByrs+2, 0, 1), times = ncovars2))
 
 theta1 <- c(0.2) #, 0.1,0.06,0.08) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
 theta2 <- c(-0.05)#, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
- 
-# theta1 <- c(0.5,0.1) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
-#  theta2 <- c(-0.5,-0.9)#, -0.6) #relationship for simulated data
-#    
+  
  p_1 = as.vector(NA) #matrix(nrow=nByrs,ncol=1,NA)
  p_2 = as.vector(NA) #matrix(nrow=nByrs,ncol=K,NA)
  
  # lines below need to be edited if I use more stocks!! theta and cov 1 should be multipled and summed, can get away with just multiplying here because there is only 1 stock and 1 covar
  
- cov_eff1 = matrix(NA, nrow = nByrs, ncol = ncovars1)
- cov_eff2 = matrix(NA, nrow = nByrs, ncol = ncovars2)
+ cov_eff1 = matrix(NA, nrow = nByrs+1, ncol = ncovars1)
+ cov_eff2 = matrix(NA, nrow = nByrs+2, ncol = ncovars2)
  
-  for(t in 1:nByrs){
+ for(t in 1:nByrs){
    for (c in 1:ncovars1) {
-     cov_eff1[t,c] = theta1[c]*cov1[t,c]
+     cov_eff1[t+1,c] =  theta1[c]*cov1[t+1,c]  
    }
-    for (c in 1:ncovars2) {
-      cov_eff2[t,c] = theta2[c]*cov2[t,c]
-    }
-    p_1[t]  = 1 / 1+ exp(basal_p_1 + (sum(cov_eff1[t,1:c]))) # covariate impacts survival, impact is measured through theta
-    p_2[t]  = 1 / 1+ exp(basal_p_2 + (sum(cov_eff2[t,1:c]))) # covariate impacts survival, impact is measured through theta
-  }
- 
+   for (c in 1:ncovars2) {
+     cov_eff2[t+2,c] =  theta2[c]*cov2[t+2,c]
+   }
+   p_1[t+1]  = 1 / (1 + exp(basal_p_1+sum(cov_eff1[t+1,1:ncovars1])))
+   p_2[t+2]  = 1 / (1 + exp(basal_p_2+ sum(cov_eff2[t+2,1:ncovars2])))
+ }
  
 
  # AGE STRUCTURE =========
@@ -130,11 +114,7 @@ theta2 <- c(-0.05)#, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
   
   # pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
 prob = c(NA)
-
-# for (r in 1:3) {
-#   prob[r] = rbeta(1,1,1)
-# }
-
+ 
 prob = c(0.1548598, 0.7782258, 0.40537690)
 
   pi[1] = prob[1]
@@ -168,13 +148,13 @@ kappa_marine_mortality = vector( )
 N_j =  matrix(nrow=nByrs+1,ncol=1,NA)
 #N_first_winter = matrix(NA, nrow = nByrs)
 
-N_first_winter = matrix(nrow=nRyrs_T+1,ncol=A,NA)
+N_first_winter = matrix(nrow=nRyrs_T,ncol=A,NA)
 N_e_sum = matrix(nrow=nByrs,ncol=1,NA)
-N_e  = matrix(NA, nrow = nRyrs_T+1,ncol=A)
-N_recruit =  matrix(NA, nrow = nRyrs_T+1,ncol=A)
-N_catch =  matrix(NA, nrow = nRyrs_T+1,ncol=A)
-N_ocean = matrix(NA, nrow = nRyrs_T+1,ncol=A)
-N_sp = matrix(NA, nrow = nRyrs_T+1,ncol=A) 
+N_e  = matrix(NA, nrow = nRyrs_T,ncol=A)
+N_recruit =  matrix(NA, nrow = nRyrs_T,ncol=A)
+N_catch =  matrix(NA, nrow = nRyrs_T,ncol=A)
+N_ocean = matrix(NA, nrow = nRyrs_T,ncol=A)
+N_sp = matrix(NA, nrow = nRyrs_T,ncol=A) 
  
  ## make starting values ========
  N_e_sum_start = as.vector(0)
@@ -227,21 +207,16 @@ M_fill_stan = c(0.06,0.06, 0.06, 0.06) # will be cumulative
 M = matrix(ncol = A, nrow = nRyrs_T, 
            c(0.06,0.06, 0.06, 0.06) , byrow = TRUE)
 
-# p_2=rbeta(n=nByrs,1,1)
-# p_1 = 0.08#-1.820463 # (0.1) #base survival 
-# p_2 = 0.2 #-0.2369558 # (0.4)
-
-    
 # POPULATION MODEL ============ 
      for (t in 1:nByrs){ # loop for each brood year 
         
          N_e_sum[t] = sum(N_e[t,1:A])
          
-         kappa_j[t] =  p_1/(1+((p_1*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
+         kappa_j[t+1] =  p_1[t+1]/(1+((p_1[t+1]*N_e_sum[t])/c_1)) # Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
        
-         N_j[t+1] = kappa_j[t]*N_e_sum[t] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
+         N_j[t+1] = kappa_j[t+1]*N_e_sum[t] # Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
         
-         kappa_marine[t+2] =  p_2/(1 + ((p_2*N_j[t+1])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
+         kappa_marine[t+2] =  p_2[t+2]/(1 + (( p_2[t+2]*N_j[t+1])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
          kappa_marine_mortality[t+2] = -log(kappa_marine[t+2])
  
@@ -256,16 +231,8 @@ M = matrix(ncol = A, nrow = nRyrs_T,
              
            N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a] 
          }
-  
      } 
 
-   # View(N_sp)
-   # View(N_catch)
-   # View(N_e)
-   # View(N_recruit)
-   # 
-   # plot(p_2)
-   
 # calculate Obs Run Comp  ============
 o_run_comp = array(data = NA, dim = c(nRyrs,A))
 o_run_comp_sp= array(data = NA, dim = c(nRyrs,A))
@@ -285,16 +252,6 @@ for(t in 1:6){
   }
 }
 
-
-barplot(t(o_run_comp))
-#barplot(t(o_run_comp_sp))
-barplot(t(N_j))
-barplot(t(kappa_j))
-barplot(t(kappa_marine))
- 
-colMeans(o_run_comp)
-p
-
 # barplots =====
 barplot(t(p_1))
 barplot(t(p_2))
@@ -305,9 +262,17 @@ barplot(t(kappa_j[5:22]))
 
 barplot(t(kappa_marine[5:22]))
 
+barplot(t(o_run_comp))
+#barplot(t(o_run_comp_sp))
+barplot(t(N_j))
+barplot(t(kappa_j))
+barplot(t(kappa_marine))
+
+colMeans(o_run_comp)
+p
  
 # Fix ESS ============= 
-ess_age_comp = rep(80, times = nByrs)
+ess_age_comp = rep(300, times = nByrs)
 
 # PROCESS MODEL ============= 
 #N_j[1] = mean(N_j[2:nByrs]) #mean(N_j[2:n,1:n.pop]) # just so i don't get yelled at about NA's later down the road 
@@ -337,7 +302,7 @@ N_sp_sim[1:nRyrs_T]<- N_sp[1:nRyrs_T,1] + N_sp[1:nRyrs_T,2] + N_sp[1:nRyrs_T,3]+
 # incorporate Q, to connect different data sources in population model 
 N_j_sim_observed= N_j*exp(log_catch_q)
 
-N_j_sim_hat  =   (rnorm(nByrs,   (N_j_sim_observed), process_error_j))
+N_j_sim_hat  =   (rnorm(nByrs+1,   (N_j_sim_observed), process_error_j))
  
 N_catch_sim_s =    (rnorm(nRyrs_T,   (N_catch_sim), sqrt(log((0.01^2) + 1))))
 N_recruit_sim_s  =   (rnorm(nRyrs_T,   (N_recruit_sim), sqrt(log((0.06^2) + 1))))
@@ -350,16 +315,7 @@ N_sp_sim_s  =   (rnorm(nRyrs_T,   (N_sp_sim), process_error_sp))
         nByrs_stan = nByrs-5
         nRyrs_stan = nRyrs-5    
         nRyrs_T_stan = nRyrs_T-5
-        
-        barplot(N_recruit_sim[6:nByrs])
-        barplot(N_recruit_sim_s[6:nRyrs])
-        
-        barplot(N_j[6:nByrs])
-        barplot(N_j_sim_observed[6:nRyrs])
- 
-        barplot(kappa_j[6:nByrs])
-        barplot(kappa_marine[6:nByrs])
-        
+      
      # PLOT all simulated data together  ==========
         dat <- data.frame(data_stage_j = N_j_sim_hat[6:nByrs],
                           data_stage_return = N_recruit_sim_s[6:(nRyrs-1)],
@@ -382,10 +338,10 @@ N_sp_sim_s  =   (rnorm(nRyrs_T,   (N_sp_sim), process_error_sp))
                           fs=fs,
                           M = M_fill_stan, 
                     
-                          data_stage_j = N_j_sim_hat[6:nByrs],
-                          data_stage_return = N_recruit_sim_s[6:nRyrs],
-                          data_stage_sp = N_sp_sim_s[6:nRyrs],
-                          data_stage_harvest = N_catch_sim_s[6:nRyrs], 
+                          data_stage_j = N_j_sim_hat[6:nByrs+1],
+                          data_stage_return = N_recruit_sim_s[6:nRyrs+2],
+                          data_stage_sp = N_sp_sim_s[6:nRyrs+2],
+                          data_stage_harvest = N_catch_sim_s[6:nRyrs+2], 
                           
                           # N_ocean_start = N_ocean_start,
                           # N_egg_start = N_egg_start,
@@ -402,10 +358,10 @@ N_sp_sim_s  =   (rnorm(nRyrs_T,   (N_sp_sim), process_error_sp))
                           ncovars1=ncovars1,
                           ncovars2=ncovars2,
                           
-                          data_sp_cv = process_error_sp[6:nRyrs],
+                          data_sp_cv = process_error_sp,
                           
-                          cov1=cov1[6:nByrs,ncovars1],
-                          cov2=cov2[6:nByrs,ncovars2],
+                          cov1=cov1[6:nByrs+1,ncovars1],
+                          cov2=cov2[6:nByrs+2,ncovars2],
                           
                           o_run_comp=o_run_comp[6:nRyrs,],
                           ess_age_comp=ess_age_comp[6:nByrs],

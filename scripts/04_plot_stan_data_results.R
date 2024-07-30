@@ -8,6 +8,7 @@ library(rstanarm)
 # load model ==============
 bh_fit<- read_rds("output/stan_fit_DATA.RDS")
 
+# year DF for joins ==================
 years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min) %>%
   dplyr::select(cal_year) %>%
@@ -241,9 +242,34 @@ ggplot(data = pred_N_eggs_sum %>% filter(!time < 7)) +
   geom_line(aes(x=time, y = mean)) 
 
 # plot age comp through time =================
-age_comp_Q <- summary(bh_fit, pars = c("q"), 
-                       probs = c(0.1, 0.9))$summary  
+age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 
+    dplyr::mutate(time = 1:21) %>% 
+    left_join(years) %>%
+    gather(1:4, key = "age", value = "obs") %>%
+    dplyr::mutate(age = case_when(age == "abund_0.3" ~ 3,
+                                  age == "abund_0.4" ~ 4,
+                                  age == "abund_0.5" ~ 5,
+                                  age == "abund_0.6" ~ 6))
 
+age_comp_Q <- summary(bh_fit, pars = c("q"), 
+                       probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:21, each=4),
+                age = rep(3:6, length.out = nrow(.))) %>%
+  left_join(years) %>%
+  left_join( age_comp_dat) %>% 
+  rename(pred = "mean") %>%
+  dplyr::select(time,age,pred,obs) %>%
+  gather(3:4, key = "id", value = "value")
+
+ggplot(data= age_comp_Q) +
+  geom_line(aes(x=time, y = value, group = id, color = id)) +
+  facet_wrap(~age, scales = "free")
+
+ggplot(data= age_comp_Q) +
+  geom_line(aes(x=time, y = value, group = id, color = id)) +
+  facet_wrap(~age)
 
 # align all stages on one plot to look at scale. =====
 summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"), 

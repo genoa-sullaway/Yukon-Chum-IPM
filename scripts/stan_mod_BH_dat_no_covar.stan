@@ -115,11 +115,11 @@ vector [nRyrs_T] F; // instantaneous fishing mortality
 
 for(t in 1:t_start){
  for(a in 1:A){
-  N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-  N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-  N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-  N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-  N_first_winter_start[t,a] = exp(N_first_winter_start_log[t])*p_obs[a];
+  N_sp_start[t,a] = exp(N_sp_start_log[t])*p[a]; //o_run_comp[t,a];
+  N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p[a]; //*o_run_comp[t,a];
+  N_catch_start[t,a] = exp(N_catch_start_log[t])*p[a];//o_run_comp[t,a];
+  N_egg_start[t,a] = exp(N_egg_start_log[t])*p[a];//o_run_comp[t,a];
+  N_first_winter_start[t,a] = exp(N_first_winter_start_log[t])*p[a];//o_run_comp[t,a];
   }
  }
 

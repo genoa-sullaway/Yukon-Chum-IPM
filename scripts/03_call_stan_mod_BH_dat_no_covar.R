@@ -43,27 +43,27 @@ yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>
   filter(cal_year >= year_min #, 
          #cal_year <= year_max_cal
   ) %>%
-  select(2) %>%
+  dplyr::select(2) %>%
   as.vector()
 
 yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
   filter(cal_year >= year_min#, 
          #cal_year <= year_max_cal
   )%>%
-  select(2) %>%
+  dplyr::select(2) %>%
   as.vector()
 
 yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
   filter(cal_year >= year_min#, 
          #cal_year <= year_max_cal
   ) %>%
-  select(2) %>%
+  dplyr::select(2) %>%
   as.vector()
 
 ## Fall Juveniles ================================================
 fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
   filter(Year <= year_max_brood) %>% 
-  select(2) %>% 
+  dplyr::select(2) %>% 
   as.vector()
 
 #plot(fall_juv$fall_abundance, type ="l")

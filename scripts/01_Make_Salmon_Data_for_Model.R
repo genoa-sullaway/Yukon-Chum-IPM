@@ -85,8 +85,10 @@ write_csv(yukon_fall_recruits,"data/processed_data/yukon_fall_recruits.csv")
 # write_csv(yukon_summer_sp, "output/yukon_summer_broodyear.csv")
 
 ## Fall ========
+# Fall age comps come from JTC: https://www.yukonriverpanel.com/publications/yukon-river-joint-technical-committee-reports/
+# change proportions from brood year to calendar year 
 yukon_fall_ages <- readxl::read_excel("data/age_comps/Fall_Yukon_Calc_Source4.xlsx") %>%  # created in make_fall_yukon_age_comp.R - source from JTC report
-  select(c(1:5)) %>% 
+  dplyr::select(c(1:5)) %>% 
   gather(2:5, key = "age", value = "abund") %>%
   mutate(cal_year = case_when(age == "abund_0.3" ~ brood_year +3,
                               age == "abund_0.4" ~ brood_year +4,
