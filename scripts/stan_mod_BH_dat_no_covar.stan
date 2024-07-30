@@ -55,8 +55,9 @@ real log_catch_q;
  
 vector [nRyrs_T]  log_F_dev_y; 
 real log_F_mean; 
-vector <lower = 0> [A] log_S; // log selectivity
-
+real <lower = 0> log_S [nRyrs_T,A]; // log selectivity
+// vector <lower = 0> [A] log_S; // log selectivity
+ 
 real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
 real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
 
@@ -106,7 +107,8 @@ matrix<lower=0, upper=1>[nRyrs,A] q;
 vector<lower=0, upper=1> [A] pi;
 
 vector [nRyrs_T] F; // instantaneous fishing mortality           
-vector <lower = 0> [A] S; //selectivty
+// vector <lower = 0> [A] S; //selectivty
+  matrix<lower=0>[nRyrs_T, A] S; 
 
 // starting value transformations ======
   kappa_marine_survival[1:2] = kappa_marine_start;
@@ -119,8 +121,10 @@ vector <lower = 0> [A] S; //selectivty
  }
 
 // transform selectivity 
-for(a in 1:A){
-  S[a] = exp(log_S[a]);
+for(t in 1:nRyrs_T){
+ for(a in 1:A){
+  S[t,a] = exp(log_S[t,a]);
+ }
 }
 
 
@@ -187,7 +191,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
        
           N_recruit[t+a+2,a] = N_first_winter[t+a+2,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+2])); // add age specific mortality, 
 
-          N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
+          N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[t+a+2,a])));
            
           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
              
@@ -250,11 +254,14 @@ model {
     log_F_mean ~ normal(0,1);
 
 // selectivity for each age class 
- for (a in 1:A) {
-    log_S[a] ~ normal(0,5);
- } 
+ // for (a in 1:A) {
+ //    log_S[a] ~ normal(0,5);
+ // } 
   for(t in 1:nRyrs_T){
     log_F_dev_y[t] ~ normal(0, 5); 
+     for (a in 1:A) {
+    log_S[t,a] ~ normal(0,5);
+  }
  }
  
  // age comp priors -- maturity schedules
