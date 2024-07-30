@@ -26,8 +26,6 @@ traceplot(bh_fit,pars=  c( "g", "Dir_alpha"))
 
 traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"))
 
-traceplot(bh_fit,pars=  c("log_catch_q","g"))
-
 traceplot(bh_fit,pars=  c("N_sp_start_log"))
 
 traceplot(bh_fit,pars=  c("log_c_1","log_c_2"))
@@ -83,7 +81,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "sigma_y_j"),
+     pars=  c( "sigma_y_j","sigma_catch"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
@@ -270,6 +268,20 @@ ggplot(data= age_comp_Q) +
 ggplot(data= age_comp_Q) +
   geom_line(aes(x=time, y = value, group = id, color = id)) +
   facet_wrap(~age)
+
+# plot mean age comp  ======
+age_comp <- summary(bh_fit, pars = c("p"), 
+                    probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column() %>% 
+  rename(pred = "mean") %>% 
+  cbind(obs = data_list_stan$p_obs) %>% 
+  dplyr::select(1,2,9) %>% 
+  gather(2:3, key = "key", value = "value")
+
+ggplot(data = age_comp) +
+  geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
+  theme_classic()
 
 # align all stages on one plot to look at scale. =====
 summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"), 
@@ -592,33 +604,33 @@ ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = vari
                   ymax = mean+se_mean), alpha = 0.5)
 
 # calculate correlation in productivity ...
-productivity_split <- productivity %>% 
-  select(time, variable,mean) %>% 
-  spread(variable, mean)
-
-cor.test(productivity_split$p_1,productivity_split$p_2)
-
-# calculate rolling correlation in productivity....
-# make a list of 5 year chunks .... 
-# could also look at warm vs cold year productivity 
-n <- 5
-productivity_group <- productivity %>% 
-  select(time, variable,mean) %>% 
-  spread(variable, mean) %>% 
-   filter(!time %in% c(23,1,2)) %>% 
-  mutate(id = rep(1:n, times=1, each=4)) 
- 
-corr <- list()
-
-for (i in 1:n) {
-  temp <- productivity_group %>% 
-    filter(id == i)
-  
-  corr[[i]]<- cor.test(temp$p_1,temp$p_2)
-  
-}
-
-corr
+# productivity_split <- productivity %>% 
+#   dplyr::select(time, variable,mean) %>% 
+#   spread(variable, mean)
+# 
+# cor.test(productivity_split$p_1,productivity_split$p_2)
+# 
+# # calculate rolling correlation in productivity....
+# # make a list of 5 year chunks .... 
+# # could also look at warm vs cold year productivity 
+# n <- 5
+# productivity_group <- productivity %>% 
+#   select(time, variable,mean) %>% 
+#   spread(variable, mean) %>% 
+#    filter(!time %in% c(23,1,2)) %>% 
+#   mutate(id = rep(1:n, times=1, each=4)) 
+#  
+# corr <- list()
+# 
+# for (i in 1:n) {
+#   temp <- productivity_group %>% 
+#     filter(id == i)
+#   
+#   corr[[i]]<- cor.test(temp$p_1,temp$p_2)
+#   
+# }
+# 
+# corr
 
 
 # productivity_late <- productivity %>% 
@@ -646,21 +658,7 @@ corr
 # ggplot(data = sigma) +
 #   geom_point(aes(x= rowname, y = mean)) + 
 #   theme_classic()
-
-# plot age comp  ======
-age_comp <- summary(bh_fit, pars = c("p"), 
-                   probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column() %>% 
-  rename(pred = "mean") %>% 
-  cbind(obs = data_list_stan$p_obs) %>% 
-  dplyr::select(1,2,9) %>% 
-  gather(2:3, key = "key", value = "value")
-
-ggplot(data = age_comp) +
-  geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
-  theme_classic()
-
+ 
 
 # Plot covariates with respective salmon population ======
 brood_year_recruits <- summary(bh_fit, pars = c("N_recruit"), 
