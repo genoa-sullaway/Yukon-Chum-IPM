@@ -169,7 +169,6 @@ bh_fit <- stan(
   iter = total_iterations,
   cores = n_cores,
   verbose=FALSE,
-  # seed=101,
   control = list(adapt_delta = 0.9))
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
