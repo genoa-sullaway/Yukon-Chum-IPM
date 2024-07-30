@@ -49,8 +49,8 @@ real  N_egg_start_log[t_start,A];
 
 vector <lower=0> [A-1] prob; 
 real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
-// vector <lower=0> [A] g; // gamma random draws
-real <lower=0> g[nByrs+1,A]; // gamma random draws
+vector <lower=0> [A] g; // gamma random draws
+// real <lower=0> g[nByrs+1,A]; // gamma random draws
 real log_catch_q;
  
 vector [nRyrs_T]  log_F_dev_y; 
@@ -91,9 +91,6 @@ real <lower =0> N_j_start;
 vector [nByrs+1] kappa_j_survival; // predicted survival for juvenile fish (FW and early marine)
 vector [nByrs+2] kappa_marine_survival; // predicted survival for marine fish
 vector [nByrs+2] kappa_marine_mortality; // converting kappa marine survival to mortality 
-// 
-// matrix [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine covariate effects by brood year and stock
-// matrix [nByrs, ncovars2] cov_eff2; 
 
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
 
@@ -101,8 +98,8 @@ real c_1; // estimate on log, transform back to normal scale
 real c_2; // estimate on log, transform back to normal scale
 
 // // Age related transformed params ====== 
-// vector<lower=0>[A] p;  
-matrix<lower=0, upper=1>[nByrs+1, A] p;  // age at maturity proportions through time 
+vector<lower=0>[A] p;  
+// matrix<lower=0, upper=1>[nByrs+1, A] p;  // age at maturity proportions through time 
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0>[A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix<lower=0, upper=1>[nRyrs,A] q; 
@@ -164,9 +161,10 @@ for(t in 1:t_start){
   
   for (a in 1:A) {
     Dir_alpha[a] = D_sum * pi[a];
-for(t in 1:(nByrs+1)) {    
-    p[t,a] = g[t,a]/sum(g[t,1:A]);
-  }
+// for(t in 1:(nByrs+1)) {    
+    p[a] = g[a]/sum(g[1:A]);
+     // p[t,a] = g[t,a]/sum(g[t,1:A]);
+  // }
 }
 
 catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
@@ -185,7 +183,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
          kappa_marine_mortality[t+2] = -log(kappa_marine_survival[t+2]);
      
         for (a in 1:A) { 
-          N_first_winter[t+a+2,a] =  N_j[t+1]*p[t+1,a]; // add age structure, p is proportion per age class
+          N_first_winter[t+a+2,a] =  N_j[t+1]*p[a]; // add age structure, p is proportion per age class
        
           N_recruit[t+a+2,a] = N_first_winter[t+a+2,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t+2])); // add age specific mortality, 
 
@@ -214,12 +212,12 @@ model {
   sigma_y_j ~ uniform(0,5); //normal 
   sigma_catch ~ uniform(0,5); //normal 
  
-  log_catch_q ~ normal(0,20);  // Estimate Q - this will translate # of recruits to # of spawners 
+  log_catch_q ~ normal(0,10);  // Estimate Q - this will translate # of recruits to # of spawners 
  
   log_c_1 ~ normal(16,10); // carrying capacity prior - stage 1
   log_c_2 ~ normal(20, 10); // carrying capacity prior - stage 2
  
-    N_j_start_log ~ normal(0,10);
+  N_j_start_log ~ normal(0,10);
 
  for(t in 1:t_start){
    for(a in 1:A){
@@ -231,7 +229,6 @@ model {
   }
  }
  
- 
   D_scale ~ beta(1,1);  
     
   p_1 ~ beta(1,1);
@@ -241,10 +238,12 @@ model {
   basal_p_2 ~ beta(1,1); // mean survivial stage 2
   
 // age comp 
-for(t in 1:(nByrs+1)){
-    for (a in 1:A) {
-   target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
- }
+  for (a in 1:A) {
+// for(t in 1:(nByrs)){
+      target += gamma_lpdf(g[a]|Dir_alpha[a],1);
+ //    for (a in 1:A) {
+ //   target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
+ // }
 }
  
 // log fishing mortality for each calendar year 
@@ -255,7 +254,7 @@ for(t in 1:(nByrs+1)){
     log_S[a] ~ normal(0,5);
  } 
   for(t in 1:nRyrs_T){
-    log_F_dev_y[t] ~ normal(0, 20); 
+    log_F_dev_y[t] ~ normal(0, 5); 
  }
  
  // age comp priors -- maturity schedules

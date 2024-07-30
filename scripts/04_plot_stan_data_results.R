@@ -20,7 +20,7 @@ traceplot(bh_fit,pars=  c( "theta1[1]","theta2[1]","theta1[3]",
 
 traceplot(bh_fit,pars=  c( "D_scale" ))
 
-traceplot(bh_fit,pars=  c( "log_catch_q" ))
+traceplot(bh_fit,pars=  c( "log_catch_q", "log_S" ))
 
 traceplot(bh_fit,pars=  c( "g", "Dir_alpha"))
 
