@@ -26,7 +26,17 @@ n.thin <- 2
 
 year_min = 2002
 year_max_cal = 2022
-year_max_brood = 2022
+year_max_brood = 2022 
+
+nByrs = nrow(fall_juv) # Number of BROOD years                
+nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
+nRyrs_T = nByrs + 4 + 2
+A = 4 # number of age classes, 3,4,5,6
+K = 1 # number of stocks 
+Ps = 0.5 # proportion of females - assumption, need to lit check
+fs = as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+t_start = A + 2 # to fill starting values 
+
 
 # load salmon data ==============================================
 ## Fall age comp ================================================
@@ -111,16 +121,6 @@ stage_b_cov <- temp_b_cov %>%
 # number covariates for each life stage 
 ncovars1 = 3
 ncovars2 = 2
-
-# Organize data call inputs ================================================
-nByrs = nrow(fall_juv) # Number of BROOD years                
-nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
-nRyrs_T = nByrs + 4 + 2
-A = 4 # number of age classes, 3,4,5,6
-K = 1 # number of stocks 
-Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = A + 2 # to fill starting values 
 
 # mean productivity rate =====
 # estimating this now

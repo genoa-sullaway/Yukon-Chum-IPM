@@ -20,10 +20,10 @@ library(readxl)
 # setup inputs ===============================================================
 warmups <- 2000
 total_iterations <- 4000
-max_treedepth <-  15
+max_treedepth <-  12
 n_chains <- 4
 n_cores <- 4
-adapt_delta <- 0.95
+adapt_delta <- 0.95 # step size 
 
 year_min = 2002
 year_max_cal = 2022
@@ -169,6 +169,7 @@ bh_fit <- stan(
   iter = total_iterations,
   cores = n_cores,
   verbose=FALSE,
-  control = list(adapt_delta = 0.9))
+  control = list(adapt_delta = adapt_delta, 
+                 max_treedepth = max_treedepth))
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")

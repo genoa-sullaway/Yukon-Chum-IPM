@@ -89,10 +89,16 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
       pars=  c("N_j_start_log",
-                "N_sp_start_log",
-                "N_egg_start_log",
-                "N_recruit_start_log"),
+               "N_sp_start_log",
+               "N_egg_start_log",
+               "N_egg_sum_start_log",
+               "N_recruit_start_log"),
        fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c("N_egg_sum_start_log",
+              "N_recruit_start_log"),
+     fill_color = "blue")
  
 plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
      pars=  c( "theta_1_1_pp","theta_1_2_pp","theta_1_3_pp",
@@ -511,6 +517,16 @@ fishing <- summary(bh_fit, pars = c("F"),
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) + 
   ylab("Instantaneous fishing mortality")
+
+# Plot selectivity ======
+S <- summary(bh_fit, pars = c("log_S"), 
+                   probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()   
+
+ggplot(data = S) + 
+  geom_point(aes(x=rowname, y = mean)) + 
+  ylab("Log Selectivity") 
   
 # plot  estimated kappas survival ======
 kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
@@ -551,8 +567,6 @@ ggplot(data = kappasurvival %>%
   theme_classic() + 
   xlab("Calendar Year") + 
   ylab("Survival Rate")
-
-
 
 # calculate rolling correlation in productivity....
 # make a list of 5 year chunks .... 

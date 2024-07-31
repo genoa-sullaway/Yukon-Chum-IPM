@@ -6,63 +6,97 @@ library(bayesplot)
 library(rstanarm)
 # pairs with stan mod BH SIM script and simulate_data_age_strucutre.R script
 
-# functions for tidying ===========
-# Function to remove '[' character
-remove_bracket <- function(lst) {
-  sapply(lst, function(x) gsub("\\[", "", x))
-}
-remove_bracket2 <- function(lst) {
-  sapply(lst, function(x) gsub("\\]", "", x))
-}
-remove_comma <- function(lst) {
-  sapply(lst, function(x) gsub("\\,", "", x))
-}
+# PLOT data =======
+data_list_plot <- list(nByrs=nByrs,
+                       nRyrs=nRyrs,
+                       A=A,
+                       t_start = t_start,
+                       Ps=Ps,
+                       fs=fs,
+                       data_stage_j = N_j_sim_observed[6:nByrs],
+                       data_stage_return = N_recruit_sim_s[6:nRyrs],
+                       data_stage_sp = N_sp_sim_s[6:nRyrs],
+                       data_stage_harvest = N_catch_sim_s[6:nRyrs], 
+                       N_j_start =  N_j_start,
+                       N_recruit_start = N_recruit_start,
+                       N_e_sum_start= N_e_sum_start,
+                       N_egg_start= N_egg_start,
+                       N_sp_start= N_sp_start,
+                       N_catch_start= N_catch_start,
+                       catch_q = log_catch_q, 
+                       kappa_marine = kappa_marine,
+                       kappa_j = kappa_j,
+                       kappa_marine_start = basal_p_2, 
+                       kappa_j_start = basal_p_1, 
+                       M =M,
+                       pi=pi,
+                       c_1=c_1,
+                       c_2=c_2,
+                       log_c_1 = log_c_1,
+                       log_c_2=log_c_2,
+                       D_scale = D_scale,
+                       o_run_comp=o_run_comp,
+                       ess_age_comp=ess_age_comp,
+                       g = g,
+                       p=p,
+                       F=F,
+                       Dir_alpha=Dir_alpha,
+                       "theta1[1]"=theta1[1],
+                       "theta1[2]"=theta1[2],
+                       "theta2[1]"=theta2[1],
+                       "theta2[2]"=theta2[2],
+                       "prob[1]"=prob[1],
+                       "prob[2]"=prob[2],
+                       "prob[3]"=prob[3]) 
 
+ 
 # load model ==============
 bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT.RDS")
 
 # traceplot ========
-traceplot(bh_fit,pars=  c( "D_scale", "theta1[1]","theta1[2]","theta2[1]"))
+traceplot(bh_fit,pars=  c( "theta1[1]" ,
+                           "theta2[1]" ))
+
+traceplot(bh_fit,pars=  c( "D_scale" ))
+
+traceplot(bh_fit,pars=  c( "log_catch_q", "log_S" ))
+
+traceplot(bh_fit,pars=  c( "g", "Dir_alpha"))
 
 traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"))
 
-traceplot(bh_fit,pars=  c("log_F","log_catch_q","g"))
+traceplot(bh_fit,pars=  c("N_sp_start_log"))
 
-traceplot(bh_fit,pars=  c("N_sp_start_log", "N_j_start_log","N_egg_start_log"))
+traceplot(bh_fit,pars=  c("log_c_1","log_c_2"))
 
-# parameter plots ========  
+traceplot(bh_fit,pars=  c("p_1","p_2"))
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
-               "theta2[1]","theta2[2]","theta2[3]","theta2[4]"),
-     fill_color = "blue")
+traceplot(bh_fit,pars=  c("log_F_dev_y","log_F_mean"))
 
-plot(bh_fit,  ci_level = 0.95, 
-     pars=  c( "kappa_marine_survival"),
-     fill_color = "blue")
- 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "kappa_j_survival"),
+# parameter plots ======== 
+plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
+     pars=  c( "theta1[1]", 
+               "theta2[1]" ),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "p_1","p_2"),
+     pars=  c( "log_F_mean"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "basal_p_1", "basal_p_2"),
+     pars=  c( "log_S"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c("log_c_1", "log_c_2"),
+     pars=  c( "log_F_dev_y"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c(  "log_F" ),
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "log_c_1","log_c_2"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -73,46 +107,41 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "g"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "sigma_y_j"), #,"sigma_y_sp","sigma_y_r", "sigma_y_h"),
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c("N_j_start_log",
+              "N_sp_start_log",
+              "N_egg_start_log",
+              "N_egg_sum_start_log",
+              "N_recruit_start_log"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "N_sp_start_log", "N_j_start_log",
-               "N_catch_start_log", "N_recruit_start_log"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "cov_eff1"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "cov_eff2"),
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c("N_egg_sum_start_log",
+              "N_recruit_start_log"),
      fill_color = "blue")
  
-
 # Plot Observed vs Predicted ========
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:23, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>% 
-  filter(!time > 21)
+  dplyr::mutate(time = rep(1:29, each=4),
+                age = rep(1:4, length.out = nrow(.)))# %>% 
+  # filter(!time > 21)
 
 # plot proportions 
 # sum to compare with data 
 summ_n_sp <- pred_N_SP %>%
   group_by(time) %>%
   summarise(pred_n_sp = sum(mean),
-            pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_sp) %>%  
-  filter(!time <7)
+            pred_se = mean(se_mean)) #%>% 
+  # cbind(obs = data_list_stan$data_stage_sp) %>%  
+  # filter(!time <7)
 
 
 ggplot(data = summ_n_sp) +
-  geom_point(aes(x=time, y = obs)) +
+  # geom_point(aes(x=time, y = obs)) +
   geom_line(aes(x=time, y = pred_n_sp)) +
   geom_ribbon(aes(x=time, ymin = pred_n_sp-pred_se,
                   ymax = pred_n_sp+pred_se))
@@ -198,88 +227,68 @@ ggplot(data = summ_n_j) +
                   ymax = mean+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
 
-# plot time series of estimated fishing mortality ======
-fishing <- summary(bh_fit, pars = c("log_F"), 
+# estimated fishing mortality ======
+fishing <- summary(bh_fit, pars = c("F"), 
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  mutate(mean = exp(mean),
-         time = 1:nrow(.))
+  mutate(mean =  (mean),
+         time = 1:nrow(.)) %>% 
+  filter(!time> 21 & !time<5)
 
 ggplot(data = fishing) + 
-  geom_line(aes(x=time, y = mean)) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+  geom_line(aes(x=time, y = mean)) + 
+  ylab("Instantaneous fishing mortality")
+
+# Plot selectivity ======
+S <- summary(bh_fit, pars = c("log_S"), 
+             probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()   
+
+ggplot(data = S) + 
+  geom_point(aes(x=rowname, y = mean)) + 
+  ylab("Log Selectivity") 
+
+# plot  estimated kappas survival ======
+kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
+                         probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:22, length.out = nrow(.)), 
+                variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
+                                     TRUE ~ "kappa_j_survival")) %>% 
+  left_join(years)# %>% 
+#filter(!time<5 & !time>20)
+
+ggplot(data = kappasurvival%>%   filter(!time<2),aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) + 
+  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
+
+ggplot(data = kappasurvival,# %>%   filter(!time<2),
+       aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) +
-  ylab("Fm")
+  facet_wrap(~variable, scales = "free") + 
+  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
+  theme_classic() + 
+  xlab("Calendar Year") + 
+  ylab("Survival Rate")
 
-# plot  estimated survival ======
-survival <- summary(bh_fit, pars = c("p_1", "p_2"), 
-                    probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
-                variable = case_when(grepl("p_1",rowname) ~ "p_1",
-                                     TRUE ~ "p_2"))
-
-ggplot(data = survival, aes(x=time, y = mean, group = variable ,color = variable)) + 
+ggplot(data = kappasurvival %>%
+         filter(!time<8 & !time>16), 
+       aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) 
-
-# kappa marine =====
-kappa_m <- summary(bh_fit, pars = c("kappa_marine_mortality"), 
-                    probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:20, length.out = nrow(.))) %>% 
-  filter(!time<5)
-
-ggplot(data = kappa_m, aes(x=time, y = mean)) + 
-  geom_line( ) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) 
-
-# kappa marine survival =====
-kappa_marine_survival <- summary(bh_fit, pars = c("kappa_marine_survival"), 
-                            probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:20, length.out = nrow(.))) %>% 
-  filter(!time<5)
-
-ggplot(data = kappa_marine_survival, aes(x=time, y = mean)) + 
-  geom_line( ) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) 
-
-# kappa j =====
-kappa_j_survival <- summary(bh_fit, pars = c("kappa_j_survival"), 
-                   probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:20, length.out = nrow(.)), 
-                variable = case_when(grepl("p_1",rowname) ~ "p_1",
-                                     TRUE ~ "p_2")) %>% 
-  filter(!time<5)
-
-ggplot(data = kappa_j_survival, aes(x=time, y = mean, group = variable ,color = variable)) + 
-  geom_line( ) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) 
-
-# plot age comp  ======
-age_comp <- summary(bh_fit, pars = c("p"), 
-                    probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column() %>% 
-  rename(pred = "mean") %>% 
-  cbind(obs = data_list_stan$p_obs) %>% 
-  dplyr::select(1,2,9) %>% 
-  gather(2:3, key = "key", value = "value")
-
-ggplot(data = age_comp) +
-  geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
-  theme_classic()
+  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) +
+  facet_wrap(~variable, scales = "free") + 
+  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
+  theme_classic() + 
+  xlab("Calendar Year") + 
+  ylab("Survival Rate")
 
 # PLOT PARAMS  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
