@@ -7,47 +7,46 @@ library(rstanarm)
 # pairs with stan mod BH SIM script and simulate_data_age_strucutre.R script
 
 # PLOT data =======
-data_list_plot <- list(nByrs=nByrs,
-                       nRyrs=nRyrs,
-                       A=A,
-                       t_start = t_start,
-                       Ps=Ps,
-                       fs=fs,
-                       data_stage_j = N_j_sim_observed[6:nByrs],
-                       data_stage_return = N_recruit_sim_s[6:nRyrs],
-                       data_stage_sp = N_sp_sim_s[6:nRyrs],
-                       data_stage_harvest = N_catch_sim_s[6:nRyrs], 
-                       N_j_start =  N_j_start,
-                       N_recruit_start = N_recruit_start,
-                       N_e_sum_start= N_e_sum_start,
-                       N_egg_start= N_egg_start,
-                       N_sp_start= N_sp_start,
-                       N_catch_start= N_catch_start,
-                       catch_q = log_catch_q, 
-                       kappa_marine = kappa_marine,
-                       kappa_j = kappa_j,
-                       kappa_marine_start = basal_p_2, 
-                       kappa_j_start = basal_p_1, 
-                       M =M,
-                       pi=pi,
-                       c_1=c_1,
-                       c_2=c_2,
-                       log_c_1 = log_c_1,
-                       log_c_2=log_c_2,
-                       D_scale = D_scale,
-                       o_run_comp=o_run_comp,
-                       ess_age_comp=ess_age_comp,
-                       g = g,
-                       p=p,
-                       F=F,
-                       Dir_alpha=Dir_alpha,
-                       "theta1[1]"=theta1[1],
-                       "theta1[2]"=theta1[2],
-                       "theta2[1]"=theta2[1],
-                       "theta2[2]"=theta2[2],
-                       "prob[1]"=prob[1],
-                       "prob[2]"=prob[2],
-                       "prob[3]"=prob[3]) 
+data_list_plot <-    list(nByrs=nByrs_stan,
+                                          nRyrs=nRyrs_stan,
+                                          nRyrs_T = nRyrs_T_stan, 
+                                          A=A,
+                                          t_start = t_start,
+                                          
+                                          Ps=Ps,
+                                          fs=fs,
+                                          M = M_fill_stan, 
+                                          
+                                          log_c_1 = log_c_1,
+                                          log_c_2=log_c_2,
+                                          
+                                          data_stage_j = N_j_sim_hat,#[6:nByrs+1],
+                                          data_stage_return = N_recruit_sim_s,#[6:nRyrs+2],
+                                          data_stage_sp = N_sp_sim_s,#[6:nRyrs+2],
+                                          data_stage_harvest = N_catch_sim_s,#[6:nRyrs+2], 
+                          kappa_j = kappa_j,
+                          kappa_marine = kappa_marine,
+                                          kappa_marine_mort_start = c(-log(basal_p_2), -log(basal_p_2)),                
+                                          kappa_marine_start = c(basal_p_2, basal_p_2), 
+                                          
+                                          kappa_j_start = basal_p_1,
+                                          
+                                          basal_p_1 = basal_p_1,
+                                          basal_p_2 = basal_p_2,
+                                          
+                                          ncovars1=ncovars1,
+                                          ncovars2=ncovars2,
+                                          
+                                          # data_sp_cv = process_error_sp,
+                                          cov1 = matrix(nrow = nByrs_stan+1, ncol = ncovars1, rep(rnorm(nByrs_stan+1, 0, 1), times = ncovars1)),   
+                                          cov2 = matrix(nrow = nByrs_stan+2, ncol = ncovars2, rep(rnorm(nByrs_stan+2, 0, 1), times = ncovars2)),
+                                          
+                                          # cov1=cov1[8:nByrs,ncovars1],
+                                          # cov2=cov2[7:nByrs,ncovars2],
+                                          # 
+                                          o_run_comp=o_run_comp,#[8:nByrs,],
+                                          ess_age_comp=ess_age_comp)#[8:(nByrs-1)] )
+
 
  
 # load model ==============
@@ -59,7 +58,7 @@ traceplot(bh_fit,pars=  c( "theta1[1]" ,
 
 traceplot(bh_fit,pars=  c( "D_scale" ))
 
-traceplot(bh_fit,pars=  c( "log_catch_q", "log_S" ))
+traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
 traceplot(bh_fit,pars=  c( "g", "Dir_alpha"))
 
@@ -89,6 +88,11 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_dev_y"),
+     fill_color = "blue")
+
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "F"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -126,7 +130,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:29, each=4),
+  dplyr::mutate(time = rep(1:28, each=4),
                 age = rep(1:4, length.out = nrow(.)))# %>% 
   # filter(!time > 21)
 
@@ -135,13 +139,14 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
 summ_n_sp <- pred_N_SP %>%
   group_by(time) %>%
   summarise(pred_n_sp = sum(mean),
-            pred_se = mean(se_mean)) #%>% 
-  # cbind(obs = data_list_stan$data_stage_sp) %>%  
-  # filter(!time <7)
+            pred_se = mean(se_mean)) %>% 
+   filter(!time >21) %>% 
+    cbind(obs = data_list_plot$data_stage_sp)  
+   
 
 
 ggplot(data = summ_n_sp) +
-  # geom_point(aes(x=time, y = obs)) +
+  geom_point(aes(x=time, y = obs), color = "red") +
   geom_line(aes(x=time, y = pred_n_sp)) +
   geom_ribbon(aes(x=time, ymin = pred_n_sp-pred_se,
                   ymax = pred_n_sp+pred_se))
@@ -151,10 +156,8 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:25, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>%  
-  filter(!time > 21)
-
+  dplyr::mutate(time = rep(1:28, each=4),
+                age = rep(1:4, length.out = nrow(.)))# %>% 
 # plt proportions 
 
 # sum to compare with data 
@@ -227,6 +230,34 @@ ggplot(data = summ_n_j) +
                   ymax = mean+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
 
+# plot age comp through time =================
+# age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 
+#   dplyr::mutate(time = 1:21) %>% 
+#   left_join(years) %>%
+#   gather(1:4, key = "age", value = "obs") %>%
+#   dplyr::mutate(age = case_when(age == "abund_0.3" ~ 3,
+#                                 age == "abund_0.4" ~ 4,
+#                                 age == "abund_0.5" ~ 5,
+#                                 age == "abund_0.6" ~ 6))
+
+age_comp_Q <- summary(bh_fit, pars = c("q"), 
+                      probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:21, each=4),
+                age = rep(3:6, length.out = nrow(.))) %>%
+  dplyr::rename(pred = "mean") %>%
+  dplyr::select(time,age,pred)  
+
+ggplot(data= age_comp_Q) +
+  geom_line(aes(x=time, y = pred )) +
+  facet_wrap(~age, scales = "free")
+
+
+ggplot(data= age_comp_Q) +
+  geom_line(aes(x=time, y = pred )) +
+  facet_wrap(~age)
+
 # estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("F"), 
                    probs = c(0.1, 0.9))$summary %>%
@@ -251,19 +282,31 @@ ggplot(data = S) +
   ylab("Log Selectivity") 
 
 # plot  estimated kappas survival ======
-kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
+kappasurvival_marine <- summary(bh_fit, pars = c("kappa_marine_survival"), 
                          probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:22, length.out = nrow(.)), 
-                variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
-                                     TRUE ~ "kappa_j_survival")) %>% 
-  left_join(years)# %>% 
-#filter(!time<5 & !time>20)
+  dplyr::mutate(time = rep(1:22, length.out = nrow(.))) %>% 
+  cbind(obs = data_list_plot$kappa_marine)
 
-ggplot(data = kappasurvival%>%   filter(!time<2),aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
+
+ggplot(data = kappasurvival_marine,aes(x=time, y = mean)) + 
   geom_line( ) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
+  geom_point(aes(x=time,y=obs), color = "red")+
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) + 
+  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
+
+kappasurvival_j<- summary(bh_fit, pars = c("kappa_j_survival"), 
+                                probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:21, length.out = nrow(.)))
+
+
+ggplot(data = kappasurvival_j,aes(x=time, y = mean)) + 
+  geom_line( ) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
 

@@ -198,7 +198,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
      }
      
   // Calculate age proportions by return year
-  for (t in 1:nByrs) {
+  for (t in 1:nRyrs) {
     for(a in 1:A){
      q[t,a] = N_recruit[t,a]/(sum(N_recruit[t,1:A]));
     }
