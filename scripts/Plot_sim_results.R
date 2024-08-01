@@ -26,6 +26,7 @@ data_list_plot <-    list(nByrs=nByrs_stan,
                                           data_stage_harvest = N_catch_sim_s,#[6:nRyrs+2], 
                           kappa_j = kappa_j,
                           kappa_marine = kappa_marine,
+                          kappa_marine_mortality = kappa_marine_mortality,
                                           kappa_marine_mort_start = c(-log(basal_p_2), -log(basal_p_2)),                
                                           kappa_marine_start = c(basal_p_2, basal_p_2), 
                                           
@@ -44,6 +45,7 @@ data_list_plot <-    list(nByrs=nByrs_stan,
                                           # cov1=cov1[8:nByrs,ncovars1],
                                           # cov2=cov2[7:nByrs,ncovars2],
                                           # 
+                                          p =p,
                                           o_run_comp=o_run_comp,#[8:nByrs,],
                                           ess_age_comp=ess_age_comp)#[8:(nByrs-1)] )
 
@@ -70,6 +72,8 @@ traceplot(bh_fit,pars=  c("log_c_1","log_c_2"))
 
 traceplot(bh_fit,pars=  c("p_1","p_2"))
 
+traceplot(bh_fit,pars=  c("prob"))
+
 traceplot(bh_fit,pars=  c("log_F_dev_y","log_F_mean"))
 
 # parameter plots ======== 
@@ -77,7 +81,7 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
      pars=  c( "theta1[1]", 
                "theta2[1]" ),
      fill_color = "blue")
-
+ 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_mean"),
      fill_color = "blue")
@@ -87,9 +91,24 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_F_dev_y"),
+     pars=  c( "prob"),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "pi"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "p"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "p_1", "p_2"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_F_dev_y"),
+     fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "F"),
@@ -108,7 +127,15 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "Dir_alpha"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "g"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "D_scale"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
@@ -143,8 +170,6 @@ summ_n_sp <- pred_N_SP %>%
    filter(!time >21) %>% 
     cbind(obs = data_list_plot$data_stage_sp)  
    
-
-
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=time, y = obs), color = "red") +
   geom_line(aes(x=time, y = pred_n_sp)) +
@@ -157,22 +182,20 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:28, each=4),
-                age = rep(1:4, length.out = nrow(.)))# %>% 
-# plt proportions 
+                age = rep(1:4, length.out = nrow(.))) 
 
-# sum to compare with data 
 summ_n_rec <- pred_N_recruit %>%
   group_by(time) %>%
-  summarise(pred_n_rec = sum(mean),
+  summarise(pred = sum(mean),
             pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_return) %>%
-  filter(!time < 7)
+  filter(!time >21) %>% 
+  cbind(obs = data_list_plot$data_stage_return) 
 
 ggplot(data = summ_n_rec) +
   geom_point(aes(x=time, y = obs)) +
-  geom_line(aes(x=time, y = pred_n_rec)) +
-  geom_ribbon(aes(x=time, ymin = pred_n_rec-pred_se,
-                  ymax = pred_n_rec+pred_se))+
+  geom_line(aes(x=time, y = pred)) +
+  geom_ribbon(aes(x=time, ymin = pred-pred_se,
+                  ymax = pred+pred_se))+
   ggtitle(("Recruits, est and observed"))
 
 ## harvest ====== 
@@ -180,25 +203,21 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:25, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>% 
-  filter(!time>21) 
+  dplyr::mutate(time = rep(1:28, each=4),
+                age = rep(1:4, length.out = nrow(.))) 
 
-# plt proportions 
-
-# sum to compare with data 
 summ_n_harvest <- pred_N_harvest %>%
   group_by(time) %>%
-  summarise(pred_n_harvest = sum(mean),
+  summarise(pred = sum(mean),
             pred_se = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_harvest) %>%
-  filter(!time < 7)
+  filter(!time >21) %>% 
+  cbind(obs = data_list_plot$data_stage_harvest) 
 
 ggplot(data = summ_n_harvest) +
   geom_point(aes(x=time, y = obs)) +
-  geom_line(aes(x=time, y = pred_n_harvest)) +
-  geom_ribbon(aes(x=time, ymin = pred_n_harvest-pred_se,
-                  ymax = pred_n_harvest+pred_se))+
+  geom_line(aes(x=time, y = pred)) +
+  geom_ribbon(aes(x=time, ymin = pred-pred_se,
+                  ymax = pred+pred_se))+
   ggtitle(("Harvest, est and observed"))
 
 ## juveniles ====== 
@@ -231,32 +250,47 @@ ggplot(data = summ_n_j) +
   ggtitle(("Juveniles, est and observed"))
 
 # plot age comp through time =================
-# age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 
-#   dplyr::mutate(time = 1:21) %>% 
-#   left_join(years) %>%
-#   gather(1:4, key = "age", value = "obs") %>%
-#   dplyr::mutate(age = case_when(age == "abund_0.3" ~ 3,
-#                                 age == "abund_0.4" ~ 4,
-#                                 age == "abund_0.5" ~ 5,
-#                                 age == "abund_0.6" ~ 6))
-
 age_comp_Q <- summary(bh_fit, pars = c("q"), 
                       probs = c(0.1, 0.9))$summary %>% 
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:21, each=4),
-                age = rep(3:6, length.out = nrow(.))) %>%
+                age = rep(1:4, length.out = nrow(.))) %>%
   dplyr::rename(pred = "mean") %>%
-  dplyr::select(time,age,pred)  
+  dplyr::select(time,age,pred)  %>%
+  cbind( data.frame(data_list_plot$o_run_comp) %>% 
+                        dplyr::mutate(time = 1:nrow(.)) %>% 
+                        gather(1:4, key = "age",value = "obs")) %>%
+  dplyr::select(1:3,6)
 
 ggplot(data= age_comp_Q) +
-  geom_line(aes(x=time, y = pred )) +
+  geom_line(aes(x=time, y = pred, group = age )) +
+  geom_point(aes(x=time, y = obs, group = age ), color = "red") +
+  geom_line(aes(x=time, y = obs, group = age ), color = "red") +
   facet_wrap(~age, scales = "free")
 
+# plot P through time =================
+# proportion of maturing indviduals
+age_comp_P <- summary(bh_fit, pars = c("p"), 
+                      probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:27, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>%
+  dplyr::rename(pred = "mean") %>%
+  dplyr::select(time,age,pred)  %>%
+  arrange(time,age) %>% 
+  cbind( t<-data.frame(data_list_plot$p) %>% 
+           dplyr::mutate(time = 1:nrow(.)) %>% 
+           gather(1:4, key = "age",value = "obs") %>% 
+           arrange(time,age)) %>%
+  dplyr::select(1:3,6)
 
-ggplot(data= age_comp_Q) +
-  geom_line(aes(x=time, y = pred )) +
-  facet_wrap(~age)
+ggplot(data= age_comp_P) +
+  geom_line(aes(x=time, y = pred, group = age )) +
+  geom_point(aes(x=time, y = obs, group = age ), color = "red") +
+  geom_line(aes(x=time, y = obs, group = age ), color = "red") +
+  facet_wrap(~age, scales = "free")
 
 # estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("F"), 
@@ -301,37 +335,33 @@ kappasurvival_j<- summary(bh_fit, pars = c("kappa_j_survival"),
                                 probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:21, length.out = nrow(.)))
-
+  dplyr::mutate(time = rep(1:21, length.out = nrow(.))) %>% 
+  cbind(obs = data_list_plot$kappa_j)
 
 ggplot(data = kappasurvival_j,aes(x=time, y = mean)) + 
   geom_line( ) +
+  geom_point(aes(x=time,y=obs), color = "red") +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) + 
+  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
+ 
+# kappa marine mortalty ===========
+
+kappasurvival_mm<- summary(bh_fit, pars = c("kappa_marine_mortality"), 
+                          probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:22, length.out = nrow(.))) %>% 
+  filter(!time > 20) %>% 
+  cbind(obs = data_list_plot$kappa_marine_mortality)
+
+ggplot(data = kappasurvival_mm,aes(x=time, y = mean)) + 
+  geom_line( ) +
+  geom_point(aes(x=time,y=obs), color = "red") +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
 
-ggplot(data = kappasurvival,# %>%   filter(!time<2),
-       aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
-  geom_line( ) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) +
-  facet_wrap(~variable, scales = "free") + 
-  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
-  theme_classic() + 
-  xlab("Calendar Year") + 
-  ylab("Survival Rate")
-
-ggplot(data = kappasurvival %>%
-         filter(!time<8 & !time>16), 
-       aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
-  geom_line( ) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) +
-  facet_wrap(~variable, scales = "free") + 
-  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
-  theme_classic() + 
-  xlab("Calendar Year") + 
-  ylab("Survival Rate")
 
 # PLOT PARAMS  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
