@@ -163,14 +163,13 @@ kappa_marine = vector( )
 kappa_marine_mortality = vector( )
 
 N_j =  matrix(nrow=nByrs,ncol=1,NA)
-#N_first_winter = matrix(NA, nrow = nByrs)
+N_first_winter = matrix(nrow=nByrs,ncol=1,NA)
 
-# N_first_winter = matrix(nrow=nRyrs_T,ncol=A,NA)
+#N_first_winter = matrix(nrow=nRyrs_T,ncol=A,NA)
 N_e_sum = matrix(nrow=nByrs,ncol=1,NA)
 N_e  = matrix(NA, nrow = nRyrs_T,ncol=A)
 N_recruit =  matrix(NA, nrow = nRyrs_T,ncol=A)
-N_catch =  matrix(NA, nrow = nRyrs_T,ncol=A)
-# N_ocean = matrix(NA, nrow = nRyrs_T,ncol=A)
+N_catch =  matrix(NA, nrow = nRyrs_T,ncol=A) 
 N_sp = matrix(NA, nrow = nRyrs_T,ncol=A) 
  
  ## starting values ========
@@ -178,11 +177,11 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
  N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
  N_catch_start = matrix(NA,nrow=t_start, ncol=A)
  N_egg_start = matrix(0,nrow=t_start, ncol=A)
- # N_first_winter_start = matrix(NA,nrow=t_start, ncol=A)
  N_sp_start = matrix(NA,nrow=t_start, ncol=A)
- # N_first_winter_start = matrix(NA,nrow=t_start, ncol=A)
+  # N_first_winter_start = matrix(NA,nrow=t_start, ncol=A)
 
  N_j_start = exp(rnorm(1,16,1)) 
+ N_first_winter_start = exp(rnorm(1,14,1))
  # N_e_sum_start = exp(rnorm(1,18,1))
  
  for (a in 1:A) {
@@ -195,11 +194,12 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
    N_egg_start[t,a] = exp(rnorm(1,14,1))*p[a]#*p[t,a]
   }
  }
+ 
 # fill starting values 
-  # N_e_sum[1,1] = N_e_sum_start
   N_j[1,1] = N_j_start
+  N_first_winter[1,1] = N_first_winter_start
+  
   N_recruit[1:t_start,] = N_recruit_start
-  # N_first_winter[1:t_start,] = N_first_winter_start
   N_sp[1:t_start,] = N_sp_start
   N_catch[1:t_start,] = N_catch_start
   N_e[1:t_start,] = N_egg_start
@@ -213,11 +213,11 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
 # Harvest =============
 ## fishing mortality by age 
   
-  log_F_dev_y = rnorm(nRyrs_T, 0,1)  
+  log_F_dev_y = rnorm(nRyrs_T, 0,0.5)  
   log_F_mean = -0.1
  
   F  = exp(log_F_mean +log_F_dev_y) 
-  
+ 
   ## selectivity =====
 # S = c(0.05,0.08,1.05,1.08)
 # S = exp(log_S)
@@ -229,8 +229,8 @@ M_fill_stan = c(0.06,0.06, 0.06, 0.06) # will be cumulative
 #            c(0.06,0.06, 0.06, 0.06) , byrow = TRUE)
 
 # fix productivity ======
-p_1 =  (rnorm(nByrs, 0.3,0.1)  ) 
-p_2 =  (rnorm(nByrs, 0.5,0.1)  ) 
+p_1 =  (rnorm(nByrs, 0.3,0.01)  ) 
+p_2 =  (rnorm(nByrs, 0.5,0.01)  ) 
 
 
 # POPULATION MODEL ============ 
@@ -243,12 +243,15 @@ p_2 =  (rnorm(nByrs, 0.5,0.1)  )
         
          kappa_marine[t] =  p_2[t]/(1 + (( p_2[t]*N_j[t])/c_2)) # Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
          
-         kappa_marine_mortality[t] = -log(kappa_marine[t])
- 
+         # kappa_marine_mortality[t] = -log(kappa_marine[t])
+         
+         N_first_winter[t] = N_j[t]*kappa_marine[t] #)*exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+          
+         
          for (a in 1:A) { 
            # N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; #add age structure, p is proportion per age class by BROOD YEAR 
            
-           N_recruit[t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+           N_recruit[t+a,a] = (N_first_winter[t]*p[t,a])*exp(-(sum(M_fill_stan[1:a]))) #exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
             # N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M_fill_stan[1:a]) + kappa_marine_mortality[t])) #add age specific mortality, 
            
@@ -289,9 +292,7 @@ barplot(t(p_2))
 
 barplot(t(kappa_j))
 
-barplot(t(kappa_j[5:22]))
-
-barplot(t(kappa_marine[5:22]))
+barplot(t(kappa_marine))
 
 barplot(t(o_run_comp))
 barplot(t(N_j))
@@ -395,8 +396,8 @@ N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
                           ncovars2=ncovars2,
                           F = F,
                           # data_sp_cv = process_error_sp,
-                          cov1 = matrix(nrow = nByrs_stan, ncol = ncovars1, rep(rnorm(nByrs_stan+1, 0, 1), times = ncovars1)),   
-                          cov2 = matrix(nrow = nByrs_stan, ncol = ncovars2, rep(rnorm(nByrs_stan+2, 0, 1), times = ncovars2)),
+                          cov1 = matrix(nrow = nByrs_stan, ncol = ncovars1, rep(rnorm(nByrs_stan, 0, 1), times = ncovars1)),   
+                          cov2 = matrix(nrow = nByrs_stan, ncol = ncovars2, rep(rnorm(nByrs_stan, 0, 1), times = ncovars2)),
                           
                           # cov1=cov1[8:nByrs,ncovars1],
                           # cov2=cov2[7:nByrs,ncovars2],
