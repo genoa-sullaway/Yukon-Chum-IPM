@@ -64,7 +64,9 @@ traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
 traceplot(bh_fit,pars=  c( "g", "Dir_alpha"))
 
-traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"))
+traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]"#, 
+                          #"basal_p_1", "basal_p_2"
+                          ))
 
 traceplot(bh_fit,pars=  c("N_sp_start_log"))
 
@@ -74,7 +76,31 @@ traceplot(bh_fit,pars=  c("p_1","p_2"))
 
 traceplot(bh_fit,pars=  c("prob"))
 
+traceplot(bh_fit,pars=  c("g"))
+
+traceplot(bh_fit,pars=  c("sigma_y_j"))
+
 traceplot(bh_fit,pars=  c("log_F_dev_y","log_F_mean"))
+ 
+# pairs======
+pairs(bh_fit, pars= c("N_j_start_log",
+                      "N_first_winter_start_log"
+                      # "N_sp_start_log",
+                      # "N_recruit_start_log",
+                      # "N_catch_start_log",
+                      # "N_egg_start_log",
+                      # "N_egg_sum_start_log"
+                      ))
+
+pairs(bh_fit, pars= c("prob" ))
+
+pairs(bh_fit, pars= c("g" ))
+ 
+pairs(bh_fit, pars= c( "log_catch_q",
+                       "sigma_y_j"))
+
+stan_par(bh_fit, par = c("log_catch_q",
+         "sigma_y_j"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
@@ -84,6 +110,10 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_mean"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "N_recruit_start_log"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -127,6 +157,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c("sigma_y_j"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "Dir_alpha"),
      fill_color = "blue")
 
@@ -157,7 +191,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
+  dplyr::mutate(time = rep(1:25, each=4),
                 age = rep(1:4, length.out = nrow(.)))# %>% 
   # filter(!time > 21)
 
@@ -175,13 +209,13 @@ ggplot(data = summ_n_sp) +
   geom_line(aes(x=time, y = pred_n_sp)) +
   geom_ribbon(aes(x=time, ymin = pred_n_sp-pred_se,
                   ymax = pred_n_sp+pred_se))
-
+ 
 ## recruits ====== 
 pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
+  dplyr::mutate(time = rep(1:25, each=4),
                 age = rep(1:4, length.out = nrow(.))) 
 
 summ_n_rec <- pred_N_recruit %>%
@@ -192,7 +226,7 @@ summ_n_rec <- pred_N_recruit %>%
   cbind(obs = data_list_plot$data_stage_return) 
 
 ggplot(data = summ_n_rec) +
-  geom_point(aes(x=time, y = obs)) +
+  geom_point(aes(x=time, y = obs), color = "red") +
   geom_line(aes(x=time, y = pred)) +
   geom_ribbon(aes(x=time, ymin = pred-pred_se,
                   ymax = pred+pred_se))+
@@ -203,7 +237,7 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:28, each=4),
+  dplyr::mutate(time = rep(1:25, each=4),
                 age = rep(1:4, length.out = nrow(.))) 
 
 summ_n_harvest <- pred_N_harvest %>%
@@ -214,7 +248,7 @@ summ_n_harvest <- pred_N_harvest %>%
   cbind(obs = data_list_plot$data_stage_harvest) 
 
 ggplot(data = summ_n_harvest) +
-  geom_point(aes(x=time, y = obs)) +
+  geom_point(aes(x=time, y = obs), color = "red") +
   geom_line(aes(x=time, y = pred)) +
   geom_ribbon(aes(x=time, ymin = pred-pred_se,
                   ymax = pred+pred_se))+
@@ -239,11 +273,11 @@ pred_N_j <- summary(bh_fit, pars = c("N_j_predicted"),
 summ_n_j <- pred_N_j %>%
   # dplyr::mutate(mean_J_Q = mean*catch_q$mean,
   #               se_mean = se_mean*catch_q$mean) %>% 
-  cbind(obs = data_list_stan$data_stage_j)  %>%
-  filter(!time < 7)
+  cbind(obs = data_list_stan$data_stage_j) # %>%
+ # filter(!time < 7)
 
 ggplot(data = summ_n_j) +
-  geom_point(aes(x=time, y = obs)) +
+  geom_point(aes(x=time, y = obs), color = "red") +
   geom_line(aes(x=time, y = mean)) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5)+
@@ -258,24 +292,27 @@ age_comp_Q <- summary(bh_fit, pars = c("q"),
                 age = rep(1:4, length.out = nrow(.))) %>%
   dplyr::rename(pred = "mean") %>%
   dplyr::select(time,age,pred)  %>%
-  cbind( data.frame(data_list_plot$o_run_comp) %>% 
-                        dplyr::mutate(time = 1:nrow(.)) %>% 
-                        gather(1:4, key = "age",value = "obs")) %>%
-  dplyr::select(1:3,6)
-
+left_join(data.frame(data_list_plot$o_run_comp) %>% 
+            dplyr::mutate(time = 1:nrow(.)) %>% 
+            gather(1:4, key = "age",value = "obs") %>% 
+            mutate(age = case_when(age == "X1" ~ 1,
+                                   age == "X2" ~ 2,
+                                   age == "X3" ~ 3,
+                                   age == "X4" ~ 4)))
+  
 ggplot(data= age_comp_Q) +
   geom_line(aes(x=time, y = pred, group = age )) +
-  geom_point(aes(x=time, y = obs, group = age ), color = "red") +
-  geom_line(aes(x=time, y = obs, group = age ), color = "red") +
+  geom_point(aes(x=time, y = obs, group = age ), color = "red", alpha = 0.5) +
+  geom_line(aes(x=time, y = obs, group = age ), color = "red", alpha = 0.5) +
   facet_wrap(~age, scales = "free")
-
+ 
 # plot P through time =================
 # proportion of maturing indviduals
 age_comp_P <- summary(bh_fit, pars = c("p"), 
                       probs = c(0.1, 0.9))$summary %>% 
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:25, each=4),
                 age = rep(1:4, length.out = nrow(.))) %>%
   dplyr::rename(pred = "mean") %>%
   dplyr::select(time,age,pred)  %>%

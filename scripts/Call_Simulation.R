@@ -108,10 +108,10 @@ theta2 <- c(-0.05) #, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
 
  # AGE STRUCTURE =========
   Dir_alpha = c(NA)
-  # p = c(NA) #
-  p = matrix(nrow=nRyrs_T,ncol=A,NA)
-  # g = c(NA)
-  g = matrix(nrow=nRyrs_T,ncol=A,NA)
+ p = c(NA) #
+  # p = matrix(nrow=nRyrs_T,ncol=A,NA)
+  g = c(NA)
+  # g = matrix(nrow=nRyrs_T,ncol=A,NA)
   D_scale = 0.2
   
 # pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
@@ -129,26 +129,22 @@ prob = c(0.1548598, 0.7782258, 0.40537690)
 
   for (a in 1:A) {
       Dir_alpha[a] = D_sum * pi[a]
-      # for(t in 1:(nByrs+1)) {    
-        # g[a] = rgamma(n=1,Dir_alpha[a],1)
-      # }
-       for(t in 1:nRyrs_T) {
-        g[t,a] = rgamma(n=1,Dir_alpha[a],1)
-         }
+ 
+      g[a] = rgamma(n=1,Dir_alpha[a],2)
+    
+       # for(t in 1:nRyrs_T) {
+       #  g[t,a] = rgamma(n=1,Dir_alpha[a],1)
+       #   }
       }
-  # for (a in 1:A) {
-  #     p[a] = g[a]/sum(g[1:A])
-  # }
-
   for (a in 1:A) {
-    for(t in 1:(nRyrs_T)) {
-  p[t,a] = g[t,a]/sum(g[t,1:A])
-    }
+      p[a] = g[a]/sum(g[1:A])
   }
 
-    # for (a in 1:A) {
-    #    p[a] = g[a]/sum(g[1:A])
-    # }
+  # for (a in 1:A) {
+  #   for(t in 1:(nRyrs_T)) {
+  # p[t,a] = g[t,a]/sum(g[t,1:A])
+  #   }
+  # }
  
 # Process error  ===================
 # error is fixed in model right now so fix it here. 
@@ -172,30 +168,35 @@ N_recruit =  matrix(NA, nrow = nRyrs_T,ncol=A)
 N_catch =  matrix(NA, nrow = nRyrs_T,ncol=A) 
 N_sp = matrix(NA, nrow = nRyrs_T,ncol=A) 
  
- ## starting values ========
+# starting values ========
  # N_e_sum_start = as.vector(0)
  N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
  N_catch_start = matrix(NA,nrow=t_start, ncol=A)
  N_egg_start = matrix(0,nrow=t_start, ncol=A)
  N_sp_start = matrix(NA,nrow=t_start, ncol=A)
-  # N_first_winter_start = matrix(NA,nrow=t_start, ncol=A)
 
  N_j_start = exp(rnorm(1,16,1)) 
- N_first_winter_start = exp(rnorm(1,14,1))
- # N_e_sum_start = exp(rnorm(1,18,1))
- 
+ N_first_winter_start = exp(rnorm(1,15,1))
+
  for (a in 1:A) {
   for(t in 1:t_start){
-   N_recruit_start[t,a] = exp(rnorm(1,yukon_fall_recruits$mean,1))*p[a]#*p[t,a]
+   N_recruit_start[t,] = exp(yukon_fall_recruits$mean)*p #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
    # N_ocean_start[t,a] = exp(rnorm(1,13.6,1))*p[a]#*p[t,a]
-   N_sp_start[t,a] = exp(rnorm(1,yukon_fall_spawners$mean,1))*p[a]#*p[t,a]
+   N_sp_start[t,] = exp( yukon_fall_spawners$mean )*p  #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
    # N_first_winter_start[t,a] = exp(rnorm(1,13.6))*p[a]#*p[t,a]
-   N_catch_start[t,a] = exp(rnorm(1,yukon_fall_harvest$mean,1))*p[a]#*p[t,a]
-   N_egg_start[t,a] = exp(rnorm(1,14,1))*p[a]#*p[t,a]
+   N_catch_start[t,] = exp( yukon_fall_harvest$mean )*p  #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
+   N_egg_start[t,] = exp(16.5)*p 
   }
  }
+ # log for model ======
+ N_j_start_log = log(N_j_start)
+ N_first_winter_start_log =  log(N_first_winter_start)
+ N_recruit_start_log = log(N_recruit_start)
+ N_sp_start_log = log(N_sp_start)
+ N_catch_start_log = log(N_catch_start) 
+ N_egg_start_log  = log(N_egg_start)
  
-# fill starting values 
+ # fill starting values 
   N_j[1,1] = N_j_start
   N_first_winter[1,1] = N_first_winter_start
   
@@ -229,9 +230,8 @@ M_fill_stan = c(0.06,0.06, 0.06, 0.06) # will be cumulative
 #            c(0.06,0.06, 0.06, 0.06) , byrow = TRUE)
 
 # fix productivity ======
-p_1 =  (rnorm(nByrs, 0.3,0.01)  ) 
-p_2 =  (rnorm(nByrs, 0.5,0.01)  ) 
-
+p_1 =  (rnorm(nByrs, 0.3,0.01)  )
+p_2 =  (rnorm(nByrs, 0.5,0.01)  )
 
 # POPULATION MODEL ============ 
      for (t in 1:nByrs){ # loop for each brood year 
@@ -251,7 +251,7 @@ p_2 =  (rnorm(nByrs, 0.5,0.01)  )
          for (a in 1:A) { 
            # N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; #add age structure, p is proportion per age class by BROOD YEAR 
            
-           N_recruit[t+a,a] = (N_first_winter[t]*p[t,a])*exp(-(sum(M_fill_stan[1:a]))) #exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+           N_recruit[t+a,a] = (N_first_winter[t]*p[a])*exp(-(sum(M_fill_stan[1:a]))) #exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
             # N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M_fill_stan[1:a]) + kappa_marine_mortality[t])) #add age specific mortality, 
            
@@ -366,6 +366,18 @@ N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
                           nRyrs_T = nRyrs_T_stan, 
                           A=A,
                           t_start = t_start,
+                          prob = prob, 
+                          # fix starting values 
+                          N_j_start_log =N_j_start_log,
+                          N_first_winter_start_log =  N_first_winter_start_log,
+                          N_recruit_start_log = N_recruit_start_log,
+                          N_sp_start_log =N_sp_start_log,
+                          N_catch_start_log = N_catch_start_log,
+                          N_egg_start_log=N_egg_start_log,
+                          
+                          sigma_y_j=process_error_j,
+                          
+                          log_catch_q = log_catch_q, 
                           
                           D_scale=D_scale,
                           
@@ -410,10 +422,12 @@ N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_SIM.stan"), # different than data model so I can move priors around 
   data = data_list_stan,
-  chains = 1, #n_chains,
+  chains = 4, #n_chains,
   warmup = warmups,
   iter = total_iterations,
-  cores = n_cores)  
+  cores = n_cores,
+  control = list(adapt_delta = 0.95,
+                 max_treedepth = 12))  
         
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
 
