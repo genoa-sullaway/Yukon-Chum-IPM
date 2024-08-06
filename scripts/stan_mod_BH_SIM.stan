@@ -8,13 +8,11 @@ data { // all equation references are from proposal numbering
 vector <lower=0, upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
 vector <lower=0, upper = 1> [nByrs] p_2;
 
-// vector <lower=0> [A-1] prob; 
-
 real <lower=0> sigma_y_j;
 
 real D_scale;
 
-vector<lower=0, upper=100> [A] g; 
+// vector<lower=0, upper=100> [A] g; 
 
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
   vector [A] fs; // fecundity
@@ -77,9 +75,9 @@ parameters {
 // real theta1[ncovars1]; // covariate estimated for each covariate and each population
 // real theta2[ncovars2];
   
-vector <lower=0> [A-1] prob; 
+vector <lower=0, upper = 1> [A-1] prob; 
 // real <lower=0, upper=1> D_scale; // Variability of age proportion vectors across cohorts
-// vector<lower=0, upper=100> [A] g; 
+vector<lower=0, upper=100> [A] g;
 // real <lower=0> g[nRyrs_T,A]; // gamma random draws
 
 // real log_catch_q; 
@@ -96,6 +94,8 @@ vector <lower=0> [A-1] prob;
 // vector <lower=0, upper = 1> [nByrs+2] p_2;
 
 // real <lower=0> sigma_y_j;
+
+// vector<lower=0, upper=1> [A] pi;
 }
 
 transformed parameters { 
@@ -186,7 +186,6 @@ N_first_winter[1] = N_first_winter_start;
   // N_first_winter[1:t_start,a] = N_first_winter_start[1:t_start,a];
      }
 
-
   // transform log carrying capacity to normal scale
    c_1 = exp(log_c_1);
    c_2 = exp(log_c_2);
@@ -234,17 +233,17 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
      
          kappa_marine_survival[t] =  p_2[t]/(1 + ((p_2[t]*N_j[t])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
 
-    // convert survival to mortality for next equation
+         // convert survival to mortality for next equation
          // kappa_marine_mortality[t] = -log(kappa_marine_survival[t]);
       
-       N_first_winter[t] = N_j[t]*kappa_marine_survival[t]; //)*exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+           N_first_winter[t] = N_j[t]*kappa_marine_survival[t]; //)*exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
          
         for (a in 1:A) { 
-           N_recruit[t+a,a] = (N_first_winter[t]*p[a])*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+           N_recruit[t+a,a] = (N_first_winter[t]*p[a])//*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
           // N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; // add age structure, p is proportion per age class
-       
-          // N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
+
+          // N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality,
           
            // N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
            // N_recruit[t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])); // add age specific mortality, 
@@ -257,19 +256,17 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
           N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a]; 
             }
      }
-     
-  print("N_sp", N_sp); 
-  print("N_recruit", N_recruit);
-  print("N_first_winter", N_first_winter);
-  print("kappa_marine_survival", kappa_marine_survival); 
+   
+  // print("N_sp", N_sp); 
+  // print("N_recruit", N_recruit);
+  // print("N_first_winter", N_first_winter);
+  // print("kappa_marine_survival", kappa_marine_survival); 
       
      // print("kappa_marine_survival", kappa_marine_survival);
      // print("kappa_marine_survival", kappa_marine_survival);
      // print("N_recruit", N_recruit); 
      // print("N_e_sum", N_e_sum);
       
-     
-  
   // Calculate age proportions by return year
   for (t in 1:nRyrs) {
     for(a in 1:A){
@@ -284,6 +281,7 @@ for(t in 1:nByrs){
 }
 
 model {
+ 
   //  sigma_y_j ~ uniform(0,5); 
   // 
   // log_catch_q ~ normal(-4,10);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
@@ -318,10 +316,10 @@ model {
     // basal_p_2 ~ beta(1,1); // mean survivial stage 2
   
 // age comp 
- //    for (a in 1:A) {
- //      g[a] ~ gamma(Dir_alpha[a],2);
- //   // target += gamma_lpdf(g[a]|Dir_alpha[a],1);
- // }
+    for (a in 1:A) {
+      g[a] ~ gamma(Dir_alpha[a],1);
+   // target += gamma_lpdf(g[a]|Dir_alpha[a],1);
+ }
 
 //  for(t in 1:nRyrs_T){
 //     for (a in 1:A) {
@@ -340,10 +338,10 @@ model {
  // }
 
  // age comp priors -- maturity schedules
-  prob[1] ~ beta(1,1);
-  prob[2] ~ beta(1,1);
-  prob[3] ~ beta(1,1);
-  // 
+  prob[1] ~ beta(0.16,1);
+  prob[2] ~ beta(0.78,1);
+  prob[3] ~ beta(0.41,1); 
+ 
 // Likelilihoods --  
   // Observation model
   for (t in 1:nByrs) {

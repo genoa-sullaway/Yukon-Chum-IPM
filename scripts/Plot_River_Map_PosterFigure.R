@@ -2,21 +2,28 @@
 # copied from here: https://github.com/milos-agathon/map-rivers-with-sf-and-ggplot2-in-R/blob/main/R/rivers_america.r
 # AYK MAP THAT SHOWS WEIR PROJECTS, USED IN POSTERS
  
-libs <- c(
-  "httr", "tidyverse", "sf", "here"
-)
+# libs <- c(
+#   "httr", "tidyverse", "sf", "here"
+# )
+# 
+# # install missing libraries
+# installed_libs <- libs %in% rownames(installed.packages())
+# if (any(installed_libs == F)) {
+#   install.packages(libs[!installed_libs])
+# }
+# 
+# # load libraries
+# invisible(lapply(libs, library, character.only = T))
+# 
+# sysfonts::font_add_google("Montserrat", "Montserrat")
+# showtext::showtext_auto()
 
-# install missing libraries
-installed_libs <- libs %in% rownames(installed.packages())
-if (any(installed_libs == F)) {
-  install.packages(libs[!installed_libs])
-}
+library("httr")
+library("tidyverse")
+library("sf")
+library("here")
 
-# load libraries
-invisible(lapply(libs, library, character.only = T))
-
-sysfonts::font_add_google("Montserrat", "Montserrat")
-showtext::showtext_auto()
+sf_use_s2(FALSE)
 
 # Load shape file with yukon watershed
 # found here: https://www.sciencebase.gov/catalog/item/5813d2b2e4b0bb36a4c29e31
@@ -68,22 +75,13 @@ bbox <- st_sfc(
   crs = crsLONGLAT
 )
 
+
+
 new_prj <- sf::st_transform(bbox, crs = crsLONGLAT)
 bb <- sf::st_bbox(new_prj)
 
 
 # make mask ========
-# use this to make a alpha filer for the yukon watershed
-
-mask <-st_difference(bbox,yukon_poly) 
-mask2 <-st_difference(mask,na_outline) 
-plot(mask)
-plot(mask2)
-
-both <- st_difference(mask, mask2)
-
-plot(both) 
-
 #trim rivers to just be inside AK and part of canada
 source("scripts/Function_AKMap.R")
 
@@ -92,6 +90,23 @@ source("scripts/Function_AKMap.R")
 
 na_outline <- st_union(ak,can)
 
+# use this to make a alpha filer for the yukon watershed
+plot(yukon_poly)
+plot(bbox)
+
+ggplot() +
+    geom_sf(data = yukon_poly ) +
+    geom_sf(data = bbox, alpha = 0.5)
+
+mask <-sf::st_difference(bbox,yukon_poly) 
+mask2 <-st_difference(mask,na_outline) 
+plot(mask)
+plot(mask2)
+
+both <- st_difference(mask, mask2)
+
+plot(both) 
+ 
 # make plot with points  ========
 p <-ggplot() +
   geom_sf(data = ariv, aes(
@@ -131,7 +146,9 @@ p <-ggplot() +
     axis.text.x = element_blank(),
     axis.text.y = element_blank()
   )
- 
+
+p 
+
 ggsave(
   filename = "output/ak_rivers.png",
   width = 9, height = 6, dpi = 600,
@@ -139,14 +156,15 @@ ggsave(
 )
 
 
-
+ 
 # make plot with no points ========
 p <-ggplot() +
+  geom_sf(data = na_outline, fill = "white") +
   geom_sf(data = ariv, aes(
-    color = factor(ORD_FLOW), size = width, alpha = width
+    color = factor(ORD_FLOW), size = width, alpha = width 
   )) +
-  geom_sf(data = both, alpha = 0.7, color = "black") + 
-  # geom_sf(data = na_outline, fill = NA, color = "black") +
+  geom_sf(data = both, alpha = 0.7, color = "black" ) + 
+ 
   scale_color_manual(
     name = "",
     values = c(
@@ -178,7 +196,7 @@ p <-ggplot() +
     axis.text.y = element_blank(),
     rect = element_rect(fill = "transparent")
   )
-
+ 
 ggsave(
   filename = "output/ak_rivers_nopoints.png",
   width = 9, height = 6, dpi = 600,

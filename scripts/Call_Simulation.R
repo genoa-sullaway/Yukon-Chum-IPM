@@ -117,20 +117,21 @@ theta2 <- c(-0.05) #, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
 # pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
   
 prob = c(NA)
- 
+
 prob = c(0.1548598, 0.7782258, 0.40537690)
 
   pi[1] = prob[1]
   pi[2] = prob[2] * (1 - pi[1])
   pi[3] = prob[3] * (1 - pi[1] - pi[2])
   pi[4] = 1 - pi[1] - pi[2] - pi[3]
-  
+   
+   
   D_sum = 1/(D_scale^2)
 
   for (a in 1:A) {
       Dir_alpha[a] = D_sum * pi[a]
  
-      g[a] = rgamma(n=1,Dir_alpha[a],2)
+      g[a] = rgamma(n=1,Dir_alpha[a],1)
     
        # for(t in 1:nRyrs_T) {
        #  g[t,a] = rgamma(n=1,Dir_alpha[a],1)
@@ -251,7 +252,7 @@ p_2 =  (rnorm(nByrs, 0.5,0.01)  )
          for (a in 1:A) { 
            # N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; #add age structure, p is proportion per age class by BROOD YEAR 
            
-           N_recruit[t+a,a] = (N_first_winter[t]*p[a])*exp(-(sum(M_fill_stan[1:a]))) #exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+           N_recruit[t+a,a] = (N_first_winter[t]*p[a])#*exp(-(sum(M_fill_stan[1:a]))) #exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
             # N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M_fill_stan[1:a]) + kappa_marine_mortality[t])) #add age specific mortality, 
            
@@ -303,7 +304,8 @@ barplot(t(N_sp))
 barplot(t(N_catch))
  
 colMeans(o_run_comp)
-colMeans(p)
+p
+#colMeans(p)
  
 # Fix ESS ============= 
 ess_age_comp = 300 #rep(300, times = nByrs)
@@ -423,7 +425,7 @@ N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_SIM.stan"), # different than data model so I can move priors around 
   data = data_list_stan,
-  chains = 4, #n_chains,
+  chains = 1, #n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores,

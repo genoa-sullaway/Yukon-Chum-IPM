@@ -13,6 +13,8 @@ data_list_plot <-    list(nByrs=nByrs_stan,
                                           A=A,
                                           t_start = t_start,
                                           
+                           prob = prob, 
+                           pi = pi, 
                                           Ps=Ps,
                                           fs=fs,
                                           M = M_fill_stan, 
@@ -44,7 +46,7 @@ data_list_plot <-    list(nByrs=nByrs_stan,
                                           
                                           # cov1=cov1[8:nByrs,ncovars1],
                                           # cov2=cov2[7:nByrs,ncovars2],
-                                          # 
+                                          g=g, 
                                           p =p,
                                           o_run_comp=o_run_comp,#[8:nByrs,],
                                           ess_age_comp=ess_age_comp)#[8:(nByrs-1)] )
@@ -83,14 +85,7 @@ traceplot(bh_fit,pars=  c("sigma_y_j"))
 traceplot(bh_fit,pars=  c("log_F_dev_y","log_F_mean"))
  
 # pairs======
-pairs(bh_fit, pars= c("N_j_start_log",
-                      "N_first_winter_start_log"
-                      # "N_sp_start_log",
-                      # "N_recruit_start_log",
-                      # "N_catch_start_log",
-                      # "N_egg_start_log",
-                      # "N_egg_sum_start_log"
-                      ))
+
 
 pairs(bh_fit, pars= c("prob" ))
 
@@ -162,6 +157,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "Dir_alpha"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "D_sum"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -283,6 +282,42 @@ ggplot(data = summ_n_j) +
                   ymax = mean+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
 
+# plot pi  =================
+pi_df <- summary(bh_fit, pars = c("pi"), 
+                   probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column() %>% 
+  cbind( data.frame(obs= data_list_plot$pi)) 
+
+ggplot(data= pi_df) +
+  geom_point(aes(x=rowname, y = mean  )) +
+  geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) 
+
+# plot PROB  =================
+prob_df <- summary(bh_fit, pars = c("prob"), 
+                      probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column() %>% 
+  cbind( data.frame(obs= data_list_plot$prob)) 
+
+ggplot(data= prob_df) +
+  geom_point(aes(x=rowname, y = mean  )) +
+  geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) +
+  labs(caption= "Red is observed, black is predicted")
+
+
+# plot G  =================
+g_df <- summary(bh_fit, pars = c("g"), 
+                   probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column() %>% 
+  cbind( data.frame(obs= data_list_plot$g)) 
+
+ggplot(data= g_df) +
+  geom_point(aes(x=rowname, y = mean  )) +
+  geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) +
+  labs(caption= "Red is observed, black is predicted")
+
 # plot age comp through time =================
 age_comp_Q <- summary(bh_fit, pars = c("q"), 
                       probs = c(0.1, 0.9))$summary %>% 
@@ -304,10 +339,28 @@ ggplot(data= age_comp_Q) +
   geom_line(aes(x=time, y = pred, group = age )) +
   geom_point(aes(x=time, y = obs, group = age ), color = "red", alpha = 0.5) +
   geom_line(aes(x=time, y = obs, group = age ), color = "red", alpha = 0.5) +
-  facet_wrap(~age, scales = "free")
+  facet_wrap(~age, scales = "free")+
+  labs(caption= "Red is observed, black is predicted")
  
 # plot P through time =================
 # proportion of maturing indviduals
+
+## mean age comp: ====
+age_comp_P <- summary(bh_fit, pars = c("p"), 
+                      probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate( age = c(1:4)) %>%
+  dplyr::rename(pred = "mean") %>%
+  dplyr::select(age,pred)  %>% 
+  left_join(data.frame(obs = data_list_plot$p) %>% 
+           dplyr::mutate(age = c(1:4)))  
+
+ggplot(data= age_comp_P) +
+  geom_point(aes(x=age, y = pred )) +
+  geom_point(aes(x=age, y = obs, group = age ), color = "red", alpha = 0.5) 
+
+# or age comp through time: =====
 age_comp_P <- summary(bh_fit, pars = c("p"), 
                       probs = c(0.1, 0.9))$summary %>% 
   data.frame() %>%
