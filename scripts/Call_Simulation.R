@@ -108,8 +108,8 @@ theta2 <- c(-0.05) #, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
 
  # AGE STRUCTURE =========
   Dir_alpha = c(NA)
- p = c(NA) #
-  # p = matrix(nrow=nRyrs_T,ncol=A,NA)
+  # p = c(NA) #
+  p = matrix(nrow=nByrs,ncol=A,NA)
   g = c(NA)
   # g = matrix(nrow=nRyrs_T,ncol=A,NA)
   D_scale = 0.2
@@ -136,11 +136,12 @@ prob = c(0.1548598, 0.7782258, 0.40537690)
        # for(t in 1:nRyrs_T) {
        #  g[t,a] = rgamma(n=1,Dir_alpha[a],1)
        #   }
-      }
-  for (a in 1:A) {
-      p[a] = g[a]/sum(g[1:A])
   }
-
+  
+  for (a in 1:A) {
+      p[1:nByrs, a] = g[a]/sum(g[1:A])
+  }
+  
   # for (a in 1:A) {
   #   for(t in 1:(nRyrs_T)) {
   # p[t,a] = g[t,a]/sum(g[t,1:A])
@@ -160,7 +161,7 @@ kappa_marine = vector( )
 kappa_marine_mortality = vector( )
 
 N_j =  matrix(nrow=nByrs,ncol=1,NA)
-N_first_winter = matrix(nrow=nByrs,ncol=1,NA)
+N_brood_year_return = matrix(nrow=nByrs,ncol=1,NA)
 
 #N_first_winter = matrix(nrow=nRyrs_T,ncol=A,NA)
 N_e_sum = matrix(nrow=nByrs,ncol=1,NA)
@@ -177,21 +178,23 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
  N_sp_start = matrix(NA,nrow=t_start, ncol=A)
 
  N_j_start = exp(rnorm(1,16,1)) 
- N_first_winter_start = exp(rnorm(1,15,1))
+ N_brood_year_return_start = exp(rnorm(1,15,1))
 
  for (a in 1:A) {
   for(t in 1:t_start){
-   N_recruit_start[t,] = exp(yukon_fall_recruits$mean)*p #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
+   N_recruit_start[t,a] = exp(yukon_fall_recruits$mean)*p[t,a] #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
    # N_ocean_start[t,a] = exp(rnorm(1,13.6,1))*p[a]#*p[t,a]
-   N_sp_start[t,] = exp( yukon_fall_spawners$mean )*p  #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
+   N_sp_start[t,a] = exp( yukon_fall_spawners$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
    # N_first_winter_start[t,a] = exp(rnorm(1,13.6))*p[a]#*p[t,a]
-   N_catch_start[t,] = exp( yukon_fall_harvest$mean )*p  #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
-   N_egg_start[t,] = exp(16.5)*p 
+   N_catch_start[t,a] = exp( yukon_fall_harvest$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
+   N_egg_start[t,a] = exp(16.5)*p[t,a]  
   }
  }
+ 
  # log for model ======
  N_j_start_log = log(N_j_start)
- N_first_winter_start_log =  log(N_first_winter_start)
+ N_brood_year_return_start_log =  log(N_brood_year_return_start)
+ 
  N_recruit_start_log = log(N_recruit_start)
  N_sp_start_log = log(N_sp_start)
  N_catch_start_log = log(N_catch_start) 
@@ -199,7 +202,8 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
  
  # fill starting values 
   N_j[1,1] = N_j_start
-  N_first_winter[1,1] = N_first_winter_start
+# N_first_winter[1,1] = N_first_winter_start  
+  N_brood_year_return[1,1] = N_brood_year_return_start
   
   N_recruit[1:t_start,] = N_recruit_start
   N_sp[1:t_start,] = N_sp_start
@@ -234,6 +238,7 @@ M_fill_stan = c(0.06,0.06, 0.06, 0.06) # will be cumulative
 p_1 =  (rnorm(nByrs, 0.3,0.01)  )
 p_2 =  (rnorm(nByrs, 0.5,0.01)  )
 
+ 
 # POPULATION MODEL ============ 
      for (t in 1:nByrs){ # loop for each brood year 
          N_e_sum[t] = sum(N_e[t,1:A]); 
@@ -246,13 +251,13 @@ p_2 =  (rnorm(nByrs, 0.5,0.01)  )
          
          # kappa_marine_mortality[t] = -log(kappa_marine[t])
          
-         N_first_winter[t] = N_j[t]*kappa_marine[t] #)*exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+         N_brood_year_return[t] = N_j[t]*kappa_marine[t] #)*exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
           
          
          for (a in 1:A) { 
            # N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; #add age structure, p is proportion per age class by BROOD YEAR 
            
-           N_recruit[t+a,a] = (N_first_winter[t]*p[a])#*exp(-(sum(M_fill_stan[1:a]))) #exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+           N_recruit[t+a,a] = (N_brood_year_return[t]*p[t,a])#*exp(-(sum(M_fill_stan[1:a]))) #exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
             # N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M_fill_stan[1:a]) + kappa_marine_mortality[t])) #add age specific mortality, 
            
@@ -278,7 +283,7 @@ o_run_comp = array(data = NA, dim = c(nRyrs,A))
     # }
   }
 }
-
+ 
 # fill in the weird gaps
 # for(t in 1:6){
 #   for (a in 1:A) {
@@ -299,12 +304,15 @@ barplot(t(o_run_comp))
 barplot(t(N_j))
 barplot(t(N_e_sum))
 barplot(t(N_e))
+barplot(t(N_brood_year_return))
+barplot(t(N_recruit))
 
 barplot(t(N_sp))
 barplot(t(N_catch))
  
 colMeans(o_run_comp)
 p
+ 
 #colMeans(p)
  
 # Fix ESS ============= 
@@ -319,6 +327,8 @@ N_sp_sim_s <-  vector() #array(data = NA, dim = c(nRyrs, K))
 N_catch_sim <- vector()
 N_catch_sim_s <- vector()
 
+N_brood_year_return_sim <-  vector() #array(data = NA, dim = c(nRyrs, K))
+ 
 N_recruit_sim <-  vector() #array(data = NA, dim = c(nRyrs, K))
 N_recruit_sim_s <-  vector() #array(data = NA, dim = c(nRyrs, K))
 
@@ -342,26 +352,34 @@ nRyrs_T_stan = nRyrs_T#-8
 
 N_j_sim_observed= N_j*(exp(log_catch_q))
 
-N_j_sim_hat  =  (rnorm(nByrs_stan, (N_j_sim_observed ), process_error_j))
- 
-N_recruit_sim_s  = (rnorm(nRyrs_stan, (N_recruit_sim ), sqrt(log((0.06^2) + 1))))
-N_catch_sim_s = (rnorm(nRyrs_stan, (N_catch_sim ), sqrt(log((0.01^2) + 1))))
-N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
-      
+# log normal simulation  
+N_j_sim_hat  =  rlnorm(nByrs_stan,  log(N_j_sim_observed ), process_error_j)
+N_brood_year_return_sim <- rlnorm(nByrs_stan, log(N_brood_year_return), sqrt(log((0.06^2) + 1)))
+N_catch_sim_s = rlnorm(nRyrs_stan, log(N_catch_sim ), sqrt(log((0.01^2) + 1)))
+N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
+
+# nomral simulation 
+#N_j_sim_hat  =    (rnorm(nByrs_stan,  (N_j_sim_observed ), process_error_j)) 
+# N_brood_year_return_sim <- (rnorm(nRyrs_stan, (N_brood_year_return), sqrt(log((0.06^2) + 1))))
+# 
+# # N_recruit_sim_s  = (rnorm(nRyrs_stan, (N_recruit_sim ), sqrt(log((0.06^2) + 1))))
+# N_catch_sim_s = (rnorm(nRyrs_stan, (N_catch_sim ), sqrt(log((0.01^2) + 1))))
+# N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
+#       
     # STAN STARTING VALUES ==========
     kappa_j_start =  basal_p_1 # runif(1, 0.2, 0.2)
     kappa_marine_start = basal_p_2 #runif(1, 0.4, 0.4)
 
      # PLOT all simulated data together  ==========
-        dat <- data.frame(data_stage_return = N_recruit_sim_s,#[6:(nRyrs-1)],
+        dat <- data.frame(#data_stage_return = N_brood_year_return_sim,#[6:(nRyrs-1)],
                           data_stage_sp = N_sp_sim_s,#[6:(nRyrs-1)],
                           data_stage_harvest = N_catch_sim_s) %>% #[6:(nRyrs-1)])%>%
           mutate(time = 1:nrow(.)) %>% 
           gather(1:3, key = "id", value = "value")
         
-        ggplot(data = dat) +
-          geom_line(aes(x=time, y =value, group = id, color = id))
-     
+        # ggplot(data = dat) +
+        #   geom_line(aes(x=time, y =value, group = id, color = id))
+        # 
         # STAN data ==========
    data_list_stan <- list(nByrs=nByrs_stan,
                           nRyrs=nRyrs_stan,
@@ -371,17 +389,19 @@ N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
                           # prob = prob, 
                           # fix starting values 
                           N_j_start_log =N_j_start_log,
-                          N_first_winter_start_log =  N_first_winter_start_log,
+                          # N_first_winter_start_log =  N_first_winter_start_log,
+                          N_brood_year_return_start_log =  N_brood_year_return_start_log,
+                          
                           N_recruit_start_log = N_recruit_start_log,
                           N_sp_start_log =N_sp_start_log,
                           N_catch_start_log = N_catch_start_log,
                           N_egg_start_log=N_egg_start_log,
                           
-                          sigma_y_j=process_error_j,
+                         sigma_y_j=process_error_j,
                           
                           log_catch_q = log_catch_q, 
                           
-                          D_scale=D_scale,
+                          # D_scale=D_scale,
                           
                           Ps=Ps,
                           fs=fs,
@@ -391,7 +411,8 @@ N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
                           log_c_2=log_c_2,
                     
                           data_stage_j = N_j_sim_hat,#[6:nByrs+1],
-                          data_stage_return = N_recruit_sim_s,#[6:nRyrs+2],
+                          data_stage_return = N_brood_year_return_sim, 
+                          # data_stage_return = N_recruit_sim_s,#[6:nRyrs+2],
                           data_stage_sp = N_sp_sim_s,#[6:nRyrs+2],
                           data_stage_harvest = N_catch_sim_s,#[6:nRyrs+2], 
                           
@@ -409,7 +430,7 @@ N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
                           
                           ncovars1=ncovars1,
                           ncovars2=ncovars2,
-                          F = F,
+                          # F = F,
                           # data_sp_cv = process_error_sp,
                           cov1 = matrix(nrow = nByrs_stan, ncol = ncovars1, rep(rnorm(nByrs_stan, 0, 1), times = ncovars1)),   
                           cov2 = matrix(nrow = nByrs_stan, ncol = ncovars2, rep(rnorm(nByrs_stan, 0, 1), times = ncovars2)),
