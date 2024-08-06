@@ -366,7 +366,7 @@ N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
                           nRyrs_T = nRyrs_T_stan, 
                           A=A,
                           t_start = t_start,
-                          prob = prob, 
+                          # prob = prob, 
                           # fix starting values 
                           N_j_start_log =N_j_start_log,
                           N_first_winter_start_log =  N_first_winter_start_log,
@@ -399,6 +399,7 @@ N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
                            p_1 = p_1,
                            p_2=p_2,
                           
+                          g=g,
                           kappa_j_start = basal_p_1,
                
                           basal_p_1 = basal_p_1,

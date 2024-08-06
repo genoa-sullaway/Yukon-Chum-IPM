@@ -8,11 +8,13 @@ data { // all equation references are from proposal numbering
 vector <lower=0, upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
 vector <lower=0, upper = 1> [nByrs] p_2;
 
-vector <lower=0> [A-1] prob; 
+// vector <lower=0> [A-1] prob; 
 
 real <lower=0> sigma_y_j;
 
 real D_scale;
+
+vector<lower=0, upper=100> [A] g; 
 
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
   vector [A] fs; // fecundity
@@ -75,9 +77,9 @@ parameters {
 // real theta1[ncovars1]; // covariate estimated for each covariate and each population
 // real theta2[ncovars2];
   
-
+vector <lower=0> [A-1] prob; 
 // real <lower=0, upper=1> D_scale; // Variability of age proportion vectors across cohorts
-vector<lower=0, upper=100> [A] g; 
+// vector<lower=0, upper=100> [A] g; 
 // real <lower=0> g[nRyrs_T,A]; // gamma random draws
 
 // real log_catch_q; 
@@ -316,10 +318,10 @@ model {
     // basal_p_2 ~ beta(1,1); // mean survivial stage 2
   
 // age comp 
-    for (a in 1:A) {
-      g[a] ~ gamma(Dir_alpha[a],2);
-   // target += gamma_lpdf(g[a]|Dir_alpha[a],1);
- }
+ //    for (a in 1:A) {
+ //      g[a] ~ gamma(Dir_alpha[a],2);
+ //   // target += gamma_lpdf(g[a]|Dir_alpha[a],1);
+ // }
 
 //  for(t in 1:nRyrs_T){
 //     for (a in 1:A) {
@@ -338,9 +340,9 @@ model {
  // }
 
  // age comp priors -- maturity schedules
-  // prob[1] ~ beta(1,1); 
-  // prob[2] ~ beta(1,1);  
-  // prob[3] ~ beta(1,1);  
+  prob[1] ~ beta(1,1);
+  prob[2] ~ beta(1,1);
+  prob[3] ~ beta(1,1);
   // 
 // Likelilihoods --  
   // Observation model
