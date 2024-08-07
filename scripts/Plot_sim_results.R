@@ -19,7 +19,7 @@ data_list_plot <-    list(nByrs=nByrs_stan,
                                           Ps=Ps,
                                           fs=fs,
                                           M = M_fill_stan, 
-                                          
+                                          F=F,
                                           log_c_1 = log_c_1,
                                           log_c_2=log_c_2,
                                           
@@ -91,9 +91,10 @@ traceplot(bh_fit,pars=  c("log_F_dev_y","log_F_mean"))
 pairs(bh_fit, pars= c("prob" ))
 
 pairs(bh_fit, pars= c("g" ))
+
+pairs(bh_fit, pars= c("log_F_dev_y" ))
  
-pairs(bh_fit, pars= c( "log_catch_q",
-                       "sigma_y_j"))
+pairs(bh_fit, pars= c( "log_catch_q","prob" ))
 
 stan_par(bh_fit, par = c(#"log_catch_q",
          "sigma_y_j"))
@@ -416,10 +417,13 @@ fishing <- summary(bh_fit, pars = c("F"),
   rownames_to_column()  %>% 
   mutate(mean =  (mean),
          time = 1:nrow(.)) %>% 
-  filter(!time> 21 & !time<5)
-
+  left_join( data.frame(obs= data_list_plot$F) %>% 
+           dplyr::mutate(time = 1:nrow(.))) %>%
+  filter(!time>21 & !time <5)
+ 
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) + 
+  geom_line(aes(x=time, y = obs),color = "red", alpha = 0.5) + 
   ylab("Instantaneous fishing mortality")
 
 # Plot selectivity ======
@@ -482,6 +486,13 @@ ggplot(data = kappasurvival_mm,aes(x=time, y = mean)) +
 
 # PLOT PARAMS  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
+
+all_summ <- summary(bh_fit)$summary %>%
+  data.frame() %>%
+  rownames_to_column()  
+
+low_n_eff <- all_summ %>% 
+  filter(n_eff <1)
 
 obs <- data.frame(log_c_1 = data_list_plot$log_c_1, 
                   log_c_2 = data_list_plot$log_c_2,

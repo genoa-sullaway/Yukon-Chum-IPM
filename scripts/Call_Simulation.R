@@ -177,8 +177,8 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
  N_egg_start = matrix(0,nrow=t_start, ncol=A)
  N_sp_start = matrix(NA,nrow=t_start, ncol=A)
 
- N_j_start = exp(rnorm(1,16,1)) 
- N_brood_year_return_start = exp(rnorm(1,15,1))
+ N_j_start = exp(rnorm(1,17,1)) 
+ N_brood_year_return_start = exp(rnorm(1,16,1))
 
  for (a in 1:A) {
   for(t in 1:t_start){
@@ -187,7 +187,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
    N_sp_start[t,a] = exp( yukon_fall_spawners$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
    # N_first_winter_start[t,a] = exp(rnorm(1,13.6))*p[a]#*p[t,a]
    N_catch_start[t,a] = exp( yukon_fall_harvest$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
-   N_egg_start[t,a] = exp(16.5)*p[t,a]  
+   N_egg_start[t,a] = exp(17.5)*p[t,a]  
   }
  }
  
@@ -214,13 +214,13 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
   # translates from predicted juveniles to observed juveniles 
   # catch_q = -2  #exp(rnorm(1,0,0.5))
   
- log_catch_q = -4
- 
+ # log_catch_q = rnorm(nByrs, -4,0.5)  
+  log_catch_q = -4
 # Harvest =============
 ## fishing mortality by age 
   
-  log_F_dev_y = rnorm(nRyrs_T, 0,0.5)  
-  log_F_mean = -0.1
+  log_F_dev_y = rnorm(nByrs, 0,0.5)  
+  log_F_mean = -1.1
  
   F  = exp(log_F_mean +log_F_dev_y) 
  
@@ -235,8 +235,8 @@ M_fill_stan = c(0.06,0.06, 0.06, 0.06) # will be cumulative
 #            c(0.06,0.06, 0.06, 0.06) , byrow = TRUE)
 
 # fix productivity ======
-p_1 =  (rnorm(nByrs, 0.3,0.01)  )
-p_2 =  (rnorm(nByrs, 0.5,0.01)  )
+p_1 =  rbeta(nByrs,0.2,1) #abs(rnorm(nByrs, 0.3,1))
+p_2 =  rbeta(nByrs,0.5,1)#abs(rnorm(nByrs, 0.5,1)  )
 
  
 # POPULATION MODEL ============ 
@@ -263,7 +263,7 @@ p_2 =  (rnorm(nByrs, 0.5,0.01)  )
            
            # N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a])+kappa_marine_mortality[t]));  
            
-           N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a]))) 
+           N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t]))) 
            
            # N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]*S[a])))
            
@@ -316,7 +316,7 @@ p
 #colMeans(p)
  
 # Fix ESS ============= 
-ess_age_comp = 300 #rep(300, times = nByrs)
+ess_age_comp = 400 #rep(300, times = nByrs)
 
 # PROCESS MODEL ============= 
 N_j_sim_hat <- vector()# matrix(nrow=nByrs,ncol=K,NA)
@@ -349,11 +349,11 @@ nByrs_stan = nByrs#-8
 nRyrs_stan = nRyrs#-8
 nRyrs_T_stan = nRyrs_T#-8
 # incorporate Q, to connect different data sources in population model 
-
+ 
 N_j_sim_observed= N_j*(exp(log_catch_q))
 
 # log normal simulation  
-N_j_sim_hat  =  rlnorm(nByrs_stan,  log(N_j_sim_observed ), process_error_j)
+N_j_sim_hat  =  rlnorm(nByrs_stan,  log(N_j_sim_observed), sqrt(log((0.01^2) + 1)))
 N_brood_year_return_sim <- rlnorm(nByrs_stan, log(N_brood_year_return), sqrt(log((0.06^2) + 1)))
 N_catch_sim_s = rlnorm(nRyrs_stan, log(N_catch_sim ), sqrt(log((0.01^2) + 1)))
 N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
@@ -399,7 +399,7 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
                           
                          sigma_y_j=process_error_j,
                           
-                          log_catch_q = log_catch_q, 
+                          # log_catch_q = log_catch_q, 
                           
                           # D_scale=D_scale,
                           
@@ -450,8 +450,7 @@ bh_fit <- stan(
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores,
-  control = list(adapt_delta = 0.95,
-                 max_treedepth = 12))  
+  control = list(adapt_delta = 0.95))  
         
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
 
