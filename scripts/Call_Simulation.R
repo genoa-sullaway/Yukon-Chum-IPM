@@ -131,11 +131,13 @@ prob = c(0.1548598, 0.7782258, 0.40537690)
   for (a in 1:A) {
       Dir_alpha[a] = D_sum * pi[a]
  
-      g[a] = rgamma(n=1,Dir_alpha[a],5)
-    
        # for(t in 1:nRyrs_T) {
        #  g[t,a] = rgamma(n=1,Dir_alpha[a],1)
-       #   }
+  
+        }
+
+  for (a in 1:A) {
+  g[a] = rgamma(n=1,Dir_alpha[a],5)
   }
   
   for (a in 1:A) {

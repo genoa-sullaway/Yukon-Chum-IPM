@@ -327,9 +327,10 @@ D_scale_df <- summary(bh_fit, pars = c("D_scale"),
   cbind( data.frame(obs= data_list_plot$D_scale)) 
 
 ggplot(data= D_scale_df) +
-  geom_point(aes(x=rowname, y = mean  )) +
-  geom_errorbar(aes(x=rowname, ymin = X10., ymax = X90.), width = 0.1) + 
-  geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) 
+  geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
+  geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
+  geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
+  labs(caption= "Red is observed, black is predicted")
 
 # plot dir alpha  =================
 dir_alpha_df <- summary(bh_fit, pars = c("Dir_alpha"), 
@@ -339,8 +340,10 @@ dir_alpha_df <- summary(bh_fit, pars = c("Dir_alpha"),
   cbind( data.frame(obs= data_list_plot$Dir_alpha)) 
 
 ggplot(data= dir_alpha_df) +
-  geom_point(aes(x=rowname, y = mean  )) +
-  geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) 
+  geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
+  geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
+  geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
+  labs(caption= "Red is observed, black is predicted")
 
 # plot PROB  =================
 prob_df <- summary(bh_fit, pars = c("prob"), 
@@ -350,8 +353,9 @@ prob_df <- summary(bh_fit, pars = c("prob"),
   cbind( data.frame(obs= data_list_plot$prob)) 
 
 ggplot(data= prob_df) +
-  geom_point(aes(x=rowname, y = mean  )) +
-  geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) +
+  geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
+  geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
+  geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
   labs(caption= "Red is observed, black is predicted")
 
 
@@ -363,8 +367,9 @@ g_df <- summary(bh_fit, pars = c("g"),
   cbind( data.frame(obs= data_list_plot$g)) 
 
 ggplot(data= g_df) +
-  geom_point(aes(x=rowname, y = mean  )) +
-  geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) +
+  geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
+  # geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
+  geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
   labs(caption= "Red is observed, black is predicted")
 
 # plot Q obs age comp through time =================

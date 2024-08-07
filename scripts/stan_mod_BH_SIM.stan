@@ -337,8 +337,8 @@ model {
   
 // age comp 
     for (a in 1:A) {
-      // g[a] ~ gamma(Dir_alpha[a],1);
-     target += gamma_lpdf(g[a]|Dir_alpha[a],5);
+         g[a] ~ gamma(Dir_alpha[a],5);
+     // target += gamma_lpdf(g[a]|Dir_alpha[a],5);
  }
 
 //  for(t in 1:nRyrs_T){
