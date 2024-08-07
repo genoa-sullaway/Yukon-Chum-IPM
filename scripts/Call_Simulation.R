@@ -54,11 +54,11 @@ adapt_delta <- 0.95
 A = 4 # age classes 
 nByrs= 20 
 nRyrs = 21  
-nRyrs_T = nRyrs + A
+nRyrs_T = nRyrs + A -1
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1800, 2000, 2200, 2440)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(2000,2000,2000,2000)) #1800, 2000, 2200, 2400)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = A  # to fill starting values 
  
 #Bev Holt parameters ===================
@@ -112,7 +112,7 @@ theta2 <- c(-0.05) #, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
   p = matrix(nrow=nByrs,ncol=A,NA)
   g = c(NA)
   # g = matrix(nrow=nRyrs_T,ncol=A,NA)
-  D_scale = 0.2
+  D_scale = 0.5
   
 # pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
   
@@ -131,7 +131,7 @@ prob = c(0.1548598, 0.7782258, 0.40537690)
   for (a in 1:A) {
       Dir_alpha[a] = D_sum * pi[a]
  
-      g[a] = rgamma(n=1,Dir_alpha[a],1)
+      g[a] = rgamma(n=1,Dir_alpha[a],5)
     
        # for(t in 1:nRyrs_T) {
        #  g[t,a] = rgamma(n=1,Dir_alpha[a],1)
@@ -218,11 +218,13 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
   log_catch_q = -4
 # Harvest =============
 ## fishing mortality by age 
+  log_F = rnorm(nRyrs_T, 0,1)   
+  F = exp(log_F)
   
-  log_F_dev_y = rnorm(nByrs, 0,0.5)  
-  log_F_mean = -1.1
- 
-  F  = exp(log_F_mean +log_F_dev_y) 
+  # log_F_dev_y = rnorm(nByrs, 0,0.5)  
+  # log_F_mean = -1.1
+  # 
+  # F  = exp(log_F_mean +log_F_dev_y) 
  
   ## selectivity =====
 # S = c(0.05,0.08,1.05,1.08)
@@ -263,7 +265,7 @@ p_2 =  rbeta(nByrs,0.5,1)#abs(rnorm(nByrs, 0.5,1)  )
            
            # N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a])+kappa_marine_mortality[t]));  
            
-           N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t]))) 
+           N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a]))) 
            
            # N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]*S[a])))
            
@@ -446,7 +448,7 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_SIM.stan"), # different than data model so I can move priors around 
   data = data_list_stan,
-  chains = 1, #n_chains,
+  chains = 4, #n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores,

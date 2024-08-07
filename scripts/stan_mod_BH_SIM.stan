@@ -65,8 +65,7 @@ real N_j_start;
   
   // real N_egg_sum_start;
 real N_brood_year_return_start;
-
-
+ 
 real<lower=0> c_1; // estimate on log, transform back to normal scale 
 real<lower=0> c_2; // estimate on log, transform back to normal scale 
  
@@ -108,16 +107,22 @@ parameters {
 // covariate parameters 
 // real theta1[ncovars1]; // covariate estimated for each covariate and each population
 // real theta2[ncovars2];
-  
-vector <lower=0, upper = 1> [A-1] prob; 
+//   
+// vector   [A-1] prob; 
+// real   D_scale; // Variability of age proportion vectors across cohorts
+// vector  [A] g;
+
+vector <lower=0> [A-1] prob;
 real <lower=0, upper=1> D_scale; // Variability of age proportion vectors across cohorts
-vector<lower=0, upper=100> [A] g;
+vector<lower=0> [A] g;
  // real <lower=0> sigma_y_j;
 // real <lower=0> g[nRyrs_T,A]; // gamma random draws
 
   real log_catch_q; 
-  real log_F_mean; 
-  vector [nByrs]  log_F_dev_y; 
+  // real log_F_mean; 
+  vector [nRyrs_T]  log_F; 
+  
+  // vector [nByrs]  log_F_dev_y; 
 // vector [A] log_S; // log selectivity
  
   
@@ -168,7 +173,7 @@ vector <lower=0> [A] Dir_alpha;         // Dirichlet shape parameter for gamma d
 matrix<lower=0, upper=1>[nRyrs,A] q;
 vector<lower=0, upper=1> [A] pi;
 
-vector [nByrs] F; // instantaneous fishing mortality           
+vector [nRyrs_T] F; // instantaneous fishing mortality           
 // vector <lower = 0> [A] S; //selectivty
 
 // starting value transformations ======
@@ -180,9 +185,10 @@ vector [nByrs] F; // instantaneous fishing mortality
 //   S[a] = exp(log_S[a]);
 // } 
 
-  for(t in 1:nByrs){//
+  for(t in 1:nRyrs_T){//
   // instant fishing mortality
-  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
+   F[t] = exp(log_F[t]); 
+  // F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  }
 
   N_j[1] = N_j_start;
@@ -262,7 +268,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            // N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
            // N_recruit[t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])); // add age specific mortality, 
           
-          N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t])));
+          N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a])));
           // N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t]*S[a])));
            
           N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
@@ -331,8 +337,8 @@ model {
   
 // age comp 
     for (a in 1:A) {
-      g[a] ~ gamma(Dir_alpha[a],1);
-   // target += gamma_lpdf(g[a]|Dir_alpha[a],1);
+      // g[a] ~ gamma(Dir_alpha[a],1);
+     target += gamma_lpdf(g[a]|Dir_alpha[a],5);
  }
 
 //  for(t in 1:nRyrs_T){
@@ -340,21 +346,29 @@ model {
 //    target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
 //  }
 // }
- 
+
+// # fishing via normal distribution  
+  for(t in 1:nRyrs_T){
+ log_F[t] ~ normal(0,1); //log fishing mortatliy
+}
+
 // log fishing mortality for each calendar year 
-  log_F_mean ~ normal(0,1);
-  
- //   for (a in 1:A) {
- //    log_S[a] ~ uniform(0.1,5);
+ //  log_F_mean ~ normal(0,1);
+ //  
+ // //   for (a in 1:A) {
+ // //    log_S[a] ~ uniform(0.1,5);
+ // // }
+ //  for(t in 1:nByrs){
+ // log_F_dev_y[t] ~ normal(0, 5);
  // }
-  for(t in 1:nByrs){
- log_F_dev_y[t] ~ normal(0, 5);
- }
 
  // age comp priors -- maturity schedules
-  prob[1] ~ beta(0.16,1);
-  prob[2] ~ beta(0.78,1);
-  prob[3] ~ beta(0.41,1); 
+  prob[1] ~ beta(1,1);
+  prob[2] ~ beta(1,1);
+  prob[3] ~ beta(1,1);
+  // prob[1] ~ beta(0.16,1);
+  // prob[2] ~ beta(0.78,1);
+  // prob[3] ~ beta(0.41,1); 
  
 // Likelilihoods --  
   // Observation model

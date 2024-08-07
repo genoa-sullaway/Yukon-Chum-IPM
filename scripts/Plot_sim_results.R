@@ -14,6 +14,7 @@ data_list_plot <-    list(nByrs=nByrs_stan,
                                           t_start = t_start,
                           
                                           Dir_alpha=Dir_alpha,
+                                          D_scale = D_scale,
                                           prob = prob, 
                                           pi = pi, 
                                           Ps=Ps,
@@ -87,6 +88,11 @@ traceplot(bh_fit,pars=  c("sigma_y_j"))
 
 traceplot(bh_fit,pars=  c("log_F_dev_y","log_F_mean"))
  
+traceplot(bh_fit,pars=  c("log_F"))
+
+traceplot(bh_fit,pars=  c("D_sum"))
+
+
 # pairs======
 pairs(bh_fit, pars= c("prob" ))
 
@@ -192,7 +198,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:25, each=4),
+  dplyr::mutate(time = rep(1:24, each=4),
                 age = rep(1:4, length.out = nrow(.)))# %>% 
   # filter(!time > 21)
 
@@ -238,7 +244,7 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:25, each=4),
+  dplyr::mutate(time = rep(1:24, each=4),
                 age = rep(1:4, length.out = nrow(.))) 
 
 summ_n_harvest <- pred_N_harvest %>%
@@ -310,6 +316,19 @@ pi_df <- summary(bh_fit, pars = c("pi"),
 
 ggplot(data= pi_df) +
   geom_point(aes(x=rowname, y = mean  )) +
+  geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) 
+
+
+# plot d scale =================
+D_scale_df <- summary(bh_fit, pars = c("D_scale"), 
+                        probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column() %>% 
+  cbind( data.frame(obs= data_list_plot$D_scale)) 
+
+ggplot(data= D_scale_df) +
+  geom_point(aes(x=rowname, y = mean  )) +
+  geom_errorbar(aes(x=rowname, ymin = X10., ymax = X90.), width = 0.1) + 
   geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) 
 
 # plot dir alpha  =================
@@ -418,13 +437,14 @@ fishing <- summary(bh_fit, pars = c("F"),
   mutate(mean =  (mean),
          time = 1:nrow(.)) %>% 
   left_join( data.frame(obs= data_list_plot$F) %>% 
-           dplyr::mutate(time = 1:nrow(.))) %>%
-  filter(!time>21 & !time <5)
+           dplyr::mutate(time = 1:nrow(.))) #%>%
+  # filter(!time>21 & !time <5)
  
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) + 
   geom_line(aes(x=time, y = obs),color = "red", alpha = 0.5) + 
-  ylab("Instantaneous fishing mortality")
+  ylab("Instantaneous fishing mortality")+
+  labs(caption = "red is obs, black is predicted")
 
 # Plot selectivity ======
 S <- summary(bh_fit, pars = c("log_S"), 
@@ -484,7 +504,7 @@ ggplot(data = kappasurvival_mm,aes(x=time, y = mean)) +
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
 
 
-# PLOT PARAMS  ======================  
+# Look at whole model summary  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 
 all_summ <- summary(bh_fit)$summary %>%
@@ -492,40 +512,40 @@ all_summ <- summary(bh_fit)$summary %>%
   rownames_to_column()  
 
 low_n_eff <- all_summ %>% 
-  filter(n_eff <1)
-
-obs <- data.frame(log_c_1 = data_list_plot$log_c_1, 
-                  log_c_2 = data_list_plot$log_c_2,
-                  log_catch_q = data_list_plot$catch_q,
-                  D_scale = data_list_plot$D_scale,
-                  p_1 = 0.02
-                  
-                  # theta1_1 = data_list_plot$`theta1[1]`, 
-                  # theta1_2 = data_list_plot$`theta1[2]`,
-                  # theta2_1 = data_list_plot$`theta2[1]`, 
-                  # theta2_2 = data_list_plot$`theta2[2]`
-                  ) %>% 
-  gather(1:ncol(.), key = "rowname", value = "obs")
-
-params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
-                                   "D_scale", "p_1"# "theta1", "theta2"
-                                  # "N_catch_start_log", "N_egg_start_log" 
-                                  ), 
-                  probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column() %>%
-  # dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1_1",
-  #                                   rowname == "theta1[2]"~ "theta1_2",
-  #                                   rowname == "theta2[1]"~ "theta2_1",
-  #                                   rowname == "theta2[2]"~ "theta2_2",
-  #                                   TRUE ~ rowname)) %>%
-  left_join(obs)
-
-params %>% 
-  ggplot() + 
-  geom_linerange(aes(rowname, ymin = X10.,ymax = X90.)) + 
-  geom_crossbar(aes(rowname, mean, ymin = X10.,ymax = X90.),  fill= 'grey') + 
-  geom_point(aes(rowname, obs), color = "red")+
-  facet_wrap(~rowname, scales = 'free') +
-  labs(caption = "red is observed, black is model")
- 
+  filter(n_eff <20)
+# 
+# obs <- data.frame(log_c_1 = data_list_plot$log_c_1, 
+#                   log_c_2 = data_list_plot$log_c_2,
+#                   log_catch_q = data_list_plot$catch_q,
+#                   D_scale = data_list_plot$D_scale,
+#                   p_1 = 0.02
+#                   
+#                   # theta1_1 = data_list_plot$`theta1[1]`, 
+#                   # theta1_2 = data_list_plot$`theta1[2]`,
+#                   # theta2_1 = data_list_plot$`theta2[1]`, 
+#                   # theta2_2 = data_list_plot$`theta2[2]`
+#                   ) %>% 
+#   gather(1:ncol(.), key = "rowname", value = "obs")
+# 
+# params <- summary(bh_fit, pars = c("log_c_1","log_c_2","log_catch_q", 
+#                                    "D_scale", "p_1"# "theta1", "theta2"
+#                                   # "N_catch_start_log", "N_egg_start_log" 
+#                                   ), 
+#                   probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column() %>%
+#   # dplyr::mutate(rowname = case_when(rowname == "theta1[1]"~ "theta1_1",
+#   #                                   rowname == "theta1[2]"~ "theta1_2",
+#   #                                   rowname == "theta2[1]"~ "theta2_1",
+#   #                                   rowname == "theta2[2]"~ "theta2_2",
+#   #                                   TRUE ~ rowname)) %>%
+#   left_join(obs)
+# 
+# params %>% 
+#   ggplot() + 
+#   geom_linerange(aes(rowname, ymin = X10.,ymax = X90.)) + 
+#   geom_crossbar(aes(rowname, mean, ymin = X10.,ymax = X90.),  fill= 'grey') + 
+#   geom_point(aes(rowname, obs), color = "red")+
+#   facet_wrap(~rowname, scales = 'free') +
+#   labs(caption = "red is observed, black is model")
+#  
