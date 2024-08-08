@@ -86,19 +86,19 @@ traceplot(bh_fit,pars=  c("g"))
 
 traceplot(bh_fit,pars=  c("sigma_y_j"))
 
-traceplot(bh_fit,pars=  c("log_F_dev_y","log_F_mean"))
- 
 traceplot(bh_fit,pars=  c("log_F"))
+
 
 traceplot(bh_fit,pars=  c("D_sum"))
 
+traceplot(bh_fit,pars=  c("Dir_alpha"))
 
 # pairs======
 pairs(bh_fit, pars= c("prob" ))
 
 pairs(bh_fit, pars= c("g" ))
 
-pairs(bh_fit, pars= c("log_F_dev_y" ))
+pairs(bh_fit, pars= c("log_F" ))
  
 pairs(bh_fit, pars= c( "log_catch_q","prob" ))
 
@@ -318,7 +318,6 @@ ggplot(data= pi_df) +
   geom_point(aes(x=rowname, y = mean  )) +
   geom_point(aes(x=rowname, y = obs), color = "red", alpha = 0.5) 
 
-
 # plot d scale =================
 D_scale_df <- summary(bh_fit, pars = c("D_scale"), 
                         probs = c(0.1, 0.9))$summary %>% 
@@ -368,7 +367,7 @@ g_df <- summary(bh_fit, pars = c("g"),
 
 ggplot(data= g_df) +
   geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
-  # geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
+   geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
   geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
   labs(caption= "Red is observed, black is predicted")
 

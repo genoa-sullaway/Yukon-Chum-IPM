@@ -77,11 +77,11 @@ ncovars2 = 1
 basal_p_1 = 0.3#-1.820463 # (0.1) #base survival 
 basal_p_2 = 0.4 #-0.2369558 # (0.4)
 
- p_1 = 0.08 #-1.820463 # (0.1) #base survival 
- p_2 = 0.2 #-0.2369558 # (0.4)
+ # p_1 = 0.08 #-1.820463 # (0.1) #base survival 
+ # p_2 = 0.2 #-0.2369558 # (0.4)
 
-cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs+1, 0, 1), times = ncovars1))   
-cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs+2, 0, 1), times = ncovars2))
+cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
+cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = ncovars2))
 
 theta1 <- c(0.2)   #, 0.1,0.06,0.08) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
 theta2 <- c(-0.05) #, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
@@ -89,66 +89,61 @@ theta2 <- c(-0.05) #, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
  p_1 = as.vector(NA) # matrix(nrow=nByrs,ncol=1,NA)
  p_2 = as.vector(NA) # matrix(nrow=nByrs,ncol=K,NA)
  
- # lines below need to be edited if I use more stocks!! theta and cov 1 should be multipled and summed, can get away with just multiplying here because there is only 1 stock and 1 covar
- 
  cov_eff1 = matrix(NA, nrow = nByrs, ncol = ncovars1)
  cov_eff2 = matrix(NA, nrow = nByrs, ncol = ncovars2)
  
- # for(t in 1:nByrs){
- #   for (c in 1:ncovars1) {
- #     cov_eff1[t+1,c] =  theta1[c]*cov1[t+1,c]  
- #   }
- #   for (c in 1:ncovars2) {
- #     cov_eff2[t+2,c] =  theta2[c]*cov2[t+2,c]
- #   }
- #   p_1[t+1]  = 1 / (1 + exp(basal_p_1+sum(cov_eff1[t+1,1:ncovars1])))
- #   p_2[t+2]  = 1 / (1 + exp(basal_p_2+ sum(cov_eff2[t+2,1:ncovars2])))
- # }
- 
+ for(t in 1:nByrs){
+   for (c in 1:ncovars1) {
+     cov_eff1[t,c] =  theta1[c]*cov1[t,c]
+   }
+   for (c in 1:ncovars2) {
+     cov_eff2[t,c] =  theta2[c]*cov2[t,c]
+   }
+   p_1[t]  = 1 / (1 + exp(basal_p_1+sum(cov_eff1[t,1:ncovars1])))
+   p_2[t]  = 1 / (1 + exp(basal_p_2+ sum(cov_eff2[t,1:ncovars2])))
+ }
 
  # AGE STRUCTURE =========
+# Dirichlet version
   Dir_alpha = c(NA)
-  # p = c(NA) #
+   # p = c(NA) #
   p = matrix(nrow=nByrs,ncol=A,NA)
-  g = c(NA)
-  # g = matrix(nrow=nRyrs_T,ncol=A,NA)
+  # g = c(NA)
+   g = matrix(nrow=nByrs,ncol=A,NA)
   D_scale = 0.5
-  
 # pi = c(0.2148158, 0.1909981, 0.3164682, 0.2777180)
-  
 prob = c(NA)
-
 prob = c(0.1548598, 0.7782258, 0.40537690)
 
   pi[1] = prob[1]
   pi[2] = prob[2] * (1 - pi[1])
   pi[3] = prob[3] * (1 - pi[1] - pi[2])
   pi[4] = 1 - pi[1] - pi[2] - pi[3]
-   
-   
+
+
   D_sum = 1/(D_scale^2)
 
   for (a in 1:A) {
       Dir_alpha[a] = D_sum * pi[a]
- 
-       # for(t in 1:nRyrs_T) {
-       #  g[t,a] = rgamma(n=1,Dir_alpha[a],1)
-  
-        }
+       for(t in 1:nByrs) {
+        g[t,a] = rgamma(n=1,Dir_alpha[a],1)
+       }
+  }
+
+  # for (a in 1:A) {
+  # g[a] = rgamma(n=1,Dir_alpha[a],5)
+  # }
+
+  # for (a in 1:A) {
+  #     # p[1:nByrs, a] = g[a]/sum(g[1:A])
+  #       p[a] = g[a]/sum(g[1:A])
+  # }
 
   for (a in 1:A) {
-  g[a] = rgamma(n=1,Dir_alpha[a],5)
+    for(t in 1:(nByrs)) {
+  p[t,a] = g[t,a]/sum(g[t,1:A])
+    }
   }
-  
-  for (a in 1:A) {
-      p[1:nByrs, a] = g[a]/sum(g[1:A])
-  }
-  
-  # for (a in 1:A) {
-  #   for(t in 1:(nRyrs_T)) {
-  # p[t,a] = g[t,a]/sum(g[t,1:A])
-  #   }
-  # }
  
 # Process error  ===================
 # error is fixed in model right now so fix it here. 
@@ -184,12 +179,12 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
 
  for (a in 1:A) {
   for(t in 1:t_start){
-   N_recruit_start[t,a] = exp(yukon_fall_recruits$mean)*p[t,a] #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
+   N_recruit_start[,a] = exp(yukon_fall_recruits$mean)*p[a] #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
    # N_ocean_start[t,a] = exp(rnorm(1,13.6,1))*p[a]#*p[t,a]
-   N_sp_start[t,a] = exp( yukon_fall_spawners$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
+   N_sp_start[,a] = exp( yukon_fall_spawners$mean )*p[a]   #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
    # N_first_winter_start[t,a] = exp(rnorm(1,13.6))*p[a]#*p[t,a]
-   N_catch_start[t,a] = exp( yukon_fall_harvest$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
-   N_egg_start[t,a] = exp(17.5)*p[t,a]  
+   N_catch_start[,a] = exp( yukon_fall_harvest$mean )*p[a]   #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
+   N_egg_start[,a] = exp(17.5)*p[a]  
   }
  }
  
@@ -239,10 +234,9 @@ M_fill_stan = c(0.06,0.06, 0.06, 0.06) # will be cumulative
 #            c(0.06,0.06, 0.06, 0.06) , byrow = TRUE)
 
 # fix productivity ======
-p_1 =  rbeta(nByrs,0.2,1) #abs(rnorm(nByrs, 0.3,1))
-p_2 =  rbeta(nByrs,0.5,1)#abs(rnorm(nByrs, 0.5,1)  )
+# p_1 =  rbeta(nByrs,0.2,1) #abs(rnorm(nByrs, 0.3,1))
+# p_2 =  rbeta(nByrs,0.5,1)#abs(rnorm(nByrs, 0.5,1)  )
 
- 
 # POPULATION MODEL ============ 
      for (t in 1:nByrs){ # loop for each brood year 
          N_e_sum[t] = sum(N_e[t,1:A]); 
@@ -381,9 +375,7 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
           mutate(time = 1:nrow(.)) %>% 
           gather(1:3, key = "id", value = "value")
         
-        # ggplot(data = dat) +
-        #   geom_line(aes(x=time, y =value, group = id, color = id))
-        # 
+     
         # STAN data ==========
    data_list_stan <- list(nByrs=nByrs_stan,
                           nRyrs=nRyrs_stan,
@@ -411,6 +403,9 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
                           fs=fs,
                           M = M_fill_stan, 
                           
+                          basal_p_1 = basal_p_1,
+                          basal_p_2=basal_p_2,
+                         
                           log_c_1 = log_c_1,
                           log_c_2=log_c_2,
                     
@@ -438,7 +433,8 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
                           # data_sp_cv = process_error_sp,
                           cov1 = matrix(nrow = nByrs_stan, ncol = ncovars1, rep(rnorm(nByrs_stan, 0, 1), times = ncovars1)),   
                           cov2 = matrix(nrow = nByrs_stan, ncol = ncovars2, rep(rnorm(nByrs_stan, 0, 1), times = ncovars2)),
-                          
+                          theta1=theta1,
+                          theta2=theta2,
                           # cov1=cov1[8:nByrs,ncovars1],
                           # cov2=cov2[7:nByrs,ncovars2],
                           # 
@@ -450,7 +446,7 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_SIM.stan"), # different than data model so I can move priors around 
   data = data_list_stan,
-  chains = 4, #n_chains,
+  chains = 1, #n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores,
