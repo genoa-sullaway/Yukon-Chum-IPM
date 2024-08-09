@@ -346,7 +346,7 @@ model {
   log_c_1 ~  normal(16, 50); // carrying capacity prior - stage 1
   log_c_2 ~  normal(18, 50); // carrying capacity prior - stage 2
 
- N_j_start_log ~ normal(17,5);
+ N_j_start_log ~ normal(17,10);
  N_brood_year_return_start_log~ normal(15,10); 
  // N_egg_sum_start_log ~ normal(18,5); 
  // N_first_winter_start_log ~ normal(16,5);
@@ -360,9 +360,12 @@ model {
   }
  }
  
-  theta1[1]  ~ normal(0.5,0.001); //normal(0.5,5); // environmental covariate coefficient stage 1
+  theta1[1]  ~ normal(0.5,1); //normal(0.5,5); // environmental covariate coefficient stage 1
 
-  theta2[1]  ~ normal(-0.5,0.001);
+  theta2[1]  ~ normal(-0.5,1);
+  // theta1[1]  ~ normal(0.5,0.001); //normal(0.5,5); // environmental covariate coefficient stage 1
+  // 
+  // theta2[1]  ~ normal(-0.5,0.001);
  
  D_scale ~ beta(1,1);  
     

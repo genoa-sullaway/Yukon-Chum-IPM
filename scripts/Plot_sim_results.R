@@ -106,11 +106,7 @@ stan_par(bh_fit, par = c("sigma_y_j"))
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]", 
                "theta2[1]" ),
-     fill_color = "blue")
- 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_F_mean"),
-     fill_color = "blue")
+     fill_color = "blue") 
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "sigma_catch"),

@@ -449,5 +449,5 @@ bh_fit <- stan(
         
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
 
-
+ 
  
