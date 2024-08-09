@@ -23,33 +23,32 @@ data_list_plot <-    list(nByrs=nByrs_stan,
                                           F=F,
                                           log_c_1 = log_c_1,
                                           log_c_2=log_c_2,
-                                          
+                                          p_1=p_1,
+                                          p_2=p_2,
+                                          theta1=theta1,
+                                          theta2=theta2,
+                                          cov_eff1=cov_eff1,
+                                          cov_eff2=cov_eff2,
+                          
                                           data_stage_j = N_j_sim_hat,#[6:nByrs+1],
                                           data_stage_return = N_brood_year_return_sim,#[6:nRyrs+2],
                                           data_stage_recruit = N_recruit,#[6:nRyrs+2],
-                          
                                           data_stage_sp = N_sp_sim_s,#[6:nRyrs+2],
                                           data_stage_harvest = N_catch_sim_s,#[6:nRyrs+2], 
                                           kappa_j = kappa_j,
                                           kappa_marine = kappa_marine,
-                                          kappa_marine_mortality = kappa_marine_mortality,
-                                          kappa_marine_mort_start = c(-log(basal_p_2), -log(basal_p_2)),                
-                                          kappa_marine_start = c(basal_p_2, basal_p_2), 
-                                          
-                                          kappa_j_start = basal_p_1,
+                                          # kappa_marine_mortality = kappa_marine_mortality,
+                                          # kappa_marine_mort_start = c(-log(basal_p_2), -log(basal_p_2)),                
+                                          # kappa_marine_start = c(basal_p_2, basal_p_2), 
+                                          #  kappa_j_start = basal_p_1,
                                           
                                           basal_p_1 = basal_p_1,
                                           basal_p_2 = basal_p_2,
                                           
                                           ncovars1=ncovars1,
                                           ncovars2=ncovars2,
-                                          
-                                          # data_sp_cv = process_error_sp,
-                                          cov1 = matrix(nrow = nByrs_stan+1, ncol = ncovars1, rep(rnorm(nByrs_stan+1, 0, 1), times = ncovars1)),   
-                                          cov2 = matrix(nrow = nByrs_stan+2, ncol = ncovars2, rep(rnorm(nByrs_stan+2, 0, 1), times = ncovars2)),
-                                          sigma_y_j=process_error_j,
-                                          # cov1=cov1[8:nByrs,ncovars1],
-                                          # cov2=cov2[7:nByrs,ncovars2],
+                                          # log_S = log_S, 
+                                          sigma_y_j=process_error_j, 
                                           g=g, 
                                           p =p,
                                           o_run_comp=o_run_comp,#[8:nByrs,],
@@ -66,10 +65,12 @@ traceplot(bh_fit,pars=  c( "theta1[1]" ,
 
 traceplot(bh_fit,pars=  c( "D_scale" ))
 
+traceplot(bh_fit,pars=  c( "basal_p_1","basal_p_2"))
+
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
-traceplot(bh_fit,pars=  c( "g", "Dir_alpha"))
-
+traceplot(bh_fit,pars=  c(  "Dir_alpha"))
+ 
 traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]"#, 
                           #"basal_p_1", "basal_p_2"
                           ))
@@ -80,14 +81,11 @@ traceplot(bh_fit,pars=  c("log_c_1","log_c_2"))
 
 traceplot(bh_fit,pars=  c("p_1","p_2"))
 
-traceplot(bh_fit,pars=  c("prob"))
-
 traceplot(bh_fit,pars=  c("g"))
 
 traceplot(bh_fit,pars=  c("sigma_y_j"))
 
 traceplot(bh_fit,pars=  c("log_F"))
-
 
 traceplot(bh_fit,pars=  c("D_sum"))
 
@@ -102,8 +100,7 @@ pairs(bh_fit, pars= c("log_F" ))
  
 pairs(bh_fit, pars= c( "log_catch_q","prob" ))
 
-stan_par(bh_fit, par = c(#"log_catch_q",
-         "sigma_y_j"))
+stan_par(bh_fit, par = c("sigma_y_j"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
@@ -113,6 +110,10 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_mean"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "sigma_catch"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -152,9 +153,13 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "log_c_1","log_c_2"),
+     pars=  c(  "log_c_1" ),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "log_c_2" ),
+     fill_color = "blue")
+ 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c("log_catch_q"),
      fill_color = "blue")
@@ -261,15 +266,7 @@ ggplot(data = summ_n_harvest) +
                   ymax = pred+pred_se))+
   ggtitle(("Harvest, est and observed"))
 
-# retuns ===========
-
-## juveniles ====== 
-# multiply by catch q to fit observations
-# catch_q <- summary(bh_fit, pars = c("log_catch_q"), 
-#                    probs = c(0.1, 0.9))$summary %>%
-#   data.frame() %>%
-#   rownames_to_column()  %>% 
-#   mutate(mean = exp(mean))
+## retuns ===========
 
 pred_N_byr <- summary(bh_fit, pars = c("N_brood_year_return"), 
                     probs = c(0.1, 0.9))$summary %>%
@@ -357,18 +354,27 @@ ggplot(data= prob_df) +
   geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
   labs(caption= "Red is observed, black is predicted")
 
-
 # plot G  =================
 g_df <- summary(bh_fit, pars = c("g"), 
                    probs = c(0.1, 0.9))$summary %>% 
   data.frame() %>%
   rownames_to_column() %>% 
-  cbind( data.frame(obs= data_list_plot$g)) 
+  dplyr::mutate(time = rep(1:20, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>%
+  dplyr::rename(pred = "mean") %>%
+  left_join(data.frame(  obs= data_list_plot$g) %>% 
+           dplyr::mutate(time = 1:nrow(.)) %>% 
+           gather(1:4, key = "age",value = "obs") %>% 
+           mutate(age = case_when(age == "obs.1" ~ 1,
+                                  age == "obs.2" ~ 2,
+                                  age == "obs.3" ~ 3,
+                                  age == "obs.4" ~ 4)))
 
 ggplot(data= g_df) +
-  geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
-   geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
-  geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
+  geom_line(aes(x=time, y = pred, group = age )) +
+  geom_point(aes(x=time, y = obs, group = age ), color = "red", alpha = 0.5) +
+  geom_line(aes(x=time, y = obs, group = age ), color = "red", alpha = 0.5) +
+  facet_wrap(~age, scales = "free")+
   labs(caption= "Red is observed, black is predicted")
 
 # plot Q obs age comp through time =================
@@ -397,20 +403,6 @@ ggplot(data= age_comp_Q) +
  
 # plot P through time =================
 # proportion of maturing indviduals
-## mean age comp: ====
-age_comp_P <- summary(bh_fit, pars = c("p"), 
-                      probs = c(0.1, 0.9))$summary %>% 
-  data.frame() %>%
-  rownames_to_column()  %>%
-  dplyr::mutate( age = c(1:4)) %>%
-  dplyr::rename(pred = "mean") %>%
-  dplyr::select(age,pred)  %>% 
-  left_join(data.frame(obs = data_list_plot$p) %>% 
-           dplyr::mutate(age = c(1:4)))  
-
-ggplot(data= age_comp_P) +
-  geom_point(aes(x=age, y = pred )) +
-  geom_point(aes(x=age, y = obs, group = age ), color = "red", alpha = 0.5) 
 
 ## or age comp through time: =====
 age_comp_P <- summary(bh_fit, pars = c("p"), 
@@ -433,6 +425,59 @@ ggplot(data= age_comp_P) +
   geom_line(aes(x=time, y = obs, group = age ), color = "red", alpha = 0.5) +
   facet_wrap(~age , scales = "free")
 
+# plot theta  =================
+theta1 <- summary(bh_fit, pars = c("theta1"), 
+                   probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column() %>% 
+  cbind( data.frame(obs= data_list_plot$theta1)) 
+
+ggplot(data= theta1) +
+  geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
+  geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
+  geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
+  labs(caption= "Red is observed, black is predicted")
+
+theta2 <- summary(bh_fit, pars = c("theta2"), 
+                  probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column() %>% 
+  cbind( data.frame(obs= data_list_plot$theta2)) 
+
+ggplot(data= theta2) +
+  geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
+  geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
+  geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
+  labs(caption= "Red is observed, black is predicted")
+
+
+# plot basal p  =================
+## basal p1 ============
+basal_p_1 <- summary(bh_fit, pars = c("basal_p_1"), 
+                  probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column() %>% 
+  cbind( data.frame(obs= data_list_plot$basal_p_1)) 
+
+ggplot(data= basal_p_1) +
+  geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
+  geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
+  geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
+  labs(caption= "Red is observed, black is predicted")
+
+## basal p2 ============
+basal_p_2 <- summary(bh_fit, pars = c("basal_p_2"), 
+                  probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column() %>% 
+  cbind( data.frame(obs= data_list_plot$basal_p_2)) 
+
+ggplot(data= basal_p_2) +
+  geom_point(aes(x=rowname, y = mean  ),size = 2 ) +
+  geom_errorbar(aes(x = rowname, ymin = X10., ymax = X90.), width = 0.1,alpha = 0.5) + 
+  geom_point(aes(x=rowname, y = obs), color = "red", size = 2 ) +
+  labs(caption= "Red is observed, black is predicted")
+
 # estimated fishing mortality ======
 fishing <- summary(bh_fit, pars = c("F"), 
                    probs = c(0.1, 0.9))$summary %>%
@@ -454,30 +499,82 @@ ggplot(data = fishing) +
 S <- summary(bh_fit, pars = c("log_S"), 
              probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
-  rownames_to_column()   
+  rownames_to_column()    %>%
+cbind( data.frame(obs= data_list_plot$log_S) %>% 
+dplyr::mutate(age = 1:nrow(.))) #%>%
 
 ggplot(data = S) + 
   geom_point(aes(x=rowname, y = mean)) + 
+  geom_point(aes(x=rowname, y = obs), color = "red") + 
   ylab("Log Selectivity") 
 
-# plot  estimated kappas survival ======
-kappasurvival_marine <- summary(bh_fit, pars = c("kappa_marine_survival"), 
-                         probs = c(0.1, 0.9))$summary %>%
+# plot productivity ======
+## p1 =======
+p_1 <- summary(bh_fit, pars = c("p_1"), 
+                                probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:22, length.out = nrow(.))) %>% 
-  cbind(obs = data_list_plot$kappa_marine)
+  dplyr::mutate(time = rep(1:20, length.out = nrow(.))) %>% 
+  cbind(obs = data_list_plot$p_1)
 
 
-ggplot(data = kappasurvival_marine,aes(x=time, y = mean)) + 
+ggplot(data = p_1,aes(x=time, y = mean)) + 
+  geom_line( ) +
+  geom_point(aes(x=time,y=obs), color = "red")+
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) + 
+  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
+ 
+## p2 =======
+p_2 <- summary(bh_fit, pars = c("p_2"), 
+               probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:20, length.out = nrow(.))) %>% 
+  cbind(obs = data_list_plot$p_2)
+
+ggplot(data = p_2,aes(x=time, y = mean)) + 
   geom_line( ) +
   geom_point(aes(x=time,y=obs), color = "red")+
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
 
+# plot cov effect ======
+## cov eff 1 =======
+cov_eff1 <- summary(bh_fit, pars = c("cov_eff1"), 
+               probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:20, length.out = nrow(.))) %>% 
+  cbind(obs = data_list_plot$cov_eff1)
+
+
+ggplot(data = cov_eff1,aes(x=time, y = mean)) + 
+  geom_line( ) +
+  geom_point(aes(x=time,y=obs), color = "red")+
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) + 
+  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
+
+## cov_eff2 =======
+cov_eff2 <- summary(bh_fit, pars = c("cov_eff2"), 
+               probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>% 
+  dplyr::mutate(time = rep(1:20, length.out = nrow(.))) %>% 
+  cbind(obs = data_list_plot$cov_eff2)
+
+ggplot(data = cov_eff2,aes(x=time, y = mean)) + 
+  geom_line( ) +
+  geom_point(aes(x=time,y=obs), color = "red")+
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean), alpha = 0.5) + 
+  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
+
+# plot  estimated kappas survival ======
 kappasurvival_j<- summary(bh_fit, pars = c("kappa_j_survival"), 
-                                probs = c(0.1, 0.9))$summary %>%
+                          probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
   dplyr::mutate(time = rep(1:21, length.out = nrow(.))) %>% 
@@ -489,25 +586,23 @@ ggplot(data = kappasurvival_j,aes(x=time, y = mean)) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
- 
-# kappa marine mortalty ===========
 
-kappasurvival_mm<- summary(bh_fit, pars = c("kappa_marine_mortality"), 
-                          probs = c(0.1, 0.9))$summary %>%
+kappasurvival_marine <- summary(bh_fit, pars = c("kappa_marine_survival"), 
+                         probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
   dplyr::mutate(time = rep(1:22, length.out = nrow(.))) %>% 
-  filter(!time > 20) %>% 
-  cbind(obs = data_list_plot$kappa_marine_mortality)
+  cbind(obs = data_list_plot$kappa_marine)
 
-ggplot(data = kappasurvival_mm,aes(x=time, y = mean)) + 
+ggplot(data = kappasurvival_marine,aes(x=time, y = mean)) + 
   geom_line( ) +
-  geom_point(aes(x=time,y=obs), color = "red") +
+  geom_point(aes(x=time,y=obs), color = "red")+
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
 
-
+ 
+ 
 # Look at whole model summary  ======================  
 # data_list - holds simulated values, this is from: simulate_data_age_structure.R
 

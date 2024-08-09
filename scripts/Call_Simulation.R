@@ -74,18 +74,18 @@ c_2 = exp(log_c_2) # as.matrix(nrow = 1, ncol =1, exp(log_c_2))
 ncovars1 = 1
 ncovars2 = 1
 
-basal_p_1 = 0.3#-1.820463 # (0.1) #base survival 
-basal_p_2 = 0.4 #-0.2369558 # (0.4)
+basal_p_1 = 1#0.2#-1.820463 # (0.1) #base survival 
+basal_p_2 = 1# 0.2 #-0.2369558 # (0.4)
 
  # p_1 = 0.08 #-1.820463 # (0.1) #base survival 
  # p_2 = 0.2 #-0.2369558 # (0.4)
 
-cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 1), times = ncovars1))   
-cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 1), times = ncovars2))
+cov1 <- matrix(nrow = nByrs, ncol = ncovars1, rep(rnorm(nByrs, 0, 2), times = ncovars1))   
+cov2 <- matrix(nrow = nByrs, ncol = ncovars2, rep(rnorm(nByrs, 0, 2), times = ncovars2))
 
-theta1 <- c(0.2)   #, 0.1,0.06,0.08) #rep(0.1,n), rep(0.3,n), rep(0.4,n)) #relationship for simulated data
-theta2 <- c(-0.05) #, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
-  
+theta1 <- c(0.5)    
+theta2 <- c(-0.5)  
+
  p_1 = as.vector(NA) # matrix(nrow=nByrs,ncol=1,NA)
  p_2 = as.vector(NA) # matrix(nrow=nByrs,ncol=K,NA)
  
@@ -99,10 +99,9 @@ theta2 <- c(-0.05) #, 0.1, 0.06, -0.06)#, -0.6) #relationship for simulated data
    for (c in 1:ncovars2) {
      cov_eff2[t,c] =  theta2[c]*cov2[t,c]
    }
-   p_1[t]  = 1 / (1 + exp(basal_p_1+sum(cov_eff1[t,1:ncovars1])))
-   p_2[t]  = 1 / (1 + exp(basal_p_2+ sum(cov_eff2[t,1:ncovars2])))
- }
-
+   p_1[t]  = 1 / (1 + exp(-basal_p_1-sum(cov_eff1[t,1:ncovars1])))
+   p_2[t]  = 1 / (1 + exp(-basal_p_2-sum(cov_eff2[t,1:ncovars2])))
+ } 
  # AGE STRUCTURE =========
 # Dirichlet version
   Dir_alpha = c(NA)
@@ -175,7 +174,7 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
  N_sp_start = matrix(NA,nrow=t_start, ncol=A)
 
  N_j_start = exp(rnorm(1,17,1)) 
- N_brood_year_return_start = exp(rnorm(1,16,1))
+ N_brood_year_return_start = exp(rnorm(1,16.5,1))
 
  for (a in 1:A) {
   for(t in 1:t_start){
@@ -214,17 +213,17 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
  # log_catch_q = rnorm(nByrs, -4,0.5)  
   log_catch_q = -4
 # Harvest =============
+  sigma_catch = 5
 ## fishing mortality by age 
-  log_F = rnorm(nRyrs_T, 0,1)   
+  log_F = rnorm(nRyrs_T, 0,0.5)   
   F = exp(log_F)
   
   # log_F_dev_y = rnorm(nByrs, 0,0.5)  
   # log_F_mean = -1.1
-  # 
   # F  = exp(log_F_mean +log_F_dev_y) 
  
-  ## selectivity =====
-# S = c(0.05,0.08,1.05,1.08)
+## selectivity =====
+# log_S = c(-1.1534648,  1.0728142, -0.4745670, -0.4882135)
 # S = exp(log_S)
 # S
 
@@ -261,9 +260,9 @@ M_fill_stan = c(0.06,0.06, 0.06, 0.06) # will be cumulative
            
            # N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a])+kappa_marine_mortality[t]));  
            
-           N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a]))) 
+          N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a]))) 
            
-           # N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]*S[a])))
+           #N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a]*S[a])))
            
            N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a] # fishing occurs before spawning -- 
              
@@ -295,6 +294,8 @@ barplot(t(p_1))
 barplot(t(p_2))
 
 barplot(t(kappa_j))
+
+barplot(t(F))
 
 barplot(t(kappa_marine))
 
@@ -345,25 +346,15 @@ N_sp_sim[1:nRyrs_T]<- N_sp[1:nRyrs_T,1] + N_sp[1:nRyrs_T,2] + N_sp[1:nRyrs_T,3]+
 # do this so i remove the burn in period until the model stabilizes
 nByrs_stan = nByrs#-8
 nRyrs_stan = nRyrs#-8
-nRyrs_T_stan = nRyrs_T#-8
-# incorporate Q, to connect different data sources in population model 
- 
+nRyrs_T_stan = nRyrs_T#-8 
+
 N_j_sim_observed= N_j*(exp(log_catch_q))
 
-# log normal simulation  
 N_j_sim_hat  =  rlnorm(nByrs_stan,  log(N_j_sim_observed), sqrt(log((0.01^2) + 1)))
-N_brood_year_return_sim <- rlnorm(nByrs_stan, log(N_brood_year_return), sqrt(log((0.06^2) + 1)))
-N_catch_sim_s = rlnorm(nRyrs_stan, log(N_catch_sim ), sqrt(log((0.01^2) + 1)))
-N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
-
-# nomral simulation 
-#N_j_sim_hat  =    (rnorm(nByrs_stan,  (N_j_sim_observed ), process_error_j)) 
-# N_brood_year_return_sim <- (rnorm(nRyrs_stan, (N_brood_year_return), sqrt(log((0.06^2) + 1))))
-# 
-# # N_recruit_sim_s  = (rnorm(nRyrs_stan, (N_recruit_sim ), sqrt(log((0.06^2) + 1))))
-# N_catch_sim_s = (rnorm(nRyrs_stan, (N_catch_sim ), sqrt(log((0.01^2) + 1))))
-# N_sp_sim_s  = (rnorm(nRyrs_stan, (N_sp_sim ), sqrt(log((0.06^2) + 1))))
-#       
+N_brood_year_return_sim <- rlnorm(nByrs_stan, log(N_brood_year_return), sqrt(log((0.01^2) + 1)))  
+N_catch_sim_s = rlnorm(nRyrs_stan, log(N_catch_sim ), sigma_catch)  
+N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.01^2) + 1)))
+       
     # STAN STARTING VALUES ==========
     kappa_j_start =  basal_p_1 # runif(1, 0.2, 0.2)
     kappa_marine_start = basal_p_2 #runif(1, 0.4, 0.4)
@@ -373,8 +364,21 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
                           data_stage_sp = N_sp_sim_s,#[6:(nRyrs-1)],
                           data_stage_harvest = N_catch_sim_s) %>% #[6:(nRyrs-1)])%>%
           mutate(time = 1:nrow(.)) %>% 
-          gather(1:3, key = "id", value = "value")
+          gather(1:2, key = "id", value = "value")
         
+    ggplot(data = dat, aes(x=time , y = value)) +
+      geom_line(aes(group = id, color = id))+
+      facet_wrap(~id, scales = "free")
+    
+    dat <- data.frame(#data_stage_return = N_brood_year_return_sim,#[6:(nRyrs-1)],
+      data_stage_return = N_brood_year_return_sim,#[6:(nRyrs-1)],
+      data_stage_j = N_j_sim_hat) %>% #[6:(nRyrs-1)])%>%
+      mutate(time = 1:nrow(.)) %>% 
+      gather(1:2, key = "id", value = "value")  
+    
+    ggplot(data = dat, aes(x=time , y = value)) +
+      geom_line(aes(group = id, color = id)) +
+      facet_wrap(~id,scales = "free")
      
         # STAN data ==========
    data_list_stan <- list(nByrs=nByrs_stan,
@@ -406,8 +410,8 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
                           basal_p_1 = basal_p_1,
                           basal_p_2=basal_p_2,
                          
-                          log_c_1 = log_c_1,
-                          log_c_2=log_c_2,
+                          # log_c_1 = log_c_1,
+                          # log_c_2=log_c_2,
                     
                           data_stage_j = N_j_sim_hat,#[6:nByrs+1],
                           data_stage_return = N_brood_year_return_sim, 
@@ -424,17 +428,18 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.06^2) + 1)))
                           g=g,
                           kappa_j_start = basal_p_1,
                
-                          basal_p_1 = basal_p_1,
-                          basal_p_2 = basal_p_2,
+                          # basal_p_1 = basal_p_1,
+                          # basal_p_2 = basal_p_2,
                           
                           ncovars1=ncovars1,
                           ncovars2=ncovars2,
+                          # log_S = log_S,
                           # F = F,
                           # data_sp_cv = process_error_sp,
-                          cov1 = matrix(nrow = nByrs_stan, ncol = ncovars1, rep(rnorm(nByrs_stan, 0, 1), times = ncovars1)),   
-                          cov2 = matrix(nrow = nByrs_stan, ncol = ncovars2, rep(rnorm(nByrs_stan, 0, 1), times = ncovars2)),
-                          theta1=theta1,
-                          theta2=theta2,
+                          cov1 = cov1,#matrix(nrow = nByrs_stan, ncol = ncovars1, rep(rnorm(nByrs_stan, 0, 1), times = ncovars1)),   
+                          cov2 = cov2, #matrix(nrow = nByrs_stan, ncol = ncovars2, rep(rnorm(nByrs_stan, 0, 1), times = ncovars2)),
+                          # theta1=theta1,
+                          # theta2=theta2,
                           # cov1=cov1[8:nByrs,ncovars1],
                           # cov2=cov2[7:nByrs,ncovars2],
                           # 
