@@ -441,7 +441,7 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.01^2) + 1)))
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_SIM.stan"), # different than data model so I can move priors around 
   data = data_list_stan,
-  chains = 4, #n_chains,
+  chains = 1, #n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores,
