@@ -496,17 +496,17 @@ ggplot(data = fishing) +
   labs(caption = "red is obs, black is predicted")
 
 # Plot selectivity ======
-S <- summary(bh_fit, pars = c("log_S"), 
-             probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()    %>%
-cbind( data.frame(obs= data_list_plot$log_S) %>% 
-dplyr::mutate(age = 1:nrow(.))) #%>%
-
-ggplot(data = S) + 
-  geom_point(aes(x=rowname, y = mean)) + 
-  geom_point(aes(x=rowname, y = obs), color = "red") + 
-  ylab("Log Selectivity") 
+# S <- summary(bh_fit, pars = c("log_S"), 
+#              probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()    %>%
+# cbind( data.frame(obs= data_list_plot$log_S) %>% 
+# dplyr::mutate(age = 1:nrow(.))) #%>%
+# 
+# ggplot(data = S) + 
+#   geom_point(aes(x=rowname, y = mean)) + 
+#   geom_point(aes(x=rowname, y = obs), color = "red") + 
+#   ylab("Log Selectivity") 
 
 # plot productivity ======
 ## p1 =======

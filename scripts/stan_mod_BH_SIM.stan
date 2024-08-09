@@ -36,15 +36,12 @@ int<lower=0> ncovars2; //number of covariates for second lifestage
   vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
 
-real <lower =10> N_j_start_log;
-real <lower =0> N_brood_year_return_start_log;
-
-// real <lower =0> N_first_winter_start_log [t_start,A];
-real <lower =0> N_sp_start_log[t_start,A];
-real <lower =0> N_recruit_start_log[t_start,A];
-real <lower =0> N_catch_start_log[t_start,A];
-real <lower =0> N_egg_start_log[t_start,A];
-// real <lower =0> N_egg_sum_start_log;
+// real <lower =10> N_j_start_log;
+// real <lower =0> N_brood_year_return_start_log;
+// real <lower =0> N_sp_start_log[t_start,A];
+// real <lower =0> N_recruit_start_log[t_start,A];
+// real <lower =0> N_catch_start_log[t_start,A];
+// real <lower =0> N_egg_start_log[t_start,A];
 
 // kappa is marine and juvenile survival estimated via beverton holt transition fxn 
  vector [2] kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
@@ -63,15 +60,13 @@ real <lower =0> N_egg_start_log[t_start,A];
 }
   
 transformed data {
-real N_sp_start [t_start,A];
-real N_recruit_start [t_start,A];
-real N_catch_start [t_start,A];
-real N_ocean_start[t_start,A];
-real N_egg_start[t_start,A];
-real N_j_start;
-  
-  // real N_egg_sum_start;
-real N_brood_year_return_start;
+// real N_sp_start [t_start,A];
+// real N_recruit_start [t_start,A];
+// real N_catch_start [t_start,A];
+// real N_ocean_start[t_start,A];
+// real N_egg_start[t_start,A];
+// real N_j_start; 
+// real N_brood_year_return_start;
  
 // real<lower=0> c_1; // estimate on log, transform back to normal scale 
 // real<lower=0> c_2; // estimate on log, transform back to normal scale 
@@ -83,23 +78,19 @@ real N_brood_year_return_start;
 // vector <lower=0, upper = 1> [nByrs] p_2;
 
 
-for(t in 1:t_start){
-  for(a in 1:A){
-  N_sp_start[t,a] = exp(N_sp_start_log[t,a]);//*p[a]; //o_run_comp[t,a];
-  N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);//*p[a]; //*o_run_comp[t,a];
-  N_catch_start[t,a] = exp(N_catch_start_log[t,a]);//*p[a];//o_run_comp[t,a];
-  N_egg_start[t,a] = exp(N_egg_start_log[t,a]);//*p[a];//o_run_comp[t,a];
-  // N_first_winter_start[t,a] = exp(N_first_winter_start_log[t,a]);//*p[a];//o_run_comp[t,a];
-  }
- }
- 
- N_j_start = exp(N_j_start_log);
- 
- // N_egg_sum_start = exp(N_egg_sum_start_log);
- // N_e_sum[1] = N_egg_sum_start;
- 
-N_brood_year_return_start = exp(N_brood_year_return_start_log);
- 
+// for(t in 1:t_start){
+//   for(a in 1:A){
+//   N_sp_start[t,a] = exp(N_sp_start_log[t,a]);//*p[a]; //o_run_comp[t,a];
+//   N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);//*p[a]; //*o_run_comp[t,a];
+//   N_catch_start[t,a] = exp(N_catch_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+//   N_egg_start[t,a] = exp(N_egg_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+//   // N_first_winter_start[t,a] = exp(N_first_winter_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+//   }
+//  }
+//  
+//  N_j_start = exp(N_j_start_log); 
+// N_brood_year_return_start = exp(N_brood_year_return_start_log);
+//  
   // transform log carrying capacity to normal scale
    // c_1 = exp(log_c_1);
    // c_2 = exp(log_c_2);
@@ -118,15 +109,13 @@ N_brood_year_return_start = exp(N_brood_year_return_start_log);
  
 parameters {
 //starting values 
-// real <lower =10> N_j_start_log;
-// real <lower =0> N_first_winter_start_log;
-// 
-// // real <lower =0> N_first_winter_start_log [t_start,A];
-// real <lower =0> N_sp_start_log[t_start,A];
-// real <lower =0> N_recruit_start_log[t_start,A];
-// real <lower =0> N_catch_start_log[t_start,A];
-// real <lower =0> N_egg_start_log[t_start,A];
-// real <lower =0> N_egg_sum_start_log;
+
+real <lower =10> N_j_start_log;
+real <lower =0> N_brood_year_return_start_log; 
+real <lower =0> N_sp_start_log[t_start,A];
+real <lower =0> N_recruit_start_log[t_start,A];
+real <lower =0> N_catch_start_log[t_start,A];
+real <lower =0> N_egg_start_log[t_start,A]; 
  
 // covariate parameters 
 real theta1[ncovars1]; // covariate estimated for each covariate and each population
@@ -172,6 +161,15 @@ transformed parameters {
  real  N_sp [nRyrs_T,A];
  real  N_catch [nRyrs_T,A];
  real  N_e [nRyrs_T,A];
+ 
+real N_sp_start [t_start,A];
+real N_recruit_start [t_start,A];
+real N_catch_start [t_start,A];
+real N_ocean_start[t_start,A];
+real N_egg_start[t_start,A];
+real N_j_start;
+real N_brood_year_return_start;
+
   
 vector <lower=0, upper = 1>[nByrs] kappa_j_survival ; // predicted survival for juvenile fish (FW and early marine)
 vector <lower=0, upper = 1>[nByrs] kappa_marine_survival; // predicted survival for marine fish
@@ -214,6 +212,19 @@ vector<lower = 0> [nRyrs_T] F; // instantaneous fishing mortality
   // F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  }
 
+
+for(t in 1:t_start){
+  for(a in 1:A){
+  N_sp_start[t,a] = exp(N_sp_start_log[t,a]);//*p[a]; //o_run_comp[t,a];
+  N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);//*p[a]; //*o_run_comp[t,a];
+  N_catch_start[t,a] = exp(N_catch_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+  N_egg_start[t,a] = exp(N_egg_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+  }
+ }
+ 
+ N_j_start = exp(N_j_start_log); 
+N_brood_year_return_start = exp(N_brood_year_return_start_log);
+ 
   N_j[1] = N_j_start;
   N_brood_year_return[1] = N_brood_year_return_start;
  
@@ -335,19 +346,20 @@ model {
   log_c_1 ~  normal(16, 50); // carrying capacity prior - stage 1
   log_c_2 ~  normal(18, 50); // carrying capacity prior - stage 2
 
- // N_j_start_log ~ normal(17,5);
- // // N_egg_sum_start_log ~ normal(18,5); 
+ N_j_start_log ~ normal(17,5);
+ N_brood_year_return_start_log~ normal(15,10); 
+ // N_egg_sum_start_log ~ normal(18,5); 
  // N_first_winter_start_log ~ normal(16,5);
- // 
- // for(t in 1:t_start){
- //   for(a in 1:A){
- //    // N_first_winter_start_log[t,a] ~ normal(10,10); 
- //    N_sp_start_log[t,a] ~ normal(10,10); 
- //    N_recruit_start_log[t,a] ~  normal(10,10); 
- //    N_catch_start_log[t,a] ~ normal(10,10); 
- //    N_egg_start_log[t,a] ~  normal(10,10); 
- //  }
- // }
+
+ for(t in 1:t_start){
+   for(a in 1:A){
+    N_sp_start_log[t,a] ~ normal(10,10);
+    N_recruit_start_log[t,a] ~  normal(10,10);
+    N_catch_start_log[t,a] ~ normal(10,10);
+    N_egg_start_log[t,a] ~  normal(10,10);
+  }
+ }
+ 
   theta1[1]  ~ normal(0.5,0.001); //normal(0.5,5); // environmental covariate coefficient stage 1
 
   theta2[1]  ~ normal(-0.5,0.001);

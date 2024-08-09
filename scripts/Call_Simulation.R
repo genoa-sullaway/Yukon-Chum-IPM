@@ -385,30 +385,23 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.01^2) + 1)))
                           nRyrs=nRyrs_stan,
                           nRyrs_T = nRyrs_T_stan, 
                           A=A,
-                          t_start = t_start,
-                          # prob = prob, 
-                          # fix starting values 
-                          N_j_start_log =N_j_start_log,
-                          # N_first_winter_start_log =  N_first_winter_start_log,
-                          N_brood_year_return_start_log =  N_brood_year_return_start_log,
+                          t_start = t_start, 
                           
-                          N_recruit_start_log = N_recruit_start_log,
-                          N_sp_start_log =N_sp_start_log,
-                          N_catch_start_log = N_catch_start_log,
-                          N_egg_start_log=N_egg_start_log,
+                          # N_j_start_log =N_j_start_log,
+                          # N_brood_year_return_start_log =  N_brood_year_return_start_log,
+                          # N_recruit_start_log = N_recruit_start_log,
+                          # N_sp_start_log =N_sp_start_log,
+                          # N_catch_start_log = N_catch_start_log,
+                          # N_egg_start_log=N_egg_start_log,
                           
-                         sigma_y_j=process_error_j,
-                          
-                          # log_catch_q = log_catch_q, 
-                          
-                          # D_scale=D_scale,
+                         sigma_y_j=process_error_j, 
                           
                           Ps=Ps,
                           fs=fs,
                           M = M_fill_stan, 
                           
-                          basal_p_1 = basal_p_1,
-                          basal_p_2=basal_p_2,
+                          # basal_p_1 = basal_p_1,
+                          # basal_p_2=basal_p_2,
                          
                           # log_c_1 = log_c_1,
                           # log_c_2=log_c_2,
@@ -436,13 +429,10 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.01^2) + 1)))
                           # log_S = log_S,
                           # F = F,
                           # data_sp_cv = process_error_sp,
-                          cov1 = cov1,#matrix(nrow = nByrs_stan, ncol = ncovars1, rep(rnorm(nByrs_stan, 0, 1), times = ncovars1)),   
+                          cov1 = cov1, #matrix(nrow = nByrs_stan, ncol = ncovars1, rep(rnorm(nByrs_stan, 0, 1), times = ncovars1)),   
                           cov2 = cov2, #matrix(nrow = nByrs_stan, ncol = ncovars2, rep(rnorm(nByrs_stan, 0, 1), times = ncovars2)),
                           # theta1=theta1,
                           # theta2=theta2,
-                          # cov1=cov1[8:nByrs,ncovars1],
-                          # cov2=cov2[7:nByrs,ncovars2],
-                          # 
                           o_run_comp=o_run_comp,#[8:nByrs,],
                           ess_age_comp=ess_age_comp)#[8:(nByrs-1)] )
         
@@ -451,11 +441,11 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.01^2) + 1)))
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_SIM.stan"), # different than data model so I can move priors around 
   data = data_list_stan,
-  chains = 1, #n_chains,
+  chains = 4, #n_chains,
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores,
-  control = list(adapt_delta = 0.95))  
+  control = list(adapt_delta = 0.99))  
         
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
 
