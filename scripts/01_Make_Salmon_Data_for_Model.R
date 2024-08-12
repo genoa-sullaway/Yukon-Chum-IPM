@@ -44,12 +44,18 @@ yukon_fall_recruits <- yukon_fall %>%
   dplyr::rename(total_run = "Estimated_Run") %>% 
   dplyr::select(cal_year, total_run)
 
+yukon_fall_return_brood_year <- yukon_fall %>%
+  dplyr::rename(total_run = "Estimated_Run") %>% 
+  dplyr::select(Brood_Year, Brood_Year_Return)
+
 write_csv(yukon_fall_spawners, "data/processed_data/yukon_fall_spawners.csv")
 
 write_csv(yukon_fall_harvest, "data/processed_data/yukon_fall_harvest.csv")
 
 write_csv(yukon_fall_recruits,"data/processed_data/yukon_fall_recruits.csv")
  
+write_csv(yukon_fall_return_brood_year,"data/processed_data/yukon_fall_yukon_fall_return_brood_year.csv")
+
 # age comps ========
 ## Summer ========
 # yukon_summer_age_abund<- yukon_summer_df %>%

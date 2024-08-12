@@ -44,9 +44,9 @@ int<lower=0> ncovars2; //number of covariates for second lifestage
 // real <lower =0> N_egg_start_log[t_start,A];
 
 // kappa is marine and juvenile survival estimated via beverton holt transition fxn 
- vector [2] kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
-  real kappa_j_start;
-  vector [2] kappa_marine_mort_start;
+//  vector [2] kappa_marine_start; // adding starting values for kappa so there arent NAs..not sure if this is necessary
+// real kappa_j_start;
+// vector [2] kappa_marine_mort_start;
   
   
   // vector [nByrs+1] cov1; // covariate data in a matrix format
@@ -120,24 +120,19 @@ real <lower =0> N_egg_start_log[t_start,A];
 // covariate parameters 
 real theta1[ncovars1]; // covariate estimated for each covariate and each population
 real theta2[ncovars2];
-//   
-// vector   [A-1] prob; 
-// real   D_scale; // Variability of age proportion vectors across cohorts
-// vector  [A] g;
+
 real   log_c_1; // log carrying capacity
 real   log_c_2; // log carrying capacity
 
 vector <lower=0> [A-1] prob;
 real <lower=0, upper=1> D_scale; // Variability of age proportion vectors across cohorts
-// vector<lower=0> [A] g;
- // real <lower=0> sigma_y_j;
- real <lower=0> sigma_catch; 
- 
- real <lower=0> g[nByrs,A]; // gamma random draws
+real <lower=0> g[nByrs,A]; // gamma random draws
 
-  real log_catch_q; 
+real <lower=0> sigma_catch; 
+ 
+real log_catch_q; 
   // real log_F_mean; 
-  vector [nRyrs_T]  log_F; 
+vector [nRyrs_T]  log_F; 
   
   // vector [nByrs]  log_F_dev_y; 
   // vector [A] log_S; // log selectivity
@@ -145,10 +140,6 @@ real <lower=0, upper=1> D_scale; // Variability of age proportion vectors across
 real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
 real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
 
-// vector <lower=0, upper = 1> [nByrs+1] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
-// vector <lower=0, upper = 1> [nByrs+2] p_2;
-
-// vector<lower=0, upper=1> [A] pi;
 }
 
 transformed parameters { 
@@ -271,12 +262,7 @@ N_brood_year_return_start = exp(N_brood_year_return_start_log);
     p[t,a] = g[t,a]/sum(g[t,1:A]);
    }
   }
-  // for(t in 1:(nByrs)) {
-  //  p[t,a] = g[a]/sum(g[1:A]);
-  // }
- 
-   // p[a] = g[a]/sum(g[1:A]);
-  // }
+
 
 catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
 
@@ -402,10 +388,7 @@ model {
  // age comp priors -- maturity schedules
   prob[1] ~ beta(1,1);
   prob[2] ~ beta(1,1);
-  prob[3] ~ beta(1,1);
-  // prob[1] ~ beta(0.16,1);
-  // prob[2] ~ beta(0.78,1);
-  // prob[3] ~ beta(0.41,1);
+  prob[3] ~ beta(1,1); 
  
 // Likelilihoods --  
   // Observation model
