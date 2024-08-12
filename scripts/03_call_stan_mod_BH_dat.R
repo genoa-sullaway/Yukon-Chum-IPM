@@ -34,7 +34,7 @@ K = 1 # number of stocks
 Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(2000,2000,2000,2000))
 # fs = as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = A +2 # to fill starting values 
+t_start = A  # to fill starting values 
 
 
 # load salmon data ==============================================
@@ -85,7 +85,7 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
 # set year vectors =====
 nByrs = nrow(fall_juv) # Number of BROOD years                
 nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
-nRyrs_T = nByrs + A +2
+nRyrs_T = nByrs + A
 
 #plot(fall_juv$fall_abundance, type ="l")
 # # CV ========================================
@@ -214,7 +214,7 @@ data_list_stan <- list(nByrs=nByrs,
                        cov1=stage_a_cov,
                        cov2=stage_b_cov,
                        
-                       o_run_comp=(yukon_fall_obs_agecomp + 0.00001),
+                       o_run_comp=(yukon_fall_obs_agecomp),
                        ess_age_comp=ess_age_comp,
                        pi = pi
                       )
@@ -227,7 +227,7 @@ bh_fit <- stan(
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 
-  verbose=TRUE)#, 
+  verbose=FALSE)#, 
 #  control = list(adapt_delta = 0.95))
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")

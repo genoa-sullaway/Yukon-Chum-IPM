@@ -52,12 +52,18 @@ yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
   )%>%
   dplyr::select(2) %>%
   as.vector()
+# 
+# yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
+#   filter(cal_year >= year_min#, 
+#          #cal_year <= year_max_cal
+#   ) %>%
+#   dplyr::select(2) %>%
+#   as.vector()
 
-yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
-  filter(cal_year >= year_min#, 
-         #cal_year <= year_max_cal
-  ) %>%
-  dplyr::select(2) %>%
+yukon_fall_return_brood_year<- read_csv("data/processed_data/yukon_fall_yukon_fall_return_brood_year.csv") %>%
+  filter(Brood_Year >= year_min,
+         Brood_Year <= year_max_brood) %>% 
+  dplyr::select(2) %>% 
   as.vector()
 
 ## Fall Juveniles ================================================
@@ -145,7 +151,7 @@ data_list_stan <- list(nByrs=nByrs,
                        #  data_j_cv = fall_juv_cv$CV,
                        
                        data_stage_j = as.vector(fall_juv$fall_abundance), 
-                       data_stage_return = as.vector(yukon_fall_recruits$total_run),
+                       data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                        

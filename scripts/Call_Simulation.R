@@ -386,12 +386,12 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.01^2) + 1)))
                           A=A,
                           t_start = t_start, 
                           
-                          # N_j_start_log =N_j_start_log,
-                          # N_brood_year_return_start_log =  N_brood_year_return_start_log,
-                          # N_recruit_start_log = N_recruit_start_log,
-                          # N_sp_start_log =N_sp_start_log,
-                          # N_catch_start_log = N_catch_start_log,
-                          # N_egg_start_log=N_egg_start_log,
+                          N_j_start_log =N_j_start_log,
+                          N_brood_year_return_start_log =  N_brood_year_return_start_log,
+                          N_recruit_start_log = N_recruit_start_log,
+                          N_sp_start_log =N_sp_start_log,
+                          N_catch_start_log = N_catch_start_log,
+                          N_egg_start_log=N_egg_start_log,
                           
                          sigma_y_j=process_error_j, 
                           
@@ -440,11 +440,11 @@ N_sp_sim_s  = rlnorm(nRyrs_stan, log(N_sp_sim ), sqrt(log((0.01^2) + 1)))
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_SIM.stan"), # different than data model so I can move priors around 
   data = data_list_stan,
-  chains = 1, #n_chains,
+  chains = 4, #n_chains,
   warmup = warmups,
   iter = total_iterations,
-  cores = n_cores,
-  control = list(adapt_delta = 0.99))  
+  cores = n_cores)#,
+#  control = list(adapt_delta = 0.99))  
         
 write_rds(bh_fit, "output/stan_fit_SIMULATED_OUTPUT.RDS")
 

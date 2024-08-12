@@ -294,7 +294,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            N_brood_year_return[t] = N_j[t]*kappa_marine_survival[t]; //)*exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
          
         for (a in 1:A) { 
-           N_recruit[t+a+2,a] = (N_brood_year_return[t]*pi[a]); //*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+           N_recruit[t+a,a] = (N_brood_year_return[t]*pi[a]); //*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
           // N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; // add age structure, p is proportion per age class
 
@@ -303,12 +303,12 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            // N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
            // N_recruit[t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])); // add age specific mortality, 
           
-          N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2])));
+          N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a])));
          // N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a]*S[a])));
            
-          N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
+          N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
              
-          N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; 
+          N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a]; 
             }
      }
      
@@ -320,7 +320,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
     }
   }
   
-  q =   q + 0.001;
+  // q =   q + 0.001;
   
 for(t in 1:nByrs){
  // translate juvenile fish to the appropriate scale 
@@ -409,7 +409,7 @@ model {
   for(t in 1:nRyrs){ // calendar years 
      target += ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
-     target += normal_lpdf(log(data_stage_harvest[t]+0.001) | log(sum(N_catch[t,1:A])+ 0.001), 0.001); //sigma_catch); // sqrt(log((0.01^2) + 1)));
+     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), 0.001); //sigma_catch); // sqrt(log((0.01^2) + 1)));
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.05^2) + 1)));//sqrt(log((data_sp_cv[t]^2) + 1))); // sigma_y_sp);
      }
  }  
