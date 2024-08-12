@@ -177,12 +177,12 @@ N_sp = matrix(NA, nrow = nRyrs_T,ncol=A)
 
  for (a in 1:A) {
   for(t in 1:t_start){
-   N_recruit_start[,a] = exp(yukon_fall_recruits$mean)*p[t,a] #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
+   N_recruit_start[t,a] = exp(yukon_fall_recruits$mean)*p[t,a] #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
    # N_ocean_start[t,a] = exp(rnorm(1,13.6,1))*p[a]#*p[t,a]
-   N_sp_start[,a] = exp( yukon_fall_spawners$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
+   N_sp_start[t,a] = exp( yukon_fall_spawners$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
    # N_first_winter_start[t,a] = exp(rnorm(1,13.6))*p[a]#*p[t,a]
-   N_catch_start[,a] = exp( yukon_fall_harvest$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
-   N_egg_start[,a] = exp(17.5)*p[t,a]  
+   N_catch_start[t,a] = exp( yukon_fall_harvest$mean )*p[t,a]   #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
+   N_egg_start[t,a] = exp(17.5)*p[t,a]  
   }
  }
  

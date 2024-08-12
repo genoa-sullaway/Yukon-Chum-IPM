@@ -25,40 +25,46 @@ n_chains <- 4
 n_cores <- 4
 adapt_delta <- 0.95 # step size 
 
-year_min = 2002
-year_max_cal = 2022
-year_max_brood = 2022
+A = 4 # number of age classes, 3,4,5,6
+K = 1 # number of stocks 
+Ps = 0.5 # proportion of females - assumption, need to lit check
+fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+t_start = A +2  # to fill starting values 
+
+
+year_min = 2001
+year_max_cal = 2021
+year_max_brood = 2017
+
 
 # load salmon data ==============================================
 ## Fall age comp ================================================
 yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv") %>%
   filter(cal_year >= year_min, 
-         cal_year <= 2022
+         cal_year <= year_max_cal
   ) %>%
   dplyr::select(2:ncol(.)) %>%
   as.matrix()
 
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
-  filter(cal_year >= year_min #, 
-         #cal_year <= year_max_cal
-  ) %>%
+  filter(cal_year >= year_min, 
+         cal_year <= year_max_cal) %>% 
   dplyr::select(2) %>%
   as.vector()
 
 yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
-  filter(cal_year >= year_min#, 
-         #cal_year <= year_max_cal
-  )%>%
+  filter(cal_year >= year_min, 
+         cal_year <= year_max_cal) %>% 
   dplyr::select(2) %>%
   as.vector()
-# 
-# yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
-#   filter(cal_year >= year_min#, 
-#          #cal_year <= year_max_cal
-#   ) %>%
-#   dplyr::select(2) %>%
-#   as.vector()
+
+yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
+  filter(cal_year >= year_min#,
+         #cal_year <= year_max_cal
+  ) %>%
+  dplyr::select(2) %>%
+  as.vector()
 
 yukon_fall_return_brood_year<- read_csv("data/processed_data/yukon_fall_yukon_fall_return_brood_year.csv") %>%
   filter(Brood_Year >= year_min,
@@ -68,15 +74,49 @@ yukon_fall_return_brood_year<- read_csv("data/processed_data/yukon_fall_yukon_fa
 
 ## Fall Juveniles ================================================
 fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
+  dplyr::mutate(Year = Year-1) %>% 
   filter(Year <= year_max_brood) %>% 
   dplyr::select(2) %>% 
   as.vector()
 
+# specific year inputs ========
+nByrs = nrow(fall_juv) # Number of BROOD years                
+nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
+nRyrs_T = nByrs + 4 + 2
+
+# starting values to fix  =============
+
+N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
+N_catch_start = matrix(NA,nrow=t_start, ncol=A)
+N_egg_start = matrix(0,nrow=t_start, ncol=A)
+N_sp_start = matrix(NA,nrow=t_start, ncol=A)
+
+N_j_start = exp(rnorm(1,17,1)) 
+N_brood_year_return_start = exp(rnorm(1,16.5,1))
+
+for (a in 1:A) {
+  for(t in 1:t_start){
+    N_recruit_start[t,a] = yukon_fall_recruits$total_run[t]*yukon_fall_obs_agecomp[t,a] #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
+    N_sp_start[t,a] = yukon_fall_spawners$Spawners[t] *yukon_fall_obs_agecomp[t,a]   #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
+    N_catch_start[t,a] = yukon_fall_harvest$harvest[t]*yukon_fall_obs_agecomp[t,a]   #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
+    N_egg_start[t,a] = exp(17.5)*yukon_fall_obs_agecomp[t,a]  
+  }
+}
+
+# log for model ======
+N_j_start_log = log(N_j_start)
+N_brood_year_return_start_log =  log(N_brood_year_return_start)
+
+N_recruit_start_log = log(N_recruit_start+ 0.001)
+N_sp_start_log = log(N_sp_start+ 0.001) 
+N_catch_start_log = log(N_catch_start+ 0.001) 
+N_egg_start_log  = log(N_egg_start+ 0.001)
+
 #plot(fall_juv$fall_abundance, type ="l")
 # CV ========================================
-spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>% 
-  filter(year >= year_min, 
-         year <= 2022)  
+# spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>% 
+#   filter(year >= year_min, 
+#          year <= 2022)  
  
 # Summer ================================================
 # summer_age_comp<-read_csv("data/age_comps/processed_age_comps_summer_yukon.csv")  %>% 
@@ -104,15 +144,6 @@ spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
 #   as.data.frame()  #%>%  
 #  #as.matrix()
 
-# Organize data call inputs ================================================
-nByrs = nrow(fall_juv) # Number of BROOD years                
-nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
-nRyrs_T = nByrs + 4 + 2
-A = 4 # number of age classes, 3,4,5,6
-K = 1 # number of stocks 
-Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
-t_start = A + 2 # to fill starting values 
 
 # mean productivity rate =====
 # estimating this now
@@ -124,15 +155,15 @@ basal_p_2 = 0.4
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = as.vector(rep(300, times = nByrs))
+ess_age_comp =300# as.vector(rep(300, times = nByrs))
 
 # STAN STARTING VALUES ==========
-kappa_j_start =  basal_p_1
-kappa_marine_start = c(basal_p_2,basal_p_2)
-kappa_marine_mort_start = c(-log(basal_p_2), -log(basal_p_2))
+# kappa_j_start =  basal_p_1
+# kappa_marine_start = c(basal_p_2,basal_p_2)
+# kappa_marine_mort_start = c(-log(basal_p_2), -log(basal_p_2))
 
 # use average age comp to distribute starting values
-p <- colMeans(yukon_fall_obs_agecomp[1:21,]) 
+# p <- colMeans(yukon_fall_obs_agecomp[1:21,]) 
 
 # ASSIGN DATA ==========
 data_list_stan <- list(nByrs=nByrs,
@@ -161,7 +192,14 @@ data_list_stan <- list(nByrs=nByrs,
                        
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
-                       p_obs = p,
+                       # p_obs = p,
+                       
+                       N_j_start_log =N_j_start_log,
+                       N_brood_year_return_start_log =  N_brood_year_return_start_log,
+                       N_recruit_start_log = N_recruit_start_log,
+                       N_sp_start_log =N_sp_start_log,
+                       N_catch_start_log = N_catch_start_log,
+                       N_egg_start_log=N_egg_start_log,
                        
                        basal_p_1 =basal_p_1,
                        basal_p_2 = basal_p_2)
@@ -170,12 +208,10 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat_no_covar.stan"),
   data = data_list_stan,
-  chains = 4,  
+  chains = 1,  
   warmup = warmups,
   iter = total_iterations,
   cores = n_cores,
-  verbose=FALSE,
-  control = list(adapt_delta = adapt_delta, 
-                 max_treedepth = max_treedepth))
+  verbose=FALSE)
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")

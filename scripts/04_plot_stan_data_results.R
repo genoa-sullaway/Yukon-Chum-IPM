@@ -15,16 +15,20 @@ years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   dplyr::mutate(time = c(1:nrow(.)))
 
 # traceplot ========
-traceplot(bh_fit,pars=  c( "theta1[1]","theta2[1]","theta1[3]", 
-                            "theta2[1]","theta2[2]"))
+traceplot(bh_fit,pars=  c( "theta1[1]" ,
+                           "theta2[1]" ))
 
 traceplot(bh_fit,pars=  c( "D_scale" ))
 
-traceplot(bh_fit,pars=  c( "log_catch_q", "log_S" ))
+traceplot(bh_fit,pars=  c( "basal_p_1","basal_p_2"))
 
-traceplot(bh_fit,pars=  c( "g", "Dir_alpha"))
+traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
-traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"))
+traceplot(bh_fit,pars=  c(  "Dir_alpha"))
+
+traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]"#, 
+                          #"basal_p_1", "basal_p_2"
+))
 
 traceplot(bh_fit,pars=  c("N_sp_start_log"))
 
@@ -32,9 +36,13 @@ traceplot(bh_fit,pars=  c("log_c_1","log_c_2"))
 
 traceplot(bh_fit,pars=  c("p_1","p_2"))
 
-traceplot(bh_fit,pars=  c("sigma_y_j","sigma_catch"))
+traceplot(bh_fit,pars=  c("g"))
 
-traceplot(bh_fit,pars=  c("log_F_dev_y","log_F_mean"))
+traceplot(bh_fit,pars=  c("sigma_y_j"))
+
+traceplot(bh_fit,pars=  c("log_F"))
+
+traceplot(bh_fit,pars=  c("D_sum"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
@@ -112,7 +120,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
               probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:29, each=4),
+  dplyr::mutate(time = rep(1:23, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   filter(!time>21) %>% # remove years without full return estimates 
   left_join(years)  
@@ -138,37 +146,37 @@ ggplot(data = summ_n_sp) +
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
   theme_classic()
 
-## recruits ====== 
-pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
-                     probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:29, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>%
-   filter(!time>21) %>%
-  left_join(years) 
-
-summ_n_rec <- pred_N_recruit %>%
-  group_by(cal_year) %>%
-  summarise(mean = sum(mean),
-            se_mean = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_return)  %>%
-  mutate(rowname = "recruit")  
-
-ggplot(data = summ_n_rec) +
-  geom_point(aes(x=cal_year, y = obs)) +
-  geom_line(aes(x=cal_year, y = mean)) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean))+
-  ggtitle(("recruits: obs and predicted"))+
-  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020))
+# ## recruits ====== 
+# pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
+#                      probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()  %>%
+#   dplyr::mutate(time = rep(1:23, each=4),
+#                 age = rep(1:4, length.out = nrow(.))) %>%
+#    filter(!time>21) %>%
+#   left_join(years) 
+# 
+# summ_n_rec <- pred_N_recruit %>%
+#   group_by(cal_year) %>%
+#   summarise(mean = sum(mean),
+#             se_mean = mean(se_mean)) %>% 
+#   cbind(obs = data_list_stan$data_stage_return)  %>%
+#   mutate(rowname = "recruit")  
+# 
+# ggplot(data = summ_n_rec) +
+#   geom_point(aes(x=cal_year, y = obs)) +
+#   geom_line(aes(x=cal_year, y = mean)) +
+#   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
+#                   ymax = mean+se_mean))+
+#   ggtitle(("recruits: obs and predicted"))+
+#   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020))
 
 ## harvest ====== 
 pred_N_harvest <- summary(bh_fit, pars = c("N_catch"), 
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:29, each=4),
+  dplyr::mutate(time = rep(1:23, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>% 
   filter(!time>21) 
 
@@ -259,7 +267,7 @@ age_comp_Q <- summary(bh_fit, pars = c("q"),
                        probs = c(0.1, 0.9))$summary %>% 
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:21, each=4),
+  dplyr::mutate(time = rep(1:17, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   left_join(years) %>%
   left_join( age_comp_dat) %>% 
@@ -555,18 +563,18 @@ ggplot(data = kappasurvival,# %>%   filter(!time<2),
   theme_classic() + 
   xlab("Calendar Year") + 
   ylab("Survival Rate")
-
-ggplot(data = kappasurvival %>%
-         filter(!time<8 & !time>16), 
-       aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
-  geom_line( ) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5) +
-  facet_wrap(~variable, scales = "free") + 
-  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
-  theme_classic() + 
-  xlab("Calendar Year") + 
-  ylab("Survival Rate")
+# 
+# ggplot(data = kappasurvival %>%
+#          filter(!time<8 & !time>16), 
+#        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
+#   geom_line( ) +
+#   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
+#                   ymax = mean+se_mean), alpha = 0.5) +
+#   facet_wrap(~variable, scales = "free") + 
+#   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
+#   theme_classic() + 
+#   xlab("Calendar Year") + 
+#   ylab("Survival Rate")
 
 # calculate rolling correlation in productivity....
 # make a list of 5 year chunks .... 

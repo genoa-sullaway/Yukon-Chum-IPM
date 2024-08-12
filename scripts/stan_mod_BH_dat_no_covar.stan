@@ -15,24 +15,53 @@ data { // all equation references are from proposal numbering
 
   matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by return year
   real ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 300 based on Hulson et al 2011
+
+  real  N_j_start_log;
+  real  N_brood_year_return_start_log;
+  real  N_sp_start_log[t_start,A];
+  real N_recruit_start_log[t_start,A];
+  real  N_catch_start_log[t_start,A];
+  real  N_egg_start_log[t_start,A];
 }
   
-parameters {
-//starting values 
+transformed data {
+real N_sp_start [t_start,A];
+real N_recruit_start [t_start,A];
+real N_catch_start [t_start,A];
+real N_ocean_start[t_start,A];
+real N_egg_start[t_start,A];
+real N_j_start;
+real N_brood_year_return_start;
 
-real <lower =10> N_j_start_log;
-real <lower =0> N_brood_year_return_start_log; 
-real <lower =0> N_sp_start_log[t_start,A];
-real <lower =0> N_recruit_start_log[t_start,A];
-real <lower =0> N_catch_start_log[t_start,A];
-real <lower =0> N_egg_start_log[t_start,A]; 
+for(t in 1:t_start){
+  for(a in 1:A){
+  N_sp_start[t,a] = exp(N_sp_start_log[t,a]);//*p[a]; //o_run_comp[t,a];
+  N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);//*p[a]; //*o_run_comp[t,a];
+  N_catch_start[t,a] = exp(N_catch_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+  N_egg_start[t,a] = exp(N_egg_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+  }
+ }
+
+N_j_start = exp(N_j_start_log);
+N_brood_year_return_start = exp(N_brood_year_return_start_log);
+
+}  
+  
+parameters {
+// starting values 
+// real <lower =10> N_j_start_log;
+// real <lower =0> N_brood_year_return_start_log; 
+// real <lower =0> N_sp_start_log[t_start,A];
+// real <lower =0> N_recruit_start_log[t_start,A];
+// real <lower =0> N_catch_start_log[t_start,A];
+// real <lower =0> N_egg_start_log[t_start,A]; 
 
 real   log_c_1; // log carrying capacity
 real   log_c_2; // log carrying capacity
 
 vector <lower=0> [A-1] prob;
-real <lower=0, upper=1> D_scale; // Variability of age proportion vectors across cohorts
-real <lower=0> g[nByrs,A]; // gamma random draws
+// real <lower=0, upper=1> D_scale; // Variability of age proportion vectors across cohorts
+// real <lower=0> g[nByrs,A]; // gamma random draws
 
 real <lower=0> sigma_catch; 
  
@@ -59,13 +88,13 @@ transformed parameters {
  real  N_catch [nRyrs_T,A];
  real  N_e [nRyrs_T,A];
  
-real N_sp_start [t_start,A];
-real N_recruit_start [t_start,A];
-real N_catch_start [t_start,A];
-real N_ocean_start[t_start,A];
-real N_egg_start[t_start,A];
-real N_j_start;
-real N_brood_year_return_start;
+// real N_sp_start [t_start,A];
+// real N_recruit_start [t_start,A];
+// real N_catch_start [t_start,A];
+// real N_ocean_start[t_start,A];
+// real N_egg_start[t_start,A];
+// real N_j_start;
+// real N_brood_year_return_start;
 
   
 vector <lower=0, upper = 1>[nByrs] kappa_j_survival ; // predicted survival for juvenile fish (FW and early marine)
@@ -81,10 +110,10 @@ real<lower=0> c_2; // estimate on log, transform back to normal scale
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
   
 // Age related transformed params ====== 
-matrix<lower=0, upper=1> [nByrs,A] p;// proportion of fish from each brood year that mature at a certain age
-real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
-vector <lower=0> [A] Dir_alpha;         // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
-matrix<lower=0, upper=1>[nRyrs,A] q;
+// matrix<lower=0, upper=1> [nByrs,A] p;// proportion of fish from each brood year that mature at a certain age
+// real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
+// vector <lower=0> [A] Dir_alpha;         // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
+matrix<lower=0, upper=1>[nByrs,A] q;
 vector<lower=0, upper=1> [A] pi;
 
 vector<lower = 0> [nRyrs_T] F; // instantaneous fishing mortality           
@@ -98,18 +127,18 @@ vector<lower = 0> [nRyrs_T] F; // instantaneous fishing mortality
  }
 
 
-for(t in 1:t_start){
-  for(a in 1:A){
-  N_sp_start[t,a] = exp(N_sp_start_log[t,a]);//*p[a]; //o_run_comp[t,a];
-  N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);//*p[a]; //*o_run_comp[t,a];
-  N_catch_start[t,a] = exp(N_catch_start_log[t,a]);//*p[a];//o_run_comp[t,a];
-  N_egg_start[t,a] = exp(N_egg_start_log[t,a]);//*p[a];//o_run_comp[t,a];
-  }
- }
- 
- N_j_start = exp(N_j_start_log); 
-N_brood_year_return_start = exp(N_brood_year_return_start_log);
- 
+// for(t in 1:t_start){
+//   for(a in 1:A){
+//   N_sp_start[t,a] = exp(N_sp_start_log[t,a]);//*p[a]; //o_run_comp[t,a];
+//   N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);//*p[a]; //*o_run_comp[t,a];
+//   N_catch_start[t,a] = exp(N_catch_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+//   N_egg_start[t,a] = exp(N_egg_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+//   }
+//  }
+//  
+//  N_j_start = exp(N_j_start_log); 
+// N_brood_year_return_start = exp(N_brood_year_return_start_log);
+//  
   N_j[1] = N_j_start;
   N_brood_year_return[1] = N_brood_year_return_start;
  
@@ -126,21 +155,20 @@ N_brood_year_return_start = exp(N_brood_year_return_start_log);
    c_1 = exp(log_c_1);
    c_2 = exp(log_c_2);
 
-
  // Maturity schedule: use a common maturation schedule to draw the brood year specific schedules
   pi[1] = prob[1];
   pi[2] = prob[2] * (1 - pi[1]);
   pi[3] = prob[3] * (1 - pi[1] - pi[2]);
   pi[4] = 1 - pi[1] - pi[2] - pi[3];
 
-  D_sum = 1/(D_scale^2);
-
-  for (a in 1:A) {
-    Dir_alpha[a] = D_sum * pi[a];
-  for(t in 1:(nByrs)) {
-    p[t,a] = g[t,a]/sum(g[t,1:A]);
-   }
-  }
+//   D_sum = 1/(D_scale^2);
+// 
+//   for (a in 1:A) {
+//     Dir_alpha[a] = D_sum * pi[a];
+//   for(t in 1:(nByrs)) {
+//     p[t,a] = g[t,a]/sum(g[t,1:A]);
+//    }
+//   }
 
 
 catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
@@ -161,7 +189,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            N_brood_year_return[t] = N_j[t]*kappa_marine_survival[t]; //)*exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
          
         for (a in 1:A) { 
-           N_recruit[t+a,a] = (N_brood_year_return[t]*p[t,a]); //*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+           N_recruit[t+a+2,a] = (N_brood_year_return[t]*pi[a]); // p[t,a]); //*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
           // N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; // add age structure, p is proportion per age class
 
@@ -170,21 +198,21 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            // N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
            // N_recruit[t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])); // add age specific mortality, 
           
-          N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a])));
+          N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2])));
          // N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a]*S[a])));
            
-          N_sp[t+a,a] = N_recruit[t+a,a]-N_catch[t+a,a]; // fishing occurs before spawning -- 
+          N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
              
-          N_e[t+a,a] = fs[a]*Ps*N_sp[t+a,a]; 
+          N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; 
             }
      }
    
-  // print("N_sp", N_sp); 
-  // print("N_recruit", N_recruit);
+  print("pi", pi);
+  print("prob", prob);
   
   
   // Calculate age proportions by return year
-  for (t in 1:nRyrs) {
+  for (t in 1:nByrs) {
     for(a in 1:A){
      q[t,a] = N_recruit[t,a]/(sum(N_recruit[t,1:A]));
     }
@@ -204,30 +232,30 @@ model {
 
   log_c_1 ~  normal(16, 50); // carrying capacity prior - stage 1
   log_c_2 ~  normal(18, 50); // carrying capacity prior - stage 2
+// 
+//  N_j_start_log ~ normal(17,10);
+//  N_brood_year_return_start_log~ normal(15,10); 
+// 
+//  for(t in 1:t_start){
+//    for(a in 1:A){
+//     N_sp_start_log[t,a] ~ normal(10,10);
+//     N_recruit_start_log[t,a] ~  normal(10,10);
+//     N_catch_start_log[t,a] ~ normal(10,10);
+//     N_egg_start_log[t,a] ~  normal(10,10);
+//   }
+//  }
 
- N_j_start_log ~ normal(17,10);
- N_brood_year_return_start_log~ normal(15,10); 
-
- for(t in 1:t_start){
-   for(a in 1:A){
-    N_sp_start_log[t,a] ~ normal(10,10);
-    N_recruit_start_log[t,a] ~  normal(10,10);
-    N_catch_start_log[t,a] ~ normal(10,10);
-    N_egg_start_log[t,a] ~  normal(10,10);
-  }
- }
-
- D_scale ~ beta(1,1);  
+ // D_scale ~ beta(1,1);  
  
      p_1 ~ beta(1,1); 
      p_2 ~ beta(1,1); 
   
 // age comp 
- for(t in 1:nByrs){
-    for (a in 1:A) {
-   target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
- }
-}
+//  for(t in 1:nByrs){
+//     for (a in 1:A) {
+//    target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
+//  }
+// }
 
 // # fishing via normal distribution  
   for(t in 1:nRyrs_T){
@@ -258,7 +286,7 @@ model {
      
     } 
 
-  for(t in 1:nRyrs){ // calendar years 
+  for(t in 1:nByrs){ // calendar years 
  // if(t<nByrs){
      target += ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
