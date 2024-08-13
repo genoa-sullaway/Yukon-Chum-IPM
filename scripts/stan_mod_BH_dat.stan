@@ -67,7 +67,7 @@ real <lower =0> N_egg_start_log[t_start,A];
  real  log_c_1;
  real  log_c_2; // log carrying capacity
  
-real <lower =0> sigma_sp; 
+// real <lower =0> sigma_sp; 
 real <lower =0> sigma_catch; 
   // real <lower=0> sigma_y_j;
  
@@ -349,13 +349,13 @@ for(t in 1:nByrs){
 
 model {
   // sigma_y_j ~ normal(0,5); //normal 
-   sigma_sp ~  normal(0,1); 
+   // sigma_sp ~  normal(0,1); 
    sigma_catch ~ normal(0,1); 
    
    log_catch_q ~ normal(-4,10);
    
-  log_c_1 ~  normal(16, 50); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 50); // carrying capacity prior - stage 2
+  log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
+  log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
  
  N_j_start_log ~ normal(17,10);
  N_brood_year_return_start_log~ normal(15,10);
@@ -425,7 +425,7 @@ model {
      
      //recruit by cal year:: target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])), sqrt(log((0.06^2) + 1)));  
      target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_catch) ; //sqrt(log((0.01^2) + 1)));  
-     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp);//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_y_sp);
+     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
       // }
     }
   }

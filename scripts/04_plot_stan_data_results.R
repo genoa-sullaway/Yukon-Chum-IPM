@@ -69,10 +69,10 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_mean"),
      fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_S"),
-     fill_color = "blue")
+# 
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+#      pars=  c( "log_S"),
+#      fill_color = "blue")
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_dev_y"),
