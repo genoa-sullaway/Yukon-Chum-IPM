@@ -32,7 +32,7 @@ year_max_brood = 2017
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(2000,2000,2000,2000))
+fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 # fs = as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = A+2  # to fill starting values 
 
@@ -177,9 +177,9 @@ M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative
 ess_age_comp = 400#as.vector(rep(400, times = nRyrs))
 
 # STAN STARTING VALUES ==========
-kappa_j_start =  basal_p_1
-kappa_marine_start = c(basal_p_2,basal_p_2)
-kappa_marine_mort_start = c(-log(basal_p_2),-log(basal_p_2))
+# kappa_j_start =  basal_p_1
+# kappa_marine_start = c(basal_p_2,basal_p_2)
+# kappa_marine_mort_start = c(-log(basal_p_2),-log(basal_p_2))
 
 # use average age comp to distribute starting values
 # p <- colMeans(yukon_fall_obs_agecomp[1:21,]) 
@@ -217,7 +217,7 @@ kappa_marine_mort_start = c(-log(basal_p_2),-log(basal_p_2))
 #        sigma_y_j = runif(1,0.5,2)
 #        )
 #      }
-# 
+
 # ASSIGN DATA ==========
 data_list_stan <- list(nByrs=nByrs,
                        nRyrs=nRyrs,
@@ -261,7 +261,8 @@ bh_fit <- stan(
   iter = total_iterations, 
   cores = n_cores, 
   verbose=FALSE, 
-  control = list(adapt_delta = 0.95))
+  control = list(adapt_delta = 0.95)
+  )
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
  

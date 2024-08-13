@@ -338,7 +338,6 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
   for (t in 1:nRyrs) {
     for(a in 1:A){
      q[t,a] = N_recruit[t,a]/(sum(N_recruit[t,1:A]));
-     
     }
   }
   
@@ -350,8 +349,8 @@ for(t in 1:nByrs){
 
 model {
   // sigma_y_j ~ normal(0,5); //normal 
-   sigma_sp ~  normal(0,5); 
-   sigma_catch ~ normal(0,5); 
+   sigma_sp ~  normal(0,1); 
+   sigma_catch ~ normal(0,1); 
    
    log_catch_q ~ normal(-4,10);
    
@@ -359,14 +358,18 @@ model {
   log_c_2 ~  normal(18, 50); // carrying capacity prior - stage 2
  
  N_j_start_log ~ normal(17,10);
- N_brood_year_return_start_log~ normal(16,10);
+ N_brood_year_return_start_log~ normal(15,10);
 
  for(t in 1:t_start){
    for(a in 1:A){
-    N_sp_start_log[t,a] ~ normal(15,10);
-    N_recruit_start_log[t,a] ~  normal(15.5,10);
-    N_catch_start_log[t,a] ~ normal(13,10);
-    N_egg_start_log[t,a] ~  normal(18,10);
+    // N_sp_start_log[t,a] ~ normal(15,10);
+    // N_recruit_start_log[t,a] ~  normal(15.5,10);
+    // N_catch_start_log[t,a] ~ normal(13,10);
+    // N_egg_start_log[t,a] ~  normal(18,10);
+    N_sp_start_log[t,a] ~ normal(10,10);
+    N_recruit_start_log[t,a] ~  normal(10,10);
+    N_catch_start_log[t,a] ~ normal(10,10);
+    N_egg_start_log[t,a] ~  normal(10,10);
   }
  }
  

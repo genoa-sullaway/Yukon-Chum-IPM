@@ -95,6 +95,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c("pi"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "g"),
      fill_color = "blue")
 
@@ -105,7 +109,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff2"),
      fill_color = "blue")
-
 
 plot(bh_fit,pars=  c(  "N_sp_start_log",
                             "N_recruit_start_log"))
@@ -262,20 +265,20 @@ ggplot(data = summ_n_j) +
   ggtitle(("Juveniles, est and observed"))
 
 ## eggs =============================
-pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"), 
-                          probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:23, each=1)) %>%
-  mutate(rowname = "eggs")  
-   
-ggplot(data = pred_N_eggs_sum) + 
- geom_line(aes(x=time, y = mean)) #+
- # geom_line(aes(x=time, y = mean*10), color = "green") +  
-  # geom_line(aes(x=time, y = pred_j), color = "blue")  
-
-ggplot(data = pred_N_eggs_sum %>% filter(!time < 7)) + 
-  geom_line(aes(x=time, y = mean)) 
+# pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"), 
+#                           probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()  %>%
+#   dplyr::mutate(time = rep(1:23, each=1)) %>%
+#   mutate(rowname = "eggs")  
+#    
+# ggplot(data = pred_N_eggs_sum) + 
+#  geom_line(aes(x=time, y = mean)) #+
+#  # geom_line(aes(x=time, y = mean*10), color = "green") +  
+#   # geom_line(aes(x=time, y = pred_j), color = "blue")  
+# 
+# ggplot(data = pred_N_eggs_sum %>% filter(!time < 7)) + 
+#   geom_line(aes(x=time, y = mean)) 
 
 # plot age comp through time =================
 age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 
@@ -312,57 +315,52 @@ age_comp <- summary(bh_fit, pars = c("pi"),
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column() %>% 
-  rename(pred = "mean")# %>% 
-#  cbind(obs = data_list_stan$pi) %>% 
-  #dplyr::select(1,2,9) %>% 
-  #gather(2:3, key = "key", value = "value")
+  rename(pred = "mean")  
 
 ggplot(data = age_comp) +
   geom_point(aes(x= rowname, y = pred)) + 
-  
-  # geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
   theme_classic()
 
-# align all stages on one plot to look at scale. =====
-summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"), 
-                           probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:23, each=1)) %>%
-  filter(!time<7 & !time>15)  %>% 
-  dplyr::mutate(rowname = "eggs",
-         mean = as.numeric(scale(mean)))  %>%
-  dplyr::select(rowname, mean, se_mean,time)
-  
-comp_j_e<- rbind(#summ_n_sp %>% select(-obs),
-                   #summ_n_rec%>% select(-obs),
-                   #summ_n_harvest%>% select(-obs),
-                   summ_n_eggs,
-                   summ_n_j %>% filter(!time<7 & !time>15) %>% 
-                     select(time, rowname,mean,se_mean) %>% 
-                     mutate(mean = as.numeric(scale(mean))
-                            #time = time-1
-                            ))   
-
-ggplot(data = comp_j_e) + 
-  geom_line(aes(x=time, y = mean, group = rowname, color = rowname)) +
-  # geom_ribbon(aes(x=time, ymin = mean-se_mean,
-  #                 ymax = mean+se_mean))+
-  #  facet_wrap(~rowname, scales = "free") + 
-  ggtitle(("juv eggs compare")) 
- 
-all_stages_scale <- all_stages %>% 
-  group_by(rowname) %>%
-  mutate(mean = as.numeric(scale(mean)))
-
-ggplot(data = all_stages_scale) + 
-  geom_line(aes(x=time, y = mean, group = rowname, color = rowname)) +
-  # geom_ribbon(aes(x=time, ymin = mean-se_mean,
-  #                 ymax = mean+se_mean))+
-  #  facet_wrap(~rowname, scales = "free") + 
-  ggtitle(("all stages compare - mean scaled")) +
-  ylab("mean scaled")
-
+# # align all stages on one plot to look at scale. =====
+# summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"), 
+#                            probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()  %>%
+#   dplyr::mutate(time = rep(1:23, each=1)) %>%
+#   filter(!time<7 & !time>15)  %>% 
+#   dplyr::mutate(rowname = "eggs",
+#          mean = as.numeric(scale(mean)))  %>%
+#   dplyr::select(rowname, mean, se_mean,time)
+#   
+# comp_j_e<- rbind(#summ_n_sp %>% select(-obs),
+#                    #summ_n_rec%>% select(-obs),
+#                    #summ_n_harvest%>% select(-obs),
+#                    summ_n_eggs,
+#                    summ_n_j %>% filter(!time<7 & !time>15) %>% 
+#                      select(time, rowname,mean,se_mean) %>% 
+#                      mutate(mean = as.numeric(scale(mean))
+#                             #time = time-1
+#                             ))   
+# 
+# ggplot(data = comp_j_e) + 
+#   geom_line(aes(x=time, y = mean, group = rowname, color = rowname)) +
+#   # geom_ribbon(aes(x=time, ymin = mean-se_mean,
+#   #                 ymax = mean+se_mean))+
+#   #  facet_wrap(~rowname, scales = "free") + 
+#   ggtitle(("juv eggs compare")) 
+#  
+# all_stages_scale <- all_stages %>% 
+#   group_by(rowname) %>%
+#   mutate(mean = as.numeric(scale(mean)))
+# 
+# ggplot(data = all_stages_scale) + 
+#   geom_line(aes(x=time, y = mean, group = rowname, color = rowname)) +
+#   # geom_ribbon(aes(x=time, ymin = mean-se_mean,
+#   #                 ymax = mean+se_mean))+
+#   #  facet_wrap(~rowname, scales = "free") + 
+#   ggtitle(("all stages compare - mean scaled")) +
+#   ylab("mean scaled")
+# 
 
 # brood year convert ==============
 rec_brood <- pred_N_recruit %>% 
@@ -553,14 +551,14 @@ ggplot(data = fishing) +
   ylab("Instantaneous fishing mortality")
 
 # Plot selectivity ======
-S <- summary(bh_fit, pars = c("log_S"), 
-                   probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()   
-
-ggplot(data = S) + 
-  geom_point(aes(x=rowname, y = mean)) + 
-  ylab("Log Selectivity") 
+# S <- summary(bh_fit, pars = c("log_S"), 
+#                    probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()   
+# 
+# ggplot(data = S) + 
+#   geom_point(aes(x=rowname, y = mean)) + 
+#   ylab("Log Selectivity") 
   
 # plot  estimated kappas survival ======
 kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
