@@ -28,12 +28,19 @@ traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
 traceplot(bh_fit,pars=  c(  "Dir_alpha"))
 
+traceplot(bh_fit,pars=  c(  "N_sp_start_log",
+                            "N_recruit_start_log"))
+
+traceplot(bh_fit,pars=  c(  "N_catch_start_log",
+                            "N_egg_start_log"))
+
+traceplot(bh_fit,pars=  c(  "N_j_start_log",
+                            "N_brood_year_return_start_log"))
+
 traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]"#, 
                           #"basal_p_1", "basal_p_2"
 ))
-
-traceplot(bh_fit,pars=  c("N_sp_start_log"))
-
+ 
 traceplot(bh_fit,pars=  c("log_c_1","log_c_2"))
 
 traceplot(bh_fit,pars=  c("p_1","p_2"))
@@ -41,6 +48,10 @@ traceplot(bh_fit,pars=  c("p_1","p_2"))
 traceplot(bh_fit,pars=  c("g"))
 
 traceplot(bh_fit,pars=  c("sigma_y_j"))
+
+traceplot(bh_fit,pars=  c("sigma_catch"))
+
+traceplot(bh_fit,pars=  c("sigma_brood_return"))
 
 traceplot(bh_fit,pars=  c("log_F"))
 
@@ -67,6 +78,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "log_F_dev_y"),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_F"),
+     fill_color = "blue")
+
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c( "prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"),
      fill_color = "blue")
@@ -91,21 +106,22 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff2"),
      fill_color = "blue")
 
+
+plot(bh_fit,pars=  c(  "N_sp_start_log",
+                            "N_recruit_start_log"))
+
+plot(bh_fit,pars=  c(  "N_catch_start_log",
+                            "N_egg_start_log"))
+
+plot(bh_fit,pars=  c(  "N_j_start_log",
+                            "N_brood_year_return_start_log"))
+
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "sigma_y_j","sigma_catch"),
+     pars=  c(  "sigma_catch"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-      pars=  c("N_j_start_log",
-               "N_sp_start_log",
-               "N_egg_start_log",
-               "N_egg_sum_start_log",
-               "N_recruit_start_log"),
-       fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c("N_egg_sum_start_log",
-              "N_recruit_start_log"),
+     pars=  c(  "sigma_sp"),
      fill_color = "blue")
  
 plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
@@ -574,7 +590,7 @@ ggplot(data = kappasurvival,# %>%   filter(!time<2),
   theme_classic() + 
   xlab("Calendar Year") + 
   ylab("Survival Rate")
-# 
+ 
 # ggplot(data = kappasurvival %>%
 #          filter(!time<8 & !time>16), 
 #        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 

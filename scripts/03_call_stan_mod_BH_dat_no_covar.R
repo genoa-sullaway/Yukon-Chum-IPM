@@ -106,45 +106,12 @@ N_recruit_start_log = log(N_recruit_start+ 0.001)
 N_sp_start_log = log(N_sp_start+ 0.001) 
 N_catch_start_log = log(N_catch_start+ 0.001) 
 N_egg_start_log  = log(N_egg_start+ 0.001)
-
-#plot(fall_juv$fall_abundance, type ="l")
-# CV ========================================
-# spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>% 
-#   filter(year >= year_min, 
-#          year <= 2022)  
  
-# Summer ================================================
-# summer_age_comp<-read_csv("data/age_comps/processed_age_comps_summer_yukon.csv")  %>% 
-#   filter(!cal_year < 2005 )
-# summer_brood <- read_csv("output/yukon_summer_broodyear.csv")%>%
-#   filter(!brood_year < 2002) # for now to simplify matching with juveniles
-# yukon_summer <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", sheet = 2) %>%
-#   dplyr::select(1,11:14) %>% 
-#   janitor::row_to_names(row_number = 1) %>%
-#   dplyr::rename(cal_year = "Year")  %>%
-#   dplyr::mutate(age3=as.numeric(age3),
-#                 age4=as.numeric(age4),
-#                 age5=as.numeric(age5),
-#                 age6=as.numeric(age6)) %>% 
-#   filter(!cal_year < 2005)
-# ## harvest below weir 
-# harvest_escapement <- read_excel("data/Yukon_Escapement_ADFG/S Chum RR 2023.xlsx", sheet = 2) %>%
-#   dplyr::select(1:2,4) %>%  
-#   janitor::row_to_names(row_number = 1)  %>% 
-#   dplyr::rename(cal_year = "Year") %>% 
-#   dplyr::mutate(cal_year = as.numeric(cal_year), 
-#          Harvest = as.numeric(Harvest), 
-#          Escapement = as.numeric(Escapement)) %>% 
-#   filter(!cal_year < 2005) %>% # from brood year 2002 (first year of juvenile data), the first year that fish could return is 2005 if its a 3yo, the last yera it coudl return is 2007 if its a 6yo. 
-#   as.data.frame()  #%>%  
-#  #as.matrix()
-
-
 # mean productivity rate =====
 # estimating this now
 basal_p_1 = 0.1  # these are values it estimates at when allowed to
-
 basal_p_2 = 0.4
+
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 

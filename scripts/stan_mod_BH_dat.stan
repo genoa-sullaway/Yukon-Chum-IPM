@@ -56,19 +56,21 @@ real ess_age_comp;
 // 
 // }  
 parameters {
+ // starting values 
+real <lower =0> N_j_start_log;
+real <lower =0> N_brood_year_return_start_log;
+real <lower =0> N_sp_start_log[t_start,A];
+real <lower =0> N_recruit_start_log[t_start,A];
+real <lower =0> N_catch_start_log[t_start,A];
+real <lower =0> N_egg_start_log[t_start,A];
+
  real  log_c_1;
  real  log_c_2; // log carrying capacity
- real <lower=0> sigma_catch; 
+ 
+real <lower =0> sigma_sp; 
+real <lower =0> sigma_catch; 
   // real <lower=0> sigma_y_j;
-
-// starting values
- real <lower= 10>  N_j_start_log;
- real <lower =10>  N_brood_year_return_start_log;
- real <lower= 10>  N_sp_start_log [t_start,A];
- real <lower= 10>  N_recruit_start_log [t_start,A];
- real <lower= 10>  N_catch_start_log [t_start,A];
- real <lower= 10>  N_egg_start_log [t_start,A];
-
+ 
 // covariate parameters 
 real theta1 [ncovars1]; // covariate estimated for each covariate and each population
 real theta2 [ncovars2];
@@ -76,12 +78,11 @@ real theta2 [ncovars2];
 vector <lower=0> [A-1] prob; 
 // real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 // real <lower=0> g[nByrs,A]; // gamma random draws
-real log_catch_q;
- 
-// vector [nRyrs_T]  log_F_dev_y; 
-// real log_F_mean; 
 
- vector [nRyrs_T]  log_F; 
+real log_catch_q; 
+real log_F_mean; 
+// vector [nRyrs_T]  log_F;  
+vector [nRyrs_T]  log_F_dev_y; 
 
 real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
 real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
@@ -107,8 +108,8 @@ real N_brood_year_return_start;
 // real N_first_winter_start[t_start,A];
 real N_j_start;
 
-real c_1;
-real c_2;
+real<lower=0> c_1; // estimate on log, transform back to normal scale 
+real<lower=0> c_2;
 
 vector<lower = 0> [nRyrs_T] F;
 
@@ -119,9 +120,9 @@ vector <lower=0,upper = 1>  [nByrs] p_2;
 // vector <lower=0.001, upper = 0.99> [nByrs+1] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
 // vector <lower=0.001, upper = 0.99> [nByrs+1+1] p_2;
 
-vector<lower=0,upper = 1> [nByrs] kappa_j_survival; // predicted survival for juvenile fish (FW and early marine)
+vector [nByrs] kappa_j_survival; // predicted survival for juvenile fish (FW and early marine)
 //vector <lower=0.001, upper = 0.5> [nByrs] kappa_j_survival; // predicted survival for juvenile fish (FW and early marine)
-vector<lower=0,upper = 1> [nByrs] kappa_marine_survival; // predicted survival for marine fish
+vector [nByrs] kappa_marine_survival; // predicted survival for marine fish
 // vector [nByrs] kappa_marine_mortality; // converting kappa marine survival to mortality 
 
 matrix [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine covariate effects by brood year and stock
@@ -148,8 +149,8 @@ vector<lower=0, upper=1> [A] pi; // actual age comps
  
   for(t in 1:nRyrs_T){//
   // instant fishing mortality
-   F[t] = exp(log_F[t]); 
-  // F[t]  = exp(log_F_mean +log_F_dev_y[t]);
+   // F[t] = exp(log_F[t]); 
+  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  }
  
 N_j_start = exp(N_j_start_log);
@@ -272,9 +273,12 @@ for(t in 1:t_start){
   //    if(c==2){ // pink hatchery - shouldn't be forwarding looking to compare the covariate, because they are hatchery releases, so releases during the brood year, will be competing in the ocean at t+2
   // cov_eff2[t,c] =  theta2[c]*cov2[t,c]; //  
      }
+  }
   //    if(c==2){ // Chum hatchery - shouldn't be forwarding looking to compare the covariate, because they are hatchery releases, so releases during the brood year, will be competing in the ocean at t+2
   // cov_eff2[t+2,c] = theta2[c]*cov2[t,c]; //  
   //    }
+  
+for(t in 1:nByrs){
     p_1[t]  = 1 / (1 + exp(-basal_p_1-sum(cov_eff1[t,1:ncovars1])));
     p_2[t]  = 1 / (1 + exp(-basal_p_2- sum(cov_eff2[t,1:ncovars2])));
   }
@@ -346,22 +350,23 @@ for(t in 1:nByrs){
 
 model {
   // sigma_y_j ~ normal(0,5); //normal 
-   sigma_catch ~ normal(0,10); 
+   sigma_sp ~  normal(0,5); 
+   sigma_catch ~ normal(0,5); 
    
-   log_catch_q ~ normal(-4,10);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
-
-  log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
-// 
- N_j_start_log ~ normal(17,5);
- N_brood_year_return_start_log~ normal(16,5);
+   log_catch_q ~ normal(-4,10);
+   
+  log_c_1 ~  normal(16, 50); // carrying capacity prior - stage 1
+  log_c_2 ~  normal(18, 50); // carrying capacity prior - stage 2
+ 
+ N_j_start_log ~ normal(17,10);
+ N_brood_year_return_start_log~ normal(16,10);
 
  for(t in 1:t_start){
    for(a in 1:A){
-    N_sp_start_log[t,a] ~ normal(15,5);
-    N_recruit_start_log[t,a] ~  normal(15.5,5);
-    N_catch_start_log[t,a] ~ normal(13,5);
-    N_egg_start_log[t,a] ~  normal(18,5);
+    N_sp_start_log[t,a] ~ normal(15,10);
+    N_recruit_start_log[t,a] ~  normal(15.5,10);
+    N_catch_start_log[t,a] ~ normal(13,10);
+    N_egg_start_log[t,a] ~  normal(18,10);
   }
  }
  
@@ -386,15 +391,15 @@ model {
 // }
 
 // log fishing mortality for each calendar year 
- //    log_F_mean ~ normal(0,1);
- // 
- //  for(t in 1:nRyrs_T){
- //    log_F_dev_y[t] ~ normal(0, 1); 
- // }
+    log_F_mean ~ normal(0,1);
+
+  for(t in 1:nRyrs_T){
+    log_F_dev_y[t] ~ normal(0, 1);
+ }
  
-   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(0,1); //log fishing mortatliy
-}
+//    for(t in 1:nRyrs_T){
+//  log_F[t] ~ normal(0,1); //log fishing mortatliy
+// }
 
 
  // age comp priors -- maturity schedules
@@ -402,20 +407,22 @@ model {
   prob[2] ~ beta(1,1);
   prob[3] ~ beta(1,1);
   
- for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.01^2) + 1)));  
+ // Observation model
+  for (t in 1:nByrs) {
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.01^2) + 1))); // sigma_y_j;  
  // recruit by brood year 
-     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.01^2) + 1)));  
+     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
      
     } 
 
+ 
   for(t in 1:nRyrs){ // calendar years 
  // if(t<nByrs){
      target += ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
      //recruit by cal year:: target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])), sqrt(log((0.06^2) + 1)));  
      target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_catch) ; //sqrt(log((0.01^2) + 1)));  
-     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_y_sp);
+     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp);//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_y_sp);
       // }
     }
   }
