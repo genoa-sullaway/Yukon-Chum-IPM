@@ -54,7 +54,7 @@ data_list_plot <-    list(nByrs=nByrs_stan,
                                           o_run_comp=o_run_comp,#[8:nByrs,],
                                           ess_age_comp=ess_age_comp)#[8:(nByrs-1)] )
 
-
+saveRDS( data_list_plot, "data/sim_dat.rds") 
  
 # load model ==============
 bh_fit<- read_rds("output/stan_fit_SIMULATED_OUTPUT.RDS")
@@ -83,7 +83,7 @@ traceplot(bh_fit,pars=  c("p_1","p_2"))
 
 traceplot(bh_fit,pars=  c("g"))
 
-traceplot(bh_fit,pars=  c("sigma_y_j"))
+traceplot(bh_fit,pars=  c("sigma_catch"))
 
 traceplot(bh_fit,pars=  c("log_F"))
 

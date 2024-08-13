@@ -20,12 +20,12 @@ data { // all equation references are from proposal numbering
 //   real  N_recruit_start_log[t_start,A];
 //   real  N_catch_start_log[t_start,A];
 //   real  N_egg_start_log[t_start,A];
-// //   
+   
 // vector<lower=0, upper=1> [A] pi; // actual age comps
 
- real <lower =10> log_c_1;
- real <lower =10> log_c_2; // log carrying capacity
-  
+ // real <lower =10> log_c_1;
+ // real <lower =10> log_c_2; // log carrying capacity
+ //  
 int<lower=0> ncovars1; //number of covariates for first lifestage  
 int<lower=0> ncovars2; //number of covariates for second lifestage  
 
@@ -36,7 +36,7 @@ matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by yea
 // vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 real ess_age_comp; 
 }
-   transformed data {
+   // transformed data {
 // real N_sp_start [t_start,A];
 // real N_recruit_start [t_start,A];
 // real N_catch_start [t_start,A];
@@ -57,13 +57,13 @@ real ess_age_comp;
 // N_j_start = exp(N_j_start_log);
 // N_brood_year_return_start = exp(N_brood_year_return_start_log);
 //
-real<lower=0> c_1; // estimate on log, transform back to normal scale 
-real<lower=0> c_2;
+// real<lower=0> c_1; // estimate on log, transform back to normal scale 
+// real<lower=0> c_2;
 
-   c_1 = exp(log_c_1);
-   c_2 = exp(log_c_2);
+   // c_1 = exp(log_c_1);
+   // c_2 = exp(log_c_2);
 
-  }  
+  // }  
 parameters {
  // starting values 
 real <lower =10> N_j_start_log;
