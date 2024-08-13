@@ -126,6 +126,14 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "sigma_sp"),
      fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "sigma_y_j"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "sigma_brood_return"),
+     fill_color = "blue")
  
 plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
      pars=  c( "theta_1_1_pp","theta_1_2_pp","theta_1_3_pp",

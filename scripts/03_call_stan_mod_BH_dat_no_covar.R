@@ -107,11 +107,6 @@ N_sp_start_log = log(N_sp_start+ 0.001)
 N_catch_start_log = log(N_catch_start+ 0.001) 
 N_egg_start_log  = log(N_egg_start+ 0.001)
  
-# mean productivity rate =====
-# estimating this now
-basal_p_1 = 0.1  # these are values it estimates at when allowed to
-basal_p_2 = 0.4
-
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 

@@ -13,7 +13,7 @@ data { // all equation references are from proposal numbering
   vector[nByrs] data_stage_return;   //  number of harvest + escapement for each group 
   vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
-// 
+ 
 //   real  N_j_start_log;
 //   real  N_brood_year_return_start_log;
 //   real  N_sp_start_log[t_start,A];
@@ -22,7 +22,10 @@ data { // all equation references are from proposal numbering
 //   real  N_egg_start_log[t_start,A];
 // //   
 // vector<lower=0, upper=1> [A] pi; // actual age comps
-//  
+
+ real <lower =10> log_c_1;
+ real <lower =10> log_c_2; // log carrying capacity
+  
 int<lower=0> ncovars1; //number of covariates for first lifestage  
 int<lower=0> ncovars2; //number of covariates for second lifestage  
 
@@ -33,7 +36,7 @@ matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by yea
 // vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 real ess_age_comp; 
 }
-//   transformed data {
+   transformed data {
 // real N_sp_start [t_start,A];
 // real N_recruit_start [t_start,A];
 // real N_catch_start [t_start,A];
@@ -53,23 +56,30 @@ real ess_age_comp;
 // 
 // N_j_start = exp(N_j_start_log);
 // N_brood_year_return_start = exp(N_brood_year_return_start_log);
-// 
-// }  
+//
+real<lower=0> c_1; // estimate on log, transform back to normal scale 
+real<lower=0> c_2;
+
+   c_1 = exp(log_c_1);
+   c_2 = exp(log_c_2);
+
+  }  
 parameters {
  // starting values 
-real <lower =0> N_j_start_log;
+real <lower =10> N_j_start_log;
 real <lower =0> N_brood_year_return_start_log;
 real <lower =0> N_sp_start_log[t_start,A];
 real <lower =0> N_recruit_start_log[t_start,A];
 real <lower =0> N_catch_start_log[t_start,A];
 real <lower =0> N_egg_start_log[t_start,A];
 
- real  log_c_1;
- real  log_c_2; // log carrying capacity
- 
-// real <lower =0> sigma_sp; 
+ // real <lower =10> log_c_1;
+ // real <lower =10> log_c_2; // log carrying capacity
+ // 
+real <lower =0> sigma_sp; 
+real <lower =0> sigma_brood_return; 
 real <lower =0> sigma_catch; 
-  // real <lower=0> sigma_y_j;
+real <lower=0> sigma_y_j;
  
 // covariate parameters 
 real theta1 [ncovars1]; // covariate estimated for each covariate and each population
@@ -108,8 +118,8 @@ real N_brood_year_return_start;
 // real N_first_winter_start[t_start,A];
 real N_j_start;
 
-real<lower=0> c_1; // estimate on log, transform back to normal scale 
-real<lower=0> c_2;
+// real<lower=0> c_1; // estimate on log, transform back to normal scale 
+// real<lower=0> c_2;
 
 vector<lower = 0> [nRyrs_T] F;
 
@@ -258,8 +268,8 @@ for(t in 1:t_start){
 //   }
 
   // transform log carrying capacity to normal scale
-   c_1 = exp(log_c_1);
-   c_2 = exp(log_c_2);
+   // c_1 = exp(log_c_1);
+   // c_2 = exp(log_c_2);
 
 // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
   for(t in 1:nByrs){
@@ -348,15 +358,16 @@ for(t in 1:nByrs){
 }
 
 model {
-  // sigma_y_j ~ normal(0,5); //normal 
-   // sigma_sp ~  normal(0,1); 
+   sigma_y_j ~ normal(0,1); //normal
+   sigma_sp ~  normal(0,1);
+   sigma_brood_return ~  normal(0,1);
    sigma_catch ~ normal(0,1); 
    
    log_catch_q ~ normal(-4,10);
    
-  log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
- 
+  // log_c_1 ~  normal(16, 20); // carrying capacity prior - stage 1
+  // log_c_2 ~  normal(18, 20); // carrying capacity prior - stage 2
+  
  N_j_start_log ~ normal(17,10);
  N_brood_year_return_start_log~ normal(15,10);
 
@@ -376,11 +387,11 @@ model {
     // print("g:", g);
     // print("prob :", prob);
     
-  theta1[1] ~ normal(0,1); //normal(0.5,5); // environmental covariate coefficient stage 1
+  theta1[1] ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
  // theta1[2] ~ normal(0.1,0.01); // environmental covariate coefficient stage 1
  // theta1[3] ~ normal(-0.1,0.01);
  
- theta2[1] ~ normal(0,1);
+ theta2[1] ~ normal(0,0.01);
  // theta2[2] ~ normal(-0.1,0.01);
  
     basal_p_1 ~ beta(1,1); // mean survival stage 1
@@ -412,9 +423,9 @@ model {
   
  // Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.01^2) + 1))); // sigma_y_j;  
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sigma_y_j);//sqrt(log((0.01^2) + 1))); // sigma_y_j;  
  // recruit by brood year 
-     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
+     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sigma_brood_return);//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
      
     } 
 
@@ -425,7 +436,7 @@ model {
      
      //recruit by cal year:: target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])), sqrt(log((0.06^2) + 1)));  
      target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_catch) ; //sqrt(log((0.01^2) + 1)));  
-     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
+     target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp); //sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
       // }
     }
   }
