@@ -19,7 +19,7 @@ data { // all equation references are from proposal numbering
   real  N_j_start_log;
   real  N_brood_year_return_start_log;
   real  N_sp_start_log[t_start,A];
-  real N_recruit_start_log[t_start,A];
+  real  N_recruit_start_log[t_start,A];
   real  N_catch_start_log[t_start,A];
   real  N_egg_start_log[t_start,A];
 }
@@ -113,7 +113,7 @@ real <lower=0>  catch_q; // related juvebile data to spawner data (on different 
 // matrix<lower=0, upper=1> [nByrs,A] p;// proportion of fish from each brood year that mature at a certain age
 // real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 // vector <lower=0> [A] Dir_alpha;         // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
-matrix<lower=0, upper=1>[nByrs,A] q;
+matrix<lower=0, upper=1>[nRyrs,A] q;
 vector<lower=0, upper=1> [A] pi;
 
 vector<lower = 0> [nRyrs_T] F; // instantaneous fishing mortality           
@@ -148,8 +148,7 @@ vector<lower = 0> [nRyrs_T] F; // instantaneous fishing mortality
   N_sp[1:t_start,a] = N_sp_start[1:t_start,a];
   N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
   N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
-  // N_first_winter[1:t_start,a] = N_first_winter_start[1:t_start,a];
-     }
+    }
 
   // // transform log carrying capacity to normal scale
    c_1 = exp(log_c_1);
@@ -169,7 +168,6 @@ vector<lower = 0> [nRyrs_T] F; // instantaneous fishing mortality
 //     p[t,a] = g[t,a]/sum(g[t,1:A]);
 //    }
 //   }
-
 
 catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
 
@@ -206,13 +204,9 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
           N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; 
             }
      }
-   
-  print("pi", pi);
-  print("prob", prob);
-  
-  
+    
   // Calculate age proportions by return year
-  for (t in 1:nByrs) {
+  for (t in 1:nRyrs) {
     for(a in 1:A){
      q[t,a] = N_recruit[t,a]/(sum(N_recruit[t,1:A]));
     }
@@ -286,7 +280,7 @@ model {
      
     } 
 
-  for(t in 1:nByrs){ // calendar years 
+  for(t in 1:nRyrs){ // calendar years 
  // if(t<nByrs){
      target += ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      

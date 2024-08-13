@@ -146,32 +146,40 @@ ggplot(data = summ_n_sp) +
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
   theme_classic()
 
-# ## recruits ====== 
-# pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
-#                      probs = c(0.1, 0.9))$summary %>%
-#   data.frame() %>%
-#   rownames_to_column()  %>%
-#   dplyr::mutate(time = rep(1:23, each=4),
-#                 age = rep(1:4, length.out = nrow(.))) %>%
-#    filter(!time>21) %>%
-#   left_join(years) 
-# 
-# summ_n_rec <- pred_N_recruit %>%
-#   group_by(cal_year) %>%
-#   summarise(mean = sum(mean),
-#             se_mean = mean(se_mean)) %>% 
-#   cbind(obs = data_list_stan$data_stage_return)  %>%
-#   mutate(rowname = "recruit")  
-# 
-# ggplot(data = summ_n_rec) +
-#   geom_point(aes(x=cal_year, y = obs)) +
-#   geom_line(aes(x=cal_year, y = mean)) +
-#   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-#                   ymax = mean+se_mean))+
-#   ggtitle(("recruits: obs and predicted"))+
-#   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020))
+## recruits ====== 
+pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
+                     probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:23, each=4),
+                age = rep(1:4, length.out = nrow(.))) %>%
+ 
+  left_join(years)
+ 
+ggplot(data = pred_N_recruit) +
+  geom_line(aes(x=cal_year, y = mean, group = age, color = age)) +
+  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
+                  ymax = mean+se_mean))+
+  ggtitle(("recruits: obs and predicted"))+
+  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020))
 
-## harvest ====== 
+## brood year return ====== 
+pred_N_brood_year_return <- summary(bh_fit, pars = c("N_brood_year_return"), 
+                          probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = (1:17 )) %>% 
+  cbind(obs = data_list_stan$data_stage_return)  %>%
+  mutate(rowname = "recruit")
+
+ggplot(data = pred_N_brood_year_return) + 
+  geom_line(aes(x=time, y = mean)) +
+  geom_point(aes(x=time, y = obs)) +
+  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                  ymax = mean+se_mean))+
+  ggtitle(("brood year return"))
+
+## harvest ========= 
 pred_N_harvest <- summary(bh_fit, pars = c("N_catch"), 
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
@@ -284,12 +292,12 @@ ggplot(data= age_comp_Q) +
   facet_wrap(~age)
 
 # plot mean age comp  ======
-age_comp <- summary(bh_fit, pars = c("p"), 
+age_comp <- summary(bh_fit, pars = c("pi"), 
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column() %>% 
   rename(pred = "mean") %>% 
-  cbind(obs = data_list_stan$p_obs) %>% 
+  cbind(obs = data_list_stan$pi) %>% 
   dplyr::select(1,2,9) %>% 
   gather(2:3, key = "key", value = "value")
 
@@ -541,13 +549,14 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:22, length.out = nrow(.)), 
+  dplyr::mutate(time = rep(1:17, length.out = nrow(.)), 
                 variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
-                                     TRUE ~ "kappa_j_survival")) %>% 
+                                     grepl("kappa_j_survival",rowname) ~ "kappa_j_survival")) %>% 
   left_join(years)# %>% 
   #filter(!time<5 & !time>20)
 
-ggplot(data = kappasurvival%>%   filter(!time<2),aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
+ggplot(data = kappasurvival,
+       aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) + 

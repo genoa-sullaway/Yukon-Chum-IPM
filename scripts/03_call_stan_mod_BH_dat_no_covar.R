@@ -33,7 +33,7 @@ t_start = A +2  # to fill starting values
 
 
 year_min = 2001
-year_max_cal = 2021
+year_max_cal = 2020
 year_max_brood = 2017
 
 
@@ -202,7 +202,8 @@ data_list_stan <- list(nByrs=nByrs,
                        N_egg_start_log=N_egg_start_log,
                        
                        basal_p_1 =basal_p_1,
-                       basal_p_2 = basal_p_2)
+                       basal_p_2 = basal_p_2,
+                       pi=pi)
 
 # call mod  ===========================
 bh_fit <- stan(
