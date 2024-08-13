@@ -22,6 +22,8 @@ traceplot(bh_fit,pars=  c( "D_scale" ))
 
 traceplot(bh_fit,pars=  c( "basal_p_1","basal_p_2"))
 
+traceplot(bh_fit,pars=  c( "log_c_1","log_c_2"))
+
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
 traceplot(bh_fit,pars=  c(  "Dir_alpha"))
@@ -261,7 +263,7 @@ ggplot(data = pred_N_eggs_sum %>% filter(!time < 7)) +
 
 # plot age comp through time =================
 age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 
-    dplyr::mutate(time = 1:21) %>% 
+    dplyr::mutate(time = 1:20) %>% 
     left_join(years) %>%
     gather(1:4, key = "age", value = "obs") %>%
     dplyr::mutate(age = case_when(age == "abund_0.3" ~ 3,
@@ -273,7 +275,7 @@ age_comp_Q <- summary(bh_fit, pars = c("q"),
                        probs = c(0.1, 0.9))$summary %>% 
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:17, each=4),
+  dplyr::mutate(time = rep(1:20, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   left_join(years) %>%
   left_join( age_comp_dat) %>% 
@@ -294,13 +296,15 @@ age_comp <- summary(bh_fit, pars = c("pi"),
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column() %>% 
-  rename(pred = "mean") %>% 
-  cbind(obs = data_list_stan$pi) %>% 
-  dplyr::select(1,2,9) %>% 
-  gather(2:3, key = "key", value = "value")
+  rename(pred = "mean")# %>% 
+#  cbind(obs = data_list_stan$pi) %>% 
+  #dplyr::select(1,2,9) %>% 
+  #gather(2:3, key = "key", value = "value")
 
 ggplot(data = age_comp) +
-  geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
+  geom_point(aes(x= rowname, y = pred)) + 
+  
+  # geom_point(aes(x= rowname, y = value, group = key, color = key)) + 
   theme_classic()
 
 # align all stages on one plot to look at scale. =====

@@ -13,14 +13,14 @@ data { // all equation references are from proposal numbering
   vector[nByrs] data_stage_return;   //  number of harvest + escapement for each group 
   vector[nRyrs] data_stage_sp;   // number of spawners for each group (escapement)
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
-
-  real  N_j_start_log;
-  real  N_brood_year_return_start_log;
-  real  N_sp_start_log[t_start,A];
-  real  N_recruit_start_log[t_start,A];
-  real  N_catch_start_log[t_start,A];
-  real  N_egg_start_log[t_start,A];
-//   
+// 
+//   real  N_j_start_log;
+//   real  N_brood_year_return_start_log;
+//   real  N_sp_start_log[t_start,A];
+//   real  N_recruit_start_log[t_start,A];
+//   real  N_catch_start_log[t_start,A];
+//   real  N_egg_start_log[t_start,A];
+// //   
 // vector<lower=0, upper=1> [A] pi; // actual age comps
 //  
 int<lower=0> ncovars1; //number of covariates for first lifestage  
@@ -33,41 +33,41 @@ matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by yea
 // vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 real ess_age_comp; 
 }
-  transformed data {
-real N_sp_start [t_start,A];
-real N_recruit_start [t_start,A];
-real N_catch_start [t_start,A];
-real N_ocean_start[t_start,A];
-real N_egg_start[t_start,A];
-real N_j_start;
-real N_brood_year_return_start;
-
-for(t in 1:t_start){
-  for(a in 1:A){
-  N_sp_start[t,a] = exp(N_sp_start_log[t,a]);//*p[a]; //o_run_comp[t,a];
-  N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);//*p[a]; //*o_run_comp[t,a];
-  N_catch_start[t,a] = exp(N_catch_start_log[t,a]);//*p[a];//o_run_comp[t,a];
-  N_egg_start[t,a] = exp(N_egg_start_log[t,a]);//*p[a];//o_run_comp[t,a];
-  }
- }
-
-N_j_start = exp(N_j_start_log);
-N_brood_year_return_start = exp(N_brood_year_return_start_log);
-
-}  
+//   transformed data {
+// real N_sp_start [t_start,A];
+// real N_recruit_start [t_start,A];
+// real N_catch_start [t_start,A];
+// real N_ocean_start[t_start,A];
+// real N_egg_start[t_start,A];
+// real N_j_start;
+// real N_brood_year_return_start;
+// 
+// for(t in 1:t_start){
+//   for(a in 1:A){
+//   N_sp_start[t,a] = exp(N_sp_start_log[t,a]);//*p[a]; //o_run_comp[t,a];
+//   N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);//*p[a]; //*o_run_comp[t,a];
+//   N_catch_start[t,a] = exp(N_catch_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+//   N_egg_start[t,a] = exp(N_egg_start_log[t,a]);//*p[a];//o_run_comp[t,a];
+//   }
+//  }
+// 
+// N_j_start = exp(N_j_start_log);
+// N_brood_year_return_start = exp(N_brood_year_return_start_log);
+// 
+// }  
 parameters {
  real  log_c_1;
  real  log_c_2; // log carrying capacity
  real <lower=0> sigma_catch; 
   // real <lower=0> sigma_y_j;
-// 
-// // starting values 
-//  real <lower= 10>  N_j_start_log; 
-//  real <lower =10>  N_brood_year_return_start_log; 
-//  real <lower= 10>  N_sp_start_log [t_start,A];
-//  real <lower= 10>  N_recruit_start_log [t_start,A];
-//  real <lower= 10>  N_catch_start_log [t_start,A];
-//  real <lower= 10>  N_egg_start_log [t_start,A]; 
+
+// starting values
+ real <lower= 10>  N_j_start_log;
+ real <lower =10>  N_brood_year_return_start_log;
+ real <lower= 10>  N_sp_start_log [t_start,A];
+ real <lower= 10>  N_recruit_start_log [t_start,A];
+ real <lower= 10>  N_catch_start_log [t_start,A];
+ real <lower= 10>  N_egg_start_log [t_start,A];
 
 // covariate parameters 
 real theta1 [ncovars1]; // covariate estimated for each covariate and each population
@@ -99,13 +99,13 @@ vector [nByrs] N_brood_year_return; // sum eggs across ages to then go into the 
  real N_ocean[nRyrs_T,A];
  real N_e [nRyrs_T,A];
 
-// real N_sp_start [t_start,A];
-// real N_recruit_start [t_start,A];
-// real N_catch_start [t_start,A];
-// real N_egg_start[t_start,A];
-// real N_brood_year_return_start;
-// // real N_first_winter_start[t_start,A];
-// real N_j_start;
+real N_sp_start [t_start,A];
+real N_recruit_start [t_start,A];
+real N_catch_start [t_start,A];
+real N_egg_start[t_start,A];
+real N_brood_year_return_start;
+// real N_first_winter_start[t_start,A];
+real N_j_start;
 
 real c_1;
 real c_2;
@@ -152,17 +152,17 @@ vector<lower=0, upper=1> [A] pi; // actual age comps
   // F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  }
  
-  // N_j_start = exp(N_j_start_log); 
-  // N_brood_year_return_start = exp(N_brood_year_return_start_log);
-  // 
-// for(t in 1:t_start){
-//   for(a in 1:A){
-//   N_sp_start[t,a] = exp(N_sp_start_log[t,a]); 
-//   N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]); 
-//   N_catch_start[t,a] = exp(N_catch_start_log[t,a]); 
-//   N_egg_start[t,a] = exp(N_egg_start_log[t,a]); 
-//   }
-//  }
+N_j_start = exp(N_j_start_log);
+N_brood_year_return_start = exp(N_brood_year_return_start_log);
+
+for(t in 1:t_start){
+  for(a in 1:A){
+  N_sp_start[t,a] = exp(N_sp_start_log[t,a]);
+  N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);
+  N_catch_start[t,a] = exp(N_catch_start_log[t,a]);
+  N_egg_start[t,a] = exp(N_egg_start_log[t,a]);
+  }
+ }
 
 // try adding starting values specific to ages ....
 // for(a in 1:A){
@@ -350,19 +350,20 @@ model {
    
    log_catch_q ~ normal(-4,10);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 
 
-  log_c_1 ~  normal(16, 50); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 50); // carrying capacity prior - stage 2
+  log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
+  log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
 // 
-//  N_j_start_log ~ normal(17,5);
-//  N_brood_year_return_start_log~ normal(16,5); 
-// 
-//  for(t in 1:t_start){
-//    for(a in 1:A){
-//     N_sp_start_log[t,a] ~ normal(15,5);
-//     N_recruit_start_log[t,a] ~  normal(15.5,5);
-//     N_catch_start_log[t,a] ~ normal(13,5);
-//     N_egg_start_log[t,a] ~  normal(18,5);
-//   }
+ N_j_start_log ~ normal(17,5);
+ N_brood_year_return_start_log~ normal(16,5);
+
+ for(t in 1:t_start){
+   for(a in 1:A){
+    N_sp_start_log[t,a] ~ normal(15,5);
+    N_recruit_start_log[t,a] ~  normal(15.5,5);
+    N_catch_start_log[t,a] ~ normal(13,5);
+    N_egg_start_log[t,a] ~  normal(18,5);
+  }
+ }
  
     // print("g:", g);
     // print("prob :", prob);

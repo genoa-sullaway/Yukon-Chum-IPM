@@ -260,8 +260,8 @@ bh_fit <- stan(
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 
-  verbose=FALSE)#, 
-#  control = list(adapt_delta = 0.95))
+  verbose=FALSE, 
+  control = list(adapt_delta = 0.95))
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
  

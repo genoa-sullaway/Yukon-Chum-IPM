@@ -7,8 +7,6 @@ library(rstanarm)
 library(tidync)
 library(lubridate) 
 library(readxl)
-# log_f = runif(1,-4,-1)
-# 1-exp(-exp(log_f))
 
 # Things to look into  =======================================================
 # sigma for both life stages in estimates so I can fix it instead of have model estimate it 
@@ -31,11 +29,9 @@ Ps = 0.5 # proportion of females - assumption, need to lit check
 fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = A +2  # to fill starting values 
 
-
 year_min = 2001
 year_max_cal = 2020
 year_max_brood = 2017
-
 
 # load salmon data ==============================================
 ## Fall age comp ================================================
@@ -85,7 +81,6 @@ nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN
 nRyrs_T = nByrs + 4 + 2
 
 # starting values to fix  =============
-
 N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
 N_catch_start = matrix(NA,nrow=t_start, ncol=A)
 N_egg_start = matrix(0,nrow=t_start, ncol=A)
@@ -175,35 +170,26 @@ data_list_stan <- list(nByrs=nByrs,
                        Ps=Ps,
                        fs=fs,
                        M = M_fill_stan,
-                       # basal_p_1=basal_p_1,
-                       # basal_p_2=basal_p_2, estimating these now 
-                       data_sp_cv = spawner_cv$fall_spawner_cv, 
-                       data_recruit_cv = spawner_cv$summer_recruit_cv, 
-                       #  data_j_cv = fall_juv_cv$CV,
                        
                        data_stage_j = as.vector(fall_juv$fall_abundance), 
                        data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                        
-                       kappa_marine_mort_start = -log(kappa_marine_start),
-                       kappa_marine_start = kappa_marine_start,
-                       kappa_j_start = kappa_j_start,
-                       
                        o_run_comp=yukon_fall_obs_agecomp,
                        ess_age_comp=ess_age_comp,
-                       # p_obs = p,
                        
-                       N_j_start_log =N_j_start_log,
-                       N_brood_year_return_start_log =  N_brood_year_return_start_log,
-                       N_recruit_start_log = N_recruit_start_log,
-                       N_sp_start_log =N_sp_start_log,
-                       N_catch_start_log = N_catch_start_log,
-                       N_egg_start_log=N_egg_start_log,
+                       # N_j_start_log =N_j_start_log,
+                       # N_brood_year_return_start_log =  N_brood_year_return_start_log,
+                       # N_recruit_start_log = N_recruit_start_log,
+                       # N_sp_start_log =N_sp_start_log,
+                       # N_catch_start_log = N_catch_start_log,
+                       # N_egg_start_log=N_egg_start_log,
                        
                        basal_p_1 =basal_p_1,
-                       basal_p_2 = basal_p_2,
-                       pi=pi)
+                       basal_p_2 = basal_p_2)#,
+                       
+                       #pi=pi)
 
 # call mod  ===========================
 bh_fit <- stan(
