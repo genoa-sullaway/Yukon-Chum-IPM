@@ -219,7 +219,6 @@ for(t in 1:nByrs){
 }
 
 model {
- 
   // sigma_y_j ~ normal(1,5); 
    sigma_catch ~ normal(0,10); 
    log_catch_q ~ normal(-4,10);//normal(-1.2,4); // Estimate Q - this will translate # of recruits to # of spawners 

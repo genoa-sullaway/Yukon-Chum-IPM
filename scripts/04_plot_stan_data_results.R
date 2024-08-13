@@ -47,10 +47,8 @@ traceplot(bh_fit,pars=  c("D_sum"))
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
-               "theta1[2]",
-               "theta1[3]",
-               "theta2[1]",
-               "theta2[2]"#,
+              
+               "theta2[1]"
              #  "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
      ),
      fill_color = "blue")
@@ -122,7 +120,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:23, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
-  filter(!time>21) %>% # remove years without full return estimates 
+  filter(!time>20) %>% # remove years without full return estimates 
   left_join(years)  
 # ggplot(data = pred_N_SP %>% mutate(age = factor(age))) +
 #   geom_line(aes(x=time, y= mean, group = age, color = age))+
@@ -186,7 +184,7 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:23, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>% 
-  filter(!time>21) 
+  filter(!time>20) 
 
 # plt proportions 
 # sum to compare with data 
@@ -527,8 +525,8 @@ fishing <- summary(bh_fit, pars = c("F"),
   data.frame() %>%
   rownames_to_column()  %>% 
   mutate(mean =  (mean),
-         time = 1:nrow(.)) %>% 
-  filter(!time> 21 & !time<5)
+         time = 1:nrow(.)) #%>% 
+#  filter(!time> 21 & !time<5)
 
 ggplot(data = fishing) + 
   geom_line(aes(x=time, y = mean)) + 
@@ -585,27 +583,6 @@ ggplot(data = kappasurvival,# %>%   filter(!time<2),
 #   xlab("Calendar Year") + 
 #   ylab("Survival Rate")
 
-# calculate rolling correlation in productivity....
-# make a list of 5 year chunks .... 
-n <- 5
-kappasurvival_group <- kappasurvival %>% 
-  dplyr::select(9:11, 2) %>% 
-  spread(variable, mean) %>% 
-  filter(!time %in% c(21,22)) %>% 
-  mutate(id = rep(1:n, times=1, each=4)) 
-
-corr <- list()
-
-for (i in 1:n) {
-  temp <- kappasurvival_group %>% 
-    filter(id == i)
-  
-  corr[[i]]<- cor.test(temp$kappa_j_survival,temp$kappa_marine_survival)
-  
-}
-
-corr
- 
 # plot estimated productivity ======
 productivity1 <- summary(bh_fit, pars = c("p_1"), 
                     probs = c(0.1, 0.9))$summary %>%

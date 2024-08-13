@@ -249,7 +249,8 @@ data_list_stan <- list(nByrs=nByrs,
                        N_egg_start_log=N_egg_start_log,
                        
                        o_run_comp=(yukon_fall_obs_agecomp),
-                       ess_age_comp=ess_age_comp )
+                       ess_age_comp=ess_age_comp
+                       )
 
 # call mod  ===========================
 bh_fit <- stan(

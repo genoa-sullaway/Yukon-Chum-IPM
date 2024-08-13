@@ -73,7 +73,7 @@ parameters {
 real theta1 [ncovars1]; // covariate estimated for each covariate and each population
 real theta2 [ncovars2];
 
-vector <lower=0, upper =1 > [A-1] prob; 
+vector <lower=0> [A-1] prob; 
 // real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 // real <lower=0> g[nByrs,A]; // gamma random draws
 real log_catch_q;
@@ -113,8 +113,8 @@ real c_2;
 vector<lower = 0> [nRyrs_T] F;
 
 // survival and covariate section 
-vector   [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
-vector   [nByrs] p_2;
+vector  <lower=0,upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
+vector <lower=0,upper = 1>  [nByrs] p_2;
 
 // vector <lower=0.001, upper = 0.99> [nByrs+1] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
 // vector <lower=0.001, upper = 0.99> [nByrs+1+1] p_2;
@@ -133,7 +133,7 @@ real <lower=0>  catch_q; // related juvebile data to spawner data (on different 
 // matrix<lower=0, upper=1> [nByrs,A] p;// proportion of fish from each brood year that mature at a certain age
 // real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 // vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
-matrix  [nRyrs,A] q; 
+matrix <lower=0, upper=1>[nRyrs,A] q; 
 vector<lower=0, upper=1> [A] pi; // actual age comps
   
 // starting value transformations ======
@@ -208,7 +208,6 @@ vector<lower=0, upper=1> [A] pi; // actual age comps
   
   N_j[1] = N_j_start;
   N_brood_year_return[1] = N_brood_year_return_start;
-  
  
     for(a in 1:A){
    // add starting values to the whole population array
@@ -393,7 +392,7 @@ model {
  // }
  
    for(t in 1:nRyrs_T){
- log_F[t] ~ normal(0,0.5); //log fishing mortatliy
+ log_F[t] ~ normal(0,1); //log fishing mortatliy
 }
 
 
