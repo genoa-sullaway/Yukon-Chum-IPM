@@ -45,13 +45,11 @@ traceplot(bh_fit,pars=  c("log_c_1","log_c_2"))
 
 traceplot(bh_fit,pars=  c("p_1","p_2"))
 
-traceplot(bh_fit,pars=  c("g"))
+traceplot(bh_fit,pars=  c("pi"))
 
-traceplot(bh_fit,pars=  c("sigma_y_j"))
+traceplot(bh_fit,pars=  c("sigma_sp"))
 
 traceplot(bh_fit,pars=  c("sigma_catch"))
-
-traceplot(bh_fit,pars=  c("sigma_brood_return"))
 
 traceplot(bh_fit,pars=  c("log_F"))
 
@@ -79,7 +77,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_F"),
+     pars=  c( "log_F_mean"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -125,6 +123,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "sigma_sp"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "basal_p_1", "basal_p_2" ),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
@@ -181,7 +183,8 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
   dplyr::mutate(time = rep(1:23, each=4),
                 age = rep(1:4, length.out = nrow(.))) %>%
  
-  left_join(years)
+  left_join(years)%>% 
+  filter(!time <5)
  
 ggplot(data = pred_N_recruit) +
   geom_line(aes(x=cal_year, y = mean, group = age, color = age)) +
@@ -197,7 +200,7 @@ pred_N_brood_year_return <- summary(bh_fit, pars = c("N_brood_year_return"),
   rownames_to_column()  %>%
   dplyr::mutate(time = (1:17 )) %>% 
   cbind(obs = data_list_stan$data_stage_return)  %>%
-  mutate(rowname = "recruit")
+  mutate(rowname = "recruit")  
 
 ggplot(data = pred_N_brood_year_return) + 
   geom_line(aes(x=time, y = mean)) +
@@ -326,6 +329,17 @@ age_comp <- summary(bh_fit, pars = c("pi"),
   rename(pred = "mean")  
 
 ggplot(data = age_comp) +
+  geom_point(aes(x= rowname, y = pred)) + 
+  theme_classic()
+
+# plot prob  ======
+prob <- summary(bh_fit, pars = c("prob"), 
+                    probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column() %>% 
+  rename(pred = "mean")  
+
+ggplot(data = prob) +
   geom_point(aes(x= rowname, y = pred)) + 
   theme_classic()
 

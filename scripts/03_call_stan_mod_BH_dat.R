@@ -79,31 +79,31 @@ nRyrs_T = nByrs + 4 + 2
 
 
 # # starting values to fix  =============
-# 
-# N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
-# N_catch_start = matrix(NA,nrow=t_start, ncol=A)
-# N_egg_start = matrix(0,nrow=t_start, ncol=A)
-# N_sp_start = matrix(NA,nrow=t_start, ncol=A)
-# 
-# N_j_start = exp(rnorm(1,17,1)) 
-# N_brood_year_return_start = exp(rnorm(1,16.5,1))
-# 
-# for (a in 1:A) {
-#   for(t in 1:t_start){
-#     N_recruit_start[t,a] = yukon_fall_recruits$total_run[t]*yukon_fall_obs_agecomp[t,a] #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
-#     N_sp_start[t,a] = yukon_fall_spawners$Spawners[t] *yukon_fall_obs_agecomp[t,a]   #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
-#     N_catch_start[t,a] = yukon_fall_harvest$harvest[t]*yukon_fall_obs_agecomp[t,a]   #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
-#     N_egg_start[t,a] = exp(17.5)*yukon_fall_obs_agecomp[t,a]  
-#   }
-# }
-# # log for model ======
-# N_j_start_log = log(N_j_start)
-# N_brood_year_return_start_log =  log(N_brood_year_return_start)
-# 
-# N_recruit_start_log = log(N_recruit_start+ 0.001)
-# N_sp_start_log = log(N_sp_start+ 0.001) 
-# N_catch_start_log = log(N_catch_start+ 0.001) 
-# N_egg_start_log  = log(N_egg_start+ 0.001)
+
+N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
+N_catch_start = matrix(NA,nrow=t_start, ncol=A)
+N_egg_start = matrix(0,nrow=t_start, ncol=A)
+N_sp_start = matrix(NA,nrow=t_start, ncol=A)
+
+N_j_start = exp(rnorm(1,17,1))
+N_brood_year_return_start = exp(rnorm(1,16.5,1))
+
+for (a in 1:A) {
+  for(t in 1:t_start){
+    N_recruit_start[t,a] = yukon_fall_recruits$total_run[t]*yukon_fall_obs_agecomp[t,a] #exp(rnorm(1,yukon_fall_recruits$mean,1))*p[t,]
+    N_sp_start[t,a] = yukon_fall_spawners$Spawners[t] *yukon_fall_obs_agecomp[t,a]   #exp(rnorm(1,yukon_fall_spawners$mean,1))*p[t,]
+    N_catch_start[t,a] = yukon_fall_harvest$harvest[t]*yukon_fall_obs_agecomp[t,a]   #exp(rnorm(1,yukon_fall_harvest$mean,1))*p[t,]
+    N_egg_start[t,a] = exp(17.5)*yukon_fall_obs_agecomp[t,a]
+  }
+}
+# log for model ======
+N_j_start_log = log(N_j_start)
+N_brood_year_return_start_log =  log(N_brood_year_return_start)
+
+N_recruit_start_log = log(N_recruit_start+ 1.001)
+N_sp_start_log = log(N_sp_start+ 1.001)
+N_catch_start_log = log(N_catch_start+ 1.001)
+N_egg_start_log  = log(N_egg_start+ 1.001)
 
 
 #plot(fall_juv$fall_abundance, type ="l")
@@ -164,6 +164,14 @@ M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative
 
 #ess age comp =======
 ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
+
+# fix age comp - based on estimates from no covar data 
+# age_comp <- summary(bh_fit, pars = c("pi"), 
+#                     probs = c(0.1, 0.9))$summary[,1]
+ 
+age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
+# in case i want to fix that  
+#prob = c(0.03180601 0.74323447 0.96200639)
 
 # STAN STARTING VALUES ==========
 # kappa_j_start =  basal_p_1
@@ -234,11 +242,13 @@ data_list_stan <- list(nByrs=nByrs,
                        # N_recruit_start_log = N_recruit_start_log,
                        # N_sp_start_log =N_sp_start_log,
                        # N_catch_start_log = N_catch_start_log,
-                       # N_egg_start_log=N_egg_start_log,
-                       log_c_1 = 20,
-                       log_c_2 =18, 
+                       # N_egg_start_log=N_egg_start_log, 
+                       
                        o_run_comp=(yukon_fall_obs_agecomp),
-                       ess_age_comp=ess_age_comp
+                       ess_age_comp=ess_age_comp,
+                       # basal_p_1 = 0.9,
+                       # basal_p_2=0.9,
+                       pi = age_comp
                        )
 
 # call mod  ===========================
