@@ -39,8 +39,8 @@ matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by yea
 // vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 real ess_age_comp; 
 
-  real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
-// real <lower=0, upper = 1> basal_p_2;
+real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
+real <lower=0, upper = 1> basal_p_2;
 }
 
 // transformed data {
@@ -97,7 +97,7 @@ real log_F_mean;
  vector [nRyrs_T]  log_F_dev_y; 
 
  // real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
- real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
+ // real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
  }
 
 transformed parameters { 
@@ -389,14 +389,14 @@ model {
     // print("prob :", prob);
     
   theta1[1] ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
- // theta1[2] ~ normal(0.1,0.01); // environmental covariate coefficient stage 1
+  theta1[2] ~ normal(0,0.01); // environmental covariate coefficient stage 1
  // theta1[3] ~ normal(-0.1,0.01);
  
  theta2[1] ~ normal(0,0.01);
  // theta2[2] ~ normal(-0.1,0.01);
  
   // basal_p_1 ~ beta(1,1); // mean survival stage 1
-  basal_p_2 ~ beta(1,1); // mean survivial stage 2C
+  // basal_p_2 ~ beta(1,1); // mean survivial stage 2C
     // 
 // age comp 
 //  for(t in 1:nByrs){
@@ -423,9 +423,9 @@ model {
   
  // Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); // sigma_y_j;  
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.02^2) + 1)));//sqrt(log((0.01^2) + 1))); // sigma_y_j;  
  // recruit by brood year 
-     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
+     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.02^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
      
     } 
 
@@ -435,7 +435,7 @@ model {
      target += ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
      //recruit by cal year:: target += normal_lpdf(log(data_stage_return[t]) | log(sum(N_recruit[t,1:A])), sqrt(log((0.06^2) + 1)));  
-     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.05^2) + 1)));  //sigma_catch) ; 
+     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.01^2) + 1)));  //sigma_catch) ; 
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp); //sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
       // }
     }

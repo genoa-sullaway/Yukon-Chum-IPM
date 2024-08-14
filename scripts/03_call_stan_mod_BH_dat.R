@@ -122,9 +122,9 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   dplyr::mutate(brood_year = cal_year-1) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>%
-  dplyr::select(SST_CDD_NBS#,# yukon_mean_discharge,
-                # Large_zoop,
-                # Cnideria
+  dplyr::select(SST_CDD_NBS,# yukon_mean_discharge,
+                #  Large_zoop#,
+                 Cnideria
                 #,yukon_mean_discharge 
   ) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
   as.matrix()
@@ -155,7 +155,7 @@ stage_b_cov <- temp_b_cov %>%
 
 
 # number covariates for each life stage 
-ncovars1 = 1
+ncovars1 = 2
 ncovars2 = 1
 
 # fix marine mortality =======

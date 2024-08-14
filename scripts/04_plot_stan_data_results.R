@@ -57,7 +57,7 @@ traceplot(bh_fit,pars=  c("D_sum"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-     pars=  c( "theta1[1]",#"theta1[2]","theta1[3]","theta1[4]",
+     pars=  c( "theta1[1]","theta1[2]",#"theta1[3]","theta1[4]",
               
                "theta2[1]"
              #  "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
@@ -270,7 +270,7 @@ ggplot(data = summ_n_j) +
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
 
-## eggs =============================
+ ## eggs =============================
 # pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"), 
 #                           probs = c(0.1, 0.9))$summary %>%
 #   data.frame() %>%
@@ -576,6 +576,17 @@ ggplot(data = fishing) +
 # ggplot(data = S) + 
 #   geom_point(aes(x=rowname, y = mean)) + 
 #   ylab("Log Selectivity") 
+
+
+# Plot theta ======
+theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]"),
+                   probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()
+
+ggplot(data = theta) +
+  geom_point(aes(x=theta, y = mean)) +
+  ylab("Log Selectivity")
   
 # plot  estimated kappas survival ======
 kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
