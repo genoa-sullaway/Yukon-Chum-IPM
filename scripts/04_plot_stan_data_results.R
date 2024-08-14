@@ -77,7 +77,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_F_mean"),
+     pars=  c( "log_F"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -152,25 +152,21 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
   dplyr::mutate(time = rep(1:23, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   filter(!time>20) %>% # remove years without full return estimates 
-  left_join(years)  
-# ggplot(data = pred_N_SP %>% mutate(age = factor(age))) +
-#   geom_line(aes(x=time, y= mean, group = age, color = age))+
-#   facet_wrap(~age, scales = "free")
-
-# plot proportions 
+  left_join(years)   
+ 
 # sum to compare with data 
 summ_n_sp <- pred_N_SP %>%
   group_by(cal_year) %>%
   summarise(mean = sum(mean),
             sd = mean(sd) ) %>%
   cbind(obs = data_list_stan$data_stage_sp) %>%
-  mutate(rowname = "sp")  
-  
+  mutate(rowname = "sp")   
+
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=cal_year, y = obs)) +
   geom_line(aes(x=cal_year, y = mean)) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-sd,
-                  ymax = mean+sd)) +
+  # geom_ribbon(aes(x=cal_year, ymin = mean-sd,
+  #                 ymax = mean+sd)) +
   ggtitle("Spawners: obs and predicted")+
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
   theme_classic()
@@ -183,8 +179,7 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
   dplyr::mutate(time = rep(1:23, each=4),
                 age = rep(1:4, length.out = nrow(.))) %>%
  
-  left_join(years)%>% 
-  filter(!time <5)
+  left_join(years)  
  
 ggplot(data = pred_N_recruit) +
   geom_line(aes(x=cal_year, y = mean, group = age, color = age)) +

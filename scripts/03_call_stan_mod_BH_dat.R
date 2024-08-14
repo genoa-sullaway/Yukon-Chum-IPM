@@ -246,8 +246,8 @@ data_list_stan <- list(nByrs=nByrs,
                        
                        o_run_comp=(yukon_fall_obs_agecomp),
                        ess_age_comp=ess_age_comp,
-                       # basal_p_1 = 0.9,
-                       # basal_p_2=0.9,
+                       basal_p_1 = 0.9,
+                       basal_p_2=0.9,
                        pi = age_comp
                        )
 

@@ -109,18 +109,18 @@ plot(both)
  
 # make plot with points  ========
 p <-ggplot() +
+  geom_sf(data = na_outline, fill = "white") +
   geom_sf(data = ariv, aes(
-    color = factor(ORD_FLOW), size = width, alpha = width
+    color = factor(ORD_FLOW), size = width, alpha = width 
   )) +
-  # geom_sf(data = mask, alpha = 0.7, color = "black") + 
-  geom_sf(data = both, alpha = 0.7, color = "black") + 
+  geom_sf(data = both, alpha = 0.7, color = "black" ) + 
    scale_color_manual(
     name = "",
     values = c(
       "#08306b", "#1c4680", "#305d94", "#4574a7",
       "#5d8cb9", "#77a4cb", "#deebf7", "#deebf7", "#deebf7"), drop = F ) +
-    geom_point(data = summ_fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 1 ) +
-    geom_point(data = fall, aes(x=Lon, y = Lat), color= "yellow", size = 1 ) +
+    # geom_point(data = summ_fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 1 ) +
+    geom_point(data = fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 1 ) +
     geom_point(data = summer, aes(x=Lon, y = Lat), color= "orange", size = 1 ) +
   coord_sf(
     crs = crsLONGLAT,
@@ -147,12 +147,12 @@ p <-ggplot() +
     axis.text.y = element_blank()
   )
 
-p 
+ 
 
 ggsave(
   filename = "output/ak_rivers.png",
   width = 9, height = 6, dpi = 600,
-  bg = "white", device = "png", p
+  bg = "transparent", device = "png", p
 )
 
 
