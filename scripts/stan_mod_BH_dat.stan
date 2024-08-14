@@ -92,9 +92,9 @@ real theta2 [ncovars2];
 // real <lower=0> g[nByrs,A]; // gamma random draws
 
 real log_catch_q; 
-// real log_F_mean; 
-  vector [nRyrs_T]  log_F;  
-// vector [nRyrs_T]  log_F_dev_y; 
+real log_F_mean;
+  // vector [nRyrs_T]  log_F;  
+ vector [nRyrs_T]  log_F_dev_y; 
 
 // real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
 // real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
@@ -153,16 +153,15 @@ matrix <lower=0, upper=1>[nRyrs,A] q;
   // kappa_marine_mortality[1:2] = kappa_marine_mort_start;
   // kappa_j_survival[1]= kappa_j_start;
  
- //  for(t in 1:nRyrs_T){//  
- //  // instant fishing mortality 
- //  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
- // }
- 
   for(t in 1:nRyrs_T){//
   // instant fishing mortality
-  F[t] = exp(log_F[t]); 
-  // F[t]  = exp(log_F_mean +log_F_dev_y[t]);
+  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  }
+ 
+ //  for(t in 1:nRyrs_T){//
+ //  // instant fishing mortality
+ //  F[t] = exp(log_F[t]); 
+ // }
 
 N_j_start = exp(N_j_start_log);
 N_brood_year_return_start = exp(N_brood_year_return_start_log);
@@ -360,14 +359,15 @@ for(t in 1:nByrs){
 
 model {
    // sigma_y_j ~ normal(0,1); //normal
-   sigma_sp ~  normal(0,1);
    // sigma_brood_return ~  normal(0,1);
-   sigma_catch ~ normal(0,1); 
+   
+   sigma_sp ~  normal(0,0.5); 
+   sigma_catch ~ normal(0,0.5); 
    
    log_catch_q ~ normal(-4,10);
    
-  log_c_1 ~  normal(16, 5); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
+  log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
+  log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
   
  N_j_start_log ~ normal(17,10);
  N_brood_year_return_start_log~ normal(15,10);
@@ -378,10 +378,10 @@ model {
     // N_recruit_start_log[t,a] ~  normal(15.5,10);
     // N_catch_start_log[t,a] ~ normal(13,10);
     // N_egg_start_log[t,a] ~  normal(18,10);
-    N_sp_start_log[t,a] ~ normal(10,10);
-    N_recruit_start_log[t,a] ~  normal(10,10);
-    N_catch_start_log[t,a] ~ normal(10,10);
-    N_egg_start_log[t,a] ~  normal(10,10);
+    N_sp_start_log[t,a] ~ normal(5,5);
+    N_recruit_start_log[t,a] ~  normal(5,5);
+    N_catch_start_log[t,a] ~ normal(5,5);
+    N_egg_start_log[t,a] ~  normal(10,5);
   }
  }
  
@@ -406,15 +406,14 @@ model {
 // }
 
 // log fishing mortality for each calendar year 
-    // log_F_mean ~ normal(0,1);
+ log_F_mean ~ normal(0,0.5);
+  for(t in 1:nRyrs_T){
+    log_F_dev_y[t] ~ normal(0, 1);
+ }
 
- //  for(t in 1:nRyrs_T){
- //    log_F_dev_y[t] ~ normal(0, 1);
- // }
- // 
-   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(0,1); //log fishing mortatliy
-}
+//    for(t in 1:nRyrs_T){
+//  log_F[t] ~ normal(0,1); //log fishing mortatliy
+// }
 
 
  // age comp priors -- maturity schedules
