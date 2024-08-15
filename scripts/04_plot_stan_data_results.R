@@ -59,8 +59,8 @@ traceplot(bh_fit,pars=  c("D_sum"))
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]","theta1[2]",#"theta1[3]","theta1[4]",
               
-               "theta2[1]"
-             #  "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
+               "theta2[1]",
+                "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
      ),
      fill_color = "blue")
 
@@ -78,6 +78,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "basal_p_2"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "basal_p_1"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -579,14 +583,13 @@ ggplot(data = fishing) +
 
 
 # Plot theta ======
-theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]"),
+theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta2[1]"),
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()
 
 ggplot(data = theta) +
-  geom_point(aes(x=theta, y = mean)) +
-  ylab("Log Selectivity")
+  geom_point(aes(x=rowname, y = mean)) 
   
 # plot  estimated kappas survival ======
 kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 

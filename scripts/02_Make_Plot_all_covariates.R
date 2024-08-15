@@ -28,6 +28,12 @@ air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
   rename(kusko_aniak_mean_airtemp = "aniak",
          yukon_chena_mean_airtemp = "chena")
 
+fullness <- read_csv("data/NBS_JChumFullness.xlsx") %>%
+  
+  
+  
+  
+  
 # Stage A - One DF for model ============= 
 stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
               left_join(air_temp_a) %>%
