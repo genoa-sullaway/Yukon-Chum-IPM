@@ -583,7 +583,7 @@ ggplot(data = fishing) +
 
 
 # Plot theta ======
-theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta2[1]"),
+theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta2[1]","theta2[2]"),
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()
@@ -716,6 +716,16 @@ ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = vari
 #   geom_point(aes(x= rowname, y = mean)) + 
 #   theme_classic()
  
+
+# look at n_eff ==========
+
+all_summ <- summary(bh_fit)$summary %>%
+  data.frame() %>%
+  rownames_to_column()  
+
+low_n_eff <- all_summ %>% 
+  filter(n_eff <20)
+
 
 # Plot covariates with respective salmon population ======
 brood_year_recruits <- summary(bh_fit, pars = c("N_recruit"), 

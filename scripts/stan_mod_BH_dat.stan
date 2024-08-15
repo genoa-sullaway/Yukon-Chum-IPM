@@ -104,7 +104,7 @@ transformed parameters {
  vector [nByrs] N_j; // predicted juveniles 
  vector [nByrs] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
  vector [nByrs] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
-vector [nByrs] N_brood_year_return; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
+ vector [nByrs] N_brood_year_return; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
 
  real N_recruit [nRyrs_T,A]; 
  real N_sp [nRyrs_T,A];
@@ -406,7 +406,7 @@ model {
 // }
 
 // log fishing mortality for each calendar year 
- log_F_mean ~ normal(0,0.5);
+ log_F_mean ~ normal(0,0.1);
   for(t in 1:nRyrs_T){
     log_F_dev_y[t] ~ normal(0, 1);
  }
