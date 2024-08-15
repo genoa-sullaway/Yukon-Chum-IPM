@@ -67,6 +67,10 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F_mean"),
      fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_S"),
+     fill_color = "blue")
 # 
 # plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
 #      pars=  c( "log_S"),
@@ -572,15 +576,15 @@ ggplot(data = fishing) +
   ylab("Instantaneous fishing mortality")
 
 # Plot selectivity ======
-# S <- summary(bh_fit, pars = c("log_S"), 
-#                    probs = c(0.1, 0.9))$summary %>%
-#   data.frame() %>%
-#   rownames_to_column()   
-# 
-# ggplot(data = S) + 
-#   geom_point(aes(x=rowname, y = mean)) + 
-#   ylab("Log Selectivity") 
+S <- summary(bh_fit, pars = c("log_S"),
+                   probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()
 
+ggplot(data = S,aes(x=rowname, y = mean)) +
+  geom_point( ) +
+  geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd), width = 0.1) + 
+  ylab("Log Selectivity")
 
 # Plot theta ======
 theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta2[1]","theta2[2]"),
@@ -588,8 +592,10 @@ theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta2[1]","theta2[2]
   data.frame() %>%
   rownames_to_column()
 
-ggplot(data = theta) +
-  geom_point(aes(x=rowname, y = mean)) 
+ggplot(data = theta,aes(x=rowname, y = mean)) +
+  geom_point( ) +
+  geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd), width = 0.1) 
+  
   
 # plot  estimated kappas survival ======
 kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
@@ -620,17 +626,6 @@ ggplot(data = kappasurvival,# %>%   filter(!time<2),
   xlab("Calendar Year") + 
   ylab("Survival Rate")
  
-# ggplot(data = kappasurvival %>%
-#          filter(!time<8 & !time>16), 
-#        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
-#   geom_line( ) +
-#   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-#                   ymax = mean+se_mean), alpha = 0.5) +
-#   facet_wrap(~variable, scales = "free") + 
-#   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
-#   theme_classic() + 
-#   xlab("Calendar Year") + 
-#   ylab("Survival Rate")
 
 # plot estimated productivity ======
 productivity1 <- summary(bh_fit, pars = c("p_1"), 
