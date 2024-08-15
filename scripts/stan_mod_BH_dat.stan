@@ -321,7 +321,7 @@ model {
    sigma_sp ~  normal(0,0.5); 
    sigma_catch ~ normal(0,0.5); 
    
-   log_catch_q ~ normal(-4,10);
+   log_catch_q ~ normal(-8,10);
    
   log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
   log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
@@ -346,8 +346,9 @@ model {
     // print("prob :", prob);
     
   theta1[1] ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
-  theta1[2] ~ normal(0.1,0.01); // environmental covariate coefficient stage 1
-  theta1[3] ~ normal(-0.1,0.01);
+  theta1[2] ~ normal(0.01,0.01); // environmental covariate coefficient stage 1
+  theta1[3] ~ normal(-0.01,0.01);
+  theta1[4] ~ normal(0,0.01);
  
  theta2[1] ~ normal(0,0.01);
  theta2[2] ~ normal(0,0.01);

@@ -31,7 +31,8 @@ air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
 fullness_df<-readRDS("data/processed_covariates/fullness_cov.RDS") %>%
   dplyr::rename(Year = "SampleYear",
                 full_index = "pred") %>%
-  dplyr::select(Year, full_index ) 
+  dplyr::select(Year, full_index ) %>%
+  dplyr::mutate(full_index=as.numeric(full_index))
 
   # Stage A - One DF for model ============= 
 stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
@@ -53,7 +54,7 @@ stage_a_cov_plot<-stage_a_cov %>%
 plota <- ggplot(data = stage_a_cov_plot %>% filter(!Year<2000), aes(x=Year, y = value, color = id, group = id)) +
   geom_point( ) +
   geom_line( ) +
-  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Starfish",n=7)) + 
+  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Starfish",n=8)) + 
   facet_wrap(~id, scales = "free",ncol=1) +
   theme_classic()  +
   ggtitle("Stage A Covariates")
