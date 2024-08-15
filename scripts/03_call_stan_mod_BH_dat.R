@@ -123,7 +123,7 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>%
   dplyr::select(SST_CDD_NBS,# yukon_mean_discharge,
-                #  Large_zoop#,
+                 Large_zoop,
                  Cnideria
                 #,yukon_mean_discharge 
   ) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
@@ -133,8 +133,8 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
 temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
 
    dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                  Chum_hatchery= as.numeric(scale(Chum_hatchery))
-                # Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
+                  Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
+                  Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
                 #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
   ) %>% 
   dplyr::rename(cal_year = brood_year) %>% 
@@ -142,9 +142,8 @@ temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>% 
   dplyr::select(SST_CDD_Aleut,
-               Chum_hatchery
-                #,
-                # Pink_hatchery
+                Chum_hatchery,
+                Pink_hatchery
                 )  
 
 
@@ -155,8 +154,8 @@ stage_b_cov <- temp_b_cov %>%
 
 
 # number covariates for each life stage 
-ncovars1 = 2
-ncovars2 = 2
+ncovars1 = 3
+ncovars2 = 3
 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
@@ -169,7 +168,10 @@ ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
 # age_comp <- summary(bh_fit, pars = c("pi"), 
 #                     probs = c(0.1, 0.9))$summary[,1]
  
+
+# pi 
 age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
+ 
 # in case i want to fix that  
 #prob = c(0.03180601 0.74323447 0.96200639)
 
@@ -236,19 +238,12 @@ data_list_stan <- list(nByrs=nByrs,
                        
                        cov1=stage_a_cov,
                        cov2=stage_b_cov,
- 
-                       # N_j_start_log =N_j_start_log,
-                       # N_brood_year_return_start_log =  N_brood_year_return_start_log,
-                       # N_recruit_start_log = N_recruit_start_log,
-                       # N_sp_start_log =N_sp_start_log,
-                       # N_catch_start_log = N_catch_start_log,
-                       # N_egg_start_log=N_egg_start_log, 
                        
                        o_run_comp=(yukon_fall_obs_agecomp),
                        ess_age_comp=ess_age_comp,
                        basal_p_1 = 0.9,
                        basal_p_2=0.9,
-                       pi = age_comp
+                       pi = age_comp 
                        )
 
 # call mod  ===========================

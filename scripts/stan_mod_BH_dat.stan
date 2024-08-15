@@ -346,11 +346,12 @@ model {
     // print("prob :", prob);
     
   theta1[1] ~ normal(0,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
-  theta1[2] ~ normal(-0.1,0.01); // environmental covariate coefficient stage 1
- // theta1[3] ~ normal(-0.1,0.01);
+  theta1[2] ~ normal(0.1,0.01); // environmental covariate coefficient stage 1
+  theta1[3] ~ normal(-0.1,0.01);
  
  theta2[1] ~ normal(0,0.01);
  theta2[2] ~ normal(0,0.01);
+ theta2[3] ~ normal(0,0.01);
  
   basal_p_1 ~ beta(1,1); // mean survival stage 1
   basal_p_2 ~ beta(1,1); // mean survivial stage 2C

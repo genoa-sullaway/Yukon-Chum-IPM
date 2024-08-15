@@ -6,7 +6,8 @@ library(bayesplot)
 library(rstanarm)
  
 # load model ==============
-bh_fit<- read_rds("output/stan_fit_DATA.RDS")
+  bh_fit<- read_rds("output/stan_fit_DATA.RDS")
+# bh_fit <- read_rds("output/stan_fit_DATA_nocovar.RDS")
 
 # year DF for joins ==================
 years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
@@ -57,7 +58,7 @@ traceplot(bh_fit,pars=  c("D_sum"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-     pars=  c( "theta1[1]","theta1[2]",#"theta1[3]","theta1[4]",
+     pars=  c( "theta1[1]","theta1[2]","theta1[3]",#,"theta1[4]",
               
                "theta2[1]",
                 "theta2[2]"#,"theta2[2]"#,"theta2[3]" 
@@ -695,22 +696,18 @@ ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = vari
 
 
 # plot sigma  ======
-# sigma <- summary(bh_fit, pars = c("sigma_y_h", 
-#                                   "sigma_y_r", 
-#                                   "sigma_y_j",
-#                                   "sigma_y_sp"), 
-#                     probs = c(0.1, 0.9))$summary %>%
-#   data.frame() %>%
-#   rownames_to_column()   
-  # rename(pred = "mean") %>% 
-  # cbind(obs = data_list_stan$p_obs) %>% 
-  # dplyr::select(1,2,9) %>% 
-  # gather(2:3, key = "key", value = "value")
+sigma <- summary(bh_fit, pars = c(
+                                  "sigma_catch",
+                                  "sigma_sp"),
+                    probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column() 
 
-# ggplot(data = sigma) +
-#   geom_point(aes(x= rowname, y = mean)) + 
-#   theme_classic()
- 
+ggplot(data = sigma,aes(x= rowname, y = mean)) +
+  geom_point( ) +
+  theme_classic() +
+  geom_errorbar(aes(ymin = mean - sd, ymax=mean+sd),width = 0.1)
+
 
 # look at n_eff ==========
 

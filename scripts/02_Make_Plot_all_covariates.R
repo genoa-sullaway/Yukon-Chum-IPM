@@ -12,12 +12,12 @@ sst_a <- read_csv("data/processed_covariates/Stage_A_CDD.csv") %>%
 
 # this is a GAM zoop index
 zoop <- read_csv("data/processed_covariates/Stage_A_Zooplankton_Index.csv")  %>% 
-  rename(Year = "YEAR")  
+  dplyr::rename(Year = "YEAR")  
  
 river_discharge_a <- read_csv("data/processed_covariates/Stage_A_YK_Discharge.csv") %>%
   dplyr::select(Year, mean_discharge,id) %>%
   spread(id, mean_discharge) %>%
-  rename(kusko_mean_discharge = "Kusko",
+  dplyr::rename(kusko_mean_discharge = "Kusko",
          yukon_mean_discharge = "Yukon")
  
 air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
@@ -25,20 +25,21 @@ air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
   dplyr::rename(mean_air_temp = "value") %>%
   dplyr::select(Year, mean_air_temp,site) %>%
   spread(site,mean_air_temp) %>%
-  rename(kusko_aniak_mean_airtemp = "aniak",
+  dplyr::rename(kusko_aniak_mean_airtemp = "aniak",
          yukon_chena_mean_airtemp = "chena")
-# 
-# fullness <- read_csv("data/NBS_JChumFullness.xlsx") %>%
-  
-  
-  
-  
-  
-# Stage A - One DF for model ============= 
+ 
+fullness_df<-readRDS("data/processed_covariates/fullness_cov.RDS") %>%
+  dplyr::rename(Year = "SampleYear",
+                full_index = "pred") %>%
+  dplyr::select(Year, full_index ) 
+
+  # Stage A - One DF for model ============= 
 stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
               left_join(air_temp_a) %>%
-              left_join(zoop) # %>%
-              
+              left_join(zoop)  %>%
+              left_join(fullness_df) %>% 
+  data.frame()
+
 # Stage A - Save DF ============= 
 write_csv(stage_a_cov, "data/processed_covariates/stage_a_all.csv")
 
