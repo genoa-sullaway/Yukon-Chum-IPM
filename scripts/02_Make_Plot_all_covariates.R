@@ -27,8 +27,8 @@ air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
   spread(site,mean_air_temp) %>%
   rename(kusko_aniak_mean_airtemp = "aniak",
          yukon_chena_mean_airtemp = "chena")
-
-fullness <- read_csv("data/NBS_JChumFullness.xlsx") %>%
+# 
+# fullness <- read_csv("data/NBS_JChumFullness.xlsx") %>%
   
   
   

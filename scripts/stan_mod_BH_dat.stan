@@ -93,6 +93,7 @@ real theta2 [ncovars2];
 
 real log_catch_q; 
 real log_F_mean;
+vector [A] log_S; // log selectivity
   // vector [nRyrs_T]  log_F;  
  vector [nRyrs_T]  log_F_dev_y; 
 
@@ -122,7 +123,8 @@ real N_j_start;
 real<lower=0> c_1; // estimate on log, transform back to normal scale
 real<lower=0> c_2;
 
-vector<lower = 0> [nRyrs_T] F;
+vector <lower = 0> [nRyrs_T] F;
+vector <lower = 0> [A] S; //selectivty
 
 // survival and covariate section 
 vector  <lower=0,upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
@@ -147,11 +149,8 @@ real <lower=0>  catch_q; // related juvebile data to spawner data (on different 
 // vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix <lower=0, upper=1>[nRyrs,A] q; 
 // vector<lower=0, upper=1> [A] pi; // actual age comps
-//   
-// starting value transformations ======
-  // kappa_marine_survival[1:2] = kappa_marine_start;
-  // kappa_marine_mortality[1:2] = kappa_marine_mort_start;
-  // kappa_j_survival[1]= kappa_j_start;
+ 
+ S = exp(log_S);
  
   for(t in 1:nRyrs_T){//
   // instant fishing mortality
@@ -175,48 +174,6 @@ for(t in 1:t_start){
   }
  }
 
-// try adding starting values specific to ages ....
-// for(a in 1:A){
-//   if(a==1){
-//    for(t in 1:3){
-//       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-//       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-//       // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
-//       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-//      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-//    }
-//   }
-//    if(a==2){
-//    for(t in 1:4){
-//      N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-//      N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-//      // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
-//      N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-//      N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-//     }
-//    }
-//     if(a==3){
-//    for(t in 1:5){
-//       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-//       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-//       // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
-//       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-//       N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-//    }
-//     }
-// 
-//     if(a==4){
-//    for(t in 1:6){
-//       N_sp_start[t,a] = exp(N_sp_start_log[t])*p_obs[a];
-//       N_recruit_start[t,a] = exp(N_recruit_start_log[t])*p_obs[a];
-//       // N_ocean_start[t,a] = exp(N_ocean_start_log[t])*p_obs[a];
-//       N_catch_start[t,a] = exp(N_catch_start_log[t])*p_obs[a];
-//       N_egg_start[t,a] = exp(N_egg_start_log[t])*p_obs[a];
-//     }
-//    }
-//   }
-
-  
   N_j[1] = N_j_start;
   N_brood_year_return[1] = N_brood_year_return_start;
  
@@ -335,7 +292,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            // N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
            // N_recruit[t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])); // add age specific mortality, 
           
-          N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2])));
+          N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
          // N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a]*S[a])));
            
           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
@@ -409,6 +366,10 @@ model {
  log_F_mean ~ normal(0,0.1);
   for(t in 1:nRyrs_T){
     log_F_dev_y[t] ~ normal(0, 1);
+ }
+ 
+ for (a in 1:A) {
+    log_S[a] ~ normal(0,1);
  }
 
 //    for(t in 1:nRyrs_T){
