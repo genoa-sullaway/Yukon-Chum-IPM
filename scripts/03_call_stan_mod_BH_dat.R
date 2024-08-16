@@ -108,56 +108,54 @@ N_egg_start_log  = log(N_egg_start+ 1.001)
 
 #plot(fall_juv$fall_abundance, type ="l")
 # # CV ========================================
-# spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>% 
-#   filter(year >= year_min, 
-#          year <= 2022)  
+spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
+  filter(year >= year_min,
+         year <= 2022)
 
 
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
-                SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
-                full_index = as.numeric(scale(full_index))) %>%
+  dplyr::mutate(#yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+                SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))#,
+                #full_index = as.numeric(scale(full_index))
+                ) %>%
    # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>%
-  dplyr::select(SST_CDD_NBS,# yukon_mean_discharge,
+  dplyr::select(SST_CDD_NBS, 
                  Large_zoop,
-                 Cnideria,
-                full_index
-                #,yukon_mean_discharge 
-  ) %>% #,yukon_mean_discharge) %>% #, Cnideria, Large_zoop) %>%
+                 Cnideria#,
+                # full_index
+                ) %>% 
   as.matrix()
  
 # the temp in 2001 is gonna effect fish from brood year 1999
 temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-
    dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                   Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
-                  Pink_hatchery= as.numeric(scale(Pink_hatchery))#,
-                #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
+                  Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                  full_index = as.numeric(scale(full_index))
+                  #yukon_mean_discharge_summer= as.numeric(scale(yukon_mean_discharge_summer))
   ) %>% 
-  dplyr::rename(cal_year = brood_year) %>% 
+  dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-2) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>% 
   dplyr::select(SST_CDD_Aleut,
                 Chum_hatchery,
-                Pink_hatchery
-                )  
-
+                Pink_hatchery,
+                full_index)  
 
 #bind <- temp_b_cov %>% slice(22)
-
 stage_b_cov <- temp_b_cov %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
 
 # number covariates for each life stage 
-ncovars1 = 4
-ncovars2 = 3
+ncovars1 = 3
+ncovars2 = 4
 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
@@ -241,10 +239,12 @@ data_list_stan <- list(nByrs=nByrs,
                        cov1=stage_a_cov,
                        cov2=stage_b_cov,
                        
+                       data_sp_cv = spawner_cv,
+                       
                        o_run_comp=(yukon_fall_obs_agecomp),
                        ess_age_comp=ess_age_comp,
-                       basal_p_1 = 0.9,
-                       basal_p_2=0.9,
+                       # basal_p_1 = 0.2,
+                       # basal_p_2=0.5,
                        pi = age_comp 
                        )
 

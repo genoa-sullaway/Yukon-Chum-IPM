@@ -119,7 +119,8 @@ river_discharge_b <- read_csv("data/processed_covariates/Stage_B_YK_Discharge.cs
 stage_b_cov<- left_join(river_discharge_b,sst_b)  %>%
   left_join(hatchery_pink_b) %>%
   left_join(hatchery_chum_b) %>%
-  dplyr::rename(brood_year = "Year") #%>%
+  # dplyr::rename(brood_year = "Year") %>%
+  left_join(fullness_df) # can be used in either a or b stages. 
   #dplyr::mutate(index_year_brood_plus1 = brood_year+2)
 
 # Stage B - Save DF ============= 
