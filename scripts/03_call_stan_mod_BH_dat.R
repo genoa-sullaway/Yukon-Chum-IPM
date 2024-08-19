@@ -110,15 +110,12 @@ N_egg_start_log  = log(N_egg_start+ 1.001)
 # # CV ========================================
 spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
   filter(year >= year_min,
-         year <= 2022)
+         year <= year_max_cal)
 
 
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate(#yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
-                SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))#,
-                #full_index = as.numeric(scale(full_index))
-                ) %>%
+  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
    # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>% 
@@ -239,7 +236,7 @@ data_list_stan <- list(nByrs=nByrs,
                        cov1=stage_a_cov,
                        cov2=stage_b_cov,
                        
-                       data_sp_cv = spawner_cv,
+                       data_sp_cv = spawner_cv$fall_spawner_cv,
                        
                        o_run_comp=(yukon_fall_obs_agecomp),
                        ess_age_comp=ess_age_comp,
@@ -252,7 +249,7 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 1, #n_chains,  
+  chains = 4, #n_chains,  
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 

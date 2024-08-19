@@ -203,8 +203,28 @@ ggsave(
   bg = "transparent", device = "png", p
 )
 
+# GOA ======================
+ak <- sf::st_as_sf(maps::map('world','USA:Alaska', 
+                             plot=FALSE, fill=TRUE)) %>%
+  st_transform(4326)
 
-# # JUST YUKON =========
+#create bounds to trim AK map 
+bounds_ak <- extent(-175,-130,52,65)
+#bounds_ak <- extent(-164.5,-160, 55,60) 
+extent_ak <- st_set_crs(st_as_sf(as(bounds_ak, "SpatialPolygons")), 4326)
+ak_map <- st_intersection(ak, extent_ak) #trim map by intersections 
+plot(ak_map)
+
+
+
+
+
+
+
+
+
+
+## old - just yukon =========
 # 
 # Y <-ggplot() +
 #   geom_sf(data = na_outline, fill = NA) +

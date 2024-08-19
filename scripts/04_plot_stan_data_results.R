@@ -139,20 +139,24 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "sigma_y_j"),
+     pars=  c(  "N_j_pp"  ),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "sigma_brood_return"),
-     fill_color = "blue")
+
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+#      pars=  c(  "sigma_y_j"),
+#      fill_color = "blue")
+# 
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+#      pars=  c(  "sigma_brood_return"),
+#      fill_color = "blue")
  
 plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
      pars=  c( "theta_1_1_pp","theta_1_2_pp","theta_1_3_pp",
-               "theta_2_1_pp","theta_2_2_pp"),
+               "theta_2_1_pp","theta_2_2_pp","theta_2_3_pp","theta_2_4_pp"),
      fill_color = "blue")
 
- 
-# Plot Observed vs Predicted ========
+ # Plot Observed vs Predicted ========
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
               probs = c(0.1, 0.9))$summary %>%
@@ -319,7 +323,9 @@ age_comp_Q <- summary(bh_fit, pars = c("q"),
 
 ggplot(data= age_comp_Q) +
   geom_line(aes(x=time, y = value, group = id, color = id)) +
-  facet_wrap(~age, scales = "free")
+  facet_wrap(~age, scales = "free") +
+  theme_classic() + 
+  ylab("Proportion")
 
 ggplot(data= age_comp_Q) +
   geom_line(aes(x=time, y = value, group = id, color = id)) +
@@ -577,15 +583,22 @@ ggplot(data = fishing) +
   ylab("Instantaneous fishing mortality")
 
 # Plot selectivity ======
-S <- summary(bh_fit, pars = c("log_S"),
+S <- summary(bh_fit, pars = c("S"),
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
-  rownames_to_column()
+  rownames_to_column() %>% 
+  mutate(rowname = case_when(rowname == "S[1]" ~ "Age_3",
+                             rowname == "S[2]" ~ "Age_4",
+                             rowname == "S[3]" ~ "Age_5",
+                             rowname == "S[4]" ~ "Age_6"
+                             ))
 
 ggplot(data = S,aes(x=rowname, y = mean)) +
   geom_point( ) +
   geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd), width = 0.1) + 
-  ylab("Log Selectivity")
+  ylab("Selectivity")+
+  theme_classic() + 
+  xlab(" ")
 
 # Plot theta ======
 theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta2[1]","theta2[2]"),
