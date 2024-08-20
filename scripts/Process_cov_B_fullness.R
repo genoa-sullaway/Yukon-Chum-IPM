@@ -97,7 +97,8 @@ temp <- pred_df %>%
                                   SampleYear ==2014 ~ y2014[1,1],
                                   SampleYear ==2020 ~ y2020[1,1],
                                   SampleYear ==2022 ~ y2022[1,1],
-                                  TRUE ~ pred))
+                                  TRUE ~ pred)) %>%
+   dplyr::mutate(year_addone = SampleYear+1) # must add one so that they can all be -2 for cov b... 
  
  ggplot(data =  temp_full, aes(x=SampleYear, y =pred)) +
    geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci),alpha = 0.5 ) +

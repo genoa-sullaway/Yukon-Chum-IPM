@@ -15,6 +15,7 @@ bh_fit<- read_rds("output/stan_fit_DATA.RDS")
 years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min) %>%
   dplyr::select(cal_year) %>%
+  dplyr::mutate(brood_year = cal_year) %>% 
   dplyr::mutate(time = c(1:nrow(.)))
 
 # Spawners PP ====== 
@@ -120,7 +121,6 @@ ggplot(data = pred_N_return_pp) +
   xlab("Brood Year") + 
   ylab("Estimated Log Return Abundance")
 
-# 
 # ggplot(data = pred_N_return_pp) +
 #   geom_point(aes(x=cal_year, y = (obs)),color = "purple") +
 #   # geom_line(aes(x=cal_year, y = obs/1000000), color = "purple") +
@@ -330,47 +330,91 @@ theta_df <- as.data.frame(bh_fit, pars = c(#"theta1[1]",
                                                         "Aleutian Winter Temperature",
                                                         "Chum Salmon Hatchery Release Abundance",
                                                         "Pink Salmon Hatchery Release Abundance",
-                                                        "Fullness Index")))) %>% 
-  group_by(variable) %>% 
+                                                        "Fullness Index"))),
+                stage = case_when(variable %in% c("NBS July/August Temperature",
+                                                  "Large Zooplankton Index",
+                                                  "Gelatinous Zooplankton Index") ~ "Juvenile",
+                                  variable %in% c("Aleutian Winter Temperature",
+                                                  "Chum Salmon Hatchery Release Abundance",
+                                                  "Pink Salmon Hatchery Release Abundance",
+                                                  "Fullness Index") ~ "Marine")) %>% 
+  group_by(stage,variable) %>% 
   dplyr::summarise(mean = mean(value),
             ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_low),
             ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_high),
             ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
             ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
  
-ggplot(data = theta_df,
+theta_plot <- ggplot(data = theta_df,
           aes(x= mean, y = variable, 
-              group = variable, color = variable)) +
-        geom_errorbar(aes(xmin =ci_95_low, xmax = ci_95_high),width = 0, linewidth = 0.5, color = "black") + 
-        geom_point() + 
+              group = variable, color = stage)) +
+        geom_errorbar(aes(xmin =ci_95_low, xmax = ci_95_high),
+                      width = 0, linewidth = 0.5, color = "white") + 
+        geom_point(size = 2) + 
+        geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high), linewidth = 1.5, width = 0) + 
         theme_classic() +
-        geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high), linewidth = 1, width = 0) + 
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
-        geom_vline(xintercept=0)+
-        ggtitle("Covariate Coefficients")+
-        ylab("")
+        scale_color_manual(values =c("#EAAA00", "#2d9d92")) +
+        theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+              plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+              legend.background = element_blank(),
+              legend.text = element_text(color = "white"),
+              legend.title = element_blank(),#"none",
+               # panel.border = element_rect(color = "white"), #element_blank(),
+              strip.text = element_blank( ), 
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              strip.background = element_blank(),
+              panel.border = element_rect(colour = "white", fill = NA), 
+                # panel.grid.minor = element_blank(),
+                # panel.grid.major = element_blank(),
+              # plot.title = element_text(color = "white"),
+              strip.text.x = element_blank(), 
+              axis.line = element_line(color = "white"), 
+              axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+              axis.text.y = element_text(color = "white"),
+              axis.title.y = element_text(color = "white"),
+              axis.title.x = element_text(color = "white"),
+              axis.ticks.y = element_line(color = "white"),
+              axis.ticks.x = element_line(color = "white"),
+              # panel.spacing.x=unit(0.5, "lines"),
+              panel.spacing.y=unit(0, "lines")
+              ) + 
+        geom_vline(xintercept=0, color = "white")+
+        ylab("") +
+        xlab("Mean Covariate Coefficient Value") +
+        facet_wrap(~stage, scales = "free_y", ncol = 1)  
+
+theta_plot
+ggsave("output/theta_plot.png", width = 7, height = 4, bg = "transparent")
 
 ## parameters  =========
 theta_df <- as.data.frame(bh_fit, pars = c("theta1[1]", "theta1[2]","theta1[3]",
-                                           "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+                                           "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>%
   mutate(draw = 1:nrow(.)) %>%
-  gather(1:7, key = "rowname", value = "value") %>% 
+  gather(1:7, key = "rowname", value = "value") %>%
   dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
                                      rowname== "theta1[2]" ~ "Large Zooplankton Index",
                                      rowname=="theta1[3]" ~ "Gelatinous Zooplankton Index",
-                                     
-                                     rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+
+                                     rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
                                      rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
                                      rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
-                                     rowname=="theta2[4]" ~ "Fullness Index"), 
+                                     rowname=="theta2[4]" ~ "Fullness Index"),
                 variable = factor(variable, levels = rev(c("NBS July/August Temperature",
                                                            "Large Zooplankton Index",
                                                            "Gelatinous Zooplankton Index",
                                                            "Aleutian Winter Temperature",
                                                            "Chum Salmon Hatchery Release Abundance",
                                                            "Pink Salmon Hatchery Release Abundance",
-                                                           "Fullness Index")))) %>% 
-  group_by(variable) %>% 
+                                                           "Fullness Index"))),
+                stage = case_when(variable %in% c("NBS July/August Temperature",
+                                                  "Large Zooplankton Index",
+                                                  "Gelatinous Zooplankton Index") ~ "Juvenile",
+                                  variable %in% c("Aleutian Winter Temperature",
+                                                  "Chum Salmon Hatchery Release Abundance",
+                                                  "Pink Salmon Hatchery Release Abundance",
+                                                  "Fullness Index") ~ "Marine")) %>%
+  group_by(stage,variable) %>%
   dplyr::summarise(mean = mean(value),
                    ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_low),
                    ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_high),
@@ -378,13 +422,89 @@ theta_df <- as.data.frame(bh_fit, pars = c("theta1[1]", "theta1[2]","theta1[3]",
                    ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
 
 ggplot(data = theta_df,
-       aes(x= mean, y = variable, 
-           group = variable, color = variable)) +
-  geom_errorbar(aes(xmin =ci_95_low, xmax = ci_95_high),width = 0, linewidth = 0.5, color = "black") + 
-  geom_point() + 
+       aes(x= mean, y = variable,
+           group = variable, color = stage)) +
+  geom_errorbar(aes(xmin =ci_95_low, xmax = ci_95_high),width = 0, linewidth = 0.5, color = "black") +
+  geom_point() +
   theme_classic() +
-  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high), linewidth = 1, width = 0) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high), linewidth = 1, width = 0) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   geom_vline(xintercept=0)+
+  facet_wrap(~stage, scales = "free_y", ncol = 1) +
   ggtitle("Covariate Coefficients")+
   ylab("")
+
+
+
+# Plot Gelatinous Zoops and Juvenile Abundance by brood year ============== 
+sst_zoop_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
+  # zoop are already mean scaled
+  dplyr::rename(cal_year = Year) %>% 
+  dplyr::mutate(brood_year = cal_year-1) %>%  
+  dplyr::select(brood_year,SST_CDD_NBS, 
+                Cnideria)
+
+pred_N_jpp_cov <- summary(bh_fit, pars = c("N_j_pp"), 
+                      probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = 1:nrow(.)) %>%
+  left_join(data.frame(time = c(1:nrow(.)), 
+                       brood_year = c(data_list_stan$years_data_juv ),
+                       obs = c(data_list_stan$data_stage_j))) %>%
+  dplyr::mutate(ci_10=(X10.),
+                ci_90=(X90.),
+                mean = as.numeric(scale(mean))) %>% 
+  left_join(sst_zoop_cov) %>% 
+  dplyr::select(brood_year,SST_CDD_NBS,Cnideria,mean,ci_10,ci_90)
+
+ggplot(data =pred_N_jpp_cov) +
+  geom_line(aes(x=brood_year, y = mean)) + 
+  geom_line(aes(x=brood_year, y = SST_CDD_NBS), color = "purple") +
+  labs(caption = "purple is the covariate")
+
+
+ggplot(data =pred_N_jpp_cov) +
+  geom_line(aes(x=brood_year, y = mean)) + 
+  geom_line(aes(x=brood_year, y = Cnideria), color = "purple") +
+  labs(caption = "purple is the covariate")
+
+# Plot Fullness and return abundance by brood year ============== 
+fullness_hatchery_temp_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+  dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
+                full_index = as.numeric(scale(full_index))  ) %>% 
+  dplyr::rename(cal_year = Year) %>% 
+  dplyr::mutate(brood_year = cal_year-2) %>%  
+  dplyr::select(brood_year,SST_CDD_Aleut,
+                Chum_hatchery,
+                Pink_hatchery,
+                full_index) 
+
+pred_N_return_pp_cov <- summary(bh_fit, pars = c("N_return_pp"), 
+                            probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = 1:nrow(.)) %>%
+  left_join(data.frame(time = c(1:nrow(.)),
+                       brood_year = c(data_list_stan$years_data_return),
+                       obs = data_list_stan$data_stage_return)) %>%
+  dplyr::mutate(ci_10=(X10.),
+                ci_90=(X90.),
+                mean = as.numeric(scale(mean))) %>% 
+  left_join(fullness_hatchery_temp_cov) %>% 
+  dplyr::select(brood_year,SST_CDD_Aleut,Chum_hatchery,full_index,mean,ci_10,ci_90)
+
+ggplot(data =pred_N_return_pp_cov) +
+  geom_line(aes(x=brood_year, y = mean)) + 
+  geom_line(aes(x=brood_year, y = SST_CDD_Aleut), color = "purple") +
+  labs(caption = "purple is the covariate")
+
+ggplot(data =pred_N_return_pp_cov) +
+  geom_line(aes(x=brood_year, y = mean)) + 
+  geom_line(aes(x=brood_year, y = full_index), color = "purple") +
+  labs(caption = "purple is the covariate")
+
+
+

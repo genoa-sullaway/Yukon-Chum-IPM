@@ -27,18 +27,12 @@ air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
   spread(site,mean_air_temp) %>%
   dplyr::rename(kusko_aniak_mean_airtemp = "aniak",
          yukon_chena_mean_airtemp = "chena")
- 
-fullness_df<-readRDS("data/processed_covariates/fullness_cov.RDS") %>%
-  dplyr::rename(Year = "SampleYear",
-                full_index = "pred") %>%
-  dplyr::select(Year, full_index ) %>%
-  dplyr::mutate(full_index=as.numeric(full_index))
+  
 
   # Stage A - One DF for model ============= 
 stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
               left_join(air_temp_a) %>%
               left_join(zoop)  %>%
-              left_join(fullness_df) %>% 
   data.frame()
 
 # Stage A - Save DF ============= 
@@ -91,6 +85,12 @@ plota
 dev.off()
 
 # Stage B - Load data ============= 
+fullness_df<-readRDS("data/processed_covariates/fullness_cov.RDS") %>%
+  dplyr::rename(Year = "year_addone",
+                full_index = "pred") %>%
+  dplyr::select(Year, full_index ) %>%
+  dplyr::mutate(full_index=as.numeric(full_index))
+
 hatchery_chum_df<-read_csv("data/hatchery_Chum_Covariate_AKandAsia.csv") 
 hatchery_chum_b<-hatchery_chum_df %>%
   dplyr::rename(Chum_hatchery="sum") %>%
