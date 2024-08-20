@@ -98,39 +98,60 @@ ggplot(data = pred_N_H_sim) +
   ylab("Estimated Catch\n(Millions)")
 
 # return PP ====== 
+adult_cvs <- read_xlsx("data/chum_cv.xlsx") %>%
+  dplyr::select(year,fall_spawner_cv) %>%
+  dplyr::mutate(brood_year = year-3)
+
 pred_N_return_pp <- summary(bh_fit, pars = c("N_return_pp"), 
                       probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
-  left_join(years) %>%
-  left_join(data.frame(cal_year = c(data_list_stan$years_data_return),
-                       obs = data_list_stan$data_stage_return)) %>%
-  dplyr::mutate(mean = (mean),
+  left_join(data.frame(time = 1:nrow(.),
+                       brood_year = c(data_list_stan$years_data_return),
+                       obs = data_list_stan$data_stage_return)) %>% 
+ left_join(adult_cvs) %>% 
+  dplyr::select(time, brood_year,obs, fall_spawner_cv,
+                X10.,X90., mean) %>% 
+  dplyr::mutate( obs= log(obs),
+                 sd_obs = log(fall_spawner_cv*obs)) %>%
+  dplyr::rename(pred = (mean),
                 ci_10=(X10.),
                 ci_90=(X90.)) 
 
-ggplot(data = pred_N_return_pp) +
-  geom_point(aes(x=cal_year, y = log(obs)),color = "purple") +
-  geom_line(aes(x=cal_year, y = log(obs)), color = "purple") +
-  geom_line(aes(x=cal_year, y = mean )) +
-  geom_ribbon(aes(x=cal_year, ymin = ci_10 ,
-                  ymax = ci_90 ), alpha = 0.5) +
-  scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
+return_plot <- ggplot(data = pred_N_return_pp) +
+  geom_ribbon(aes(x=brood_year, ymin =ci_10,
+                  ymax = ci_90),   fill =  "#2d9d92") +
+  geom_line(aes(x=brood_year, y = pred), color = "white", linetype = 2) +
+  geom_errorbar(aes(x=brood_year, ymin = obs-sd_obs,
+                    ymax = obs+sd_obs), width = 0.1,  color = "white") +
+  geom_point(aes(x=brood_year, y = obs),color = "white" ) +
+  geom_line(aes(x=brood_year, y = obs), color = "white" ) +
+  scale_x_continuous(breaks = c(2001, 2005,2010, 2018)) +
   theme_classic() + 
   xlab("Brood Year") + 
-  ylab("Estimated Log Return Abundance")
+  ylab("Estimated Log Return Abundance") +
+  theme(panel.background = element_blank(),  
+        plot.background = element_blank(),  
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white")) 
 
-# ggplot(data = pred_N_return_pp) +
-#   geom_point(aes(x=cal_year, y = (obs)),color = "purple") +
-#   # geom_line(aes(x=cal_year, y = obs/1000000), color = "purple") +
-#   geom_line(aes(x=cal_year, y = exp(mean) )) +
-#   geom_ribbon(aes(x=cal_year, ymin = exp(ci_10),
-#                   ymax = exp(ci_90)), alpha = 0.5) +
-#   scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
-#   theme_classic() + 
-#   xlab("Brood Year") + 
-#   ylab("Estimated Log Return Abundance")
+return_plot
+ggsave("output/return_est_plot.png", width = 7, height = 4, bg = "transparent")
+
 
 # ## try other way =====
 # return_df <- as.data.frame(bh_fit, pars = c("N_return_pp")) %>% 
@@ -156,37 +177,67 @@ ggplot(data = pred_N_return_pp) +
 #   theme_classic() + 
 #   xlab("Brood Year") + 
 #   ylab("Estimated Return\n(Millions)")
-#  
-# 
-
 
 # Juveniles PP ====== 
 # multiply by catch q to fit observations
+juv_obs <-read_csv("data/processed_data/tidy_juv_fall_yukon.csv") %>% 
+     dplyr::mutate(brood_year = Year - 1,
+                   # se = `Std. Error for Estimate`,
+                   # se_log = `Std. Error for ln(Estimate)`,
+                   time = as.numeric(1:nrow(.)),
+                   obs = log(fall_abundance),
+                   sd = log(CV*obs)) %>%  
+     dplyr::select(brood_year,time,obs,sd)  
 
 pred_N_jpp <- summary(bh_fit, pars = c("N_j_pp"), 
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = 1:nrow(.)) %>%
-  left_join(years) %>%
-  # cbind(obs = data_list_stan$data_stage_j) %>% 
-  left_join(data.frame(cal_year = c(data_list_stan$years_data_juv ),
-                       obs = c(data_list_stan$data_stage_j))) %>%
-  dplyr::mutate(mean = (mean),
+  dplyr::mutate(time = as.numeric(1:nrow(.))) %>%
+  dplyr::select(-sd) %>% 
+  left_join(juv_obs, by = "time") %>%  
+  dplyr::mutate( 
          ci_10=(X10.),
          ci_90=(X90.))
 
-ggplot(data = pred_N_jpp) +
-  geom_point(aes(x=cal_year, y = log(obs)),color = "purple") +
-  geom_line(aes(x=cal_year, y = log(obs)), color = "purple") +
-  geom_line(aes(x=cal_year, y = mean)) +
-  geom_ribbon(aes(x=cal_year, ymin =ci_10,
-                  ymax = ci_90), alpha = 0.5) +
+juv_plot <- ggplot(data = pred_N_jpp) +
+  geom_ribbon(aes(x=brood_year, ymin =ci_10,
+                  ymax = ci_90),   fill =  "#EAAA00") +
+  geom_line(aes(x=brood_year, y = mean), color = "white", linetype = 2) +
+  geom_errorbar(aes(x=brood_year, ymin = (obs)-(sd),
+                    ymax = (obs)+(sd)), width = 0.1,  color = "white") + 
+  geom_point(aes(x=brood_year, y = (obs)),color = "white" ) +
+  geom_line(aes(x=brood_year, y = (obs)), color = "white" ) +
   scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
   theme_classic() + 
   xlab("Brood Year") + 
-  ylab("Estimated Log Juvenile Abundance")
- 
+  ylab("Estimated Log Juvenile Abundance") +
+  theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        # panel.grid.minor = element_blank(),
+        # panel.grid.major = element_blank(),
+        # plot.title = element_text(color = "white"),
+        strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white")) 
+
+juv_plot 
+
+## save ======== 
+ggsave("output/juv_est_plot.png", width = 7, height = 4, bg = "transparent")
+
 # juv return together pred ======
 pred_juv_rec <- left_join(pred_N_jpp %>% 
                             dplyr::select(cal_year, mean) %>%
@@ -444,6 +495,15 @@ sst_zoop_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   dplyr::mutate(brood_year = cal_year-1) %>%  
   dplyr::select(brood_year,SST_CDD_NBS, 
                 Cnideria)
+
+# kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
+#                          probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()  %>% 
+#   dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
+#                 variable = case_when(grepl("kappa_marine",rowname) ~ "Marine Survival",
+#                                      grepl("kappa_j",rowname) ~ "Juvenile Survival")) %>% 
+#   left_join(years)
 
 pred_N_jpp_cov <- summary(bh_fit, pars = c("N_j_pp"), 
                       probs = c(0.1, 0.9))$summary %>%

@@ -105,8 +105,7 @@ N_sp_start_log = log(N_sp_start+ 1.001)
 N_catch_start_log = log(N_catch_start+ 1.001)
 N_egg_start_log  = log(N_egg_start+ 1.001)
 
-
-#plot(fall_juv$fall_abundance, type ="l")
+ 
 # # CV ========================================
 spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
   filter(year >= year_min,
@@ -115,7 +114,9 @@ spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
 
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
+  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))
+#                yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))
+) %>%
    # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>% 
@@ -124,13 +125,13 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   dplyr::select(SST_CDD_NBS, 
                  Large_zoop,
                  Cnideria#,
-                # full_index
+                #yukon_mean_discharge
                 ) %>% 
   as.matrix()
  
 # the temp in 2001 is gonna effect fish from brood year 1999
 temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-   dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+   dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                   Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
                   Pink_hatchery= as.numeric(scale(Pink_hatchery)),
                   full_index = as.numeric(scale(full_index))  ) %>% 

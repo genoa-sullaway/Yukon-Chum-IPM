@@ -78,9 +78,9 @@ real <lower =0> N_egg_start_log[t_start,A];
  real <lower =10> log_c_1;
  real <lower =10> log_c_2; // log carrying capacity
  // 
-real <lower =0> sigma_sp; 
+real log_sigma_sp; 
  
-  real <lower =0> sigma_catch; 
+// real log_sigma_catch; 
 // real <lower=0> sigma_y_j;
 // real <lower =0> sigma_brood_return; 
  
@@ -123,6 +123,9 @@ real N_j_start;
 real<lower=0> c_1; // estimate on log, transform back to normal scale
 real<lower=0> c_2;
 
+// real<lower=0> sigma_catch;
+real<lower=0> sigma_sp;
+ 
 vector <lower = 0> [nRyrs_T] F;
 vector <lower = 0> [A] S; //selectivty
 
@@ -146,8 +149,7 @@ matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix <lower=0, upper=1>[nRyrs,A] q; 
-// vector<lower=0, upper=1> [A] pi; // actual age comps
- 
+
  S = exp(log_S);
  
   for(t in 1:nRyrs_T){ 
@@ -155,6 +157,9 @@ matrix <lower=0, upper=1>[nRyrs,A] q;
   F[t]  = exp(log_F_mean +log_F_dev_y[t]);
  }
  
+ // sigma_catch = exp(log_sigma_catch);
+ sigma_sp = exp(log_sigma_sp); 
+
  //  for(t in 1:nRyrs_T){//
  //  // instant fishing mortality
  //  F[t] = exp(log_F[t]); 
@@ -277,13 +282,13 @@ model {
    // sigma_y_j ~ normal(0,1); //normal
    // sigma_brood_return ~  normal(0,1);
    
-   sigma_sp ~  normal(0,0.5); 
-   sigma_catch ~ normal(0,0.5); 
+   log_sigma_sp ~  normal(0,1); 
+   // log_sigma_catch ~  normal(0,1); 
    
    log_catch_q ~ normal(-5,1);
    
-  log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
+  log_c_1 ~  normal(16, 5); // carrying capacity prior - stage 1
+  log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
   
  N_j_start_log ~ normal(17,10);
  N_brood_year_return_start_log~ normal(15,10);
@@ -352,7 +357,7 @@ model {
   for(t in 1:nRyrs){ // calendar years 
      target += ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
-     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_catch);//sqrt(log((0.01^2) + 1)));  //sigma_catch) ; 
+     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.05^2) + 1)));  //sigma_catch) ; 
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp); //sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
     }
   }
@@ -385,7 +390,7 @@ theta_2_4_pp = normal_rng(theta2[4]- 0.5 * 0.01^2,0.05);
 
 for(t in 1:nRyrs){
 N_sp_pp[t] = normal_rng((sum(N_sp[t,1:A]))- 0.5 * sqrt((sigma_sp^2) + 1)^2, 1); //(sqrt(log(data_sp_cv[t]^2) + 1)));
-N_catch_pp[t] = normal_rng((sum(N_catch[t,1:A]))- 0.5 * sqrt((sigma_catch^2) + 1)^2, 1);//(0.1));
+// N_catch_pp[t] = normal_rng((sum(N_catch[t,1:A]))- 0.5 * sqrt((sigma_catch^2) + 1)^2, 1);//(0.1));
   }
 
 for(t in 1:nByrs){

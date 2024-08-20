@@ -18,8 +18,10 @@ river_discharge_a <- read_csv("data/processed_covariates/Stage_A_YK_Discharge.cs
   dplyr::select(Year, mean_discharge,id) %>%
   spread(id, mean_discharge) %>%
   dplyr::rename(kusko_mean_discharge = "Kusko",
-         yukon_mean_discharge = "Yukon")
- 
+         yukon_mean_discharge = "Yukon") %>% 
+  dplyr::mutate(Year = Year+1) %>% # already brood year, this will line up when i subtract 1 year from all covariate years 
+ dplyr::select(Year, yukon_mean_discharge)
+
 air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
   filter(type =="average", id == "spring") %>%
   dplyr::rename(mean_air_temp = "value") %>%

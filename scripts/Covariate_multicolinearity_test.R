@@ -11,16 +11,11 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
                 full_index = as.numeric(scale(full_index))) %>%
-  # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
-  # dplyr::mutate(brood_year = cal_year-1) %>% 
-  # filter(brood_year >= year_min, 
-  #        brood_year <= year_max_brood) %>%
-  dplyr::select(SST_CDD_NBS,# yukon_mean_discharge,
+  dplyr::select(SST_CDD_NBS,
+                yukon_mean_discharge,
                 Large_zoop,
-                Cnideria,
-                full_index) 
-
+                Cnideria) 
 
 X_a<-stage_a_cov[,1:4]
 colinearity_a <-ggpairs(X_a)
