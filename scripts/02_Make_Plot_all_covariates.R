@@ -155,211 +155,211 @@ plotb
 dev.off()
 
 
-
-# Old / Plots ===============
-# Covariates B - scale ========== 
-stage_b_cov_plot <- stage_b_cov_plot %>%
-  group_by(id) %>% 
-  dplyr::mutate(scale = scale(value))
-
-plotb <- ggplot(data = stage_b_cov_plot, aes(x=Year, y = scale, color = id, group = id)) +
-  geom_point( ) +
-  geom_line( ) +
-  scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Sunset2",n=5)) + 
-  facet_wrap(~id, scales = "free",ncol=1) +
-  theme_classic()  +
-  ylab(" ") + 
-  ggtitle("Stage B Covariates - Scaled") +
-  geom_hline(yintercept = 0, linetype =2)
-
-plotb
-
-pdf("output/plot_Scaled_covariates_b.pdf",  width = 7, height = 12)
-plotb
-dev.off()
-
-# Stage A: Plot individual covariates ==============================
- ## Discharge ============= 
-  dplyr::mutate(id = factor(id, levels = c("kusko_mean_discharge", "yukon_mean_discharge",
-                                           "kusko_aniak_mean_airtemp", "yukon_chena_mean_airtemp",
-                                           "SST_CDD_NBS", "gelatinous_zoop_NBS", "large_zoop_NBS")))
-discharge <- stage_a_cov %>%
-  select(Year, kusko_mean_discharge,yukon_mean_discharge) %>%
-  gather(2:3, key = "id", value = "value") %>%
-  group_by(id) %>%
-  mutate(scale = scale(value))
-
-rivera <- ggplot( data = discharge, aes(x=Year, y = scale, group = id, color =id)) +
-  geom_point(  ) +
-  geom_line( ) + 
-  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
-  theme_classic()  +
-  ggtitle("Stage A- Mean River Discharge") + 
-  geom_hline(yintercept =0) +
-   ylab(" ") +
-  theme(legend.position = "bottom")
-
-pdf("output/plot_Cov_Riverdischarge_A.pdf",  width = 7, height = 4)
-rivera
-dev.off()
-
-## Airtemp =============  
-
-airtemp <- stage_a_cov %>%
-  select(Year, kusko_aniak_mean_airtemp,yukon_chena_mean_airtemp) %>%
-  gather(2:3, key = "id", value = "value") %>%
-  group_by(id) %>%
-  mutate(scale = scale(value))
-
-airtempa <- ggplot( data = airtemp, aes(x=Year, y = scale, group = id, color =id)) +
-  geom_point(  ) +
-  geom_line( ) + 
-  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
-  theme_classic()  +
-  ggtitle("Stage A- Mean Air Temp") + 
-  geom_hline(yintercept =0) +
-  ylab(" ") +
-  theme(legend.position = "bottom")
-
-pdf("output/plot_Cov_AirTemp_A.pdf",  width = 7, height = 4)
-airtempa
-dev.off()
-
-
-## SST NBS =============  
-
-SST_NBS <- stage_a_cov %>%
-  select(Year, SST_CDD_NBS) %>%  
-  mutate(scale = scale(SST_CDD_NBS))
-
-SST_NBSa <- ggplot( data = SST_NBS, aes(x=Year, y = scale), color = "#4682B4") +
-  geom_point( color = "#4682B4" ) +
-  geom_line( color = "#4682B4" ) + 
- # scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
-  theme_classic()  +
-  ggtitle("Stage A- NBS SST (cummulative degree days)") + 
-  geom_hline(yintercept =0) +
-  ylab(" ") #+
-  #theme(legend.position = "bottom")
-
-pdf("output/plot_SST_NBSCDD_A.pdf",  width = 7, height = 4)
-SST_NBSa
-dev.off()
-
-## Large zooplankton =============  
-
-large_zoop <- stage_a_cov %>%
-  select(Year, large_zoop_NBS) %>%  
-  mutate(scale = scale(large_zoop_NBS))
-
-large_zoopa <- ggplot( data = large_zoop, aes(x=Year, y = scale) ) +
-  geom_point( color = "#e1ad01" ) +
-  geom_line( color = "#e1ad01" ) + 
-  # scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
-  theme_classic()  +
-  ggtitle("Stage A- Large zooplankton NBS") + 
-  geom_hline(yintercept =0) +
-  ylab(" ")  
-
-pdf("output/plot_largezoop_A.pdf",  width = 7, height = 4)
-large_zoopa
-dev.off()
-
-## Gelatinous zooplankton =============  
-gelatinous_zoop <- stage_a_cov %>%
-  select(Year, gelatinous_zoop_NBS) %>%  
-  mutate(scale = scale(gelatinous_zoop_NBS))
-
-gelatinous_zoopa <- ggplot( data = gelatinous_zoop, aes(x=Year, y = scale) ) +
-  geom_point( color = "#301934" ) +
-  geom_line( color = "#301934" ) + 
-  # scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
-  theme_classic()  +
-  ggtitle("Stage A- Gelatinous zooplankton NBS") + 
-  geom_hline(yintercept =0) +
-  ylab(" ")  
-
-pdf("output/plot_gelatinouszoop_A.pdf",  width = 7, height = 4)
-gelatinous_zoopa
-dev.off()
-
-
-# Stage B: Plot individual covariates ==============================
-## SST ============= 
-# c("SST_CDD_SEBS", 
-#   "Chum_hatchery",
-#   "Pink_hatchery",
-#   "kusko_mean_discharge_summer", 
-#   "yukon_mean_discharge_summer" )))
-
-SST_SEBS <- stage_b_cov %>%
-  select(Year, SST_CDD_SEBS)  %>%
-  mutate(scale = scale(SST_CDD_SEBS))
-
-sstb <- ggplot( data = SST_SEBS, aes(x=Year, y = scale )) +
-  geom_point(color = "#4B5320"  ) +
-  geom_line(color = "#4B5320" ) + 
-  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
-  theme_classic()  +
-  ggtitle("Stage B- SST SEBS (CDD January-June)") + 
-  geom_hline(yintercept =0) +
-  ylab(" ") +
-  theme(legend.position = "bottom")
-
-pdf("output/plot_SST_CDD_SEBS_B.pdf",  width = 7, height = 4)
-sstb
-dev.off()
-
-## discharge ============= 
-# c("SST_CDD_SEBS", 
-#   "Chum_hatchery",
-#   "Pink_hatchery",
-#   "kusko_mean_discharge_summer", 
-#   "yukon_mean_discharge_summer" )))
-discharge <- stage_b_cov %>%
-  select(Year, kusko_mean_discharge_summer,yukon_mean_discharge_summer) %>%
-  gather(2:3, key = "id", value = "value") %>%
-  group_by(id) %>%
-  mutate(scale = scale(value))
-
-riverb <- ggplot( data = discharge, aes(x=Year, y = scale, group = id, color =id)) +
-  geom_point(  ) +
-  geom_line( ) + 
-  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
-  theme_classic()  +
-  ggtitle("Stage B - Mean River Discharge, Summer") + 
-  geom_hline(yintercept =0) +
-  ylab(" ") +
-  theme(legend.position = "bottom")
-
-pdf("output/plot_Cov_Riverdischarge_B.pdf",  width = 7, height = 4)
-riverb
-dev.off()
-
-
-## hatchery ============= 
-# c("SST_CDD_SEBS", 
-#   "Chum_hatchery",
-#   "Pink_hatchery",
-#   "kusko_mean_discharge_summer", 
-#   "yukon_mean_discharge_summer" )))
-hatchery <- stage_b_cov %>%
-  select(Year, Pink_hatchery,Chum_hatchery) %>%
-  gather(2:3, key = "id", value = "value") %>%
-  group_by(id) %>%
-  mutate(scale = scale(value))
-
-hatcheryb <- ggplot( data = hatchery, aes(x=Year, y = scale, group = id, color =id)) +
-  geom_point(  ) +
-  geom_line( ) + 
-  scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Sunset2",n=2)) +
-  theme_classic()  +
-  ggtitle("Stage B - Hatchery releases") + 
-  geom_hline(yintercept =0) +
-  ylab(" ") +
-  theme(legend.position = "bottom")
-
-pdf("output/plot_Cov_hatchery_B.pdf",  width = 7, height = 4)
-hatcheryb
-dev.off()
-
+# 
+# # Old / Plots ===============
+# # Covariates B - scale ========== 
+# stage_b_cov_plot <- stage_b_cov_plot %>%
+#   group_by(id) %>% 
+#   dplyr::mutate(scale = scale(value))
+# 
+# plotb <- ggplot(data = stage_b_cov_plot, aes(x=Year, y = scale, color = id, group = id)) +
+#   geom_point( ) +
+#   geom_line( ) +
+#   scale_color_manual(guide = "none", values = PNWColors::pnw_palette(name="Sunset2",n=5)) + 
+#   facet_wrap(~id, scales = "free",ncol=1) +
+#   theme_classic()  +
+#   ylab(" ") + 
+#   ggtitle("Stage B Covariates - Scaled") +
+#   geom_hline(yintercept = 0, linetype =2)
+# 
+# plotb
+# 
+# pdf("output/plot_Scaled_covariates_b.pdf",  width = 7, height = 12)
+# plotb
+# dev.off()
+# 
+# # Stage A: Plot individual covariates ==============================
+#  ## Discharge ============= 
+#   dplyr::mutate(id = factor(id, levels = c("kusko_mean_discharge", "yukon_mean_discharge",
+#                                            "kusko_aniak_mean_airtemp", "yukon_chena_mean_airtemp",
+#                                            "SST_CDD_NBS", "gelatinous_zoop_NBS", "large_zoop_NBS")))
+# discharge <- stage_a_cov %>%
+#   select(Year, kusko_mean_discharge,yukon_mean_discharge) %>%
+#   gather(2:3, key = "id", value = "value") %>%
+#   group_by(id) %>%
+#   mutate(scale = scale(value))
+# 
+# rivera <- ggplot( data = discharge, aes(x=Year, y = scale, group = id, color =id)) +
+#   geom_point(  ) +
+#   geom_line( ) + 
+#   scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+#   theme_classic()  +
+#   ggtitle("Stage A- Mean River Discharge") + 
+#   geom_hline(yintercept =0) +
+#    ylab(" ") +
+#   theme(legend.position = "bottom")
+# 
+# pdf("output/plot_Cov_Riverdischarge_A.pdf",  width = 7, height = 4)
+# rivera
+# dev.off()
+# 
+# ## Airtemp =============  
+# 
+# airtemp <- stage_a_cov %>%
+#   select(Year, kusko_aniak_mean_airtemp,yukon_chena_mean_airtemp) %>%
+#   gather(2:3, key = "id", value = "value") %>%
+#   group_by(id) %>%
+#   mutate(scale = scale(value))
+# 
+# airtempa <- ggplot( data = airtemp, aes(x=Year, y = scale, group = id, color =id)) +
+#   geom_point(  ) +
+#   geom_line( ) + 
+#   scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+#   theme_classic()  +
+#   ggtitle("Stage A- Mean Air Temp") + 
+#   geom_hline(yintercept =0) +
+#   ylab(" ") +
+#   theme(legend.position = "bottom")
+# 
+# pdf("output/plot_Cov_AirTemp_A.pdf",  width = 7, height = 4)
+# airtempa
+# dev.off()
+# 
+# 
+# ## SST NBS =============  
+# 
+# SST_NBS <- stage_a_cov %>%
+#   select(Year, SST_CDD_NBS) %>%  
+#   mutate(scale = scale(SST_CDD_NBS))
+# 
+# SST_NBSa <- ggplot( data = SST_NBS, aes(x=Year, y = scale), color = "#4682B4") +
+#   geom_point( color = "#4682B4" ) +
+#   geom_line( color = "#4682B4" ) + 
+#  # scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+#   theme_classic()  +
+#   ggtitle("Stage A- NBS SST (cummulative degree days)") + 
+#   geom_hline(yintercept =0) +
+#   ylab(" ") #+
+#   #theme(legend.position = "bottom")
+# 
+# pdf("output/plot_SST_NBSCDD_A.pdf",  width = 7, height = 4)
+# SST_NBSa
+# dev.off()
+# 
+# ## Large zooplankton =============  
+# 
+# large_zoop <- stage_a_cov %>%
+#   select(Year, large_zoop_NBS) %>%  
+#   mutate(scale = scale(large_zoop_NBS))
+# 
+# large_zoopa <- ggplot( data = large_zoop, aes(x=Year, y = scale) ) +
+#   geom_point( color = "#e1ad01" ) +
+#   geom_line( color = "#e1ad01" ) + 
+#   # scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+#   theme_classic()  +
+#   ggtitle("Stage A- Large zooplankton NBS") + 
+#   geom_hline(yintercept =0) +
+#   ylab(" ")  
+# 
+# pdf("output/plot_largezoop_A.pdf",  width = 7, height = 4)
+# large_zoopa
+# dev.off()
+# 
+# ## Gelatinous zooplankton =============  
+# gelatinous_zoop <- stage_a_cov %>%
+#   select(Year, gelatinous_zoop_NBS) %>%  
+#   mutate(scale = scale(gelatinous_zoop_NBS))
+# 
+# gelatinous_zoopa <- ggplot( data = gelatinous_zoop, aes(x=Year, y = scale) ) +
+#   geom_point( color = "#301934" ) +
+#   geom_line( color = "#301934" ) + 
+#   # scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+#   theme_classic()  +
+#   ggtitle("Stage A- Gelatinous zooplankton NBS") + 
+#   geom_hline(yintercept =0) +
+#   ylab(" ")  
+# 
+# pdf("output/plot_gelatinouszoop_A.pdf",  width = 7, height = 4)
+# gelatinous_zoopa
+# dev.off()
+# 
+# # 
+# # # Stage B: Plot individual covariates ==============================
+# # ## SST ============= 
+# # # c("SST_CDD_SEBS", 
+# # #   "Chum_hatchery",
+# # #   "Pink_hatchery",
+# # #   "kusko_mean_discharge_summer", 
+# # #   "yukon_mean_discharge_summer" )))
+# # 
+# # SST_SEBS <- stage_b_cov %>%
+# #   select(Year, SST_CDD_SEBS)  %>%
+# #   mutate(scale = scale(SST_CDD_SEBS))
+# # 
+# # sstb <- ggplot( data = SST_SEBS, aes(x=Year, y = scale )) +
+# #   geom_point(color = "#4B5320"  ) +
+# #   geom_line(color = "#4B5320" ) + 
+# #   scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+# #   theme_classic()  +
+# #   ggtitle("Stage B- SST SEBS (CDD January-June)") + 
+# #   geom_hline(yintercept =0) +
+# #   ylab(" ") +
+# #   theme(legend.position = "bottom")
+# # 
+# # pdf("output/plot_SST_CDD_SEBS_B.pdf",  width = 7, height = 4)
+# # sstb
+# # dev.off()
+# # 
+# # ## discharge ============= 
+# # # c("SST_CDD_SEBS", 
+# # #   "Chum_hatchery",
+# # #   "Pink_hatchery",
+# # #   "kusko_mean_discharge_summer", 
+# # #   "yukon_mean_discharge_summer" )))
+# # discharge <- stage_b_cov %>%
+# #   select(Year, kusko_mean_discharge_summer,yukon_mean_discharge_summer) %>%
+# #   gather(2:3, key = "id", value = "value") %>%
+# #   group_by(id) %>%
+# #   mutate(scale = scale(value))
+# # 
+# # riverb <- ggplot( data = discharge, aes(x=Year, y = scale, group = id, color =id)) +
+# #   geom_point(  ) +
+# #   geom_line( ) + 
+# #   scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Bay",n=2)) +
+# #   theme_classic()  +
+# #   ggtitle("Stage B - Mean River Discharge, Summer") + 
+# #   geom_hline(yintercept =0) +
+# #   ylab(" ") +
+# #   theme(legend.position = "bottom")
+# # 
+# # pdf("output/plot_Cov_Riverdischarge_B.pdf",  width = 7, height = 4)
+# # riverb
+# # dev.off()
+# # 
+# # 
+# # ## hatchery ============= 
+# # # c("SST_CDD_SEBS", 
+# # #   "Chum_hatchery",
+# # #   "Pink_hatchery",
+# # #   "kusko_mean_discharge_summer", 
+# # #   "yukon_mean_discharge_summer" )))
+# # hatchery <- stage_b_cov %>%
+# #   select(Year, Pink_hatchery,Chum_hatchery) %>%
+# #   gather(2:3, key = "id", value = "value") %>%
+# #   group_by(id) %>%
+# #   mutate(scale = scale(value))
+# # 
+# # hatcheryb <- ggplot( data = hatchery, aes(x=Year, y = scale, group = id, color =id)) +
+# #   geom_point(  ) +
+# #   geom_line( ) + 
+# #   scale_color_manual(name = " ", values = PNWColors::pnw_palette(name="Sunset2",n=2)) +
+# #   theme_classic()  +
+# #   ggtitle("Stage B - Hatchery releases") + 
+# #   geom_hline(yintercept =0) +
+# #   ylab(" ") +
+# #   theme(legend.position = "bottom")
+# # 
+# # pdf("output/plot_Cov_hatchery_B.pdf",  width = 7, height = 4)
+# # hatcheryb
+# # dev.off()
+# # 

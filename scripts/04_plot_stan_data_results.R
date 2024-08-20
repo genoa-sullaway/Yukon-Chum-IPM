@@ -142,6 +142,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "N_j_pp"  ),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "D_scale"  ),
+     fill_color = "blue")
+
 
 # plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 #      pars=  c(  "sigma_y_j"),
@@ -162,18 +166,19 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
               probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:23, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
-  filter(!time>20) %>% # remove years without full return estimates 
+  # filter(!time>20) %>% # remove years without full return estimates 
   left_join(years)   
  
 # sum to compare with data 
 summ_n_sp <- pred_N_SP %>%
   group_by(cal_year) %>%
   summarise(mean = sum(mean),
-            sd = mean(sd) ) %>%
-  cbind(obs = data_list_stan$data_stage_sp) %>%
-  mutate(rowname = "sp")   
+            sd = mean(sd)) %>%
+  left_join(data.frame(cal_year = c(data_list_stan$years_data_sp),
+                       obs = c(data_list_stan$data_stage_sp))) %>%
+  dplyr::mutate(rowname = "sp")   
 
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=cal_year, y = obs)) +
@@ -189,7 +194,7 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:23, each=4),
+  dplyr::mutate(time = rep(1:27, each=4),
                 age = rep(1:4, length.out = nrow(.))) %>%
  
   left_join(years)  
@@ -206,14 +211,16 @@ pred_N_brood_year_return <- summary(bh_fit, pars = c("N_brood_year_return"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = (1:17 )) %>% 
-  cbind(obs = data_list_stan$data_stage_return)  %>%
+  dplyr::mutate(time = (1:21)) %>% 
+  left_join(years)%>%
+  left_join(data.frame(cal_year = c(data_list_stan$years_data_return),
+                       obs = data_list_stan$data_stage_return)) %>%
   mutate(rowname = "recruit")  
 
 ggplot(data = pred_N_brood_year_return) + 
-  geom_line(aes(x=time, y = mean)) +
-  geom_point(aes(x=time, y = obs)) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+  geom_line(aes(x=cal_year, y = mean)) +
+  geom_point(aes(x=cal_year, y = obs)) +
+  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
                   ymax = mean+se_mean))+
   ggtitle(("brood year return"))
 
@@ -222,23 +229,20 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:23, each=4),
-                age = rep(3:6, length.out = nrow(.))) %>% 
-  filter(!time>20) 
-
-# plt proportions 
-# sum to compare with data 
-summ_n_harvest <- pred_N_harvest %>%
-  group_by(time) %>%
+  dplyr::mutate(time = rep(1:27, each=4),
+                age = rep(3:6, length.out = nrow(.))) %>%
+  left_join(years) %>%
+  group_by(cal_year) %>%
   summarise(mean = sum(mean),
             se_mean = mean(se_mean)) %>% 
-  cbind(obs = data_list_stan$data_stage_harvest)  %>%
-mutate(rowname = "harvest")  
+  dplyr::left_join( data.frame(cal_year = c(data_list_stan$years_data_sp),
+                       obs = c(data_list_stan$data_stage_harvest)), by ="cal_year") %>%
+  dplyr::mutate(rowname = "harvest")  
 
-ggplot(data = summ_n_harvest) +
-  geom_point(aes(x=time, y = obs)) +
-  geom_line(aes(x=time, y = mean)) +
-  geom_ribbon(aes(x=time, ymin = mean-se_mean,
+ggplot(data = pred_N_harvest) +
+  geom_point(aes(x=cal_year, y = obs)) +
+  geom_line(aes(x=cal_year, y = mean)) +
+  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
                   ymax = mean+se_mean))+
   ggtitle(("Harvest, est and observed"))
 
@@ -255,7 +259,7 @@ pred_N_j <- summary(bh_fit, pars = c("N_j"),
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
-  filter(!time==22) %>%
+  # filter(!time==22) %>%
   left_join(years)
                 
 # plot proportions 
@@ -263,7 +267,9 @@ pred_N_j <- summary(bh_fit, pars = c("N_j"),
 summ_n_j <- pred_N_j %>%
  dplyr::mutate(mean_J_Q = mean*catch_q$mean,
                se_mean = se_mean*catch_q$mean) %>% 
-  cbind(obs = data_list_stan$data_stage_j) %>%
+  # left_join(year) %>% 
+  left_join(data.frame(cal_year = c(data_list_stan$years_data_juv ),
+                       obs = c(data_list_stan$data_stage_j))) %>%
   mutate(rowname = "juv") #%>% 
 #  filter(!time<7)
 #  dplyr::mutate(obs = obs*catch_q$mean) 
@@ -283,25 +289,15 @@ ggplot(data = summ_n_j) +
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
 
- ## eggs =============================
-# pred_N_eggs_sum <- summary(bh_fit, pars = c("N_e_sum"), 
-#                           probs = c(0.1, 0.9))$summary %>%
-#   data.frame() %>%
-#   rownames_to_column()  %>%
-#   dplyr::mutate(time = rep(1:23, each=1)) %>%
-#   mutate(rowname = "eggs")  
-#    
-# ggplot(data = pred_N_eggs_sum) + 
-#  geom_line(aes(x=time, y = mean)) #+
-#  # geom_line(aes(x=time, y = mean*10), color = "green") +  
-#   # geom_line(aes(x=time, y = pred_j), color = "blue")  
-# 
-# ggplot(data = pred_N_eggs_sum %>% filter(!time < 7)) + 
-#   geom_line(aes(x=time, y = mean)) 
 
+g <- summary(bh_fit, pars = c("g"), 
+                      probs = c(0.1, 0.9))$summary %>% 
+  data.frame() %>%
+  rownames_to_column()   
+ 
 # plot age comp through time =================
 age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 
-    dplyr::mutate(time = 1:20) %>% 
+    dplyr::mutate(time = 1:22) %>% 
     left_join(years) %>%
     gather(1:4, key = "age", value = "obs") %>%
     dplyr::mutate(age = case_when(age == "abund_0.3" ~ 3,
@@ -313,7 +309,7 @@ age_comp_Q <- summary(bh_fit, pars = c("q"),
                        probs = c(0.1, 0.9))$summary %>% 
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:20, each=4),
+  dplyr::mutate(time = rep(1:22, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   left_join(years) %>%
   left_join( age_comp_dat) %>% 
@@ -616,7 +612,7 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
                     probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:17, length.out = nrow(.)), 
+  dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
                 variable = case_when(grepl("kappa_marine_survival",rowname) ~ "kappa_marine_survival",
                                      grepl("kappa_j_survival",rowname) ~ "kappa_j_survival")) %>% 
   left_join(years)# %>% 

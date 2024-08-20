@@ -5,10 +5,11 @@ library(readxl)
 # process stomach fullness, make fullness index. 
 
  Fullness <- read_xlsx("data/NBS_JChumFullness.xlsx")  
-
+ 
 fullness_df <- Fullness %>% 
-  filter(!is.na(Number_of_Stomachs),
-         !SampleYear == 2023) %>% 
+  filter(!is.na(Number_of_Stomachs)#,
+         #!SampleYear == 2023
+         ) %>% 
   dplyr::rename(fullness =`Stomach_fullness_index(o/ooo)`,
                 Lat = `EQ Latitude`,
                 Lon = `EQ Longitude`,
@@ -63,7 +64,7 @@ temp <- pred_df %>%
   xlab(" ") + 
   ylab("Predicted Fullness")   
 
- year = data.frame(SampleYear = c(seq(from = 2002, to = 2022, by =1)))
+ year = data.frame(SampleYear = c(seq(from = 2002, to = 2023, by =1)))
 
  test <- left_join(year,temp)
  
@@ -82,10 +83,20 @@ temp <- pred_df %>%
    filter(SampleYear %in% c(2013,2015,2016)) %>%
    dplyr::summarise(mean = mean(pred))
  
+ y2020<- test %>% 
+   filter(SampleYear %in% c(2021,2018,2019)) %>%
+   dplyr::summarise(mean = mean(pred))
+
+ y2022<- test %>% 
+   filter(SampleYear %in% c(2023,2021, 2019)) %>%
+   dplyr::summarise(mean = mean(pred))
+ 
  temp_full <- test %>%
    dplyr::mutate(pred = case_when(SampleYear ==2002 ~ y2002[1,1],
                                   SampleYear ==2008 ~ y2008[1,1],
                                   SampleYear ==2014 ~ y2014[1,1],
+                                  SampleYear ==2020 ~ y2020[1,1],
+                                  SampleYear ==2022 ~ y2022[1,1],
                                   TRUE ~ pred))
  
  ggplot(data =  temp_full, aes(x=SampleYear, y =pred)) +

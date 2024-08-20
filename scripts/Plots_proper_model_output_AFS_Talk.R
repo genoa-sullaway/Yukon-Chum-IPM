@@ -103,7 +103,8 @@ pred_N_return_pp <- summary(bh_fit, pars = c("N_return_pp"),
   rownames_to_column()  %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
   left_join(years) %>%
-  cbind(obs = data_list_stan$data_stage_return) %>% 
+  left_join(data.frame(cal_year = c(data_list_stan$years_data_return),
+                       obs = data_list_stan$data_stage_return)) %>%
   dplyr::mutate(mean = (mean),
                 ci_10=(X10.),
                 ci_90=(X90.)) 
@@ -168,7 +169,9 @@ pred_N_jpp <- summary(bh_fit, pars = c("N_j_pp"),
   rownames_to_column()  %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
   left_join(years) %>%
-  cbind(obs = data_list_stan$data_stage_j) %>% 
+  # cbind(obs = data_list_stan$data_stage_j) %>% 
+  left_join(data.frame(cal_year = c(data_list_stan$years_data_juv ),
+                       obs = c(data_list_stan$data_stage_j))) %>%
   dplyr::mutate(mean = (mean),
          ci_10=(X10.),
          ci_90=(X90.))
@@ -290,7 +293,7 @@ kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_surv
                          probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>% 
-  dplyr::mutate(time = rep(1:17, length.out = nrow(.)), 
+  dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
                 variable = case_when(grepl("kappa_marine",rowname) ~ "Marine Survival",
                                      grepl("kappa_j",rowname) ~ "Juvenile Survival")) %>% 
   left_join(years)
