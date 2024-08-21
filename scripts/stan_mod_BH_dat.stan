@@ -79,8 +79,7 @@ real <lower =0> N_egg_start_log[t_start,A];
  real <lower =10> log_c_2; // log carrying capacity
  // 
 real log_sigma_sp; 
- 
-// real log_sigma_catch; 
+real log_sigma_catch; 
 // real <lower=0> sigma_y_j;
 // real <lower =0> sigma_brood_return; 
  
@@ -93,10 +92,10 @@ real theta2 [ncovars2];
 real <lower=0> g[nByrs,A]; // gamma random draws
 
 real log_catch_q; 
-real log_F_mean;
+// real log_F_mean;
 vector [A] log_S; // log selectivity
-  // vector [nRyrs_T]  log_F;  
- vector [nRyrs_T]  log_F_dev_y; 
+vector [nRyrs_T]  log_F;  
+ // vector [nRyrs_T]  log_F_dev_y; 
 
 real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
 real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
@@ -123,7 +122,7 @@ real N_j_start;
 real<lower=0> c_1; // estimate on log, transform back to normal scale
 real<lower=0> c_2;
 
-// real<lower=0> sigma_catch;
+real<lower=0> sigma_catch;
 real<lower=0> sigma_sp;
  
 vector <lower = 0> [nRyrs_T] F;
@@ -151,19 +150,19 @@ vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma d
 matrix <lower=0, upper=1>[nRyrs,A] q; 
 
  S = exp(log_S);
+ // 
+ //  for(t in 1:nRyrs_T){ 
+ //  // instant fishing mortality
+ //  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
+ // }
  
-  for(t in 1:nRyrs_T){ 
-  // instant fishing mortality
-  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
- }
- 
- // sigma_catch = exp(log_sigma_catch);
+ sigma_catch = exp(log_sigma_catch);
  sigma_sp = exp(log_sigma_sp); 
 
- //  for(t in 1:nRyrs_T){//
- //  // instant fishing mortality
- //  F[t] = exp(log_F[t]); 
- // }
+  for(t in 1:nRyrs_T){//
+  // instant fishing mortality
+  F[t] = exp(log_F[t]);
+ }
 
 N_j_start = exp(N_j_start_log);
 N_brood_year_return_start = exp(N_brood_year_return_start_log);
@@ -283,7 +282,7 @@ model {
    // sigma_brood_return ~  normal(0,1);
    
    log_sigma_sp ~  normal(0,1); 
-   // log_sigma_catch ~  normal(0,1); 
+   log_sigma_catch ~  normal(0,1); 
    
    log_catch_q ~ normal(-5,1);
    
@@ -291,7 +290,7 @@ model {
   log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
   
  N_j_start_log ~ normal(17,10);
- N_brood_year_return_start_log~ normal(15,10);
+ N_brood_year_return_start_log~ normal(16,10);
 
  for(t in 1:t_start){
    for(a in 1:A){ 
@@ -304,7 +303,7 @@ model {
     
   theta1[1] ~ normal(0.1,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
   theta1[2] ~ normal(0,0.01); // environmental covariate coefficient stage 1
-  theta1[3] ~ normal(-0.2,0.02);
+  theta1[3] ~ normal(-0.2,0.2);
   // theta1[4] ~ normal(0,0.01);
  
  theta2[1] ~ normal(0,0.01);
@@ -325,18 +324,18 @@ model {
 // }
 
 // log fishing mortality for each calendar year 
- log_F_mean ~ normal(0,1);
-  for(t in 1:nRyrs_T){
-    log_F_dev_y[t] ~ normal(0, 1);
- }
- 
+ // log_F_mean ~ normal(0,1);
+ //  for(t in 1:nRyrs_T){
+ //    log_F_dev_y[t] ~ normal(0, 1);
+ // }
+ // 
  for (a in 1:A) {
     log_S[a] ~ normal(0,1);
  }
 
-//    for(t in 1:nRyrs_T){
-//  log_F[t] ~ normal(0,1); //log fishing mortatliy
-// }
+   for(t in 1:nRyrs_T){
+ log_F[t] ~ normal(0,1); //log fishing mortatliy
+}
 
 
  // age comp priors -- maturity schedules
@@ -357,7 +356,7 @@ model {
   for(t in 1:nRyrs){ // calendar years 
      target += ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
-     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.05^2) + 1)));  //sigma_catch) ; 
+     target += normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_catch);//sqrt(log((0.07^2) + 1)));  //sigma_catch) ; 
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp); //sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
     }
   }

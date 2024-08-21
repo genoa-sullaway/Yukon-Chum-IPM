@@ -524,7 +524,6 @@ ggplot(data =pred_N_jpp_cov) +
   geom_line(aes(x=brood_year, y = SST_CDD_NBS), color = "purple") +
   labs(caption = "purple is the covariate")
 
-
 ggplot(data =pred_N_jpp_cov) +
   geom_line(aes(x=brood_year, y = mean)) + 
   geom_line(aes(x=brood_year, y = Cnideria), color = "purple") +
