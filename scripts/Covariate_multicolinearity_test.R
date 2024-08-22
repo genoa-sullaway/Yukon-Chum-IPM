@@ -8,16 +8,15 @@ year_max_brood = 2017
 
 # load more recent covariates ========================
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate(yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
-                SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
-                full_index = as.numeric(scale(full_index))) %>%
+  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
+                yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge))) %>%
+  # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
-  dplyr::select(SST_CDD_NBS,
-                yukon_mean_discharge,
-                Large_zoop,
-                Cnideria) 
+  dplyr::mutate(brood_year = cal_year-1) %>%  
+  dplyr::select(cal_year,brood_year,SST_CDD_NBS, yukon_mean_discharge,Large_zoop,
+                Cnideria)
 
-X_a<-stage_a_cov[,1:4]
+X_a<-stage_a_cov[,3:6]
 colinearity_a <-ggpairs(X_a)
 pdf("output/cova_a_plot.pdf")
 print(colinearity_a)

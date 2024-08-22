@@ -44,27 +44,6 @@ real ess_age_comp;
 // real <lower=0, upper = 1> basal_p_2;
 }
 
-// transformed data {
-// real N_sp_start [t_start,A];
-// real N_recruit_start [t_start,A];
-// real N_catch_start [t_start,A];
-// real N_ocean_start[t_start,A];
-// real N_egg_start[t_start,A];
-// real N_j_start;
-// real N_brood_year_return_start;
-// 
-// for(t in 1:t_start){
-//   for(a in 1:A){
-//   N_sp_start[t,a] = exp(N_sp_start_log[t,a]);//*p[a]; //o_run_comp[t,a];
-//   N_recruit_start[t,a] = exp(N_recruit_start_log[t,a]);//*p[a]; //*o_run_comp[t,a];
-//   N_catch_start[t,a] = exp(N_catch_start_log[t,a]);//*p[a];//o_run_comp[t,a];
-//   N_egg_start[t,a] = exp(N_egg_start_log[t,a]);//*p[a];//o_run_comp[t,a];
-//   }
-//  }
-//  
-// N_j_start = exp(N_j_start_log);
-// N_brood_year_return_start = exp(N_brood_year_return_start_log);
-//   }
   
 parameters {
  // starting values 
@@ -286,8 +265,8 @@ model {
    
    log_catch_q ~ normal(-5,1);
    
-  log_c_1 ~  normal(16, 5); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
+  log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
+  log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
   
  N_j_start_log ~ normal(17,10);
  N_brood_year_return_start_log~ normal(16,10);
@@ -301,14 +280,14 @@ model {
   }
  } 
     
-  theta1[1] ~ normal(0.1,0.01); //normal(0.5,5); // environmental covariate coefficient stage 1
-  theta1[2] ~ normal(0,0.01); // environmental covariate coefficient stage 1
-  theta1[3] ~ normal(-0.2,0.2);
+  theta1[1] ~ normal(0.15,0.05);  
+  theta1[2] ~ normal(0,0.05);  
+  theta1[3] ~ normal(0,0.01);
   // theta1[4] ~ normal(0,0.01);
  
  theta2[1] ~ normal(0,0.01);
  theta2[2] ~ normal(0,0.01);
- theta2[3] ~ normal(0,0.01);
+ theta2[3] ~ normal(0,0.001);
  theta2[4] ~ normal(0,0.01);
  
   basal_p_1 ~ beta(1,1); // mean survival stage 1
@@ -378,14 +357,14 @@ real N_return_pp [nByrs_return_dat];
 real N_j_pp [nByrs];
 
 // added log normal correcrtions
-theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.05);
+theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.08);
 theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.05);
-theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.05);
+theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.04);
 
-theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.05);
-theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.05);
+theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.06);
+theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.09);
 theta_2_3_pp = normal_rng(theta2[3]- 0.5 * 0.01^2,0.05);
-theta_2_4_pp = normal_rng(theta2[4]- 0.5 * 0.01^2,0.05);
+theta_2_4_pp = normal_rng(theta2[4]- 0.5 * 0.01^2,0.08);
 
 for(t in 1:nRyrs){
 N_sp_pp[t] = normal_rng((sum(N_sp[t,1:A]))- 0.5 * sqrt((sigma_sp^2) + 1)^2, 1); //(sqrt(log(data_sp_cv[t]^2) + 1)));

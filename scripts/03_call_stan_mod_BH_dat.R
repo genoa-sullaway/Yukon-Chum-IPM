@@ -114,9 +114,8 @@ spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
 
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))
-#                yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))
-) %>%
+  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
    # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>% 
@@ -124,8 +123,8 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
          brood_year <= year_max_brood) %>%
   dplyr::select(SST_CDD_NBS, 
                  Large_zoop,
-                 Cnideria#,
-                #yukon_mean_discharge
+                 # Cnideria,
+                yukon_mean_discharge
                 ) %>% 
   as.matrix()
  
@@ -252,7 +251,7 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 1, #n_chains,  
+  chains = 4, #n_chains,  
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 
@@ -260,5 +259,5 @@ bh_fit <- stan(
   control = list(adapt_delta = 0.99)
   )
 
-write_rds(bh_fit, "output/stan_fit_DATA.RDS")
+write_rds(bh_fit, "output/stan_fit_DATA_forAFS.RDS")
  

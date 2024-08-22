@@ -6,7 +6,8 @@ library(bayesplot)
 library(rstanarm)
  
 # load model ==============
-  bh_fit<- read_rds("output/stan_fit_DATA.RDS")
+  # bh_fit<- read_rds("output/stan_fit_DATA.RDS")
+  bh_fit <- read_rds("output/stan_fit_DATA_forAFS.RDS")
 # bh_fit <- read_rds("output/stan_fit_DATA_nocovar.RDS")
 
 # year DF for joins ==================
@@ -178,7 +179,8 @@ summ_n_sp <- pred_N_SP %>%
             sd = mean(sd)) %>%
   left_join(data.frame(cal_year = c(data_list_stan$years_data_sp),
                        obs = c(data_list_stan$data_stage_sp))) %>%
-  dplyr::mutate(rowname = "sp")   
+  dplyr::mutate(rowname = "sp")   # %>% 
+#  filter(!cal_year < 2003)
 
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=cal_year, y = obs)) +
@@ -625,7 +627,7 @@ ggplot(data = kappasurvival,
                   ymax = mean+se_mean), alpha = 0.5) + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
 
-ggplot(data = kappasurvival,# %>%   filter(!time<2),
+ggplot(data = kappasurvival, 
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
@@ -633,7 +635,7 @@ ggplot(data = kappasurvival,# %>%   filter(!time<2),
   facet_wrap(~variable, scales = "free") + 
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
   theme_classic() + 
-  xlab("Calendar Year") + 
+  xlab("Brood Year") + 
   ylab("Survival Rate")
  
 
@@ -664,6 +666,16 @@ ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = vari
   geom_line( ) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5)
+
+                    productivity %>%
+                              group_by(variable) %>% 
+                              dplyr::mutate(mean = as.numeric(scale(mean))) %>% 
+                            ggplot(aes(x=time, y = mean, group = variable ,color = variable)) +
+                            geom_line( ) #+
+                            # geom_ribbon(aes(x=time, ymin = mean-se_mean,
+                            #                 ymax = mean+se_mean), 
+                            #             alpha = 0.5)
+
 
 # calculate correlation in productivity ...
 # productivity_split <- productivity %>% 

@@ -18,12 +18,12 @@ DF  <- read.csv(here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv"))
            !LAT>65,
            !LON> -155,
            !LON< -172,
-           MONTH %in% c(7,8,9,10)) %>% 
+           MONTH %in% c(5,6,7,8,9)) %>% 
     unite("date", c(YEAR, MONTH, DAY), sep = "/", remove = FALSE) %>%
     dplyr::mutate(date = as.Date(date, "%Y/%m/%d"),
                   DOY = yday(date),
                   TAXA_COARSE = case_when(grepl(pattern = "Themisto", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
-                                          grepl(pattern = "Calanus", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
+                                          TAXON_NAME %in% c("Calanus pacificus", "Calanus marshallae", "Calanus glacialis") ~ "large_zoop",
                                           grepl(pattern = "Copepod_large", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
                                           grepl(pattern = "Neocalanus", x=TAXON_NAME, ignore.case = TRUE) ~ "large_zoop",
                                           
@@ -59,9 +59,26 @@ ggplot(data = large_zoopsumm, aes(x=YEAR, y = mean, group =DATA_SOURCE, color =D
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se))  +
   ggtitle("Large Zoop")
 
+
+# different plot large zoop =============
+testLZ <- large_zoop %>%
+  filter(!YEAR <1999) %>%
+  group_by(TAXON_NAME,YEAR) %>%
+  dplyr::summarise(mean = mean(EST_NUM_PERM3),
+                   n= nrow(.),
+                   se= sd(EST_NUM_PERM3)/sqrt(n))
+
+ggplot(data = testLZ, aes(x=YEAR, y = mean, group =TAXON_NAME, color =TAXON_NAME )) +
+  geom_point()+
+  geom_line() +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se))  +
+  ggtitle("Large Zoop") +
+  facet_wrap(~TAXON_NAME, scales = "free")
+
+
 ## Index Standardization for Large Zoop ================= 
 mod_df_largezoop <- large_zoop %>% 
-  filter(!YEAR <1999) %>%  
+  filter(!YEAR <2000) %>%  
   group_by(DATA_SOURCE,YEAR, DOY,LAT,LON) %>% # sum across species 
   dplyr::summarise(sum_EST_NUM_PERM3 = sum(EST_NUM_PERM3))  %>% 
   mutate(YEAR = as.factor(YEAR),
@@ -98,21 +115,37 @@ ggplot(data = large_pred_df, aes(x=YEAR, y = pred,
  
  # Gelatinous Zoop - Cnideria ===============
 cnideria_zoop<- zoop %>% 
-   filter(TAXA_COARSE == "Cnideria") 
+   filter(TAXA_COARSE == "Cnideria") %>%
+   filter(!EST_NUM_PERM3>3000 ) 
 
  zoop_cnideria_summ <- cnideria_zoop %>% 
    filter(!YEAR <1999) %>% 
    group_by(DATA_SOURCE, YEAR) %>%
    dplyr::summarise(mean = mean(EST_NUM_PERM3),
                     n= nrow(.), 
-                    se = sd(EST_NUM_PERM3)/sqrt(n))  
+                    se = sd(EST_NUM_PERM3)/sqrt(n)) 
  
  ggplot(data = zoop_cnideria_summ, aes(x=YEAR, y = mean, 
                                        group =DATA_SOURCE, color =DATA_SOURCE )) +
    geom_point()+
    geom_line() +
    geom_errorbar(aes(ymin = mean-se, ymax = mean+se))  
-
+ 
+ # different plot large zoop =============
+ testC <- cnideria_zoop %>%
+   filter(!YEAR <1999) %>%
+   group_by(TAXON_NAME,YEAR) %>%
+   dplyr::summarise(mean = mean(EST_NUM_PERM3),
+                    n= nrow(.),
+                    se= sd(EST_NUM_PERM3)/sqrt(n))
+ 
+ ggplot(data = testC, aes(x=YEAR, y = mean, group =TAXON_NAME, color =TAXON_NAME )) +
+   geom_point()+
+   geom_line() +
+   geom_errorbar(aes(ymin = mean-se, ymax = mean+se))  +
+   facet_wrap(~TAXON_NAME, scales = "free")
+ 
+ 
  ## Index Standardization for Cnideria ================= 
  mod_df_cnideriazoop <-  cnideria_zoop %>% 
    filter(!YEAR <1999) %>%  
@@ -146,7 +179,7 @@ cnideria_zoop<- zoop %>%
                          dplyr::mutate( id = "Cnideria")
  
 add <-  data.frame(YEAR = c(as.factor(2023)),
-               Large_zoop = c(37.2),  
+               Large_zoop = c(2.5),  
                Cnideria = c(10.4))
 # bind both data sets ========== 
 pred_df <- large_pred_df %>%
@@ -162,8 +195,8 @@ pred_df <- large_pred_df %>%
 
 ## plots =============
  ggplot( ) +
-   geom_point(data = pred_df, aes(x=YEAR, y = Large_zoop), color = "orange")+
-   geom_point(data = pred_df, aes(x=YEAR, y = Cnideria), color = "green")+
+   geom_line(data = pred_df, aes(x=YEAR, y = Large_zoop), color = "orange")+
+  geom_line(data = pred_df, aes(x=YEAR, y = Cnideria), color = "green")+
    # geom_errorbar(aes(ymin = pred-se, ymax = pred+se), width = 0.1)  +
    ggtitle("mean scaled Modeled Index") + 
    theme_classic()
@@ -174,60 +207,60 @@ pred_df <- large_pred_df %>%
  # OLD ======== 
  # these are not used in model ============
  ## Estimate Spatial Temporal Fields? ============================ 
- largezoop_ST_index <- mgcv::gam(sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
-                                            s(LON,LAT, by = YEAR) + s(DOY),
-                                          data = mod_df_largezoop, 
-                                          family = tw(link = "log"))
- 
-  cnideria_ST_index <- mgcv::gam(sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
-                                     s(LON,LAT, by = YEAR) + s(DOY),
-                                   data = mod_df_cnideriazoop, 
-                                   family = tw(link = "log"))
- 
- summary(cnideria_ST_index)
- draw(largezoop_ST_index)
- draw(cnideria_ST_index)
- 
-# mean scale ======= 
-   ## OLD ============
-  ## Themisto ================
-themisto<- zoop %>% filter(stringr::str_detect(TAXA_COARSE, 'Themisto') )
-
-themisto_summ <- themisto %>% 
-  group_by(YEAR) %>%
-  dplyr::summarise(mean = mean(EST_NUM_PERM3),
-                   sd = sd(EST_NUM_PERM3)) %>% 
-  dplyr::mutate(mean_scale = scale(mean),
-                sd = scale(sd))
-
-ggplot(data = themisto_summ, aes(x=YEAR, y = mean_scale)) +
-  geom_point()+
-  geom_line() +
-  geom_errorbar(aes(ymin = mean_scale-sd, ymax = mean_scale+sd))
-
-### Spatial data distribution ============
-zoop_multiple_space <- large_zoop %>% 
-  filter(!YEAR <1999) %>% 
-  group_by(YEAR, LAT, LON) %>%
-  dplyr::summarise(mean = mean(EST_NUM_PERM3),
-                   sd = sd(EST_NUM_PERM3))  
-
-ggplot(data = zoop_multiple_space, 
-       aes(x=LON, y = LAT,
-          fill = log(mean), color = log(mean))) +
-  geom_point() +
-  facet_wrap(~YEAR)
-
-### Temporal data distribution ============
-zoop_multiple_space <- large_zoop %>% 
-  filter(!YEAR <1999) %>% 
-  group_by(YEAR, LAT, LON) %>%
-  dplyr::summarise(mean = mean(EST_NUM_PERM3),
-                   sd = sd(EST_NUM_PERM3))  
-
-hist(as.numeric(zoop_multiple_space$MONTH))
-
-ggplot(data = zoop_multiple_space, aes(x=LON, y = LAT,
-                                       fill = log(mean), color = log(mean))) +
-  geom_point() +
-  facet_wrap(~YEAR)
+#  largezoop_ST_index <- mgcv::gam(sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
+#                                             s(LON,LAT, by = YEAR) + s(DOY),
+#                                           data = mod_df_largezoop, 
+#                                           family = tw(link = "log"))
+#  
+#   cnideria_ST_index <- mgcv::gam(sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
+#                                      s(LON,LAT, by = YEAR) + s(DOY),
+#                                    data = mod_df_cnideriazoop, 
+#                                    family = tw(link = "log"))
+#  
+#  summary(cnideria_ST_index)
+#  draw(largezoop_ST_index)
+#  draw(cnideria_ST_index)
+#  
+# # mean scale ======= 
+#    ## OLD ============
+#   ## Themisto ================
+# themisto<- zoop %>% filter(stringr::str_detect(TAXA_COARSE, 'Themisto') )
+# 
+# themisto_summ <- themisto %>% 
+#   group_by(YEAR) %>%
+#   dplyr::summarise(mean = mean(EST_NUM_PERM3),
+#                    sd = sd(EST_NUM_PERM3)) %>% 
+#   dplyr::mutate(mean_scale = scale(mean),
+#                 sd = scale(sd))
+# 
+# ggplot(data = themisto_summ, aes(x=YEAR, y = mean_scale)) +
+#   geom_point()+
+#   geom_line() +
+#   geom_errorbar(aes(ymin = mean_scale-sd, ymax = mean_scale+sd))
+# 
+# ### Spatial data distribution ============
+# zoop_multiple_space <- large_zoop %>% 
+#   filter(!YEAR <1999) %>% 
+#   group_by(YEAR, LAT, LON) %>%
+#   dplyr::summarise(mean = mean(EST_NUM_PERM3),
+#                    sd = sd(EST_NUM_PERM3))  
+# 
+# ggplot(data = zoop_multiple_space, 
+#        aes(x=LON, y = LAT,
+#           fill = log(mean), color = log(mean))) +
+#   geom_point() +
+#   facet_wrap(~YEAR)
+# 
+# ### Temporal data distribution ============
+# zoop_multiple_space <- large_zoop %>% 
+#   filter(!YEAR <1999) %>% 
+#   group_by(YEAR, LAT, LON) %>%
+#   dplyr::summarise(mean = mean(EST_NUM_PERM3),
+#                    sd = sd(EST_NUM_PERM3))  
+# 
+# hist(as.numeric(zoop_multiple_space$MONTH))
+# 
+# ggplot(data = zoop_multiple_space, aes(x=LON, y = LAT,
+#                                        fill = log(mean), color = log(mean))) +
+#   geom_point() +
+#   facet_wrap(~YEAR)

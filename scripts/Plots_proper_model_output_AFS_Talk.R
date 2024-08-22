@@ -1,9 +1,9 @@
 library(tidyverse)
 library(tidybayes)
 library(here)
-library(rstan)
+# library(rstan)
 library(bayesplot)
-library(rstanarm)
+# library(rstanarm)
 
 library(bayestestR)
 
@@ -369,20 +369,22 @@ theta_df <- as.data.frame(bh_fit, pars = c(#"theta1[1]",
   gather(1:7, key = "rowname", value = "value") %>% 
   dplyr::mutate(variable = case_when(rowname=="theta_1_1_pp" ~ "NBS July/August Temperature",
                                      rowname== "theta_1_2_pp" ~ "Large Zooplankton Index",
-                                     rowname=="theta_1_3_pp" ~ "Gelatinous Zooplankton Index",
+                                     rowname=="theta_1_3_pp" ~ "Yukon River Mainstem Discharge", #  "Gelatinous Zooplankton Index",
                                     
                                      rowname== "theta_2_1_pp" ~ "Aleutian Winter Temperature", 
                                      rowname=="theta_2_2_pp" ~ "Chum Salmon Hatchery Release Abundance",
                                      rowname=="theta_2_3_pp" ~ "Pink Salmon Hatchery Release Abundance",
                                      rowname=="theta_2_4_pp" ~ "Fullness Index"), 
-                variable = factor(variable, levels = rev(c("NBS July/August Temperature",
-                                                        "Large Zooplankton Index",
-                                                        "Gelatinous Zooplankton Index",
-                                                        "Aleutian Winter Temperature",
-                                                        "Chum Salmon Hatchery Release Abundance",
-                                                        "Pink Salmon Hatchery Release Abundance",
-                                                        "Fullness Index"))),
-                stage = case_when(variable %in% c("NBS July/August Temperature",
+                variable = factor(variable, levels = rev(c("Yukon River Mainstem Discharge",
+                                                           "NBS July/August Temperature",
+                                                           "Large Zooplankton Index",
+                                                            # "Gelatinous Zooplankton Index",
+                                                            "Aleutian Winter Temperature",
+                                                            "Chum Salmon Hatchery Release Abundance",
+                                                            "Pink Salmon Hatchery Release Abundance",
+                                                            "Fullness Index"))),
+                stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                   "NBS July/August Temperature",
                                                   "Large Zooplankton Index",
                                                   "Gelatinous Zooplankton Index") ~ "Juvenile",
                                   variable %in% c("Aleutian Winter Temperature",
@@ -390,9 +392,9 @@ theta_df <- as.data.frame(bh_fit, pars = c(#"theta1[1]",
                                                   "Pink Salmon Hatchery Release Abundance",
                                                   "Fullness Index") ~ "Marine")) %>% 
   group_by(stage,variable) %>% 
-  dplyr::summarise(mean = mean(value),
-            ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_low),
-            ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_high),
+  dplyr::summarise(mean = median(value),
+            ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_low),
+            ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_high),
             ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
             ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
  
@@ -485,26 +487,16 @@ ggplot(data = theta_df,
   ggtitle("Covariate Coefficients")+
   ylab("")
 
-
-
-# Plot Gelatinous Zoops and Juvenile Abundance by brood year ============== 
+# Plot A-Gelatinous Zoops and Juvenile Abundance by brood year ============== 
 sst_zoop_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS))) %>%
+  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
+                yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge))) %>%
   # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>%  
-  dplyr::select(brood_year,SST_CDD_NBS, 
+  dplyr::select(cal_year,brood_year,SST_CDD_NBS, yukon_mean_discharge,Large_zoop,
                 Cnideria)
-
-# kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
-#                          probs = c(0.1, 0.9))$summary %>%
-#   data.frame() %>%
-#   rownames_to_column()  %>% 
-#   dplyr::mutate(time = rep(1:21, length.out = nrow(.)), 
-#                 variable = case_when(grepl("kappa_marine",rowname) ~ "Marine Survival",
-#                                      grepl("kappa_j",rowname) ~ "Juvenile Survival")) %>% 
-#   left_join(years)
-
+ 
 pred_N_jpp_cov <- summary(bh_fit, pars = c("N_j_pp"), 
                       probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
@@ -517,7 +509,13 @@ pred_N_jpp_cov <- summary(bh_fit, pars = c("N_j_pp"),
                 ci_90=(X90.),
                 mean = as.numeric(scale(mean))) %>% 
   left_join(sst_zoop_cov) %>% 
-  dplyr::select(brood_year,SST_CDD_NBS,Cnideria,mean,ci_10,ci_90)
+  dplyr::select(brood_year,SST_CDD_NBS,yukon_mean_discharge,Large_zoop,
+                Cnideria,mean,ci_10,ci_90)
+
+ggplot(data =pred_N_jpp_cov) +
+  geom_line(aes(x=brood_year, y = mean)) + 
+  geom_line(aes(x=brood_year, y = yukon_mean_discharge), color = "purple") +
+  labs(caption = "purple is the covariate")
 
 ggplot(data =pred_N_jpp_cov) +
   geom_line(aes(x=brood_year, y = mean)) + 
@@ -526,17 +524,32 @@ ggplot(data =pred_N_jpp_cov) +
 
 ggplot(data =pred_N_jpp_cov) +
   geom_line(aes(x=brood_year, y = mean)) + 
+  geom_line(aes(x=brood_year, y = Large_zoop), color = "purple") +
+  labs(caption = "purple is the covariate")
+
+ggplot(data =pred_N_jpp_cov) +
+  # geom_line(aes(x=brood_year, y = mean)) + 
   geom_line(aes(x=brood_year, y = Cnideria), color = "purple") +
   labs(caption = "purple is the covariate")
 
-# Plot Fullness and return abundance by brood year ============== 
+ggplot(data =pred_N_jpp_cov) +
+  # geom_line(aes(x=brood_year, y = mean)) + 
+  geom_line(aes(x=brood_year, y = Cnideria), color = "purple") +
+  labs(caption = "purple is the covariate")
+
+ggplot(data =pred_N_jpp_cov) +
+  geom_line(aes(x=brood_year, y = Cnideria)) + 
+  geom_line(aes(x=brood_year, y = Large_zoop), color = "purple") +
+  labs(caption = "purple is the covariate")
+
+# Plot B-Fullness and return abundance by brood year ============== 
 fullness_hatchery_temp_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                 Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
                 full_index = as.numeric(scale(full_index))  ) %>% 
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-2) %>%  
-  dplyr::select(brood_year,SST_CDD_Aleut,
+  dplyr::select(brood_year,cal_year,SST_CDD_Aleut,
                 Chum_hatchery,
                 Pink_hatchery,
                 full_index) 
@@ -566,4 +579,110 @@ ggplot(data =pred_N_return_pp_cov) +
   labs(caption = "purple is the covariate")
 
 
+
+# Plot JUST covariates ==============
+## A SST ========= 
+sst_cov_plot <- sst_zoop_cov %>%
+  gather(3:6, key = "variable", value = "value") %>%
+  filter(!cal_year<2000, variable%in% c("SST_CDD_NBS" ))
+
+a_sst <- ggplot(data = sst_cov_plot,aes(x=cal_year, y = value, group = variable, color = variable)) +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values= PNWColors::pnw_palette(name="Shuksan2",n=1,type="discrete")) +
+  theme_classic() +
+  ylab("Mean Scaled Trend") + 
+  xlab("Calendar Year") +
+  geom_hline(yintercept =0, linetype =2, color = "white") + 
+  theme(panel.background = element_blank(),  
+        plot.background = element_blank(),  
+        legend.background = element_blank(),
+        legend.position = "none",# element_blank(),# "top",
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        strip.text.x = element_text(color = "white"),
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white")) 
+a_sst
+ggsave("output/SST_plot.png", width = 4, height = 2, bg = "transparent")
+
+## A Zoop backup ========= 
+sst_cov_plot <- sst_zoop_cov %>%
+  gather(3:6, key = "variable", value = "value") %>%
+  filter(!cal_year<2000, variable%in% c("SST_CDD_NBS"))
+
+ggplot(data = sst_cov_plot,aes(x=cal_year, y = value, group = variable, color = variable)) +
+  geom_line() +
+  geom_point() +
+  # facet_wrap(~variable, ncol =1) +
+  theme_classic() +
+  geom_hline(yintercept =0, linetype =2) + 
+  theme(panel.background = element_blank(),  
+        plot.background = element_blank(),  
+        legend.background = element_blank(),
+        legend.position = "none",# element_blank(),# "top",
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        strip.text.x = element_text(color = "white"),
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white")) 
+
+## B ============== 
+fullness_hatchery_temp_cov_plot <- fullness_hatchery_temp_cov %>%
+  gather(3:6, key = "variable", value = "value") %>%
+  filter(!cal_year<2000, variable%in% c("SST_CDD_Aleut",
+                                        "Chum_hatchery",
+                                        "full_index")) %>% 
+  dplyr::mutate(variable = case_when(variable == "SST_CDD_Aleut" ~ "Aleutian Winter Temperature",
+                                     variable == "Chum_hatchery" ~ "Chum Salmon Hatchery Release Abundance",
+                                     variable == "full_index" ~   "Fullness Index")) 
+
+cov_b_plot<-ggplot(data = fullness_hatchery_temp_cov_plot,
+       aes(x=cal_year, y = value, group = variable, color = variable)) +
+  geom_hline(yintercept =0, linetype =2, color = "white") +
+   geom_line() +
+  geom_point() +
+  scale_color_manual(values= PNWColors::pnw_palette(name="Anemone",n=3,type="discrete")) +
+  facet_wrap(~variable, ncol =1) +
+  theme_classic() +
+  ylab("Mean Scaled Trend") + 
+  xlab("Calendar Year") +
+  theme(panel.background = element_blank(),  
+              plot.background = element_blank(),  
+              legend.background = element_blank(),
+              legend.position = "none",# element_blank(),# "top",
+              legend.text = element_text(color = "white"),
+              legend.title = element_blank(), 
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              strip.background = element_blank(),
+              panel.border = element_rect(colour = "white", fill = NA), 
+               strip.text.x = element_text(color = "white"),
+              axis.line = element_line(color = "white"), 
+              axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+              axis.text.y = element_text(color = "white"),
+              axis.title.y = element_text(color = "white"),
+              axis.title.x = element_text(color = "white"),
+              axis.ticks.y = element_line(color = "white"),
+              axis.ticks.x = element_line(color = "white")) 
+cov_b_plot  
+ggsave("output/significant_B_Covariates.png", width = 4, height = 3, bg = "transparent")
 
