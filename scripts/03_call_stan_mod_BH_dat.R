@@ -259,5 +259,5 @@ bh_fit <- stan(
   control = list(adapt_delta = 0.99)
   )
 
-write_rds(bh_fit, "output/stan_fit_DATA_forAFS.RDS")
+write_rds(bh_fit, "output/stan_fit_DATA.RDS")
  

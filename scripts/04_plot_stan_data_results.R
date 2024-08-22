@@ -6,8 +6,8 @@ library(bayesplot)
 library(rstanarm)
  
 # load model ==============
-  # bh_fit<- read_rds("output/stan_fit_DATA.RDS")
-  bh_fit <- read_rds("output/stan_fit_DATA_forAFS.RDS")
+  bh_fit<- read_rds("output/stan_fit_DATA.RDS")
+ # bh_fit <- read_rds("output/stan_fit_DATA_forAFS.RDS")
 # bh_fit <- read_rds("output/stan_fit_DATA_nocovar.RDS")
 
 # year DF for joins ==================

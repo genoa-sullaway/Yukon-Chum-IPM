@@ -429,9 +429,7 @@ theta_plot <- ggplot(data = theta_df,
               axis.title.x = element_text(color = "white"),
               axis.ticks.y = element_line(color = "white"),
               axis.ticks.x = element_line(color = "white"),
-              # panel.spacing.x=unit(0.5, "lines"),
-              panel.spacing.y=unit(0, "lines")
-              ) + 
+              panel.spacing.y=unit(0, "lines")) + 
         geom_vline(xintercept=0, color = "white")+
         ylab("") +
         xlab("Mean Covariate Coefficient Value") +
