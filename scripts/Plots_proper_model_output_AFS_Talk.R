@@ -4,12 +4,12 @@ library(here)
 # library(rstan)
 library(bayesplot)
 # library(rstanarm)
-
 library(bayestestR)
 
 # load model ==============
 bh_fit<- read_rds("output/stan_fit_DATA.RDS")
 # bh_fit <- read_rds("output/stan_fit_DATA_nocovar.RDS")
+#bh_fit <- read_rds("output/stan_fit_DATA_forAFS.RDS")
 
 # get this from the model call script: year_min = 2001
 years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
@@ -240,39 +240,114 @@ ggsave("output/juv_est_plot.png", width = 7, height = 4, bg = "transparent")
 
 # juv return together pred ======
 pred_juv_rec <- left_join(pred_N_jpp %>% 
-                            dplyr::select(cal_year, mean) %>%
+                            dplyr::select(brood_year, mean) %>%
                             rename(juv = "mean"),
                           pred_N_return_pp %>% 
-                            dplyr::select(cal_year, mean) %>%
-                            rename(rec = "mean")) %>%
+                            dplyr::select(brood_year, pred) %>%
+                            rename(rec = "pred")) %>%
   gather(2:3, key = "id", value = "value") %>%
   group_by(id) %>%
   mutate(value = as.numeric(scale(value)))
 
-ggplot(data = pred_juv_rec,aes(x=cal_year, y = value, group = id, color = id)) +
+ggplot(data = pred_juv_rec,aes(x=brood_year, y = value, group = id, color = id)) +
   geom_point() +
   geom_line()+
   ylab("Predicted, Mean-Scaled Abundance") +
   theme_classic() + 
   xlab("Brood Year")
 
-# juv return together obs ======
-obs_juv_rec <- left_join(pred_N_jpp %>% 
-                            dplyr::select(cal_year, obs) %>%
-                            rename(juv = "obs"),
-                          pred_N_return_pp %>% 
-                            dplyr::select(cal_year, obs) %>%
-                            rename(rec = "obs")) %>%
-  gather(2:3, key = "id", value = "value") %>%
-  group_by(id) %>%
-  mutate(value = as.numeric(scale(value)))
+# juv + return observations plot by brood year ======
+juv_rec_obs_temp <- pred_N_return_pp %>% 
+              dplyr::select(brood_year, obs) %>%
+              dplyr::rename(rec = "obs") %>% 
+  left_join(adult_cvs) %>% 
+  dplyr::mutate(rec_sd = (fall_spawner_cv*rec)) %>%
+  left_join(juv_obs %>% 
+              dplyr::rename(juv = "obs",
+                            juv_sd = "sd"))
 
-ggplot(data = obs_juv_rec,aes(x=cal_year, y = value, group = id, color = id)) +
+juv_rec_obs <- juv_rec_obs_temp %>%
+  dplyr::select(1,2,7) %>% 
+  gather(2:3, key = "id", value = "mean") %>%
+  left_join(  juv_rec_obs_temp %>%
+              dplyr::select(1,5,8) %>% 
+               dplyr::rename(juv = "juv_sd",
+                             rec = "rec_sd") %>% 
+              gather(2:3, key = "id", value = "sd"))  %>%
+  group_by(id) %>%
+  dplyr::mutate(mean = as.numeric(scale(mean)))
+
+obs_plot<-ggplot(data = juv_rec_obs, aes(x=brood_year, y = mean, group = id, color = id)) +
   geom_point() +
   geom_line() +
+  geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd), width = 0.1) + 
   ylab("Observed, Mean-Scaled Abundance") +
   theme_classic() + 
-  xlab("Brood Year")
+  xlab("Brood Year") +
+  scale_color_manual(values = c("#EAAA00", "#2d9d92"), labels = c("Juvenile", "Return" )) + 
+  theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA),  
+        strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white"))
+
+## save ======== 
+obs_plot
+ggsave("output/juv_returns_obs_plot.png", width = 7, height = 4, bg = "transparent")
+
+## same plot but linear scatter plot =========
+### dont mean scale data ===== 
+juv_rec_obs_absolute <- juv_rec_obs_temp %>%
+  dplyr::select(1,2,7) %>% 
+  gather(2:3, key = "id", value = "mean") %>%
+  left_join( juv_rec_obs_temp %>%
+               dplyr::select(1,5,8) %>% 
+               dplyr::rename(juv = "juv_sd",
+                             rec = "rec_sd") %>% 
+               gather(2:3, key = "id", value = "sd"))  %>%
+  group_by(id) %>%
+  dplyr::mutate(mean = as.numeric(scale(mean)),
+                mean =mean - min(mean))  %>% 
+  select(brood_year, id,mean) %>%
+  spread(id,mean)
+
+ggplot(data = juv_rec_obs_absolute %>% filter(!brood_year >2015),
+       aes(x=juv, y = rec, color = brood_year)) +
+  geom_point() +
+  geom_abline(slope =1) +
+  geom_smooth(method = "lm")
+ 
+mod <- lm(juv_rec_obs_absolute$rec~juv_rec_obs_absolute$juv, data= juv_rec_obs_absolute%>% filter(!brood_year >2015))
+summary(mod)
+plot(resid(mod))
+
+juv_rec_obs_absolute$resid <- resid(mod)
+
+juv_rec_obs_absolute <- juv_rec_obs_absolute %>% 
+  dplyr::mutate(color_id = case_when(resid > 1 ~ "juv",
+                                     resid < -1 ~ "rec",
+                                     TRUE ~ "none"))
+
+
+
+ggplot(data=juv_rec_obs_absolute,aes(x= brood_year, y = resid, color = color_id)) +
+  geom_point() + 
+  theme_classic() +
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  geom_hline(yintercept = -1, linetype = 2)
 
 # age comp ======
 age_comp <- summary(bh_fit, pars = c("p"), 

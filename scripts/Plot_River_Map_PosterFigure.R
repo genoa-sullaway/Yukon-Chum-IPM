@@ -16,17 +16,23 @@ sf_use_s2(FALSE)
 yukon_poly<- sf::st_read("data/11573/11573.shp") %>%
   st_make_valid()
 
-# GET RIVERS DATA ============
-project <- read.csv("data/project_lat_lon.csv") 
+# weir projects ============
+project <- read.csv("data/project_lat_lon.csv") %>%
+  filter(River == "Yukon")
+
 fall <- project %>% 
-  filter(Season == "Fall")
+  filter(Season == "Fall")#,
+         # !Project.Name == "Pilot Station Sonar")
 
 summ_fall <- project %>% 
-  filter(Season == "Summer/Fall")
+  filter(Project.Name == "Pilot Station Sonar") %>%
+  mutate(value = 0.5)
 
 summer <- project %>% 
-  filter(Season == "Summer")
+  filter(Season == "Summer")#, 
+         # !Project.Name == "Pilot Station Sonar")
 
+# GET RIVERS DATA ============
 ar_riv <- sf::st_read("HydroRIVERS_v10_ar_shp/HydroRIVERS_v10_ar_shp/HydroRIVERS_v10_ar.shp") %>%
   st_cast("MULTILINESTRING")
 
@@ -87,7 +93,7 @@ both <- st_difference(mask, mask2)
 plot(both) 
  
 # make plot with points  ========
-p <-ggplot() +
+p <- ggplot() +
   geom_sf(data = na_outline, fill = "white") +
   geom_sf(data = ariv, aes(
     color = factor(ORD_FLOW), size = width, alpha = width 
@@ -101,6 +107,9 @@ p <-ggplot() +
     # geom_point(data = summ_fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 1 ) +
     geom_point(data = fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 1 ) +
     geom_point(data = summer, aes(x=Lon, y = Lat), color= "orange", size = 1 ) +
+  # geom_col(data = summ_fall,aes(x=Lon, y = Lat, fill = value )) +
+  # scale_fill_manual(values = c("orange", "darkgreen")) +
+  # coord_polar(theta = "y") +  
   coord_sf(
     crs = crsLONGLAT,
     xlim = c(bb["xmin"], bb["xmax"]),
