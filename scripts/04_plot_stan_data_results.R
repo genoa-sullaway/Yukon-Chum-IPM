@@ -132,6 +132,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "sigma_return"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "sigma_sp"),
      fill_color = "blue")
 
@@ -191,40 +195,69 @@ ggplot(data = summ_n_sp) +
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
   theme_classic()
 
-## recruits ====== 
-pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
+
+## recruit ==========
+pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
   dplyr::mutate(time = rep(1:27, each=4),
-                age = rep(1:4, length.out = nrow(.))) %>%
- 
-  left_join(years)  
- 
-ggplot(data = pred_N_recruit) +
-  geom_line(aes(x=cal_year, y = mean, group = age, color = age)) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean))+
-  ggtitle(("recruits: obs and predicted"))+
-  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020))
+                age = rep(3:6, length.out = nrow(.))) %>%
+  # filter(!time>20) %>% # remove years without full return estimates 
+  left_join(years)   
+
+# sum to compare with data 
+summ_n_rec <- pred_N_recruit %>%
+  group_by(cal_year) %>%
+  summarise(mean = sum(mean),
+            sd = mean(sd)) %>%
+  left_join(data.frame(cal_year = c(data_list_stan$years_data_sp),
+                       obs = c(data_list_stan$data_stage_return))) %>%
+  dplyr::mutate(rowname = "rec")   
+
+ggplot(data = summ_n_rec) +
+  geom_point(aes(x=cal_year, y = obs)) +
+  geom_line(aes(x=cal_year, y = mean)) +
+  # geom_ribbon(aes(x=cal_year, ymin = mean-sd,
+  #                 ymax = mean+sd)) +
+  ggtitle("recruits: obs and predicted")+
+  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
+  theme_classic()
+
+## recruits by age no data ====== 
+# pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
+#                      probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()  %>%
+#   dplyr::mutate(time = rep(1:27, each=4),
+#                 age = rep(1:4, length.out = nrow(.))) %>%
+#  
+#   left_join(years)  
+#  
+# ggplot(data = pred_N_recruit) +
+#   geom_line(aes(x=cal_year, y = mean, group = age, color = age)) +
+#   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
+#                   ymax = mean+se_mean))+
+#   ggtitle(("recruits: obs and predicted"))+
+#   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020))
 
 ## brood year return ====== 
-pred_N_brood_year_return <- summary(bh_fit, pars = c("N_brood_year_return"), 
-                          probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>%
-  dplyr::mutate(time = (1:21)) %>% 
-  left_join(years)%>%
-  left_join(data.frame(cal_year = c(data_list_stan$years_data_return),
-                       obs = data_list_stan$data_stage_return)) %>%
-  mutate(rowname = "recruit")  
-
-ggplot(data = pred_N_brood_year_return) + 
-  geom_line(aes(x=cal_year, y = mean)) +
-  geom_point(aes(x=cal_year, y = obs)) +
-  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-                  ymax = mean+se_mean))+
-  ggtitle(("brood year return"))
+# pred_N_brood_year_return <- summary(bh_fit, pars = c("N_brood_year_return"), 
+#                           probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()  %>%
+#   dplyr::mutate(time = (1:21)) %>% 
+#   left_join(years)%>%
+#   left_join(data.frame(cal_year = c(data_list_stan$years_data_return),
+#                        obs = data_list_stan$data_stage_return)) %>%
+#   mutate(rowname = "recruit")  
+# 
+# ggplot(data = pred_N_brood_year_return) + 
+#   geom_line(aes(x=cal_year, y = mean)) +
+#   geom_point(aes(x=cal_year, y = obs)) +
+#   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
+#                   ymax = mean+se_mean))+
+#   ggtitle(("brood year return"))
 
 ## harvest ========= 
 pred_N_harvest <- summary(bh_fit, pars = c("N_catch"), 
@@ -599,7 +632,8 @@ ggplot(data = S,aes(x=rowname, y = mean)) +
   xlab(" ")
 
 # Plot theta ======
-theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta2[1]","theta2[2]"),
+theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta1[3]",
+                                  "theta2[1]","theta2[2]", "theta2[3]","theta2[4]"),
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()

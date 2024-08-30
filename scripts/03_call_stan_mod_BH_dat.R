@@ -223,7 +223,8 @@ data_list_stan <- list(nByrs=nByrs,
                        M = M_fill_stan,
                       
                        data_stage_j = as.vector(fall_juv$fall_abundance), 
-                       data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
+                       data_stage_return=as.vector(yukon_fall_recruits$total_run), 
+                        # data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                    
@@ -251,7 +252,7 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 4, #n_chains,  
+  chains = 1, #n_chains,  
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 
