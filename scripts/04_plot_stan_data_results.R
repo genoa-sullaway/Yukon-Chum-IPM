@@ -323,12 +323,6 @@ ggplot(data = summ_n_j) +
   geom_ribbon(aes(x=cal_year, ymin = mean_J_Q-se_mean,
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
-
-
-g <- summary(bh_fit, pars = c("g"), 
-                      probs = c(0.1, 0.9))$summary %>% 
-  data.frame() %>%
-  rownames_to_column()   
  
 # plot age comp through time =================
 age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 
