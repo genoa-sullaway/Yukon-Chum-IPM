@@ -8,11 +8,12 @@ library(tidyverse)
 library(dplyr)
 library(lubridate)
 library(mgcv)
+library(sf)
  
 DF  <- read.csv(here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv")) 
 
  zoop <- DF %>% 
-    group_by(CRUISE,HAUL_ID,YEAR,MONTH,DAY,LAT,LON, DATA_SOURCE,TAXON_NAME) %>% # sum across life stages 
+    group_by(CRUISE,HAUL_ID,GEAR_NAME,YEAR,MONTH,DAY,LAT,LON, DATA_SOURCE,TAXON_NAME) %>% # sum across life stages 
     dplyr::summarise(EST_NUM_PERM3 =  sum(EST_NUM_PERM3)) %>%
     filter(!LAT<58,
            !LAT>65,
@@ -29,12 +30,12 @@ DF  <- read.csv(here("data", "Processed_Data", "NBS_Zoop_Process_Final.csv"))
                                           
                                           grepl(pattern = "Cnidaria", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
                                           grepl(pattern = "Larvacea", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
-                                          grepl(pattern = "Medusozoa", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria", 
-                                          grepl(pattern = "Hydrozoa", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria", 
-                                          grepl(pattern = "Scyphozoa", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria", 
-                                          grepl(pattern = "Thaliacea", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria", 
+                                          grepl(pattern = "Medusozoa", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                          grepl(pattern = "Hydrozoa", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                          grepl(pattern = "Scyphozoa", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                          grepl(pattern = "Thaliacea", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
                                           grepl(pattern = "Ctenophora", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
-                                          grepl(pattern = "Oikopleura", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
+                                         grepl(pattern = "Oikopleura", x=TAXON_NAME, ignore.case = TRUE) ~ "Cnideria",
                                           TRUE ~ "other")) 
 
 names <- data.frame(unique(zoop$TAXON_NAME))
@@ -46,19 +47,19 @@ large_zoop<- zoop %>%
 ## plot raw data ===========
 # are there differences between EMA and ECOFOCI just based on plotting averages
 large_zoopsumm <- large_zoop %>%
+  group_by(CRUISE,HAUL_ID,YEAR,MONTH,DAY,LAT,LON, DATA_SOURCE,TAXON_NAME) %>% # sum across life stages 
+  dplyr::summarise(EST_NUM_PERM3 = sum(EST_NUM_PERM3)) %>% 
   filter(!YEAR <1999) %>%
   group_by(DATA_SOURCE,YEAR) %>%
   dplyr::summarise(mean = mean(EST_NUM_PERM3),
                    n= nrow(.),
-                  se= sd(EST_NUM_PERM3)/sqrt(n))
-
+                   se= sd(EST_NUM_PERM3)/sqrt(n))
 
 ggplot(data = large_zoopsumm, aes(x=YEAR, y = mean, group =DATA_SOURCE, color =DATA_SOURCE )) +
   geom_point()+
   geom_line() +
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se))  +
   ggtitle("Large Zoop")
-
 
 # different plot large zoop =============
 testLZ <- large_zoop %>%
@@ -115,10 +116,34 @@ ggplot(data = large_pred_df, aes(x=YEAR, y = pred,
  
  # Gelatinous Zoop - Cnideria ===============
 cnideria_zoop<- zoop %>% 
-   filter(TAXA_COARSE == "Cnideria") %>%
-   filter(!EST_NUM_PERM3>3000 ) 
+   filter(TAXA_COARSE == "Cnideria",
+          !EST_NUM_PERM3>3000,
+          GEAR_NAME == "60BON") 
 
- zoop_cnideria_summ <- cnideria_zoop %>% 
+## Trim inner shelf Cnideria ==============
+# Load Ortiz region shapefile
+ortiz_shp <- st_read(here("data/ortiz_regions/BSIERP_regions_2012.shp"))
+ortiz_shp <- st_transform(ortiz_shp, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")#Tranform into WGS84 coordinate system
+ortiz_shp <- subset(ortiz_shp) #, !DOMAIN == 15)
+sf_ortiz = st_make_valid(st_as_sf(ortiz_shp)) %>% 
+  filter(!DOMAIN %in% c(15,16)) #convert your shape file to sf, too. need to use make valid because
+#of intersecting polygons in shape file and sf doesnt like that data format anymore.
+
+sf_df = st_as_sf(cnideria_zoop, coords = c("LON", "LAT"), crs = 4326) # change df to sf
+
+#source("scripts/Function_Make_NewSpatialRegions.R")
+
+#First do a join that contains the points to filter points that are totally outside the region. 
+df_contains <- st_join(sf_ortiz, sf_df, join = st_contains) #you can change the join command to do nearest neighbor etc
+
+#need to do some tidying to, rejoin original lat longs and plot to look at trim
+st_geometry(df_contains)<-NULL #if you want to keep your data as a sf object skip this step, I want to convert back to a standard dataframe 
+
+N_inner_cnideria<-df_contains %>%
+  left_join(cnideria_zoop) %>%
+  filter(name == "North middle shelf")
+
+ zoop_cnideria_summ <- N_inner_cnideria %>% 
    filter(!YEAR <1999) %>% 
    group_by(DATA_SOURCE, YEAR) %>%
    dplyr::summarise(mean = mean(EST_NUM_PERM3),
@@ -159,8 +184,8 @@ cnideria_zoop<- zoop %>%
                                   s(LAT, LON) + s(DOY),
                                 data = mod_df_cnideriazoop, 
                                 family = tw(link = "log"))
- summary(cnideria_zoop_index)
- gratia::draw(cnideria_zoop_index)
+ # summary(cnideria_zoop_index)
+ # gratia::draw(cnideria_zoop_index)
  
  temp <- expand.grid(YEAR = c(unique(mod_df_cnideriazoop$YEAR)),  
                      DATA_SOURCE = c("EcoDAAT"))
@@ -181,6 +206,16 @@ cnideria_zoop<- zoop %>%
 add <-  data.frame(YEAR = c(as.factor(2023)),
                Large_zoop = c(2.5),  
                Cnideria = c(10.4))
+
+# plot cnideria ==================
+ggplot(data = cnideria_pred_df, aes(x=YEAR, y = pred,
+                                 group =DATA_SOURCE, color =DATA_SOURCE)) +
+  geom_point()+
+  geom_line() +
+  geom_errorbar(aes(ymin = pred-se, ymax = pred+se), width = 0.1)  +
+  ggtitle("Cnideria Modeled Index") + 
+  theme_classic()
+
 # bind both data sets ========== 
 pred_df <- large_pred_df %>%
               dplyr::mutate( id = "Large_zoop") %>% 

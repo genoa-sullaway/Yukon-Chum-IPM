@@ -105,8 +105,8 @@ p <- ggplot() +
       "#08306b", "#1c4680", "#305d94", "#4574a7",
       "#5d8cb9", "#77a4cb", "#deebf7", "#deebf7", "#deebf7"), drop = F ) +
     # geom_point(data = summ_fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 1 ) +
-    geom_point(data = fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 1 ) +
-    geom_point(data = summer, aes(x=Lon, y = Lat), color= "orange", size = 1 ) +
+    geom_point(data = fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 2 ) +
+    geom_point(data = summer, aes(x=Lon, y = Lat), color= "orange", size = 2 ) +
   # geom_col(data = summ_fall,aes(x=Lon, y = Lat, fill = value )) +
   # scale_fill_manual(values = c("orange", "darkgreen")) +
   # coord_polar(theta = "y") +  
@@ -141,6 +141,51 @@ ggsave(
   filename = "output/ak_rivers.png",
   width = 9, height = 6, dpi = 600,
   bg = "transparent", device = "png", p
+)
+
+## just fall fish ===============
+fall <- ggplot() +
+  geom_sf(data = na_outline, fill = "white") +
+  geom_sf(data = ariv, aes(
+    color = factor(ORD_FLOW), size = width, alpha = width 
+  )) +
+  geom_sf(data = both, alpha = 0.7, color = "black" ) + 
+  scale_color_manual(
+    name = "",
+    values = c(
+      "#08306b", "#1c4680", "#305d94", "#4574a7",
+      "#5d8cb9", "#77a4cb", "#deebf7", "#deebf7", "#deebf7"), drop = F ) +
+  # geom_point(data = summ_fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 1 ) +
+  geom_point(data = fall, aes(x=Lon, y = Lat), color= "darkgreen", size = 2 ) +
+  coord_sf(
+    crs = crsLONGLAT,
+    xlim = c(bb["xmin"], bb["xmax"]),
+    ylim = c(bb["ymin"], bb["ymax"])
+  ) +
+  labs(
+    y = "", subtitle = "",
+    x = "" ) +
+  scale_alpha(range = c(0, 1)) +
+  scale_size(range = c(0, .45)) +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "Montserrat"),
+    panel.background = element_blank(),
+    legend.background = element_blank(),
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    axis.title.y = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank()
+  )
+
+ggsave(
+  filename = "output/ak_rivers_fall_weirs.png",
+  width = 9, height = 6, dpi = 600,
+  bg = "transparent", device = "png", fall
 )
 
 

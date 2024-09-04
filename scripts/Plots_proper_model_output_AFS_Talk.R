@@ -7,9 +7,9 @@ library(bayesplot)
 library(bayestestR)
 
 # load model ==============
-bh_fit<- read_rds("output/stan_fit_DATA.RDS")
+# bh_fit<- read_rds("output/stan_fit_DATA.RDS")
 # bh_fit <- read_rds("output/stan_fit_DATA_nocovar.RDS")
-#bh_fit <- read_rds("output/stan_fit_DATA_forAFS.RDS")
+ bh_fit <- read_rds("output/stan_fit_DATA_forAFS.RDS")
 
 # get this from the model call script: year_min = 2001
 years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
@@ -108,8 +108,8 @@ pred_N_return_pp <- summary(bh_fit, pars = c("N_return_pp"),
   rownames_to_column()  %>%
   dplyr::mutate(time = 1:nrow(.)) %>%
   left_join(data.frame(time = 1:nrow(.),
-                       brood_year = c(data_list_stan$years_data_return),
-                       obs = data_list_stan$data_stage_return)) %>% 
+                       brood_year = 2001:2018,
+                       obs = yukon_fall_return_brood_year$Brood_Year_Return)) %>% # data_list_stan$data_stage_return[1:nrow(.)])) %>% 
  left_join(adult_cvs) %>% 
   dplyr::select(time, brood_year,obs, fall_spawner_cv,
                 X10.,X90., mean) %>% 
@@ -122,12 +122,12 @@ pred_N_return_pp <- summary(bh_fit, pars = c("N_return_pp"),
 return_plot <- ggplot(data = pred_N_return_pp) +
   geom_ribbon(aes(x=brood_year, ymin =ci_10,
                   ymax = ci_90),   fill =  "#2d9d92") +
-  geom_line(aes(x=brood_year, y = pred), color = "white", linetype = 2) +
+  geom_line(aes(x=brood_year, y = pred), color = "white") +
   geom_errorbar(aes(x=brood_year, ymin = obs-sd_obs,
-                    ymax = obs+sd_obs), width = 0.1,  color = "white") +
-  geom_point(aes(x=brood_year, y = obs),color = "white" ) +
-  geom_line(aes(x=brood_year, y = obs), color = "white" ) +
-  scale_x_continuous(breaks = c(2001, 2005,2010, 2018)) +
+                    ymax = obs+sd_obs), width = 0.1, 
+                color = "white", alpha = 0.6) +
+  geom_point(aes(x=brood_year, y = obs),color = "white",alpha = 0.6) +
+  # scale_x_continuous(breaks = c(2001, 2006,2011, 2018)) +
   theme_classic() + 
   xlab("Brood Year") + 
   ylab("Estimated Log Return Abundance") +
@@ -203,12 +203,12 @@ pred_N_jpp <- summary(bh_fit, pars = c("N_j_pp"),
 juv_plot <- ggplot(data = pred_N_jpp) +
   geom_ribbon(aes(x=brood_year, ymin =ci_10,
                   ymax = ci_90),   fill =  "#EAAA00") +
-  geom_line(aes(x=brood_year, y = mean), color = "white", linetype = 2) +
+  geom_line(aes(x=brood_year, y = mean), color = "white") +
   geom_errorbar(aes(x=brood_year, ymin = (obs)-(sd),
-                    ymax = (obs)+(sd)), width = 0.1,  color = "white") + 
-  geom_point(aes(x=brood_year, y = (obs)),color = "white" ) +
-  geom_line(aes(x=brood_year, y = (obs)), color = "white" ) +
-  scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
+                    ymax = (obs)+(sd)), width = 0.1,  color = "white", alpha = 0.6) + 
+  geom_point(aes(x=brood_year, y = (obs)),color = "white", alpha = 0.6) +
+  # geom_line(aes(x=brood_year, y = (obs)), color = "white" ) +
+  # scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
   theme_classic() + 
   xlab("Brood Year") + 
   ylab("Estimated Log Juvenile Abundance") +
@@ -221,9 +221,6 @@ juv_plot <- ggplot(data = pred_N_jpp) +
         panel.grid.minor = element_blank(),
         strip.background = element_blank(),
         panel.border = element_rect(colour = "white", fill = NA), 
-        # panel.grid.minor = element_blank(),
-        # panel.grid.major = element_blank(),
-        # plot.title = element_text(color = "white"),
         strip.text.x = element_blank(), 
         axis.line = element_line(color = "white"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),

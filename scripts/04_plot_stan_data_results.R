@@ -151,7 +151,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "D_scale"  ),
      fill_color = "blue")
 
-
 # plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 #      pars=  c(  "sigma_y_j"),
 #      fill_color = "blue")
