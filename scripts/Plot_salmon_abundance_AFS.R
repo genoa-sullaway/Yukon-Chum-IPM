@@ -71,9 +71,6 @@ ggplot(data = fall_all, aes(x=cal_year, y = value/1000000, group = id, fill = id
 ggsave( "output/afs_talk_ALL_FALL_chum.png",  bg = "transparent",
         width = 9, height = 4)
 
-
-
-
 # total run both life histories ===========
 yukon_summer_recruit <-  yukon_summer_df %>%
   dplyr::select(1:4) %>%

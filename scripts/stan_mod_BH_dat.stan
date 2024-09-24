@@ -278,14 +278,14 @@ model {
   }
  } 
     
-  theta1[1] ~ normal(0.15,0.05);  
-  theta1[2] ~ normal(0,0.05);  
+  theta1[1] ~ normal(0,0.01); //(0,0.05);  
+  theta1[2] ~ normal(0,0.01); //(0,0.05);  
   theta1[3] ~ normal(0,0.01);
   // theta1[4] ~ normal(0,0.01);
  
  theta2[1] ~ normal(0,0.01);
  theta2[2] ~ normal(0,0.01);
- theta2[3] ~ normal(0,0.001);
+ theta2[3] ~ normal(0,0.01); //(0,0.001);
  theta2[4] ~ normal(0,0.01);
  
   basal_p_1 ~ beta(1,1); // mean survival stage 1

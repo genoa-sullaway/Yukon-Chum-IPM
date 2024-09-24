@@ -117,7 +117,7 @@ ggplot(data = large_pred_df, aes(x=YEAR, y = pred,
  # Gelatinous Zoop - Cnideria ===============
 cnideria_zoop<- zoop %>% 
    filter(TAXA_COARSE == "Cnideria",
-          !EST_NUM_PERM3>3000,
+          # !EST_NUM_PERM3>3000,
           GEAR_NAME == "60BON") 
 
 ## Trim inner shelf Cnideria ==============
@@ -170,7 +170,6 @@ N_inner_cnideria<-df_contains %>%
    geom_errorbar(aes(ymin = mean-se, ymax = mean+se))  +
    facet_wrap(~TAXON_NAME, scales = "free")
  
- 
  ## Index Standardization for Cnideria ================= 
  mod_df_cnideriazoop <-  cnideria_zoop %>% 
    filter(!YEAR <1999) %>%  
@@ -180,13 +179,10 @@ N_inner_cnideria<-df_contains %>%
           DATA_SOURCE = as.factor(DATA_SOURCE)) %>% 
    data.frame()
  
- cnideria_zoop_index <- mgcv::gam( sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
-                                  s(LAT, LON) + s(DOY),
-                                data = mod_df_cnideriazoop, 
-                                family = tw(link = "log"))
- # summary(cnideria_zoop_index)
- # gratia::draw(cnideria_zoop_index)
- 
+ cnideria_zoop_index <- mgcv::gam(sqrt(sum_EST_NUM_PERM3) ~ YEAR + DATA_SOURCE + 
+                                      s(LAT, LON) + s(DOY),
+                                data = mod_df_cnideriazoop, family = tw(link = "log"))
+
  temp <- expand.grid(YEAR = c(unique(mod_df_cnideriazoop$YEAR)),  
                      DATA_SOURCE = c("EcoDAAT"))
  
@@ -195,26 +191,30 @@ N_inner_cnideria<-df_contains %>%
                              LON = mean(mod_df_cnideriazoop$LON), #rep(mean(scale_dat$LON), times = nrow(DF1)),
                              DOY = mean(mod_df_cnideriazoop$DOY)))  
  
- temp <- predict(cnideria_zoop_index, cnideria_pred_df, se.fit = TRUE )
+ temp <- predict(cnideria_zoop_index, cnideria_pred_df, se.fit = TRUE, response = TRUE)
  
- cnideria_pred_df$pred <-  exp(temp[[1]]) 
- cnideria_pred_df$se <-   exp(temp[[2]])
+ cnideria_pred_df$pred <- exp(temp[[1]]) 
+ cnideria_pred_df$se <- (temp[[2]])
  
  cnideria_pred_df <- cnideria_pred_df %>%
-                         dplyr::mutate( id = "Cnideria")
+                         dplyr::mutate(id = "Cnideria")
  
-add <-  data.frame(YEAR = c(as.factor(2023)),
-               Large_zoop = c(2.5),  
-               Cnideria = c(10.4))
+ add <-  data.frame(YEAR = c(as.factor(2023)),
+                     Large_zoop = c(2.5),  
+                     Cnideria = c(10.4))
 
 # plot cnideria ==================
-ggplot(data = cnideria_pred_df, aes(x=YEAR, y = pred,
+ggplot(data = cnideria_pred_df, aes(x=as.numeric(as.character(YEAR)), y = pred,
                                  group =DATA_SOURCE, color =DATA_SOURCE)) +
   geom_point()+
   geom_line() +
   geom_errorbar(aes(ymin = pred-se, ymax = pred+se), width = 0.1)  +
-  ggtitle("Cnideria Modeled Index") + 
+  ylab("Log Cnideria Modeled Index") + 
+  ggtitle("NBS Middle Shelf") + 
+  xlab("year") + 
   theme_classic()
+
+ ggsave("output/cnideria_index_middle_shelf.png")
 
 # bind both data sets ========== 
 pred_df <- large_pred_df %>%
@@ -226,13 +226,10 @@ pred_df <- large_pred_df %>%
               dplyr::mutate(YEAR = as.numeric(as.character(YEAR)),
                             Large_zoop = as.numeric(scale(Large_zoop)),
                             Cnideria = as.numeric(scale(Cnideria)))  
-   
-
 ## plots =============
  ggplot( ) +
    geom_line(data = pred_df, aes(x=YEAR, y = Large_zoop), color = "orange")+
-  geom_line(data = pred_df, aes(x=YEAR, y = Cnideria), color = "green")+
-   # geom_errorbar(aes(ymin = pred-se, ymax = pred+se), width = 0.1)  +
+   geom_line(data = pred_df, aes(x=YEAR, y = Cnideria), color = "green")+
    ggtitle("mean scaled Modeled Index") + 
    theme_classic()
  
