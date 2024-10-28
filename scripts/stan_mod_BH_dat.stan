@@ -216,7 +216,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
          kappa_marine_survival[t] =  p_2[t]/(1 + ((p_2[t]*N_j[t])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
 
          // convert survival to mortality for next equation
-         kappa_marine_mortality[t] = -log(kappa_marine_survival[t]);
+         // kappa_marine_mortality[t] = -log(kappa_marine_survival[t]);
 
         for (a in 1:A) { 
            // N_recruit[t+a+2,a] = (N_brood_year_return[t]*p[t,a]); //*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 

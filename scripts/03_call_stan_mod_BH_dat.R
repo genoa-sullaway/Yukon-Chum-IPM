@@ -96,6 +96,7 @@ for (a in 1:A) {
     N_egg_start[t,a] = exp(17.5)*yukon_fall_obs_agecomp[t,a]
   }
 }
+
 # log for model ======
 N_j_start_log = log(N_j_start)
 N_brood_year_return_start_log =  log(N_brood_year_return_start)
@@ -106,11 +107,10 @@ N_catch_start_log = log(N_catch_start+ 1.001)
 N_egg_start_log  = log(N_egg_start+ 1.001)
 
  
-# # CV ========================================
+## CV ========================================
 spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
   filter(year >= year_min,
          year <= year_max_cal)
-
 
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
