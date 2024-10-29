@@ -306,9 +306,6 @@ summ_n_j <- pred_N_j %>%
 
 ggplot(data = summ_n_j %>% filter(!cal_year ==2002)) +
   geom_line(aes(x=cal_year, y = mean_J_Q)) + 
-  # geom_line(aes(x=time, y = mean), color = "green") +
-  # geom_ribbon(aes(x=time, ymin = mean_J_Q-se_mean,
-  #                 ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est "))
 
 ggplot(data = summ_n_j) +

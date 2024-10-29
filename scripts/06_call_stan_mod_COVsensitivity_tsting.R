@@ -14,7 +14,7 @@ library(tidync)
 library(lubridate) 
 library(readxl)
 
-sensitivity_function <- function(){
+sensitivity_function_cov1 <- function(){
  # setup inputs ===============================================================
 warmups <- 2000
 total_iterations <- 4000
@@ -164,60 +164,15 @@ M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative
 
 #ess age comp =======
 ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
-
-# fix age comp - based on estimates from no covar data 
-# age_comp <- summary(bh_fit, pars = c("pi"), 
-#                     probs = c(0.1, 0.9))$summary[,1]
-
-
+ 
 # pi 
 age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
 
 # in case i want to fix that  
 #prob = c(0.03180601 0.74323447 0.96200639)
 
-# STAN STARTING VALUES ==========
-# kappa_j_start =  basal_p_1
-# kappa_marine_start = c(basal_p_2,basal_p_2)
-# kappa_marine_mort_start = c(-log(basal_p_2),-log(basal_p_2))
-
-# use average age comp to distribute starting values
-# p <- colMeans(yukon_fall_obs_agecomp[1:21,]) 
-
-# # Initial values ========
-# init_fn <- function(chain_id=1) {
-#   list( 
-#        theta1=list(rnorm(1,-0.1,0.05),
-#                    rnorm(1,0.1,0.05),
-#                    rnorm(1,-0.1,0.05)), # list because there are 3 thetas 
-# 
-#        theta2=list(rnorm(1,-0.01,0.05),
-#                    rnorm(1,-0.01,0.05)), # list becaues two thetas 
-# 
-#        prob = list(rbeta(1,0.25,1),
-#                    rbeta(1,0.75,1),
-#                    rbeta(1,0.2,1)), 
-#        
-#        D_scale = runif(1,0.1,0.8),  
-#        
-#        g = list(runif(1,0.001,0.5),
-#                 runif(1,0.5,1),
-#                 runif(1,0.3,1),
-#                 runif(1,0.001,0.5)), 
-#        
-#        log_catch_q = rnorm(1,-5,0.01),
-#        
-#        log_F_dev_y = rnorm(nRyrs_T,0,2),
-#        log_F_mean = runif(1,0.2,2),
-#           
-#        basal_p_1 = runif(1,0.1,1), 
-#        basal_p_2 = runif(1,0.1,1), 
-#        
-#        sigma_y_j = runif(1,0.5,2)
-#        )
-#      }
-
-# ASSIGN DATA ==========
+ 
+## assign data ==========
 data_list_stan <- list(nByrs=nByrs,
                        nRyrs=nRyrs,
                        nRyrs_T = nRyrs_T, 
@@ -239,45 +194,45 @@ data_list_stan <- list(nByrs=nByrs,
                        years_data_juv = fall_juv$brood_year,
                        years_data_return = yukon_fall_return_brood_year$Brood_Year,
                        
-                       ncovars1=ncovars1,
-                       ncovars2=ncovars2,
+                       ncovars1=1,
+                       # ncovars2=0,
                        
                        cov1=stage_a_cov,
-                       cov2=stage_b_cov,
+                       # cov2=stage_b_cov,
                        
                        data_sp_cv = spawner_cv$fall_spawner_cv,
                        
                        o_run_comp=(yukon_fall_obs_agecomp),
                        ess_age_comp=ess_age_comp,
-                       # basal_p_1 = 0.2,
-                       # basal_p_2=0.5,
-                       pi = age_comp#,
-                       #D_scale = 0.2
+                       pi = age_comp
 )
 
 
 
 # call mod  for Cov 1 ===========================
 bh_fit <- stan(
-  file = here::here("scripts", "stan_mod_BH_dat_sensitivity_1.stan"),
+  file = here::here("scripts", "stan_mod_sensitivity_1.stan"),
   data = data_list_stan,
-  chains = 1, #n_chains,  
+  chains = 1,  
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 
   verbose=FALSE, 
   control = list(adapt_delta = 0.99)
-)
+  )
 
-write_rds(bh_fit, "output/stan_fit_DATA.RDS")
-
+write_rds(bh_fit, paste0("output/stan_sensitivity_1",covariate_name,".RDS"))
 }
 
-
-# call funciton in a loop [eventually]
+# call function in a loop [eventually]
 # practice call
-cova<- sensitivity_function()
+cova<- sensitivity_function_cov1()
 
 
-
+# FUNCTION FOR STAGE 2
+sensitivity_function_cov2 <- function()
+  
+  
+  
+  
  

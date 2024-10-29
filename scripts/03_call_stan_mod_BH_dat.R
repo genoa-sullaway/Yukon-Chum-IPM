@@ -208,7 +208,7 @@ age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
 #        )
 #      }
 
-# ASSIGN DATA ==========
+# assign data ==========
 data_list_stan <- list(nByrs=nByrs,
                        nRyrs=nRyrs,
                        nRyrs_T = nRyrs_T, 
