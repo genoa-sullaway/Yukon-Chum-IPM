@@ -109,61 +109,115 @@ yukon_fall_ages <- readxl::read_excel("data/age_comps/Fall_Yukon_Calc_Source4.xl
 write_csv(yukon_fall_ages, "data/processed_data/yukon_fall_age_comp.csv")
 
 # Juveniles ========================================================
-juv <- read_csv("data/Juv_Index_CC_aug2023/Index2.csv") %>%
-  dplyr::select(Time, Estimate,CV) %>%
-  rename(Year = "Time") 
+# As of Oct 2024, Curry ran and updated juvenile index
+# Genoa is updating this code, and deleting old index. Now the index is by strata and there are estimated genetic groups by strata, rather than annual estimated genetic proportions...
 
-# Proportion of juveniles per run ======================================
+# juveniles per strata
+juv <- read_csv("data/Juvenile_Index_CC/Index for Sabrina.csv") %>%
+  dplyr::rename(Year = "Time",
+                Strata = "Stratum") %>% 
+  dplyr::mutate(Strata  = case_when(Strata == "Stratum_1"~"strata1",
+                                    Strata == "Stratum_2"~"strata2",
+                                    Strata == "Stratum_3"~"strata3",
+                                    Strata == "Stratum_4"~"strata4",
+                                    Strata == "Stratum_5"~"strata5",
+                                    Strata == "Stratum_6"~"strata6")) %>%
+  group_by(Year) %>%
+  dplyr::summarise(Estimate = sum(Estimate))
+
+# proportion of genetic groups in each strata
+MSA <- read_csv("data/Juvenile_Index_CC/Bering Sea Juvenile Chum Spatial Mixed Stock Analysis Summary.csv") %>%
+  group_by(Year) %>%
+  dplyr::summarise(mean_prop = mean(Mean)) %>%
+  dplyr::mutate(mean_prop = case_when(Year == 2009 ~ 0.0082, # 0.008 is the DE from the estimate, i htink the model will get weird with 0 individuals...
+                                      TRUE ~ mean_prop))
+
+# add rolling means to fill in blank years, I think this will get filled in with models later? 
+rollingmean_GSI_2008 <- MSA %>% 
+  filter(Year %in% c(2007,2009)) %>% 
+  ungroup() %>% 
+  dplyr::summarise(mean_prop = mean(mean_prop))
+
+rollingmean_GSI_2013 <- MSA %>% 
+  filter(Year %in% c(2012,2014)) %>% 
+  dplyr::summarise(mean_prop = mean(mean_prop))
+
+rollingmean_GSI_2020 <- MSA %>%  
+  filter(Year %in% c(2019,2021)) %>% 
+  dplyr::summarise(mean_prop = mean(mean_prop))
+
+abund_2020 <- juv %>%  
+  filter(Year %in% c(2019,2021)) %>% 
+  dplyr::summarise(Estimate = mean(Estimate))
+
+
+juv_df <- MSA %>%
+  rbind(data.frame(Year = c(2008, 2013,2020),
+                         mean_prop = c(rollingmean_GSI_2008$mean_prop,
+                                       rollingmean_GSI_2013$mean_prop,
+                                       rollingmean_GSI_2020$mean_prop))) %>%
+  left_join(juv) %>%
+  dplyr::mutate(Estimate = case_when(Year == 2020 ~ abund_2020$Estimate,
+                                       TRUE ~ Estimate),
+                fall_abund = Estimate*mean_prop) %>% 
+  dplyr::select(Year, fall_abund,mean_prop) %>%
+  arrange(Year)
+
+ggplot(data = juv_df) +
+  geom_path(aes(x=Year, y = fall_abund))
+
+# SAVE HERE ============
+ write_csv(juv_df, "data/processed_data/tidy_juv_fall_yukon.csv")
+
+#OLD way of doing it ==============
 # Use Fall Yukon proportions 
 # liz lee emailed this data in april 2024, see "script/explore_basis_proportions.R" for some exploratory info
-fall_juv_proportions <- read_excel("data/BeringSea_Chum_Juv_annual_2003-2023_analysis_msa.xlsx") %>% 
-  janitor::row_to_names(row_number = 1) %>%
-  rename(reporting_group = `Reporting Group`) %>%
-  mutate(Year = as.numeric(Year),
-         Mean = as.numeric(Mean),
-         SD = as.numeric(SD),
-         reporting_group = case_when(reporting_group == "Yukon River Fall Run"~ "Yukon_Fall",
-                                     reporting_group == "Coastal Western Alaska"~ "CWAK",
-                                     TRUE ~ reporting_group )) %>%
-  dplyr::select(1:4) %>%
-  filter(reporting_group %in% c("Yukon_Fall"))
- 
-rollingmean_2020 <- juv %>% 
-  filter(Year %in% c(2019,2021)) %>% 
-  summarise(Mean = mean(Estimate))
+# fall_juv_proportions <- read_excel("data/BeringSea_Chum_Juv_annual_2003-2023_analysis_msa.xlsx") %>% 
+#   janitor::row_to_names(row_number = 1) %>%
+#   rename(reporting_group = `Reporting Group`) %>%
+#   mutate(Year = as.numeric(Year),
+#          Mean = as.numeric(Mean),
+#          SD = as.numeric(SD),
+#          reporting_group = case_when(reporting_group == "Yukon River Fall Run"~ "Yukon_Fall",
+#                                      reporting_group == "Coastal Western Alaska"~ "CWAK",
+#                                      TRUE ~ reporting_group )) %>%
+#   dplyr::select(1:4) %>%
+#   filter(reporting_group %in% c("Yukon_Fall"))
+#  
+# rollingmean_2020 <- juv %>% 
+#   filter(Year %in% c(2019,2021)) %>% 
+#   summarise(Mean = mean(Estimate))
 
-# stand in guess! 
-rollingmean_GSI_2020 <- 0.15 # fall_juv_proportions %>% 
-  # filter(Year %in% c(2019,2021)) %>% 
-  # summarise(Mean = mean(Mean))
+# # stand in guess! 
+# rollingmean_GSI_2020 <- 0.15 # fall_juv_proportions %>% 
+#   # filter(Year %in% c(2019,2021)) %>% 
+#   # summarise(Mean = mean(Mean))
+# 
+# rollingmean_GSI_2013 <- fall_juv_proportions %>% 
+#   filter(Year %in% c(2010,2011,2012)) %>% 
+#   summarise(Mean = mean(Mean))
+# 
+# rollingmean_GSI_2002 <- fall_juv_proportions %>% 
+#   filter(Year %in% c(2003,2004,2005)) %>% 
+#   dplyr::summarise(Mean = mean(Mean))
+# 
+# rollingmean_GSI_2008 <- fall_juv_proportions %>%  
+#   dplyr::summarise(Mean = mean(Mean))
+# 
+# fall_juv <- left_join(juv, fall_juv_proportions)  %>%
+#   mutate(Mean = case_when(Year == 2013 ~ rollingmean_GSI_2013$Mean,
+#                           Year == 2002 ~ rollingmean_GSI_2002$Mean,
+#                           Year == 2020 ~ 0.15,
+#                           Year %in% c(2008, 2009) ~  rollingmean_GSI_2008$Mean, 
+#                           TRUE ~ Mean),
+#          Estimate = case_when(Estimate==0 ~  rollingmean_2020$Mean,
+#                           TRUE ~ Estimate),
+#          fall_abundance = Estimate * Mean) %>%
+#   dplyr::select(Year, fall_abundance,CV)
+# 
+#  ggplot(data = fall_juv) +
+#    geom_line(aes(x=Year ,y = fall_abundance))
 
-rollingmean_GSI_2013 <- fall_juv_proportions %>% 
-  filter(Year %in% c(2010,2011,2012)) %>% 
-  summarise(Mean = mean(Mean))
-
-rollingmean_GSI_2002 <- fall_juv_proportions %>% 
-  filter(Year %in% c(2003,2004,2005)) %>% 
-  dplyr::summarise(Mean = mean(Mean))
-
-rollingmean_GSI_2008 <- fall_juv_proportions %>%  
-  dplyr::summarise(Mean = mean(Mean))
-
-fall_juv <- left_join(juv, fall_juv_proportions)  %>%
-  mutate(Mean = case_when(Year == 2013 ~ rollingmean_GSI_2013$Mean,
-                          Year == 2002 ~ rollingmean_GSI_2002$Mean,
-                          Year == 2020 ~ 0.15,
-                          Year %in% c(2008, 2009) ~  rollingmean_GSI_2008$Mean, 
-                          TRUE ~ Mean),
-         Estimate = case_when(Estimate==0 ~  rollingmean_2020$Mean,
-                          TRUE ~ Estimate),
-         fall_abundance = Estimate * Mean) %>%
-  dplyr::select(Year, fall_abundance,CV)
-
- ggplot(data = fall_juv) +
-   geom_line(aes(x=Year ,y = fall_abundance))
-
- # SAVE HERE ============
-write_csv(fall_juv, "data/processed_data/tidy_juv_fall_yukon.csv")
 
 # QAQC PLOTS =========== 
 ## Spawners ============

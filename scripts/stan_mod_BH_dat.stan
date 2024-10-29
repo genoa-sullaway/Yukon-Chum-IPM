@@ -307,7 +307,7 @@ model {
  // }
  // 
  for (a in 1:A) {
-    log_S[a] ~ normal(0,1);
+    log_S[a] ~ normal(0,0.1);
  }
 
    for(t in 1:nRyrs_T){

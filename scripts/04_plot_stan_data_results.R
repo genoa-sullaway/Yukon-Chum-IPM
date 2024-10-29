@@ -67,7 +67,7 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_F_mean"),
+     pars=  c( "log_F"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -77,10 +77,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 # plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
 #      pars=  c( "log_S"),
 #      fill_color = "blue")
- 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_F_dev_y"),
-     fill_color = "blue")
+#  
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+#      pars=  c( "log_F_dev_y"),
+#      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "basal_p_2"),
@@ -100,10 +100,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c("log_catch_q"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c("pi"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
@@ -170,7 +166,7 @@ pred_N_SP <- summary(bh_fit, pars = c("N_sp"),
               probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   # filter(!time>20) %>% # remove years without full return estimates 
   left_join(years)   
@@ -200,7 +196,7 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   # filter(!time>20) %>% # remove years without full return estimates 
   left_join(years)   
@@ -263,7 +259,7 @@ pred_N_harvest <- summary(bh_fit, pars = c("N_catch"),
                           probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:27, each=4),
+  dplyr::mutate(time = rep(1:26, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   left_join(years) %>%
   group_by(cal_year) %>%
@@ -325,7 +321,7 @@ ggplot(data = summ_n_j) +
  
 # plot age comp through time =================
 age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 
-    dplyr::mutate(time = 1:22) %>% 
+    dplyr::mutate(time = 1:21) %>% 
     left_join(years) %>%
     gather(1:4, key = "age", value = "obs") %>%
     dplyr::mutate(age = case_when(age == "abund_0.3" ~ 3,
@@ -337,7 +333,7 @@ age_comp_Q <- summary(bh_fit, pars = c("q"),
                        probs = c(0.1, 0.9))$summary %>% 
   data.frame() %>%
   rownames_to_column()  %>%
-  dplyr::mutate(time = rep(1:22, each=4),
+  dplyr::mutate(time = rep(1:21, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   left_join(years) %>%
   left_join( age_comp_dat) %>% 
@@ -350,33 +346,7 @@ ggplot(data= age_comp_Q) +
   facet_wrap(~age, scales = "free") +
   theme_classic() + 
   ylab("Proportion")
-
-ggplot(data= age_comp_Q) +
-  geom_line(aes(x=time, y = value, group = id, color = id)) +
-  facet_wrap(~age)
-
-# plot mean age comp  ======
-age_comp <- summary(bh_fit, pars = c("pi"), 
-                    probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column() %>% 
-  rename(pred = "mean")  
-
-ggplot(data = age_comp) +
-  geom_point(aes(x= rowname, y = pred)) + 
-  theme_classic()
-
-# plot prob  ======
-prob <- summary(bh_fit, pars = c("prob"), 
-                    probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column() %>% 
-  rename(pred = "mean")  
-
-ggplot(data = prob) +
-  geom_point(aes(x= rowname, y = pred)) + 
-  theme_classic()
-
+  
 # # align all stages on one plot to look at scale. =====
 # summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"), 
 #                            probs = c(0.1, 0.9))$summary %>%

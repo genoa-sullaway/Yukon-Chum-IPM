@@ -1,3 +1,9 @@
+# STAN SENSITIVITY TESTING
+# Run the stan model with just 1 covariate at a time and evaluate if its still in the neighborhood of same effects...
+# how to do this --- 
+  # Run through covariate 1, one at a time and fix survival estimate for stage 2 to what its estimated at in the full model??
+  # Run through covariate 2, one at a time and fix survivial for stage 1. 
+
 library(rstan)
 library(tidyverse)
 library(here)
@@ -8,11 +14,8 @@ library(tidync)
 library(lubridate) 
 library(readxl)
 
-# Load data ==================================================================
-# see 01_make salmon data.R for salmon data tidying 
-# see 02_make covariates for data tidying 
-
-# setup inputs ===============================================================
+sensitivity_function <- function(){
+ # setup inputs ===============================================================
 warmups <- 2000
 total_iterations <- 4000
 max_treedepth <-  12
@@ -42,8 +45,8 @@ yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv"
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min, 
          cal_year <= year_max_cal) #%>% 
-  # dplyr::select(2) %>%
-  #as.vector()
+# dplyr::select(2) %>%
+#as.vector()
 
 yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
   filter(cal_year >= year_min, 
@@ -61,8 +64,8 @@ yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
 yukon_fall_return_brood_year<- read_csv("data/processed_data/yukon_fall_yukon_fall_return_brood_year.csv") %>%
   filter(Brood_Year >= year_min,
          Brood_Year <= 2018) #%>% 
-  # dplyr::select(2) %>% 
-  # as.vector()
+# dplyr::select(2) %>% 
+# as.vector()
 
 ## Fall Juveniles ================================================
 fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
@@ -104,34 +107,39 @@ N_sp_start_log = log(N_sp_start+ 1.001)
 N_catch_start_log = log(N_catch_start+ 1.001)
 N_egg_start_log  = log(N_egg_start+ 1.001)
 
- 
+
 ## CV ========================================
 spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
   filter(year >= year_min,
          year <= year_max_cal)
 
+if(covariate == "stage_a"){
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
                 yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
-   # zoop are already mean scaled
+  # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>%
   dplyr::select(SST_CDD_NBS, 
-                 Large_zoop,
-                 # Cnideria,
+                Large_zoop,
+                # Cnideria,
                 yukon_mean_discharge
-                ) %>% 
+  ) %>% 
   as.matrix()
- 
-# the temp in 2001 is gonna effect fish from brood year 1999
+
+ncovars1 = 1
+}
+
+if(covariate == "stage_b") {
+  # the temp in 2001 is gonna effect fish from brood year 1999
 temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-   dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                  Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
-                  Pink_hatchery= as.numeric(scale(Pink_hatchery)),
-                  full_index = as.numeric(scale(full_index))) %>% 
+  dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                 Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
+                 Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                 full_index = as.numeric(scale(full_index))) %>% 
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-2) %>% 
   filter(brood_year >= year_min, 
@@ -143,11 +151,12 @@ temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
 
 #bind <- temp_b_cov %>% slice(22)
 stage_b_cov <- temp_b_cov %>%
-               as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
+  as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
-# number covariates for each life stage 
-ncovars1 = 3
-ncovars2 = 4
+ncovars2 = 1
+}
+
+
 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
@@ -159,11 +168,11 @@ ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
 # fix age comp - based on estimates from no covar data 
 # age_comp <- summary(bh_fit, pars = c("pi"), 
 #                     probs = c(0.1, 0.9))$summary[,1]
- 
+
 
 # pi 
 age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
- 
+
 # in case i want to fix that  
 #prob = c(0.03180601 0.74323447 0.96200639)
 
@@ -219,13 +228,13 @@ data_list_stan <- list(nByrs=nByrs,
                        Ps=Ps,
                        fs=fs,
                        M = M_fill_stan,
-                      
+                       
                        data_stage_j = as.vector(fall_juv$fall_abund), 
                        data_stage_return=as.vector(yukon_fall_recruits$total_run), 
-                        # data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
+                       # data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
-                   
+                       
                        years_data_sp = yukon_fall_spawners$cal_year,
                        years_data_juv = fall_juv$brood_year,
                        years_data_return = yukon_fall_return_brood_year$Brood_Year,
@@ -244,11 +253,13 @@ data_list_stan <- list(nByrs=nByrs,
                        # basal_p_2=0.5,
                        pi = age_comp#,
                        #D_scale = 0.2
-                       )
+)
 
-# call mod  ===========================
+
+
+# call mod  for Cov 1 ===========================
 bh_fit <- stan(
-  file = here::here("scripts", "stan_mod_BH_dat.stan"),
+  file = here::here("scripts", "stan_mod_BH_dat_sensitivity_1.stan"),
   data = data_list_stan,
   chains = 1, #n_chains,  
   warmup = warmups, 
@@ -256,7 +267,17 @@ bh_fit <- stan(
   cores = n_cores, 
   verbose=FALSE, 
   control = list(adapt_delta = 0.99)
-  )
+)
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
+
+}
+
+
+# call funciton in a loop [eventually]
+# practice call
+cova<- sensitivity_function()
+
+
+
  
