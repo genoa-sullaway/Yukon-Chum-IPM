@@ -555,12 +555,13 @@ ggplot(data = theta_df,
 
 # Plot A-Gelatinous Zoops and Juvenile Abundance by brood year ============== 
 sst_zoop_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
+  dplyr::mutate( SST_CDD_NBS_noscale = SST_CDD_NBS,
+                 SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
                 yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge))) %>%
   # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>%  
-  dplyr::select(cal_year,brood_year,SST_CDD_NBS, yukon_mean_discharge,Large_zoop,
+  dplyr::select(cal_year,brood_year,SST_CDD_NBS, SST_CDD_NBS_noscale,yukon_mean_discharge,Large_zoop,
                 Cnideria)
  
 pred_N_jpp_cov <- summary(bh_fit, pars = c("N_j_pp"), 
@@ -575,7 +576,7 @@ pred_N_jpp_cov <- summary(bh_fit, pars = c("N_j_pp"),
                 ci_90=(X90.),
                 mean = as.numeric(scale(mean))) %>% 
   left_join(sst_zoop_cov) %>% 
-  dplyr::select(brood_year,SST_CDD_NBS,yukon_mean_discharge,Large_zoop,
+  dplyr::select(brood_year,SST_CDD_NBS,SST_CDD_NBS_noscale,yukon_mean_discharge,Large_zoop,
                 Cnideria,mean,ci_10,ci_90)
 
 ggplot(data =pred_N_jpp_cov) +
@@ -649,7 +650,7 @@ ggplot(data =pred_N_return_pp_cov) +
 # Plot JUST covariates ==============
 ## A SST ========= 
 sst_cov_plot <- sst_zoop_cov %>%
-  gather(3:6, key = "variable", value = "value") %>%
+  gather(3:7, key = "variable", value = "value") %>%
   filter(!cal_year<2000, variable%in% c("SST_CDD_NBS" ))
 
 a_sst <- ggplot(data = sst_cov_plot,aes(x=cal_year, y = value, group = variable, color = variable)) +
@@ -657,7 +658,7 @@ a_sst <- ggplot(data = sst_cov_plot,aes(x=cal_year, y = value, group = variable,
   geom_point() +
   scale_color_manual(values= PNWColors::pnw_palette(name="Shuksan2",n=1,type="discrete")) +
   theme_classic() +
-  ylab("Mean Scaled Trend") + 
+  ylab("Mean CDD Trend") + 
   xlab("Calendar Year") +
   geom_hline(yintercept =0, linetype =2, color = "white") + 
   theme(panel.background = element_blank(),  
@@ -679,7 +680,7 @@ a_sst <- ggplot(data = sst_cov_plot,aes(x=cal_year, y = value, group = variable,
         axis.ticks.y = element_line(color = "white"),
         axis.ticks.x = element_line(color = "white")) 
 a_sst
-ggsave("output/SST_plot.png", width = 4, height = 2, bg = "transparent")
+ggsave("output/SST_plot_Values.png", width = 4, height = 2, bg = "transparent")
 
 ## A Zoop backup ========= 
 sst_cov_plot <- sst_zoop_cov %>%

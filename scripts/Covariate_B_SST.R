@@ -4,8 +4,8 @@ library(here)
 library(tidyverse)
 library(lubridate)
 
-bs_sst <- read_csv("data/BS-SST-2024-02-05.csv") # daily mean temp for NBS and SEBS since 1985! 
-goa_sst <- read_csv("data/GOA-SST-2024-02-05.csv")
+# bs_sst <- read_csv("data/BS-SST-2024-02-05.csv") # daily mean temp for NBS and SEBS since 1985! 
+# goa_sst <- read_csv("data/GOA-SST-2024-02-05.csv")
 alut_sst <- read_csv("data/AI-SST-2024-07-25.csv")
 
 unique(alut_sst$Ecosystem_sub)
@@ -16,9 +16,8 @@ CDD_aleut <- alut_sst %>%
   dplyr::mutate(year = year(date),
                 month = month(date),
                 day = day(date)) %>%
-  filter(Ecosystem_sub == "Eastern Aleutians"#, 
-         
-         #!month > 6
+  filter(Ecosystem_sub == "Eastern Aleutians", 
+                !month > 6
   ) %>%
   group_by(year) %>%
   summarise(CDD = sum(meansst)) %>%
@@ -34,6 +33,19 @@ ggplot(data = CDD_aleut) +
   xlab("Year")
 
 write_csv(CDD_b,"data/processed_covariates/Stage_B_CDD.csv")
+
+# Plot just mean temp for winter
+mean_aleut <- alut_sst %>% 
+  dplyr::mutate(year = year(date),
+                month = month(date),
+                day = day(date)) %>%
+  filter(Ecosystem_sub == "Eastern Aleutians", 
+         !month > 6) %>%
+  group_by(year,month) %>% 
+  dplyr::summarise(mean_temp = mean(meansst))
+
+  ggplot(data = mean_aleut) +
+    geom_path(aes(x=year, y = mean_temp, color = month, group = month))  
 
 # GOA temp ============
 #adults unsure about goa vs bs for staging before returning to river, they have to go to BS eventually but papers show them in GOA for most of adult life 
