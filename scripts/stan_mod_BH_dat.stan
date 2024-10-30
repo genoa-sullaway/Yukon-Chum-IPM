@@ -18,16 +18,17 @@ data { // all equation references are from proposal numbering
   
   vector[nRyrs] data_sp_cv;
   
-  vector<lower=0, upper=1> [A] pi; // actual age comps
+  // vector<lower=0, upper=1> [A] pi; // actual age comps
 
 int<lower=0> ncovars1; //number of covariates for first lifestage  
 int<lower=0> ncovars2; //number of covariates for second lifestage  
 
 matrix [nByrs, ncovars1] cov1; // covariate data in a matrix format
 matrix [nByrs, ncovars2] cov2; // covariate data in a matrix format
- 
-matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
 
+// matrix<lower=0, upper=1>[n_age_comp_yrs,A] o_run_comp; // Observed age composition by year
+ matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
+ 
 real ess_age_comp; 
 }
 
@@ -54,10 +55,12 @@ real <lower =0> N_egg_start_log[t_start,A];
 real theta1 [ncovars1]; // covariate estimated for each covariate and each population
 real theta2 [ncovars2];
 
-// vector <lower=0> [A-1] prob;
+  // vector <lower=0> [A-1] prob;
   real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
   real <lower=0> g[nByrs,A]; // pi random draws
-
+ 
+ vector<lower=0, upper=1> [A] pi;
+ 
 real log_catch_q; 
 // real log_F_mean;
 vector [A] log_S; // log selectivity
@@ -117,6 +120,8 @@ matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix <lower=0, upper=1>[nRyrs,A] q; 
+// vector<lower=0, upper=1> [A] pi; // actual age comps
+  // vector <lower=0> [A-1] prob;
 
  S = exp(log_S);
  
@@ -275,6 +280,15 @@ model {
  theta2[3] ~ normal(0,0.01); //(0,0.001);
  theta2[4] ~ normal(0,0.01);
  
+ // prob[1]~ beta(1,1);
+ // prob[2]~ beta(1,1);
+ // prob[3]~ beta(1,1);
+ 
+ pi[1]~ beta(1,1);
+ pi[2]~ beta(1,1);
+ pi[3]~ beta(1,1);
+ pi[4]~ beta(1,1);
+ 
   basal_p_1 ~ beta(1,1); // mean survival stage 1
   basal_p_2 ~ beta(1,1); // mean survivial stage 2C
 
@@ -288,7 +302,7 @@ model {
 }
 
  for (a in 1:A) {
-    log_S[a] ~ normal(0,0.1);
+    log_S[a] ~ normal(0,1);
  }
 
    for(t in 1:nRyrs_T){
@@ -305,6 +319,9 @@ model {
  //     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
  //    } 
 
+  // for(t in 1:n_age_comp_yrs){ // calendar years 
+  //    target += ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
+  // } 
   for(t in 1:nRyrs){ // calendar years 
      target += ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
     

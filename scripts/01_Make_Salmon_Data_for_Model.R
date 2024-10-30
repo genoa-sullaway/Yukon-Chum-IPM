@@ -95,6 +95,7 @@ write_csv(yukon_fall_return_brood_year,"data/processed_data/yukon_fall_yukon_fal
 # change proportions from brood year to calendar year 
 yukon_fall_ages <- readxl::read_excel("data/age_comps/Fall_Yukon_Calc_Source4.xlsx") %>%  # created in make_fall_yukon_age_comp.R - source from JTC report
   dplyr::select(c(1:5)) %>% 
+  # filter(!brood_year>2017) %>% 
   gather(2:5, key = "age", value = "abund") %>%
   mutate(cal_year = case_when(age == "abund_0.3" ~ brood_year +3,
                               age == "abund_0.4" ~ brood_year +4,

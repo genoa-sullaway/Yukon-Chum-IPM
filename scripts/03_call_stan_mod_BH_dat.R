@@ -41,9 +41,7 @@ yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv"
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min, 
-         cal_year <= year_max_cal) #%>% 
-  # dplyr::select(2) %>%
-  #as.vector()
+         cal_year <= year_max_cal) 
 
 yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
   filter(cal_year >= year_min, 
@@ -73,11 +71,12 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
 # specific year inputs ========
 nByrs = nrow(fall_juv) # Number of BROOD years                
 nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
+n_age_comp_yrs = nrow(yukon_fall_obs_agecomp)
 nByrs_return_dat = nrow(yukon_fall_return_brood_year)
 
 nRyrs_T = nByrs + 4 + 2
 
-# # starting values to fix  =============
+## starting values to fix  =============
 N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
 N_catch_start = matrix(NA,nrow=t_start, ncol=A)
 N_egg_start = matrix(0,nrow=t_start, ncol=A)
@@ -212,6 +211,7 @@ age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
 data_list_stan <- list(nByrs=nByrs,
                        nRyrs=nRyrs,
                        nRyrs_T = nRyrs_T, 
+                       
                        A=A,
                        t_start = t_start,
                        nByrs_return_dat=nByrs_return_dat,

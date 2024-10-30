@@ -22,6 +22,9 @@ traceplot(bh_fit,pars=  c( "theta1[1]" ,
 
 traceplot(bh_fit,pars=  c( "D_scale" ))
 
+traceplot(bh_fit,pars=  c( "prob" ))
+traceplot(bh_fit,pars=  c( "pi" ))
+
 traceplot(bh_fit,pars=  c( "basal_p_1","basal_p_2"))
 
 traceplot(bh_fit,pars=  c( "log_c_1","log_c_2"))
@@ -333,7 +336,7 @@ age_comp_Q <- summary(bh_fit, pars = c("q"),
   dplyr::mutate(time = rep(1:21, each=4),
                 age = rep(3:6, length.out = nrow(.))) %>%
   left_join(years) %>%
-  left_join( age_comp_dat) %>% 
+  left_join( age_comp_dat) %>%
   rename(pred = "mean") %>%
   dplyr::select(time,age,pred,obs) %>%
   gather(3:4, key = "id", value = "value")
@@ -344,7 +347,7 @@ ggplot(data= age_comp_Q) +
   theme_classic() + 
   ylab("Proportion")
   
-# # align all stages on one plot to look at scale. =====
+# align all stages on one plot to look at scale. =====
 # summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"), 
 #                            probs = c(0.1, 0.9))$summary %>%
 #   data.frame() %>%
