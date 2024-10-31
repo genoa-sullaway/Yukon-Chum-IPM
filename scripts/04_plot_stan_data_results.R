@@ -147,23 +147,15 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "D_scale"  ),
-     fill_color = "blue")
-
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-#      pars=  c(  "sigma_y_j"),
-#      fill_color = "blue")
-# 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-#      pars=  c(  "sigma_brood_return"),
-#      fill_color = "blue")
+     pars=  c(  "D_scale"),
+     fill_color = "blue") 
  
 plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
      pars=  c( "theta_1_1_pp","theta_1_2_pp","theta_1_3_pp",
                "theta_2_1_pp","theta_2_2_pp","theta_2_3_pp","theta_2_4_pp"),
      fill_color = "blue")
 
- # Plot Observed vs Predicted ========
+# Plot Observed vs Predicted ========
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
               probs = c(0.1, 0.9))$summary %>%
@@ -192,7 +184,6 @@ ggplot(data = summ_n_sp) +
   ggtitle("Spawners: obs and predicted")+
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
   theme_classic()
-
 
 ## recruit ==========
 pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
@@ -300,12 +291,9 @@ pred_N_j <- summary(bh_fit, pars = c("N_j"),
 summ_n_j <- pred_N_j %>%
  dplyr::mutate(mean_J_Q = mean*catch_q$mean,
                se_mean = se_mean*catch_q$mean) %>% 
-  # left_join(year) %>% 
   left_join(data.frame(cal_year = c(data_list_stan$years_data_juv ),
                        obs = c(data_list_stan$data_stage_j))) %>%
-  mutate(rowname = "juv") #%>% 
-#  filter(!time<7)
-#  dplyr::mutate(obs = obs*catch_q$mean) 
+  mutate(rowname = "juv") 
 
 ggplot(data = summ_n_j %>% filter(!cal_year ==2002)) +
   geom_line(aes(x=cal_year, y = mean_J_Q)) + 

@@ -13,10 +13,11 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>%  
-  dplyr::select(cal_year,brood_year,SST_CDD_NBS, yukon_mean_discharge,Large_zoop,
+  dplyr::select(cal_year,brood_year,SST_CDD_NBS, yukon_mean_discharge,
+                Large_zoop,pollock_recruit_scale,
                 Cnideria)
 
-X_a<-stage_a_cov[,3:6]
+X_a<-stage_a_cov[,3:7]
 colinearity_a <-ggpairs(X_a)
 pdf("output/cova_a_plot.pdf")
 print(colinearity_a)

@@ -33,11 +33,16 @@ air_temp_a <- read_csv("data/processed_covariates/Stage_A_airtemp.csv") %>%
 pollock <- read_csv("data/processed_covariates/Stage_A_Pollock_Recruitment.csv") %>%
   dplyr::select(Year, pollock_recruit_scale)
 
+size <- read_csv("data/processed_covariates/Stage_A_Size.csv") %>%
+  dplyr::rename(Year = "cal_year",
+                mean_size = "mean")
+
   # Stage A - One DF for model ============= 
 stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
               left_join(air_temp_a) %>%
               left_join(zoop)  %>%
               left_join(pollock) %>%
+              left_join(size) %>%
   data.frame()
 
 # Stage A - Save DF ============= 

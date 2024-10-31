@@ -17,9 +17,7 @@ data { // all equation references are from proposal numbering
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
   
   vector[nRyrs] data_sp_cv;
-  
-  // vector<lower=0, upper=1> [A] pi; // actual age comps
-
+ 
 int<lower=0> ncovars1; //number of covariates for first lifestage  
 int<lower=0> ncovars2; //number of covariates for second lifestage  
 
@@ -55,11 +53,11 @@ real <lower =0> N_egg_start_log[t_start,A];
 real theta1 [ncovars1]; // covariate estimated for each covariate and each population
 real theta2 [ncovars2];
 
-  // vector <lower=0> [A-1] prob;
+  vector <lower=0> [A-1] prob;
   real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
   real <lower=0> g[nByrs,A]; // pi random draws
  
- vector<lower=0, upper=1> [A] pi;
+  vector<lower=0, upper=1> [A] pi;
  
 real log_catch_q; 
 // real log_F_mean;
@@ -121,7 +119,7 @@ real<lower=0> D_sum;                   // Inverse of D_scale which governs varia
 vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix <lower=0, upper=1>[nRyrs,A] q; 
 // vector<lower=0, upper=1> [A] pi; // actual age comps
-  // vector <lower=0> [A-1] prob;
+ // vector <lower=0> [A-1] prob;
 
  S = exp(log_S);
  
@@ -270,20 +268,20 @@ model {
   }
  } 
     
-  theta1[1] ~ normal(0,0.01); //(0,0.05);  
-  theta1[2] ~ normal(0,0.01); //(0,0.05);  
+  theta1[1] ~ normal(0,0.01);  
+  theta1[2] ~ normal(0,0.01);  
   theta1[3] ~ normal(0,0.01);
   // theta1[4] ~ normal(0,0.01);
  
  theta2[1] ~ normal(0,0.01);
  theta2[2] ~ normal(0,0.01);
- theta2[3] ~ normal(0,0.01); //(0,0.001);
+ theta2[3] ~ normal(0,0.01);  
  theta2[4] ~ normal(0,0.01);
  
  // prob[1]~ beta(1,1);
  // prob[2]~ beta(1,1);
  // prob[3]~ beta(1,1);
- 
+
  pi[1]~ beta(1,1);
  pi[2]~ beta(1,1);
  pi[3]~ beta(1,1);
@@ -336,6 +334,7 @@ generated quantities{
 real  theta_1_1_pp ;
 real  theta_1_2_pp ;
 real  theta_1_3_pp ;
+real  theta_1_4_pp ;
 
 real  theta_2_1_pp ;
 real  theta_2_2_pp ;
@@ -352,6 +351,7 @@ real N_j_pp [nByrs];
 theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.08);
 theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.05);
 theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.04);
+// theta_1_4_pp = normal_rng(theta1[4]- 0.5 * 0.01^2,0.04);
 
 theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.06);
 theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.09);

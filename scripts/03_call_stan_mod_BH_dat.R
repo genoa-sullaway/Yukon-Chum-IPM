@@ -119,9 +119,10 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>%
   dplyr::select(SST_CDD_NBS, 
-                 Large_zoop,
+                 # Large_zoop,
                  # Cnideria,
-                yukon_mean_discharge
+                yukon_mean_discharge,
+                pollock_recruit_scale
                 ) %>% 
   as.matrix()
  
