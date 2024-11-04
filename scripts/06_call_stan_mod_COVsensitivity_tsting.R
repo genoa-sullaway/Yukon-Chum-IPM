@@ -14,7 +14,7 @@ library(tidync)
 library(lubridate) 
 library(readxl)
 
-sensitivity_function_cov1 <- function(){
+
  # setup inputs ===============================================================
 warmups <- 2000
 total_iterations <- 4000
@@ -113,29 +113,92 @@ spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
   filter(year >= year_min,
          year <= year_max_cal)
 
-if(covariate == "stage_a"){
-#  covariates =================  
-stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
-  # zoop are already mean scaled
-  dplyr::rename(cal_year = Year) %>% 
-  dplyr::mutate(brood_year = cal_year-1) %>% 
-  filter(brood_year >= year_min, 
-         brood_year <= year_max_brood) %>%
-  dplyr::select(SST_CDD_NBS, 
-                Large_zoop,
-                # Cnideria,
-                yukon_mean_discharge
-  ) %>% 
-  as.matrix()
+# fix marine mortality =======
+# generally low mortality in ocean for older life stages 
+M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
-ncovars1 = 1
-}
+#ess age comp =======
+ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
 
-if(covariate == "stage_b") {
-  # the temp in 2001 is gonna effect fish from brood year 1999
-temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+# pi 
+age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
+
+# in case i want to fix that  
+#prob = c(0.03180601 0.74323447 0.96200639)
+
+
+
+# use all the above data consistently across models, its just the covariate that gets altered
+set_up_covariate_data <- function(exclusion_stage,covariate_exclude) {
+# exclude in covariate 1 category =============
+if(exclusion_stage == "a"){  
+  ncovars1 = 3
+  ncovars2 = 4
+
+          if(covariate_exclude == "SST_CDD_NBS"){
+          stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+            dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                          yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
+            # zoop are already mean scaled
+            dplyr::rename(cal_year = Year) %>% 
+            dplyr::mutate(brood_year = cal_year-1) %>% 
+            filter(brood_year >= year_min, 
+                   brood_year <= year_max_brood) %>%
+            dplyr::select(#SST_CDD_NBS, 
+                          yukon_mean_discharge,
+                          pollock_recruit_scale,
+                          mean_size) %>% 
+            as.matrix()
+        }
+         
+  
+  if(covariate_exclude == "yukon_mean_discharge"){
+    stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
+      # zoop are already mean scaled
+      dplyr::rename(cal_year = Year) %>% 
+      dplyr::mutate(brood_year = cal_year-1) %>% 
+      filter(brood_year >= year_min, 
+             brood_year <= year_max_brood) %>%
+      dplyr::select(SST_CDD_NBS, 
+                    # Large_zoop,
+                    # Cnideria,
+                    # yukon_mean_discharge,
+                    pollock_recruit_scale,
+                    mean_size) %>% 
+      as.matrix()
+  }
+  
+  if(covariate_exclude == "pollock_recruit_scale"){
+    stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
+      # zoop are already mean scaled
+      dplyr::rename(cal_year = Year) %>% 
+      dplyr::mutate(brood_year = cal_year-1) %>% 
+      filter(brood_year >= year_min, 
+             brood_year <= year_max_brood) %>%
+      dplyr::select(SST_CDD_NBS,
+                    yukon_mean_discharge,
+                    mean_size) %>% 
+      as.matrix()
+  }
+  if(covariate_exclude == "mean_size"){
+    stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
+      dplyr::rename(cal_year = Year) %>% 
+      dplyr::mutate(brood_year = cal_year-1) %>% 
+             filter(brood_year >= year_min, 
+                    brood_year <= year_max_brood) %>%
+      dplyr::select(SST_CDD_NBS, 
+                    yukon_mean_discharge,
+                    pollock_recruit_scale) %>% 
+      as.matrix()
+  }
+  
+  stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                  Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
                  Pink_hatchery= as.numeric(scale(Pink_hatchery)),
@@ -147,92 +210,176 @@ temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   dplyr::select(SST_CDD_Aleut,
                 Chum_hatchery,
                 Pink_hatchery,
-                full_index)  
-
-#bind <- temp_b_cov %>% slice(22)
-stage_b_cov <- temp_b_cov %>%
-  as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
-
-ncovars2 = 1
+                full_index)    %>%
+  as.matrix() 
+}
+  
+# exclude in cov 2 category =============
+  if(exclusion_stage == "b"){  
+    ncovars1 = 4
+    ncovars2 = 3
+    
+    stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
+      # zoop are already mean scaled
+      dplyr::rename(cal_year = Year) %>% 
+      dplyr::mutate(brood_year = cal_year-1) %>% 
+      filter(brood_year >= year_min, 
+             brood_year <= year_max_brood) %>%
+      dplyr::select(SST_CDD_NBS, 
+                    yukon_mean_discharge,
+                    pollock_recruit_scale,
+                    mean_size) %>% 
+      as.matrix()
+    
+if(covariate_exclude == "SST_CDD_Aleut"){
+  stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+      dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                     Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
+                     Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                     full_index = as.numeric(scale(full_index))) %>% 
+      dplyr::rename(cal_year = Year) %>% 
+      dplyr::mutate(brood_year = cal_year-2) %>% 
+      filter(brood_year >= year_min, 
+             brood_year <= year_max_brood) %>% 
+      dplyr::select(#SST_CDD_Aleut,
+                    Chum_hatchery,
+                    Pink_hatchery,
+                    full_index)    %>%
+      as.matrix() 
+}
+    
+if(covariate_exclude == "Chum_hatchery"){
+  stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+        dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                       Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
+                       Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                       full_index = as.numeric(scale(full_index))) %>% 
+        dplyr::rename(cal_year = Year) %>% 
+        dplyr::mutate(brood_year = cal_year-2) %>% 
+               filter(brood_year >= year_min, 
+                      brood_year <= year_max_brood) %>% 
+        dplyr::select(SST_CDD_Aleut,
+                      # Chum_hatchery,
+                      Pink_hatchery,
+                      full_index)    %>%
+        as.matrix() 
+}
+    
+    if(covariate_exclude == "Pink_hatchery"){
+      stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+        dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                       Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
+                       Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                       full_index = as.numeric(scale(full_index))) %>% 
+        dplyr::rename(cal_year = Year) %>% 
+        dplyr::mutate(brood_year = cal_year-2) %>% 
+        filter(brood_year >= year_min, 
+               brood_year <= year_max_brood) %>% 
+        dplyr::select(SST_CDD_Aleut,
+                      Chum_hatchery,
+                      #Pink_hatchery,
+                      full_index)    %>%
+        as.matrix() 
+    }
+    
+    if(covariate_exclude == "full_index"){
+      stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+        dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                       Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
+                       Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                       full_index = as.numeric(scale(full_index))) %>% 
+        dplyr::rename(cal_year = Year) %>% 
+        dplyr::mutate(brood_year = cal_year-2) %>% 
+        filter(brood_year >= year_min, 
+               brood_year <= year_max_brood) %>% 
+        dplyr::select(SST_CDD_Aleut,
+                      Chum_hatchery,
+                      Pink_hatchery#,
+                      #full_index
+                      )    %>%
+        as.matrix() 
+    }
+  }
+  
+  # assign data 
+  
+  ## assign data ==========
+  data_list_stan <- list(nByrs=nByrs,
+                         nRyrs=nRyrs,
+                         nRyrs_T = nRyrs_T, 
+                         A=A,
+                         t_start = t_start,
+                         nByrs_return_dat=nByrs_return_dat,
+                         
+                         Ps=Ps,
+                         fs=fs,
+                         M = M_fill_stan,
+                         
+                         data_stage_j = as.vector(fall_juv$fall_abund), 
+                         data_stage_return=as.vector(yukon_fall_recruits$total_run), 
+                         data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
+                         data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
+                         
+                         years_data_sp = yukon_fall_spawners$cal_year,
+                         years_data_juv = fall_juv$brood_year,
+                         years_data_return = yukon_fall_return_brood_year$Brood_Year,
+                         
+                         ncovars1=ncovars1,
+                         ncovars2=ncovars2,
+                         
+                         cov1=stage_a_cov,
+                         cov2=stage_b_cov,
+                         
+                         data_sp_cv = spawner_cv$fall_spawner_cv,
+                         
+                         o_run_comp=(yukon_fall_obs_agecomp),
+                         ess_age_comp=ess_age_comp,
+                         pi = age_comp)
+  
+  # call mod ========
+  bh_fit <- stan(
+    file = here::here("scripts", "stan_mod_sensitivity.stan"),
+    data = data_list_stan,
+    chains = 4,  
+    warmup = warmups, 
+    iter = total_iterations, 
+    cores = n_cores, 
+    verbose=FALSE, 
+    control = list(adapt_delta = 0.99))
+  
+  write_rds(bh_fit, paste0("output/stan_sensitivity",exclusion_stage,"_",covariate_name,".RDS"))
+  return(bh_fit)
 }
 
-
-
-# fix marine mortality =======
-# generally low mortality in ocean for older life stages 
-M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
-
-#ess age comp =======
-ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
  
-# pi 
-age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
+cov_a_list<- c(SST_CDD_NBS, 
+               yukon_mean_discharge,
+               pollock_recruit_scale,
+               mean_size)
 
-# in case i want to fix that  
-#prob = c(0.03180601 0.74323447 0.96200639)
+cov_b_list<-  c(SST_CDD_Aleut,
+                Chum_hatchery,
+                Pink_hatchery,
+                full_index)
 
- 
-## assign data ==========
-data_list_stan <- list(nByrs=nByrs,
-                       nRyrs=nRyrs,
-                       nRyrs_T = nRyrs_T, 
-                       A=A,
-                       t_start = t_start,
-                       nByrs_return_dat=nByrs_return_dat,
-                       
-                       Ps=Ps,
-                       fs=fs,
-                       M = M_fill_stan,
-                       
-                       data_stage_j = as.vector(fall_juv$fall_abund), 
-                       data_stage_return=as.vector(yukon_fall_recruits$total_run), 
-                       # data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
-                       data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
-                       data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
-                       
-                       years_data_sp = yukon_fall_spawners$cal_year,
-                       years_data_juv = fall_juv$brood_year,
-                       years_data_return = yukon_fall_return_brood_year$Brood_Year,
-                       
-                       ncovars1=1,
-                       # ncovars2=0,
-                       
-                       cov1=stage_a_cov,
-                       # cov2=stage_b_cov,
-                       
-                       data_sp_cv = spawner_cv$fall_spawner_cv,
-                       
-                       o_run_comp=(yukon_fall_obs_agecomp),
-                       ess_age_comp=ess_age_comp,
-                       pi = age_comp
-)
+stage_a <- list()
+stage_b <- list()
+# call function stage a =======
+for (i in 1:length(cov_a_list)) {
+ cov <- cov_a_list[[i]]
 
-
-
-# call mod  for Cov 1 ===========================
-bh_fit <- stan(
-  file = here::here("scripts", "stan_mod_sensitivity_1.stan"),
-  data = data_list_stan,
-  chains = 1,  
-  warmup = warmups, 
-  iter = total_iterations, 
-  cores = n_cores, 
-  verbose=FALSE, 
-  control = list(adapt_delta = 0.99)
-  )
-
-write_rds(bh_fit, paste0("output/stan_sensitivity_1",covariate_name,".RDS"))
+ stage_a[[i]] <- set_up_covariate_data(exclusion_stage = "a", covariate_exclude = cov)
 }
 
-# call function in a loop [eventually]
-# practice call
-cova<- sensitivity_function_cov1()
-
-
-# FUNCTION FOR STAGE 2
-sensitivity_function_cov2 <- function()
+# call function stage b =======
+for (i in 1:length(cov_b_list)) {
+  cov <- cov_b_list[[i]]
   
-  
-  
+  stage_b[[i]] <- set_up_covariate_data(exclusion_stage = "b", covariate_exclude = cov)
+}
   
  
+
+

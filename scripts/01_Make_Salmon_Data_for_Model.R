@@ -97,10 +97,10 @@ yukon_fall_ages <- readxl::read_excel("data/age_comps/Fall_Yukon_Calc_Source4.xl
   dplyr::select(c(1:5)) %>% 
   # filter(!brood_year>2017) %>% 
   gather(2:5, key = "age", value = "abund") %>%
-  mutate(cal_year = case_when(age == "abund_0.3" ~ brood_year +3,
-                              age == "abund_0.4" ~ brood_year +4,
-                              age == "abund_0.5" ~ brood_year +5,
-                              age == "abund_0.6" ~ brood_year +6)) %>%
+  mutate(cal_year = case_when(age == "abund_0.3" ~ brood_year + 3,
+                              age == "abund_0.4" ~ brood_year + 4,
+                              age == "abund_0.5" ~ brood_year + 5,
+                              age == "abund_0.6" ~ brood_year + 6)) %>%
   group_by(cal_year) %>%
   dplyr::mutate(sum = sum(abund),
                 percent = abund/sum) %>%

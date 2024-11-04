@@ -22,7 +22,6 @@ traceplot(bh_fit,pars=  c( "theta1[1]" ,
 
 traceplot(bh_fit,pars=  c( "D_scale" ))
 
-traceplot(bh_fit,pars=  c( "prob" ))
 traceplot(bh_fit,pars=  c( "pi" ))
 
 traceplot(bh_fit,pars=  c( "basal_p_1","basal_p_2"))
@@ -42,9 +41,7 @@ traceplot(bh_fit,pars=  c(  "N_catch_start_log",
 traceplot(bh_fit,pars=  c(  "N_j_start_log",
                             "N_brood_year_return_start_log"))
 
-traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]"#, 
-                          #"basal_p_1", "basal_p_2"
-))
+traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]"))
  
 traceplot(bh_fit,pars=  c("log_c_1","log_c_2"))
 
@@ -54,11 +51,9 @@ traceplot(bh_fit,pars=  c("pi"))
 
 traceplot(bh_fit,pars=  c("sigma_sp"))
 
-traceplot(bh_fit,pars=  c("sigma_catch"))
-
 traceplot(bh_fit,pars=  c("log_F"))
 
-traceplot(bh_fit,pars=  c("D_sum"))
+traceplot(bh_fit,pars=  c("D_scale"))
 
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
@@ -74,14 +69,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_S"),
      fill_color = "blue")
-# 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-#      pars=  c( "log_S"),
-#      fill_color = "blue")
-#  
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-#      pars=  c( "log_F_dev_y"),
-#      fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "pi"),
+     fill_color = "blue") 
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "basal_p_2"),
@@ -171,14 +162,11 @@ summ_n_sp <- pred_N_SP %>%
             sd = mean(sd)) %>%
   left_join(data.frame(cal_year = c(data_list_stan$years_data_sp),
                        obs = c(data_list_stan$data_stage_sp))) %>%
-  dplyr::mutate(rowname = "sp")   # %>% 
-#  filter(!cal_year < 2003)
+  dplyr::mutate(rowname = "sp")   
 
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=cal_year, y = obs)) +
-  geom_line(aes(x=cal_year, y = mean)) +
-  # geom_ribbon(aes(x=cal_year, ymin = mean-sd,
-  #                 ymax = mean+sd)) +
+  geom_line(aes(x=cal_year, y = mean)) + 
   ggtitle("Spawners: obs and predicted")+
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
   theme_classic()
@@ -292,10 +280,6 @@ summ_n_j <- pred_N_j %>%
   left_join(data.frame(cal_year = c(data_list_stan$years_data_juv ),
                        obs = c(data_list_stan$data_stage_j))) %>%
   mutate(rowname = "juv") 
-
-ggplot(data = summ_n_j %>% filter(!cal_year ==2002)) +
-  geom_line(aes(x=cal_year, y = mean_J_Q)) + 
-  ggtitle(("Juveniles, est "))
 
 ggplot(data = summ_n_j) +
   geom_point(aes(x=cal_year, y = obs)) +

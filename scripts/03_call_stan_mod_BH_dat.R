@@ -154,7 +154,7 @@ ncovars2 = 4
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
+ess_age_comp = 300 #as.vector(rep(400, times = nRyrs))
 
 # fix age comp - based on estimates from no covar data 
 # age_comp <- summary(bh_fit, pars = c("pi"), 
@@ -222,7 +222,6 @@ data_list_stan <- list(nByrs=nByrs,
                       
                        data_stage_j = as.vector(fall_juv$fall_abund), 
                        data_stage_return=as.vector(yukon_fall_recruits$total_run), 
-                        # data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                    
@@ -239,12 +238,8 @@ data_list_stan <- list(nByrs=nByrs,
                        data_sp_cv = spawner_cv$fall_spawner_cv,
                        
                        o_run_comp=(yukon_fall_obs_agecomp),
-                       ess_age_comp=ess_age_comp#,
-                       # basal_p_1 = 0.2,
-                       # basal_p_2=0.5,
-                       # pi = age_comp#,
-                       #D_scale = 0.2
-                       )
+                       ess_age_comp=ess_age_comp,
+                       pi = age_comp)
 
 # call mod  ===========================
 bh_fit <- stan(

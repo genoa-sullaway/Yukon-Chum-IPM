@@ -28,6 +28,7 @@ matrix [nByrs, ncovars2] cov2; // covariate data in a matrix format
  matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
  
 real ess_age_comp; 
+vector<lower=0, upper=1> [A] pi;
 }
 
 parameters {
@@ -43,27 +44,21 @@ real <lower =0> N_egg_start_log[t_start,A];
  real <lower =10> log_c_2; // log carrying capacity
   
  real log_sigma_sp; 
- // real log_sigma_catch; 
- // real log_sigma_return; 
-
-// real <lower=0> sigma_y_j;
-// real <lower =0> sigma_brood_return; 
  
 // covariate parameters 
 real theta1 [ncovars1]; // covariate estimated for each covariate and each population
 real theta2 [ncovars2];
 
   // vector <lower=0> [A-1] prob;
-  real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
+  real <lower=0, upper=1> D_scale; // Variability of age proportion vectors across cohorts
   real <lower=0> g[nByrs,A]; // pi random draws
  
- vector<lower=0, upper=1> [A] pi;
- 
+ // vector<lower=0, upper=1> [A] pi;
+
 real log_catch_q; 
-// real log_F_mean;
+
 vector [A] log_S; // log selectivity
-vector [nRyrs_T]  log_F;  
- // vector [nRyrs_T]  log_F_dev_y; 
+vector [nRyrs_T]  log_F;   
 
 real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
 real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
@@ -73,18 +68,16 @@ transformed parameters {
  vector [nByrs] N_j; // predicted juveniles 
  vector [nByrs] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
  vector [nByrs] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
- // vector [nByrs] N_brood_year_return; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
 
  real N_recruit [nRyrs_T,A]; 
  real N_sp [nRyrs_T,A];
  real N_catch [nRyrs_T,A]; 
  real N_e [nRyrs_T,A];
-// 
+
 real N_sp_start [t_start,A];
 real N_recruit_start [t_start,A];
 real N_catch_start [t_start,A];
 real N_egg_start[t_start,A];
-// real N_brood_year_return_start; 
 real N_j_start;
 
 real<lower=0> c_1; // estimate on log, transform back to normal scale
@@ -95,7 +88,7 @@ real<lower=0> c_2;
 real<lower=0> sigma_sp;
  
 vector <lower = 0> [nRyrs_T] F;
-vector <lower = 0> [A] S; //selectivty
+ vector <lower = 0> [A] S; //selectivty
 
 // survival and covariate section 
 vector  <lower=0,upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
@@ -137,7 +130,6 @@ matrix <lower=0, upper=1>[nRyrs,A] q;
  }
 
 N_j_start = exp(N_j_start_log);
-// N_brood_year_return_start = exp(N_brood_year_return_start_log);
 
 for(t in 1:t_start){
   for(a in 1:A){
@@ -149,7 +141,6 @@ for(t in 1:t_start){
  }
 
   N_j[1] = N_j_start;
-  // N_brood_year_return[1] = N_brood_year_return_start;
  
     for(a in 1:A){
    // add starting values to the whole population array
@@ -211,28 +202,34 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         for (a in 1:A) { 
            // N_recruit[t+a+2,a] = (N_brood_year_return[t]*p[t,a]); //*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
-          // N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; // add age structure, p is proportion per age class
+           // N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; // add age structure, p is proportion per age class
 
-          N_recruit[t+a+2,a] = (N_j[t]*kappa_marine_survival[t])*p[t,a]; //pi[a];//exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality,
+             // N_recruit[t+a+2,a] = (N_j[t]*kappa_marine_survival[t])*pi[a]; // not time varying age structure, just mean... 
+            N_recruit[t+a+2,a] = (N_j[t]*kappa_marine_survival[t])*p[t,a]; //pi[a];//exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality,
           
-          // N_recruit[t+a+2,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality,
+           // N_recruit[t+a+2,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality,
           
            // N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
            // N_recruit[t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])); // add age specific mortality, 
           
+           // N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2])));
           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
-         // N_catch[t+a,a] = N_recruit[t+a,a]*(1-exp(-(F[t+a]*S[a])));
-           
-          N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
-             
+        
+          N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; 
+          
           N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; 
             }
      }
      
   // Calculate age proportions by return year
-  for (t in 1:nRyrs) {
+  // for (t in 1:nRyrs) {
+  //   for(a in 1:A){
+  //    q[t,a] = N_recruit[t,a]/(sum(N_recruit[t,1:A]));
+  //   }
+  // }
+    for (t in 1:nRyrs) {
     for(a in 1:A){
-     q[t,a] = N_recruit[t,a]/(sum(N_recruit[t,1:A]));
+     q[t,a] = N_sp[t,a]/(sum(N_sp[t,1:A]));
     }
   }
   
@@ -243,22 +240,16 @@ for(t in 1:nByrs){
 }
 
 model {
-   // sigma_y_j ~ normal(0,1); //normal
-   // sigma_brood_return ~  normal(0,1);
-   
-   log_sigma_sp ~  normal(0,1); 
-   // log_sigma_catch ~  normal(0,1); 
-   // log_sigma_return ~  normal(0,1); 
- 
-   
-   log_catch_q ~ normal(-5,1);
+
+  log_sigma_sp ~  normal(0,1); 
+
+  log_catch_q ~ normal(-6,1);
    
   log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
   log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
   
  N_j_start_log ~ normal(17,10);
- // N_brood_year_return_start_log~ normal(16,10);
-
+ 
  for(t in 1:t_start){
    for(a in 1:A){ 
     N_sp_start_log[t,a] ~ normal(5,5);
@@ -278,14 +269,10 @@ model {
  theta2[3] ~ normal(0,0.01);  
  theta2[4] ~ normal(0,0.01);
  
- // prob[1]~ beta(1,1);
- // prob[2]~ beta(1,1);
- // prob[3]~ beta(1,1);
-
- pi[1]~ beta(1,1);
- pi[2]~ beta(1,1);
- pi[3]~ beta(1,1);
- pi[4]~ beta(1,1);
+ // pi[1]~ beta(1,1);
+ // pi[2]~ beta(1,1);
+ // pi[3]~ beta(1,1);
+ // pi[4]~ beta(1,1);
  
   basal_p_1 ~ beta(1,1); // mean survival stage 1
   basal_p_2 ~ beta(1,1); // mean survivial stage 2C
