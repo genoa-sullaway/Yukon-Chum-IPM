@@ -103,7 +103,6 @@ N_sp_start_log = log(N_sp_start+ 1.001)
 N_catch_start_log = log(N_catch_start+ 1.001)
 N_egg_start_log  = log(N_egg_start+ 1.001)
 
- 
 ## CV ========================================
 spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
   filter(year >= year_min,
@@ -122,7 +121,8 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
                  # Large_zoop,
                  # Cnideria,
                 yukon_mean_discharge,
-                pollock_recruit_scale
+                pollock_recruit_scale,
+                mean_size
                 ) %>% 
   as.matrix()
  
@@ -146,7 +146,7 @@ stage_b_cov <- temp_b_cov %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
 # number covariates for each life stage 
-ncovars1 = 3
+ncovars1 = 4
 ncovars2 = 4
 
 # fix marine mortality =======
@@ -160,7 +160,6 @@ ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
 # age_comp <- summary(bh_fit, pars = c("pi"), 
 #                     probs = c(0.1, 0.9))$summary[,1]
  
-
 # pi 
 age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
  
@@ -240,10 +239,10 @@ data_list_stan <- list(nByrs=nByrs,
                        data_sp_cv = spawner_cv$fall_spawner_cv,
                        
                        o_run_comp=(yukon_fall_obs_agecomp),
-                       ess_age_comp=ess_age_comp,
+                       ess_age_comp=ess_age_comp#,
                        # basal_p_1 = 0.2,
                        # basal_p_2=0.5,
-                       pi = age_comp#,
+                       # pi = age_comp#,
                        #D_scale = 0.2
                        )
 

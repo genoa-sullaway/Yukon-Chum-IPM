@@ -90,7 +90,6 @@ ggplot(data = brood_size_scale,
   theme(legend.position="none") +
   ylab("Length")
 
-
 # just get mean trend? do i need a DFA? 
 # use mean trend for now.... 
 size_scale <- size %>%  
