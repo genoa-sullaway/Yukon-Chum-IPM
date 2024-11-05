@@ -28,7 +28,7 @@ matrix [nByrs, ncovars2] cov2; // covariate data in a matrix format
  matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by year
  
 real ess_age_comp; 
-vector<lower=0, upper=1> [A] pi;
+ vector<lower=0, upper=1> [A] pi;
 }
 
 parameters {
@@ -243,7 +243,7 @@ model {
 
   log_sigma_sp ~  normal(0,1); 
 
-  log_catch_q ~ normal(-6,1);
+  log_catch_q ~ normal(-5,1);
    
   log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
   log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
@@ -259,20 +259,24 @@ model {
   }
  } 
     
-  theta1[1] ~ normal(0,0.01);  
-  theta1[2] ~ normal(0,0.01);  
-  theta1[3] ~ normal(0,0.01);
-  theta1[4] ~ normal(0,0.01);
+  theta1[1] ~ normal(0,0.1);  
+  theta1[2] ~ normal(0,0.1);  
+  theta1[3] ~ normal(0,0.1);
+  theta1[4] ~ normal(0,0.1);
  
- theta2[1] ~ normal(0,0.01);
- theta2[2] ~ normal(0,0.01);
- theta2[3] ~ normal(0,0.01);  
- theta2[4] ~ normal(0,0.01);
+ theta2[1] ~ normal(0,0.1);
+ theta2[2] ~ normal(0,0.1);
+ theta2[3] ~ normal(0,0.1);  
+ theta2[4] ~ normal(0,0.1);
  
  // pi[1]~ beta(1,1);
  // pi[2]~ beta(1,1);
  // pi[3]~ beta(1,1);
  // pi[4]~ beta(1,1);
+
+  // prob[1]~ beta(1,1);
+  // prob[2]~ beta(1,1);
+  // prob[3]~ beta(1,1);
  
   basal_p_1 ~ beta(1,1); // mean survival stage 1
   basal_p_2 ~ beta(1,1); // mean survivial stage 2C
@@ -328,10 +332,8 @@ real  theta_2_2_pp ;
 real  theta_2_3_pp ;
 real  theta_2_4_pp ;
 
-// real log_N_sp_pp [nRyrs];
 real N_sp_pp [nRyrs];
 real N_catch_pp [nRyrs];
-// real N_return_pp [nByrs_return_dat];
 real N_j_pp [nByrs];
 
 // added log normal correcrtions

@@ -22,8 +22,6 @@ traceplot(bh_fit,pars=  c( "theta1[1]" ,
 
 traceplot(bh_fit,pars=  c( "D_scale" ))
 
-traceplot(bh_fit,pars=  c( "pi" ))
-
 traceplot(bh_fit,pars=  c( "basal_p_1","basal_p_2"))
 
 traceplot(bh_fit,pars=  c( "log_c_1","log_c_2"))
