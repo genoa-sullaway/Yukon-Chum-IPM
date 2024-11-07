@@ -109,6 +109,22 @@ yukon_fall_ages <- readxl::read_excel("data/age_comps/Fall_Yukon_Calc_Source4.xl
 
 write_csv(yukon_fall_ages, "data/processed_data/yukon_fall_age_comp.csv")
 
+# brood year age comps ============== 
+yukon_fall_broodyear_ages <- readxl::read_excel("data/age_comps/Fall_Yukon_Calc_Source4.xlsx") %>%  # created in make_fall_yukon_age_comp.R - source from JTC report
+  dplyr::select(c(1:5)) %>% 
+  gather(2:5, key = "age", value = "abund") %>%
+  # mutate(cal_year = case_when(age == "abund_0.3" ~ brood_year + 3,
+  #                             age == "abund_0.4" ~ brood_year + 4,
+  #                             age == "abund_0.5" ~ brood_year + 5,
+  #                             age == "abund_0.6" ~ brood_year + 6)) %>%
+  group_by(brood_year) %>%
+  dplyr::mutate(sum = sum(abund),
+                percent = abund/sum) %>%
+  dplyr::select(brood_year,age,percent) %>%
+  spread(age, percent)
+
+write_csv(yukon_fall_broodyear_ages, "data/processed_data/yukon_fall_broodyear_age_comp.csv")
+
 # Juveniles ========================================================
 # As of Oct 2024, Curry ran and updated juvenile index
 # Genoa is updating this code, and deleting old index. Now the index is by strata and there are estimated genetic groups by strata, rather than annual estimated genetic proportions...

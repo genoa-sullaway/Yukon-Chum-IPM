@@ -41,6 +41,16 @@ yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv"
   dplyr::select(2:ncol(.)) %>%
   as.matrix()
 
+## Fall brood year age comp ================================================
+yukon_fall_broodyear_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv") %>%
+  dplyr::select(2:ncol(.)) %>%
+  filter(!is.na(abund_0.6)) %>% 
+  as.matrix()
+
+### mean age comp brood year ========  
+pi <- colMeans(yukon_fall_broodyear_obs_agecomp)
+
+
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min, 
@@ -120,16 +130,8 @@ M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative
 #ess age comp =======
 ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
 
-# pi 
-age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
-
-# in case i want to fix that  
-#prob = c(0.03180601 0.74323447 0.96200639)
-
-
-
 # use all the above data consistently across models, its just the covariate that gets altered
-set_up_covariate_data <- function(exclusion_stage,covariate_exclude) {
+set_up_covariate_data <- function(exclusion_stage,covariate_exclude,covariate_name) {
 # exclude in covariate 1 category =============
 if(exclusion_stage == "a"){  
   ncovars1 = 3
@@ -336,13 +338,13 @@ if(covariate_exclude == "Chum_hatchery"){
                          
                          o_run_comp=(yukon_fall_obs_agecomp),
                          ess_age_comp=ess_age_comp,
-                         pi = age_comp)
+                         pi = pi)
   
   # call mod ========
   bh_fit <- stan(
     file = here::here("scripts", "stan_mod_sensitivity.stan"),
     data = data_list_stan,
-    chains = 4,  
+    chains = 1,  
     warmup = warmups, 
     iter = total_iterations, 
     cores = n_cores, 
@@ -354,32 +356,35 @@ if(covariate_exclude == "Chum_hatchery"){
 }
 
  
-cov_a_list<- c(SST_CDD_NBS, 
-               yukon_mean_discharge,
-               pollock_recruit_scale,
-               mean_size)
+cov_a_list<- c("SST_CDD_NBS", 
+               "yukon_mean_discharge",
+               "pollock_recruit_scale",
+               "mean_size")
 
-cov_b_list<-  c(SST_CDD_Aleut,
-                Chum_hatchery,
-                Pink_hatchery,
-                full_index)
+cov_b_list<-  c("SST_CDD_Aleut",
+                "Chum_hatchery",
+                "Pink_hatchery",
+                "full_index")
 
 stage_a <- list()
 stage_b <- list()
+
 # call function stage a =======
 for (i in 1:length(cov_a_list)) {
  cov <- cov_a_list[[i]]
 
- stage_a[[i]] <- set_up_covariate_data(exclusion_stage = "a", covariate_exclude = cov)
+ stage_a[[i]] <- set_up_covariate_data(exclusion_stage = "a", covariate_exclude = cov,covariate_name = cov)
 }
+write_rds(stage_a, "output/stan_sensitivity_stage_A_list.RDS")
 
 # call function stage b =======
 for (i in 1:length(cov_b_list)) {
   cov <- cov_b_list[[i]]
   
-  stage_b[[i]] <- set_up_covariate_data(exclusion_stage = "b", covariate_exclude = cov)
+  stage_b[[i]] <- set_up_covariate_data(exclusion_stage = "b", covariate_exclude = cov,covariate_name = cov)
 }
-  
+write_rds(stage_b, "output/stan_sensitivity_stage_B_list.RDS")
+
  
 
 

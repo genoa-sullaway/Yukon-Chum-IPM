@@ -1,5 +1,6 @@
 library(here)
 library(tidyverse)
+
 # data load combine =====
 ## load older data already compiled by oke et al  ==================
 asl_dat <-read.csv("data/ASL_summary_byFWSWage.csv") %>%
@@ -91,7 +92,7 @@ ggplot(data = brood_size_scale,
   ylab("Length")
 
 # just get mean trend? do i need a DFA? 
-# use mean trend for now.... 
+# use mean scaled trend for now.... ============
 size_scale <- size %>%  
   dplyr::rename(cal_year = "sampleYear") %>% 
   group_by(cal_year,Salt.Water.Age) %>% 
@@ -101,6 +102,8 @@ size_scale <- size %>%
   dplyr::mutate(scale = as.numeric(scale(mean))) %>% 
   group_by(cal_year) %>% 
   dplyr::summarise(mean = mean(scale))
+ 
+
 
 # plot trend among ages 
 ggplot(data = size_scale %>% filter(!cal_year<2000), 

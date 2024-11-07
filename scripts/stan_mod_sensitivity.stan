@@ -310,41 +310,18 @@ model {
 // real  theta_1_1_pp ;
 // real  theta_1_2_pp ;
 // real  theta_1_3_pp ;
-// real  theta_1_4_pp ;
 // 
 // real  theta_2_1_pp ;
 // real  theta_2_2_pp ;
-// real  theta_2_3_pp ;
-// real  theta_2_4_pp ;
+// real  theta_2_3_pp ; 
 // 
-// // real log_N_sp_pp [nRyrs];
-// real N_sp_pp [nRyrs];
-// real N_catch_pp [nRyrs];
-// // real N_return_pp [nByrs_return_dat];
-// real N_j_pp [nByrs];
-// 
-// // added log normal correcrtions
+// // added log normal corrections
 // theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.08);
 // theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.05);
 // theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.04);
-//  theta_1_4_pp = normal_rng(theta1[4]- 0.5 * 0.01^2,0.04);
 // 
 // theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.06);
 // theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.09);
 // theta_2_3_pp = normal_rng(theta2[3]- 0.5 * 0.01^2,0.05);
-// theta_2_4_pp = normal_rng(theta2[4]- 0.5 * 0.01^2,0.08);
-// 
-// for(t in 1:nRyrs){
-// N_sp_pp[t] = normal_rng((sum(N_sp[t,1:A]))- 0.5 * sqrt((sigma_sp^2) + 1)^2, 1); //(sqrt(log(data_sp_cv[t]^2) + 1)));
-// // N_catch_pp[t] = normal_rng((sum(N_catch[t,1:A]))- 0.5 * sqrt((sigma_catch^2) + 1)^2, 1);//(0.1));
-//   }
-// 
-// for(t in 1:nByrs){
-//  N_j_pp[t] = normal_rng(log(N_j_predicted[t])- 0.5 *0.5^2, 0.5);
+//  
 // }
-// 
-// // for(t in 1:nByrs_return_dat){
-// //  N_return_pp[t] = normal_rng(log(N_brood_year_return[t])- 0.5 *0.5^2, 0.5);
-// //   }
-// }
-

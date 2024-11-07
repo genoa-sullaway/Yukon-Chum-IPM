@@ -14,7 +14,7 @@ library(readxl)
 
 # setup inputs ===============================================================
 warmups <- 2000
-total_iterations <- 4000
+total_iterations <- 6000
 max_treedepth <-  12
 n_chains <- 4
 n_cores <- 4
@@ -38,6 +38,15 @@ yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv"
   dplyr::select(2:ncol(.)) %>%
   as.matrix()
 
+## Fall brood year age comp ================================================
+yukon_fall_broodyear_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv") %>%
+  dplyr::select(2:ncol(.)) %>%
+  filter(!is.na(abund_0.6)) %>% 
+  as.matrix()
+
+### mean age comp brood year ========  
+pi <- colMeans(yukon_fall_broodyear_obs_agecomp)
+
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min, 
@@ -58,7 +67,7 @@ yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
 
 yukon_fall_return_brood_year<- read_csv("data/processed_data/yukon_fall_yukon_fall_return_brood_year.csv") %>%
   filter(Brood_Year >= year_min,
-         Brood_Year <= 2018) #%>% 
+         !is.na(Brood_Year_Return))
   # dplyr::select(2) %>% 
   # as.vector()
 
@@ -110,39 +119,34 @@ spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
 
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
-   # zoop are already mean scaled
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>%
+  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
+                pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
   dplyr::select(SST_CDD_NBS, 
-                 # Large_zoop,
-                 # Cnideria,
                 yukon_mean_discharge,
                 pollock_recruit_scale,
-                mean_size
+                mean_size # was already mean scaled because of the averaging across ages
                 ) %>% 
   as.matrix()
  
 # the temp in 2001 is gonna effect fish from brood year 1999
-temp_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-   dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                  Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
-                  Pink_hatchery= as.numeric(scale(Pink_hatchery)),
-                  full_index = as.numeric(scale(full_index))) %>% 
+stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-2) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>% 
+  dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                 Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+                 Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                 full_index = as.numeric(scale(full_index))) %>% 
   dplyr::select(SST_CDD_Aleut,
                 Chum_hatchery,
                 Pink_hatchery,
-                full_index)  
-
-#bind <- temp_b_cov %>% slice(22)
-stage_b_cov <- temp_b_cov %>%
+                full_index) %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
 # number covariates for each life stage 
@@ -160,8 +164,6 @@ ess_age_comp = 300 #as.vector(rep(400, times = nRyrs))
 # age_comp <- summary(bh_fit, pars = c("pi"), 
 #                     probs = c(0.1, 0.9))$summary[,1]
  
-# pi 
-age_comp = c(0.03180601, 0.71959603, 0.23915673, 0.00944123)
  
 # in case i want to fix that  
 #prob = c(0.03180601 0.74323447 0.96200639)
@@ -221,7 +223,8 @@ data_list_stan <- list(nByrs=nByrs,
                        M = M_fill_stan,
                       
                        data_stage_j = as.vector(fall_juv$fall_abund), 
-                       data_stage_return=as.vector(yukon_fall_recruits$total_run), 
+                       data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
+                       #data_stage_return=as.vector(yukon_fall_recruits$total_run), 
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                    
@@ -239,7 +242,7 @@ data_list_stan <- list(nByrs=nByrs,
                        
                        o_run_comp=(yukon_fall_obs_agecomp),
                        ess_age_comp=ess_age_comp,
-                       pi = age_comp)
+                       pi = pi)
 
 # call mod  ===========================
 bh_fit <- stan(

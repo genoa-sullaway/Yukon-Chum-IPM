@@ -1,0 +1,413 @@
+# Plot sensitivity covariate results 
+
+stage_a_list <- readRDS("output/stan_sensitivity_stage_A_list.RDS")
+stage_b_list <- readRDS("output/stan_sensitivity_stage_B_list.RDS")
+
+#  plot for each covariate 
+## PP =========
+plot_function<-function(input_cov_list,stage,cov_removed){
+
+if(stage == "a"){
+  if(cov_removed == "SST_CDD_NBS"){
+theta_df <- as.data.frame(bh_fit, pars = c(
+  "theta1[1]","theta1[2]","theta1[3]",
+  "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+  dplyr::mutate(draw = 1:nrow(.)) %>%
+  gather(1:7, key = "rowname", value = "value") %>% 
+  dplyr::mutate(variable = case_when(
+                                     rowname=="theta1[1]" ~ "Yukon River Mainstem Discharge",
+                                     rowname=="theta1[2]" ~ "Pollock Recruitment", 
+                                     rowname=="theta1[3]" ~ "Mean Return Size", 
+                                     
+                                     rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+                                     rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+                                     rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+                                     rowname=="theta2[4]" ~ "Fullness Index"), 
+               stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                   "NBS July/August Temperature",
+                                                   "Pollock Recruitment",
+                                                   "Mean Return Size") ~ "Juvenile",
+                                  variable %in% c("Aleutian Winter Temperature",
+                                                  "Chum Salmon Hatchery Release Abundance",
+                                                  "Pink Salmon Hatchery Release Abundance",
+                                                  "Fullness Index") ~ "Marine")) %>% 
+  group_by(stage,variable) %>% 
+  dplyr::summarise(mean = median(value),
+                   ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_low),
+                   ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_high),
+                   ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
+                   ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
+  }
+  if(cov_removed == "yukon_mean_discharge"){
+    theta_df <- as.data.frame(bh_fit, pars = c(
+      "theta1[1]","theta1[2]","theta1[3]",
+      "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+      dplyr::mutate(draw = 1:nrow(.)) %>%
+      gather(1:7, key = "rowname", value = "value") %>% 
+      dplyr::mutate(variable = case_when(
+        rowname=="theta1[1]" ~ "NBS July/August Temperature",
+        rowname=="theta1[2]" ~ "Pollock Recruitment", 
+        rowname=="theta1[3]" ~ "Mean Return Size", 
+        
+        rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+        rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+        rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+        rowname=="theta2[4]" ~ "Fullness Index"), 
+        stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                           "NBS July/August Temperature",
+                                           "Pollock Recruitment",
+                                           "Mean Return Size") ~ "Juvenile",
+                          variable %in% c("Aleutian Winter Temperature",
+                                          "Chum Salmon Hatchery Release Abundance",
+                                          "Pink Salmon Hatchery Release Abundance",
+                                          "Fullness Index") ~ "Marine")) %>% 
+      group_by(stage,variable) %>% 
+      dplyr::summarise(mean = median(value),
+                       ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_low),
+                       ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_high),
+                       ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
+                       ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
+  }
+  if(cov_removed == "pollock_recruit_scale"){
+    theta_df <- as.data.frame(bh_fit, pars = c(
+      "theta1[1]","theta1[2]","theta1[3]",
+      "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+      dplyr::mutate(draw = 1:nrow(.)) %>%
+      gather(1:7, key = "rowname", value = "value") %>% 
+      dplyr::mutate(variable = case_when(
+        rowname=="theta1[1]" ~ "NBS July/August Temperature",
+        rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+        rowname=="theta1[3]" ~ "Mean Return Size", 
+        
+        rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+        rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+        rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+        rowname=="theta2[4]" ~ "Fullness Index"), 
+        stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                           "NBS July/August Temperature",
+                                           "Pollock Recruitment",
+                                           "Mean Return Size") ~ "Juvenile",
+                          variable %in% c("Aleutian Winter Temperature",
+                                          "Chum Salmon Hatchery Release Abundance",
+                                          "Pink Salmon Hatchery Release Abundance",
+                                          "Fullness Index") ~ "Marine")) %>% 
+      group_by(stage,variable) %>% 
+      dplyr::summarise(mean = median(value),
+                       ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_low),
+                       ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_high),
+                       ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
+                       ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
+  }
+  if(cov_removed == "mean_size"){
+    theta_df <- as.data.frame(bh_fit, pars = c(
+      "theta1[1]","theta1[2]","theta1[3]",
+      "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+      dplyr::mutate(draw = 1:nrow(.)) %>%
+      gather(1:7, key = "rowname", value = "value") %>% 
+      dplyr::mutate(variable = case_when(
+        rowname=="theta1[1]" ~ "NBS July/August Temperature",
+        rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+        rowname=="theta1[3]" ~ "Pollock Recruitment",
+        
+        rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+        rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+        rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+        rowname=="theta2[4]" ~ "Fullness Index"), 
+        stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                           "NBS July/August Temperature",
+                                           "Pollock Recruitment",
+                                           "Mean Return Size") ~ "Juvenile",
+                          variable %in% c("Aleutian Winter Temperature",
+                                          "Chum Salmon Hatchery Release Abundance",
+                                          "Pink Salmon Hatchery Release Abundance",
+                                          "Fullness Index") ~ "Marine")) %>% 
+      group_by(stage,variable) %>% 
+      dplyr::summarise(mean = median(value),
+                       ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_low),
+                       ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_high),
+                       ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
+                       ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
+  }
+}
+  
+  if(stage == "b"){
+if(cov_removed == "SST_CDD_Aleut"){
+    theta_df <- as.data.frame(bh_fit, pars = c(
+      "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+      "theta2[1]","theta2[2]","theta2[3]")) %>% 
+      mutate(draw = 1:nrow(.)) %>%
+      gather(1:7, key = "rowname", value = "value") %>% 
+      dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
+                                         rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+                                         rowname=="theta1[3]" ~ "Pollock Recruitment", 
+                                         rowname=="theta1[4]" ~ "Mean Return Size",  
+                                     
+                                         rowname=="theta2[1]" ~ "Chum Salmon Hatchery Release Abundance",
+                                         rowname=="theta2[2]" ~ "Pink Salmon Hatchery Release Abundance",
+                                         rowname=="theta2[3]" ~ "Fullness Index"),  
+                    stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                       "NBS July/August Temperature",
+                                                       "Pollock Recruitment", 
+                                                       "Mean Return Size") ~ "Juvenile",
+                                      variable %in% c("Aleutian Winter Temperature",
+                                                      "Chum Salmon Hatchery Release Abundance",
+                                                      "Pink Salmon Hatchery Release Abundance",
+                                                      "Fullness Index") ~ "Marine")) %>% 
+      group_by(stage,variable) %>% 
+      dplyr::summarise(mean = median(value),
+                       ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_low),
+                       ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_high),
+                       ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
+                       ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
+}
+if(cov_removed == "Chum_hatchery"){
+  theta_df <- as.data.frame(bh_fit, pars = c(
+    "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+    "theta2[1]","theta2[2]","theta2[3]")) %>% 
+    mutate(draw = 1:nrow(.)) %>%
+    gather(1:7, key = "rowname", value = "value") %>% 
+    dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
+                                       rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+                                       rowname=="theta1[3]" ~ "Pollock Recruitment", 
+                                       rowname=="theta1[4]" ~ "Mean Return Size",  
+                                       
+                                       rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
+                                       rowname=="theta2[2]" ~ "Pink Salmon Hatchery Release Abundance",
+                                       rowname=="theta2[3]" ~ "Fullness Index"),  
+                  stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                     "NBS July/August Temperature",
+                                                     "Pollock Recruitment", 
+                                                     "Mean Return Size") ~ "Juvenile",
+                                    variable %in% c("Aleutian Winter Temperature",
+                                                    "Chum Salmon Hatchery Release Abundance",
+                                                    "Pink Salmon Hatchery Release Abundance",
+                                                    "Fullness Index") ~ "Marine")) %>% 
+    group_by(stage,variable) %>% 
+    dplyr::summarise(mean = median(value),
+                     ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_low),
+                     ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_high),
+                     ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
+                     ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
+}
+if(cov_removed == "Pink_hatchery"){
+  theta_df <- as.data.frame(bh_fit, pars = c(
+    "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+    "theta2[1]","theta2[2]","theta2[3]")) %>% 
+    mutate(draw = 1:nrow(.)) %>%
+    gather(1:7, key = "rowname", value = "value") %>% 
+    dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
+                                       rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+                                       rowname=="theta1[3]" ~ "Pollock Recruitment", 
+                                       rowname=="theta1[4]" ~ "Mean Return Size",  
+                                       
+                                       rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
+                                       rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+                                       rowname=="theta2[3]" ~ "Fullness Index"),  
+                  stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                     "NBS July/August Temperature",
+                                                     "Pollock Recruitment", 
+                                                     "Mean Return Size") ~ "Juvenile",
+                                    variable %in% c("Aleutian Winter Temperature",
+                                                    "Chum Salmon Hatchery Release Abundance",
+                                                    "Pink Salmon Hatchery Release Abundance",
+                                                    "Fullness Index") ~ "Marine")) %>% 
+    group_by(stage,variable) %>% 
+    dplyr::summarise(mean = median(value),
+                     ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_low),
+                     ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_high),
+                     ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
+                     ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
+}
+if(cov_removed == "full_index"){
+  theta_df <- as.data.frame(bh_fit, pars = c(
+    "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+    "theta2[1]","theta2[2]","theta2[3]")) %>% 
+    mutate(draw = 1:nrow(.)) %>%
+    gather(1:7, key = "rowname", value = "value") %>% 
+    dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
+                                       rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+                                       rowname=="theta1[3]" ~ "Pollock Recruitment", 
+                                       rowname=="theta1[4]" ~ "Mean Return Size",  
+                                       
+                                       rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
+                                       rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+                                       rowname=="theta2[3]" ~  "Pink Salmon Hatchery Release Abundance"),  
+                  stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                     "NBS July/August Temperature",
+                                                     "Pollock Recruitment", 
+                                                     "Mean Return Size") ~ "Juvenile",
+                                    variable %in% c("Aleutian Winter Temperature",
+                                                    "Chum Salmon Hatchery Release Abundance",
+                                                    "Pink Salmon Hatchery Release Abundance",
+                                                    "Fullness Index") ~ "Marine")) %>% 
+    group_by(stage,variable) %>% 
+    dplyr::summarise(mean = median(value),
+                     ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_low),
+                     ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.8)$CI_high),
+                     ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
+                     ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high))
+}
+}
+  theta_df_save <- theta_df %>% 
+    dplyr::mutate(covariate_removed = cov_removed) %>% 
+    dplyr::rename(reduced_mod_median=mean)
+  
+  theta_plot <- ggplot(data = theta_df,
+                         aes(x= mean, y = variable, 
+                             group = variable, color = stage)) +
+      geom_errorbar(aes(xmin =ci_95_low, xmax = ci_95_high),
+                    width = 0, linewidth = 0.5 ) + 
+      geom_point(size = 2) + 
+      geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high), linewidth = 1.5, width = 0) + 
+      theme_classic() +
+      scale_color_manual(values =c("#EAAA00", "#2d9d92")) +
+      theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+            plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+            legend.background = element_blank(),
+            # legend.text = element_text(color = "white"),
+            legend.title = element_blank(),#"none",
+            strip.text = element_blank( ), 
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            strip.background = element_blank(),
+            panel.border = element_rect(colour = "white", fill = NA), 
+            strip.text.x = element_blank(), 
+            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+            panel.spacing.y=unit(0, "lines")) + 
+      geom_vline(xintercept=0)+
+      ylab("") +
+      xlab("Median Covariate Coefficient Value") +
+      ggtitle(paste0("Covariate Removed:",cov_removed," ")) + 
+      facet_wrap(~stage, scales = "free_y", ncol = 1)  
+    
+    return(list(theta_plot,theta_df_save))
+
+}
+
+# ggsave("output/theta_plot.png", width = 7, height = 4, bg = "transparent")
+
+# call function ========== 
+# create list of plots for each covariate 
+plot_sensitivity_a <- list()
+plot_sensitivity_b <- list()
+
+cov_a_list<- c("SST_CDD_NBS", 
+               "yukon_mean_discharge",
+               "pollock_recruit_scale",
+               "mean_size")
+
+cov_b_list<-  c("SST_CDD_Aleut",
+                "Chum_hatchery",
+                "Pink_hatchery",
+                "full_index")
+ 
+for(i in 1:length(stage_a_list)){
+  bh_fit <- stage_a_list[[i]]
+  cov_removed <- cov_a_list[[i]]
+  plot_sensitivity_a[[i]]<-plot_function(input_cov_list=bh_fit, stage = "a",cov_removed = cov_removed)
+}
+
+plot_sensitivity_a[[1]][[1]]
+
+# ggsave(plot_sensitivity_a,"output/sensitivity_a.png")
+pdf("output/sensitivity_a.pdf")
+plot_sensitivity_a[[1]][[1]]
+plot_sensitivity_a[[1]][[2]]
+plot_sensitivity_a[[1]][[3]]
+plot_sensitivity_a[[1]][[4]]
+dev.off()
+
+for(i in 1:length(stage_b_list)){
+  bh_fit <- stage_b_list[[i]] # pull out specific model output for plot
+  cov_removed <- cov_b_list[[i]] # for title, names the covariate that has been removed in that model. 
+  plot_sensitivity_b[[i]]<-plot_function(input_cov_list=bh_fit, stage = "b",cov_removed = cov_removed)
+}
+
+# ggsave(plot_sensitivity_a,"output/sensitivity_a.png")
+pdf("output/sensitivity_b.pdf")
+plot_sensitivity_b[[1]][[1]]
+plot_sensitivity_b[[1]][[2]]
+plot_sensitivity_b[[1]][[3]]
+plot_sensitivity_b[[1]][[4]]
+dev.off()
+
+# create big dataframe with metrics for each model and the full model ==================
+# some sort of metric for how much each covariate moves around or which removed covariate causes the others to move the most?  =======
+## load full model results ======
+# add that into stage DF as a full model metric
+full_mod <-readRDS("output/stan_fit_DATA.RDS") 
+
+full_mod_df <- as.data.frame(full_mod, pars = c(
+    "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+    "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+  dplyr::mutate(draw = 1:nrow(.)) %>%
+  gather(1:8, key = "rowname", value = "value") %>% 
+  dplyr::mutate(variable = case_when(
+    rowname=="theta1[1]" ~ "NBS July/August Temperature",
+    rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+    rowname=="theta1[3]" ~ "Pollock Recruitment", 
+    rowname=="theta1[4]" ~ "Mean Return Size", 
+    
+    rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+    rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+    rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+    rowname=="theta2[4]" ~ "Fullness Index"), 
+    stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                       "NBS July/August Temperature",
+                                       "Pollock Recruitment",
+                                       "Mean Return Size") ~ "Juvenile",
+                      variable %in% c("Aleutian Winter Temperature",
+                                      "Chum Salmon Hatchery Release Abundance",
+                                      "Pink Salmon Hatchery Release Abundance",
+                                      "Fullness Index") ~ "Marine")) %>% 
+  group_by(stage,variable) %>% 
+  dplyr::summarise(full_mod_median = median(value),
+                   sd_full = sd(value))
+ 
+
+stage_a_df <- rbind(plot_sensitivity_a[[1]][[2]],plot_sensitivity_a[[2]][[2]],plot_sensitivity_a[[3]][[2]],plot_sensitivity_a[[4]][[2]])
+
+## calculate % difference =======
+joined_stage_a <- left_join(stage_a_df,full_mod_df) %>% 
+  dplyr::mutate(abs_diff =(reduced_mod_median-full_mod_median),
+                relative_diff = (reduced_mod_median-full_mod_median)/sd_full) %>%
+  dplyr::select(stage,variable, covariate_removed,reduced_mod_median, full_mod_median,
+                abs_diff) %>%
+  dplyr::mutate(switch = case_when(reduced_mod_median < 0 & full_mod_median <0 ~ "N",
+                                   reduced_mod_median > 0 & full_mod_median >0 ~ "N",
+                                   TRUE ~ "Y"
+                                   ))
+
+# code for plot [currently just stage A] ===========
+ library(viridis)
+
+ggplot(data = joined_stage_a, 
+       aes(x=covariate_removed, y = abs_diff, color = variable, shape = stage)) +
+  geom_point()+
+  geom_hline(yintercept =0, linetype =2) +
+  theme_classic()+
+ scale_color_viridis(discrete = TRUE)
+
+# example plot for curry ===========
+ggplot(data = joined_stage_a %>% filter(covariate_removed %in% c("SST_CDD_NBS" , "mean_size")), 
+       aes(x=covariate_removed, y = abs_diff, color = variable, shape = stage)) +
+  geom_point()+
+  geom_hline(yintercept =0, linetype =2) +
+  theme_classic() +
+  scale_color_viridis(discrete = TRUE)
+  
+
+plot<- ggplot(data = joined_stage_a %>% filter(covariate_removed %in% c("SST_CDD_NBS" , "mean_size")), 
+       aes(x=covariate_removed, y = abs_diff, color = variable, shape = switch)) +
+  geom_point()+
+  geom_hline(yintercept =0, linetype =2) +
+  theme_classic()+
+  scale_color_viridis(discrete = TRUE) +
+  ylab("Absolute Difference") +
+  xlab("Covariate Removed")
+
+plot
+ggsave("output/example_sensitivity_plot.png", width = 6, height = 3)
+
+
+

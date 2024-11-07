@@ -174,8 +174,9 @@ pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
                      probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
   rownames_to_column()  %>%
+  # dplyr::mutate(time = 1:17) %>% 
   dplyr::mutate(time = rep(1:26, each=4),
-                age = rep(3:6, length.out = nrow(.))) %>%
+              age = rep(3:6, length.out = nrow(.))) %>%
   # filter(!time>20) %>% # remove years without full return estimates 
   left_join(years)   
 
@@ -215,22 +216,22 @@ ggplot(data = summ_n_rec) +
 #   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020))
 
 ## brood year return ====== 
-# pred_N_brood_year_return <- summary(bh_fit, pars = c("N_brood_year_return"), 
-#                           probs = c(0.1, 0.9))$summary %>%
-#   data.frame() %>%
-#   rownames_to_column()  %>%
-#   dplyr::mutate(time = (1:21)) %>% 
-#   left_join(years)%>%
-#   left_join(data.frame(cal_year = c(data_list_stan$years_data_return),
-#                        obs = data_list_stan$data_stage_return)) %>%
-#   mutate(rowname = "recruit")  
-# 
-# ggplot(data = pred_N_brood_year_return) + 
-#   geom_line(aes(x=cal_year, y = mean)) +
-#   geom_point(aes(x=cal_year, y = obs)) +
-#   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
-#                   ymax = mean+se_mean))+
-#   ggtitle(("brood year return"))
+pred_N_brood_year_return <- summary(bh_fit, pars = c("N_brood_year_return"),
+                          probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = (1:20)) %>%
+  left_join(years)%>%
+  left_join(data.frame(cal_year = c(data_list_stan$years_data_return),
+                       obs = data_list_stan$data_stage_return)) %>%
+  mutate(rowname = "recruit")
+
+ggplot(data = pred_N_brood_year_return) +
+  geom_line(aes(x=cal_year, y = mean)) +
+  geom_point(aes(x=cal_year, y = obs)) +
+  geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
+                  ymax = mean+se_mean))+
+  ggtitle(("brood year return"))
 
 ## harvest ========= 
 pred_N_harvest <- summary(bh_fit, pars = c("N_catch"), 
@@ -572,8 +573,7 @@ theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta1[3]",
 ggplot(data = theta,aes(x=rowname, y = mean)) +
   geom_point( ) +
   geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd), width = 0.1) 
-  
-  
+
 # plot  estimated kappas survival ======
 kappasurvival <- summary(bh_fit, pars = c("kappa_marine_survival", "kappa_j_survival"), 
                     probs = c(0.1, 0.9))$summary %>%
