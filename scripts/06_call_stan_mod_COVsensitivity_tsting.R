@@ -73,9 +73,7 @@ yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
 
 yukon_fall_return_brood_year<- read_csv("data/processed_data/yukon_fall_yukon_fall_return_brood_year.csv") %>%
   filter(Brood_Year >= year_min,
-         Brood_Year <= 2018) #%>% 
-# dplyr::select(2) %>% 
-# as.vector()
+         !is.na(Brood_Year_Return))
 
 ## Fall Juveniles ================================================
 fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
@@ -138,31 +136,31 @@ if(exclusion_stage == "a"){
   ncovars2 = 4
 
           if(covariate_exclude == "SST_CDD_NBS"){
-          stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-            dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                          yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
-            # zoop are already mean scaled
-            dplyr::rename(cal_year = Year) %>% 
-            dplyr::mutate(brood_year = cal_year-1) %>% 
-            filter(brood_year >= year_min, 
-                   brood_year <= year_max_brood) %>%
-            dplyr::select(#SST_CDD_NBS, 
+            stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+              dplyr::rename(cal_year = Year) %>% 
+              dplyr::mutate(brood_year = cal_year-1) %>% 
+              filter(brood_year >= year_min, 
+                     brood_year <= year_max_brood) %>%
+              dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                            yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
+                            pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
+              dplyr::select(#SST_CDD_NBS, 
                           yukon_mean_discharge,
                           pollock_recruit_scale,
                           mean_size) %>% 
-            as.matrix()
+              as.matrix()
         }
          
   
   if(covariate_exclude == "yukon_mean_discharge"){
     stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
-      # zoop are already mean scaled
       dplyr::rename(cal_year = Year) %>% 
       dplyr::mutate(brood_year = cal_year-1) %>% 
       filter(brood_year >= year_min, 
              brood_year <= year_max_brood) %>%
+      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
+                    pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
       dplyr::select(SST_CDD_NBS, 
                     # Large_zoop,
                     # Cnideria,
@@ -174,13 +172,13 @@ if(exclusion_stage == "a"){
   
   if(covariate_exclude == "pollock_recruit_scale"){
     stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
-      # zoop are already mean scaled
       dplyr::rename(cal_year = Year) %>% 
       dplyr::mutate(brood_year = cal_year-1) %>% 
       filter(brood_year >= year_min, 
              brood_year <= year_max_brood) %>%
+      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
+                    pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
       dplyr::select(SST_CDD_NBS,
                     yukon_mean_discharge,
                     mean_size) %>% 
@@ -188,12 +186,13 @@ if(exclusion_stage == "a"){
   }
   if(covariate_exclude == "mean_size"){
     stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
       dplyr::rename(cal_year = Year) %>% 
       dplyr::mutate(brood_year = cal_year-1) %>% 
-             filter(brood_year >= year_min, 
-                    brood_year <= year_max_brood) %>%
+      filter(brood_year >= year_min, 
+             brood_year <= year_max_brood) %>%
+      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
+                    pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
       dplyr::select(SST_CDD_NBS, 
                     yukon_mean_discharge,
                     pollock_recruit_scale) %>% 
@@ -222,17 +221,18 @@ if(exclusion_stage == "a"){
     ncovars2 = 3
     
     stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge))) %>%
-      # zoop are already mean scaled
       dplyr::rename(cal_year = Year) %>% 
       dplyr::mutate(brood_year = cal_year-1) %>% 
       filter(brood_year >= year_min, 
              brood_year <= year_max_brood) %>%
+      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
+                    pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
       dplyr::select(SST_CDD_NBS, 
                     yukon_mean_discharge,
                     pollock_recruit_scale,
-                    mean_size) %>% 
+                    mean_size # was already mean scaled because of the averaging across ages
+      ) %>% 
       as.matrix()
     
 if(covariate_exclude == "SST_CDD_Aleut"){
@@ -320,7 +320,8 @@ if(covariate_exclude == "Chum_hatchery"){
                          M = M_fill_stan,
                          
                          data_stage_j = as.vector(fall_juv$fall_abund), 
-                         data_stage_return=as.vector(yukon_fall_recruits$total_run), 
+                         data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
+                         # adata_stage_return=as.vector(yukon_fall_recruits$total_run), 
                          data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                          data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                          

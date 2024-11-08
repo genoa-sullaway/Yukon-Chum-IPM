@@ -14,8 +14,8 @@ library(readxl)
 
 # setup inputs ===============================================================
 warmups <- 2000
-total_iterations <- 6000
-max_treedepth <-  12
+total_iterations <- 4000
+max_treedepth <-  15
 n_chains <- 4
 n_cores <- 4
 adapt_delta <- 0.95 # step size 
@@ -127,8 +127,8 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
                 yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
                 pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
   dplyr::select(SST_CDD_NBS, 
-                yukon_mean_discharge,
-                pollock_recruit_scale,
+                # yukon_mean_discharge,
+                # pollock_recruit_scale,
                 mean_size # was already mean scaled because of the averaging across ages
                 ) %>% 
   as.matrix()
@@ -144,14 +144,14 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                  Pink_hatchery= as.numeric(scale(Pink_hatchery)),
                  full_index = as.numeric(scale(full_index))) %>% 
   dplyr::select(SST_CDD_Aleut,
-                Chum_hatchery,
-                Pink_hatchery,
+                # Chum_hatchery,
+                # Pink_hatchery,
                 full_index) %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
 # number covariates for each life stage 
-ncovars1 = 4
-ncovars2 = 4
+ncovars1 = 2
+ncovars2 = 2
 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 

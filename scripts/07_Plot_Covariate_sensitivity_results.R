@@ -1,10 +1,14 @@
 # Plot sensitivity covariate results 
+library(viridis)
+library(tidyverse)
+library(here)
 
 stage_a_list <- readRDS("output/stan_sensitivity_stage_A_list.RDS")
 stage_b_list <- readRDS("output/stan_sensitivity_stage_B_list.RDS")
 
-#  plot for each covariate 
-## PP =========
+full_mod <-readRDS("output/stan_fit_DATA.RDS") 
+
+# Sensitiivty with percent difference ============
 plot_function<-function(input_cov_list,stage,cov_removed){
 
 if(stage == "a"){
@@ -286,7 +290,7 @@ if(cov_removed == "full_index"){
 
 # ggsave("output/theta_plot.png", width = 7, height = 4, bg = "transparent")
 
-# call function ========== 
+## call function to bring in reduced summarised mod DFS ========== 
 # create list of plots for each covariate 
 plot_sensitivity_a <- list()
 plot_sensitivity_b <- list()
@@ -331,12 +335,8 @@ plot_sensitivity_b[[1]][[3]]
 plot_sensitivity_b[[1]][[4]]
 dev.off()
 
-# create big dataframe with metrics for each model and the full model ==================
-# some sort of metric for how much each covariate moves around or which removed covariate causes the others to move the most?  =======
 ## load full model results ======
 # add that into stage DF as a full model metric
-full_mod <-readRDS("output/stan_fit_DATA.RDS") 
-
 full_mod_df <- as.data.frame(full_mod, pars = c(
     "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
     "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
@@ -367,20 +367,19 @@ full_mod_df <- as.data.frame(full_mod, pars = c(
 
 stage_a_df <- rbind(plot_sensitivity_a[[1]][[2]],plot_sensitivity_a[[2]][[2]],plot_sensitivity_a[[3]][[2]],plot_sensitivity_a[[4]][[2]])
 
-## calculate % difference =======
+## join DFS calculate metrics =======
 joined_stage_a <- left_join(stage_a_df,full_mod_df) %>% 
   dplyr::mutate(abs_diff =(reduced_mod_median-full_mod_median),
+                percent_diff =(reduced_mod_median-full_mod_median)/full_mod_median,
                 relative_diff = (reduced_mod_median-full_mod_median)/sd_full) %>%
-  dplyr::select(stage,variable, covariate_removed,reduced_mod_median, full_mod_median,
+  dplyr::select(stage,variable, covariate_removed,percent_diff,reduced_mod_median, full_mod_median,
                 abs_diff) %>%
   dplyr::mutate(switch = case_when(reduced_mod_median < 0 & full_mod_median <0 ~ "N",
                                    reduced_mod_median > 0 & full_mod_median >0 ~ "N",
                                    TRUE ~ "Y"
                                    ))
 
-# code for plot [currently just stage A] ===========
- library(viridis)
-
+## code for plot [currently just stage A] ===========
 ggplot(data = joined_stage_a, 
        aes(x=covariate_removed, y = abs_diff, color = variable, shape = stage)) +
   geom_point()+
@@ -388,7 +387,7 @@ ggplot(data = joined_stage_a,
   theme_classic()+
  scale_color_viridis(discrete = TRUE)
 
-# example plot for curry ===========
+### example plot for curry ===========
 ggplot(data = joined_stage_a %>% filter(covariate_removed %in% c("SST_CDD_NBS" , "mean_size")), 
        aes(x=covariate_removed, y = abs_diff, color = variable, shape = stage)) +
   geom_point()+
@@ -396,8 +395,8 @@ ggplot(data = joined_stage_a %>% filter(covariate_removed %in% c("SST_CDD_NBS" ,
   theme_classic() +
   scale_color_viridis(discrete = TRUE)
   
-
-plot<- ggplot(data = joined_stage_a %>% filter(covariate_removed %in% c("SST_CDD_NBS" , "mean_size")), 
+## more plots and save ================
+plot<- ggplot(data = joined_stage_a,# %>% filter(covariate_removed %in% c("SST_CDD_NBS" , "mean_size")), 
        aes(x=covariate_removed, y = abs_diff, color = variable, shape = switch)) +
   geom_point()+
   geom_hline(yintercept =0, linetype =2) +
@@ -407,7 +406,361 @@ plot<- ggplot(data = joined_stage_a %>% filter(covariate_removed %in% c("SST_CDD
   xlab("Covariate Removed")
 
 plot
-ggsave("output/example_sensitivity_plot.png", width = 6, height = 3)
+ggsave("output/example_sensitivity_plot_absdiff.png", width = 6, height = 3)
+
+plot<- ggplot(data = joined_stage_a,# %>% filter(covariate_removed %in% c("SST_CDD_NBS" , "mean_size")), 
+              aes(x=covariate_removed, y = percent_diff, color = variable, shape = switch)) +
+  geom_point()+
+  geom_hline(yintercept =0, linetype =2) +
+  theme_classic()+
+  scale_color_viridis(discrete = TRUE) +
+  ylab("Absolute Difference") +
+  xlab("Covariate Removed")
+
+plot
+ggsave("output/example_sensitivity_plot_percent_diff.png", width = 6, height = 3)
+
+
+# Sensitivity with posterior correlations ========================= 
+### reduced mod posterior =================================
+reduced_posterior_function<-function(input_cov_list,stage,cov_removed,cov_match){
+  
+  if(stage == "a"){
+    if(cov_removed == "SST_CDD_NBS"){
+      theta_df <- as.data.frame(bh_fit, pars = c(
+        "theta1[1]","theta1[2]","theta1[3]",
+        "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+        dplyr::mutate(draw = 1:nrow(.)) %>%
+        gather(1:7, key = "rowname", value = "value") %>% 
+        dplyr::mutate(variable = case_when(
+          rowname=="theta1[1]" ~ "Yukon River Mainstem Discharge",
+          rowname=="theta1[2]" ~ "Pollock Recruitment", 
+          rowname=="theta1[3]" ~ "Mean Return Size", 
+          
+          rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+          rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+          rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+          rowname=="theta2[4]" ~ "Fullness Index"), 
+          stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                             "NBS July/August Temperature",
+                                             "Pollock Recruitment",
+                                             "Mean Return Size") ~ "Juvenile",
+                            variable %in% c("Aleutian Winter Temperature",
+                                            "Chum Salmon Hatchery Release Abundance",
+                                            "Pink Salmon Hatchery Release Abundance",
+                                            "Fullness Index") ~ "Marine")) 
+    }
+    if(cov_removed == "yukon_mean_discharge"){
+      theta_df <- as.data.frame(bh_fit, pars = c(
+        "theta1[1]","theta1[2]","theta1[3]",
+        "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+        dplyr::mutate(draw = 1:nrow(.)) %>%
+        gather(1:7, key = "rowname", value = "value") %>% 
+        dplyr::mutate(variable = case_when(
+          rowname=="theta1[1]" ~ "NBS July/August Temperature",
+          rowname=="theta1[2]" ~ "Pollock Recruitment", 
+          rowname=="theta1[3]" ~ "Mean Return Size", 
+          
+          rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+          rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+          rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+          rowname=="theta2[4]" ~ "Fullness Index"), 
+          stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                             "NBS July/August Temperature",
+                                             "Pollock Recruitment",
+                                             "Mean Return Size") ~ "Juvenile",
+                            variable %in% c("Aleutian Winter Temperature",
+                                            "Chum Salmon Hatchery Release Abundance",
+                                            "Pink Salmon Hatchery Release Abundance",
+                                            "Fullness Index") ~ "Marine")) 
+    }
+    if(cov_removed == "pollock_recruit_scale"){
+      theta_df <- as.data.frame(bh_fit, pars = c(
+        "theta1[1]","theta1[2]","theta1[3]",
+        "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+        dplyr::mutate(draw = 1:nrow(.)) %>%
+        gather(1:7, key = "rowname", value = "value") %>% 
+        dplyr::mutate(variable = case_when(
+          rowname=="theta1[1]" ~ "NBS July/August Temperature",
+          rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+          rowname=="theta1[3]" ~ "Mean Return Size", 
+          
+          rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+          rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+          rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+          rowname=="theta2[4]" ~ "Fullness Index"), 
+          stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                             "NBS July/August Temperature",
+                                             "Pollock Recruitment",
+                                             "Mean Return Size") ~ "Juvenile",
+                            variable %in% c("Aleutian Winter Temperature",
+                                            "Chum Salmon Hatchery Release Abundance",
+                                            "Pink Salmon Hatchery Release Abundance",
+                                            "Fullness Index") ~ "Marine")) 
+    }
+    if(cov_removed == "mean_size"){
+      theta_df <- as.data.frame(bh_fit, pars = c(
+        "theta1[1]","theta1[2]","theta1[3]",
+        "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+        dplyr::mutate(draw = 1:nrow(.)) %>%
+        gather(1:7, key = "rowname", value = "value") %>% 
+        dplyr::mutate(variable = case_when(
+          rowname=="theta1[1]" ~ "NBS July/August Temperature",
+          rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+          rowname=="theta1[3]" ~ "Pollock Recruitment",
+          
+          rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+          rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+          rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+          rowname=="theta2[4]" ~ "Fullness Index"), 
+          stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                             "NBS July/August Temperature",
+                                             "Pollock Recruitment",
+                                             "Mean Return Size") ~ "Juvenile",
+                            variable %in% c("Aleutian Winter Temperature",
+                                            "Chum Salmon Hatchery Release Abundance",
+                                            "Pink Salmon Hatchery Release Abundance",
+                                            "Fullness Index") ~ "Marine")) 
+    }
+  }
+  
+  if(stage == "b"){
+    if(cov_removed == "SST_CDD_Aleut"){
+      theta_df <- as.data.frame(bh_fit, pars = c(
+        "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+        "theta2[1]","theta2[2]","theta2[3]")) %>% 
+        mutate(draw = 1:nrow(.)) %>%
+        gather(1:7, key = "rowname", value = "value") %>% 
+        dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
+                                           rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+                                           rowname=="theta1[3]" ~ "Pollock Recruitment", 
+                                           rowname=="theta1[4]" ~ "Mean Return Size",  
+                                           
+                                           rowname=="theta2[1]" ~ "Chum Salmon Hatchery Release Abundance",
+                                           rowname=="theta2[2]" ~ "Pink Salmon Hatchery Release Abundance",
+                                           rowname=="theta2[3]" ~ "Fullness Index"),  
+                      stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                         "NBS July/August Temperature",
+                                                         "Pollock Recruitment", 
+                                                         "Mean Return Size") ~ "Juvenile",
+                                        variable %in% c("Aleutian Winter Temperature",
+                                                        "Chum Salmon Hatchery Release Abundance",
+                                                        "Pink Salmon Hatchery Release Abundance",
+                                                        "Fullness Index") ~ "Marine")) 
+    }
+    if(cov_removed == "Chum_hatchery"){
+      theta_df <- as.data.frame(bh_fit, pars = c(
+        "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+        "theta2[1]","theta2[2]","theta2[3]")) %>% 
+        mutate(draw = 1:nrow(.)) %>%
+        gather(1:7, key = "rowname", value = "value") %>% 
+        dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
+                                           rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+                                           rowname=="theta1[3]" ~ "Pollock Recruitment", 
+                                           rowname=="theta1[4]" ~ "Mean Return Size",  
+                                           
+                                           rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
+                                           rowname=="theta2[2]" ~ "Pink Salmon Hatchery Release Abundance",
+                                           rowname=="theta2[3]" ~ "Fullness Index"),  
+                      stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                         "NBS July/August Temperature",
+                                                         "Pollock Recruitment", 
+                                                         "Mean Return Size") ~ "Juvenile",
+                                        variable %in% c("Aleutian Winter Temperature",
+                                                        "Chum Salmon Hatchery Release Abundance",
+                                                        "Pink Salmon Hatchery Release Abundance",
+                                                        "Fullness Index") ~ "Marine")) 
+    }
+    if(cov_removed == "Pink_hatchery"){
+      theta_df <- as.data.frame(bh_fit, pars = c(
+        "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+        "theta2[1]","theta2[2]","theta2[3]")) %>% 
+        mutate(draw = 1:nrow(.)) %>%
+        gather(1:7, key = "rowname", value = "value") %>% 
+        dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
+                                           rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+                                           rowname=="theta1[3]" ~ "Pollock Recruitment", 
+                                           rowname=="theta1[4]" ~ "Mean Return Size",  
+                                           
+                                           rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
+                                           rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+                                           rowname=="theta2[3]" ~ "Fullness Index"),  
+                      stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                         "NBS July/August Temperature",
+                                                         "Pollock Recruitment", 
+                                                         "Mean Return Size") ~ "Juvenile",
+                                        variable %in% c("Aleutian Winter Temperature",
+                                                        "Chum Salmon Hatchery Release Abundance",
+                                                        "Pink Salmon Hatchery Release Abundance",
+                                                        "Fullness Index") ~ "Marine")) 
+    }
+    if(cov_removed == "full_index"){
+      theta_df <- as.data.frame(bh_fit, pars = c(
+        "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+        "theta2[1]","theta2[2]","theta2[3]")) %>% 
+        mutate(draw = 1:nrow(.)) %>%
+        gather(1:7, key = "rowname", value = "value") %>% 
+        dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
+                                           rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+                                           rowname=="theta1[3]" ~ "Pollock Recruitment", 
+                                           rowname=="theta1[4]" ~ "Mean Return Size",  
+                                           
+                                           rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
+                                           rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+                                           rowname=="theta2[3]" ~  "Pink Salmon Hatchery Release Abundance"),  
+                      stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
+                                                         "NBS July/August Temperature",
+                                                         "Pollock Recruitment", 
+                                                         "Mean Return Size") ~ "Juvenile",
+                                        variable %in% c("Aleutian Winter Temperature",
+                                                        "Chum Salmon Hatchery Release Abundance",
+                                                        "Pink Salmon Hatchery Release Abundance",
+                                                        "Fullness Index") ~ "Marine")) 
+    }
+  }
+  theta_df_save <- theta_df  %>%
+    dplyr::rename(reduced_mod_estimate = "value") %>%
+    dplyr::mutate(variable_match = paste0(cov_match))
+   
+  return(theta_df_save) # return DF with posteriors 
+}
+
+### full mod posterior ====================================
+full_mod_df <- as.data.frame(full_mod, pars = c(
+  "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+  "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>% 
+  dplyr::mutate(draw = 1:nrow(.)) %>%
+  gather(1:8, key = "rowname", value = "value") %>% 
+  dplyr::mutate(variable_match = case_when(
+    rowname=="theta1[1]" ~ "NBS July/August Temperature",
+    rowname=="theta1[2]" ~ "Yukon River Mainstem Discharge",
+    rowname=="theta1[3]" ~ "Pollock Recruitment", 
+    rowname=="theta1[4]" ~ "Mean Return Size", 
+    
+    rowname=="theta2[1]" ~ "Aleutian Winter Temperature", 
+    rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
+    rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
+    rowname=="theta2[4]" ~ "Fullness Index"), 
+    stage = case_when(variable_match %in% c( "Yukon River Mainstem Discharge",
+                                       "NBS July/August Temperature",
+                                       "Pollock Recruitment",
+                                       "Mean Return Size") ~ "Juvenile",
+                      variable_match %in% c("Aleutian Winter Temperature",
+                                      "Chum Salmon Hatchery Release Abundance",
+                                      "Pink Salmon Hatchery Release Abundance",
+                                      "Fullness Index") ~ "Marine"))  %>%
+  dplyr::rename(full_mod_estimate = "value") %>%
+  dplyr::select(draw,variable_match,full_mod_estimate)
+
+
+## call function to bring in reduced summarised mod DFS ========== 
+# create list of plots for each covariate 
+posterior_dfreduced_a <- list()
+posterior_dfreduced_b <- list()
+
+cov_a_list<- c("SST_CDD_NBS", 
+               "yukon_mean_discharge",
+               "pollock_recruit_scale",
+               "mean_size")
+
+cov_b_list<-  c("SST_CDD_Aleut",
+                "Chum_hatchery",
+                "Pink_hatchery",
+                "full_index")
+
+cov_matcha <- c("NBS July/August Temperature",
+               "Yukon River Mainstem Discharge",
+               "Pollock Recruitment", 
+               "Mean Return Size")
+
+cov_matchb <- c("Aleutian Winter Temperature", 
+               "Chum Salmon Hatchery Release Abundance",
+               "Pink Salmon Hatchery Release Abundance",
+               "Fullness Index")
+
+for(i in 1:length(stage_a_list)){
+  bh_fit <- stage_a_list[[i]]
+  cov_removed <- cov_a_list[[i]]
+  posterior_dfreduced_a[[i]]<-reduced_posterior_function(input_cov_list=bh_fit, stage = "a",
+                                                         cov_match=cov_matcha[[i]],cov_removed = cov_removed )
+}
+ 
+for(i in 1:length(stage_b_list)){
+  bh_fit <- stage_b_list[[i]] # pull out specific model output for plot
+  cov_removed <- cov_b_list[[i]] # for title, names the covariate that has been removed in that model. 
+  posterior_dfreduced_b[[i]]<-reduced_posterior_function(input_cov_list=bh_fit, stage = "b",
+                                                         cov_match=cov_matchb[[i]],cov_removed = cov_removed)
+}
+ 
+stage_a_reduced_posterior <- rbind(posterior_dfreduced_a[[1]],
+                                   posterior_dfreduced_a[[2]],
+                                   posterior_dfreduced_a[[3]],
+                                   posterior_dfreduced_a[[4]])
+
+stage_b_reduced_posterior <- rbind(posterior_dfreduced_b[[1]],
+                                   posterior_dfreduced_b[[2]],
+                                   posterior_dfreduced_b[[3]],
+                                   posterior_dfreduced_b[[4]])
+
+### join reduced with full models dfs ====================================
+posterior_a <- left_join(stage_a_reduced_posterior,full_mod_df)
+posterior_b <- left_join(stage_b_reduced_posterior,full_mod_df)
+
+### Plot posterior correlations =================
+# plot posterior removed with all the other covariates in the reduced model
+
+cov_match_a <- c("NBS July/August Temperature",
+               "Yukon River Mainstem Discharge",
+               "Pollock Recruitment", 
+               "Mean Return Size")
+
+cov_match_b <- c("Aleutian Winter Temperature", 
+               "Chum Salmon Hatchery Release Abundance",
+               "Pink Salmon Hatchery Release Abundance",
+               "Fullness Index")
+
+posterior_plota <- list()
+posterior_plotb <- list()
+
+for(i in 1:length(cov_match_a)){
+  
+posterior_plota[[i]]<- ggplot(data =posterior_a %>% 
+                          filter(variable_match == cov_match_a[[i]]),
+                         aes(x= full_mod_estimate, y = reduced_mod_estimate)) +
+                    geom_point() +
+                    geom_smooth(method = "lm") + 
+                    facet_wrap(~variable,scales = "free") +
+                    ggtitle(paste0("Cov removed:",cov_match_a[[i]]," "))
+
+}
+
+ 
+for(i in 1:length(cov_match_b)){
+  
+  posterior_plotb[[i]]<- ggplot(data =posterior_b %>% 
+                                  filter(variable_match == cov_match_b[[i]]),
+                                aes(x= full_mod_estimate, y = reduced_mod_estimate)) +
+    geom_point() +
+    geom_smooth(method = "lm") + 
+    facet_wrap(~variable,scales = "free") +
+    ggtitle(paste0("Cov removed:",cov_match_b[[i]]," "))
+}
+
+pdf("output/posterior_correlation_plots_a.pdf")
+posterior_plota[[1]] 
+posterior_plota[[2]] 
+posterior_plota[[3]] 
+posterior_plota[[4]] 
+dev.off()
+
+pdf("output/posterior_correlation_plots_b.pdf")
+posterior_plotb[[1]] 
+posterior_plotb[[2]] 
+posterior_plotb[[3]] 
+posterior_plotb[[4]] 
+dev.off()
 
 
 
+
+ 

@@ -25,7 +25,7 @@ data { // all equation references are from proposal numbering
   // real  N_catch_start_log[t_start,A];
   // real  N_egg_start_log[t_start,A];
    
-  vector<lower=0, upper=1> [A] pi; // actual age comps
+  // vector<lower=0, upper=1> [A] pi; // actual age comps
 
  // real <lower =10> log_c_1;
  // real <lower =10> log_c_2; // log carrying capacity
@@ -69,8 +69,10 @@ real theta1 [ncovars1]; // covariate estimated for each covariate and each popul
 real theta2 [ncovars2];
 
 // vector <lower=0> [A-1] prob;
- real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
+real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 real <lower=0> g[nByrs,A]; // gamma random draws
+vector<lower=0, upper=1> [A] pi; // actual age comps
+
 
 real log_catch_q; 
 // real log_F_mean;
@@ -234,7 +236,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
           // N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality,
           
            // N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
-           //  [t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])); // add age specific mortality, 
+           // N_recruit[t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])); // add age specific mortality, 
         
           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
           //N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2])));
@@ -259,19 +261,19 @@ for(t in 1:nByrs){
 }
 
 model {
-   // sigma_y_j ~ normal(0,1); //normal
-   // sigma_brood_return ~  normal(0,1);
-   
    log_sigma_sp ~  normal(0,1); 
    log_sigma_catch ~  normal(0,1); 
    
    log_catch_q ~ normal(-5,1);
    
-  log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
+  log_c_1 ~  normal(16, 1); // carrying capacity prior - stage 1
+  log_c_2 ~  normal(18, 1); // carrying capacity prior - stage 2
   
- N_j_start_log ~ normal(17,10);
- N_brood_year_return_start_log~ normal(16,10);
+  // log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
+  // log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
+  
+ N_j_start_log ~ normal(17,1);
+ N_brood_year_return_start_log~ normal(16,1);
 
  for(t in 1:t_start){
    for(a in 1:A){ 
@@ -298,6 +300,10 @@ model {
  // theta2[2] ~ normal(0,0.01);
  // theta2[3] ~ normal(0,0.01);
  // theta2[4] ~ normal(0,0.01);
+  
+  for(i in 1:A){
+  pi[i] ~ beta(1,1); // mean survival stage 1
+  }
  
   basal_p_1 ~ beta(1,1); // mean survival stage 1
   basal_p_2 ~ beta(1,1); // mean survivial stage 2C
@@ -316,10 +322,10 @@ model {
  //  for(t in 1:nRyrs_T){
  //    log_F_dev_y[t] ~ normal(0, 1);
  // }
- // 
- // for (a in 1:A) {
- //    log_S[a] ~ normal(0,1);
- // }
+ 
+ for (a in 1:A) {
+    log_S[a] ~ normal(0,1);
+ }
 
    for(t in 1:nRyrs_T){
  log_F[t] ~ normal(0,1); //log fishing mortatliy
@@ -348,43 +354,43 @@ model {
      target += normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp); //sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
     }
   }
-  
-generated quantities{
-real  theta_1_1_pp ;
-real  theta_1_2_pp ;
-real  theta_1_3_pp ;
-
-real  theta_2_1_pp ;
-real  theta_2_2_pp ;
-real  theta_2_3_pp ;
-real  theta_2_4_pp ;
-
-// real log_N_sp_pp [nRyrs];
-real N_sp_pp [nRyrs];
-real N_catch_pp [nRyrs];
-real N_return_pp [nByrs_return_dat];
-real N_j_pp [nByrs];
-
-// added log normal correcrtions
-theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.08);
-theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.05);
-theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.04);
-
-theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.06);
-theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.09);
-theta_2_3_pp = normal_rng(theta2[3]- 0.5 * 0.01^2,0.05);
-theta_2_4_pp = normal_rng(theta2[4]- 0.5 * 0.01^2,0.08);
-
-for(t in 1:nRyrs){
-N_sp_pp[t] = normal_rng((sum(N_sp[t,1:A]))- 0.5 * sqrt((sigma_sp^2) + 1)^2, 1); //(sqrt(log(data_sp_cv[t]^2) + 1)));
-// N_catch_pp[t] = normal_rng((sum(N_catch[t,1:A]))- 0.5 * sqrt((sigma_catch^2) + 1)^2, 1);//(0.1));
-  }
-
-for(t in 1:nByrs){
- N_j_pp[t] = normal_rng(log(N_j_predicted[t])- 0.5 *0.5^2, 0.5);  
-}
-
-for(t in 1:nByrs_return_dat){
- N_return_pp[t] = normal_rng(log(N_brood_year_return[t])- 0.5 *0.5^2, 0.5); 
-  }
-}
+//   
+// generated quantities{
+// real  theta_1_1_pp ;
+// real  theta_1_2_pp ;
+// real  theta_1_3_pp ;
+// 
+// real  theta_2_1_pp ;
+// real  theta_2_2_pp ;
+// real  theta_2_3_pp ;
+// real  theta_2_4_pp ;
+// 
+// // real log_N_sp_pp [nRyrs];
+// real N_sp_pp [nRyrs];
+// real N_catch_pp [nRyrs];
+// real N_return_pp [nByrs_return_dat];
+// real N_j_pp [nByrs];
+// 
+// // added log normal correcrtions
+// theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.08);
+// theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.05);
+// theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.04);
+// 
+// theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.06);
+// theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.09);
+// theta_2_3_pp = normal_rng(theta2[3]- 0.5 * 0.01^2,0.05);
+// theta_2_4_pp = normal_rng(theta2[4]- 0.5 * 0.01^2,0.08);
+// 
+// for(t in 1:nRyrs){
+// N_sp_pp[t] = normal_rng((sum(N_sp[t,1:A]))- 0.5 * sqrt((sigma_sp^2) + 1)^2, 1); //(sqrt(log(data_sp_cv[t]^2) + 1)));
+// // N_catch_pp[t] = normal_rng((sum(N_catch[t,1:A]))- 0.5 * sqrt((sigma_catch^2) + 1)^2, 1);//(0.1));
+//   }
+// 
+// for(t in 1:nByrs){
+//  N_j_pp[t] = normal_rng(log(N_j_predicted[t])- 0.5 *0.5^2, 0.5);  
+// }
+// 
+// for(t in 1:nByrs_return_dat){
+//  N_return_pp[t] = normal_rng(log(N_brood_year_return[t])- 0.5 *0.5^2, 0.5); 
+//   }
+// }

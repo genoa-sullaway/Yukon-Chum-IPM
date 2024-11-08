@@ -6,8 +6,9 @@ library(bayesplot)
 library(rstanarm)
  
 # load model ==============
-  bh_fit<- read_rds("output/stan_fit_DATA.RDS")
- # bh_fit <- read_rds("output/stan_fit_DATA_forAFS.RDS")
+bh_fit<- read_rds("output/stan_fit_DATA.RDS")
+  
+# bh_fit <- read_rds("output/stan_fit_DATA_forAFS.RDS")
 # bh_fit <- read_rds("output/stan_fit_DATA_nocovar.RDS")
 
 # year DF for joins ==================
@@ -49,7 +50,7 @@ traceplot(bh_fit,pars=  c("pi"))
 
 traceplot(bh_fit,pars=  c("sigma_sp"))
 
-traceplot(bh_fit,pars=  c("log_F"))
+traceplot(bh_fit,pars=  c("log_S"))
 
 traceplot(bh_fit,pars=  c("D_scale"))
 
@@ -115,10 +116,6 @@ plot(bh_fit,pars=  c(  "N_j_start_log",
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "sigma_catch"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "sigma_return"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
@@ -564,7 +561,7 @@ ggplot(data = S,aes(x=rowname, y = mean)) +
   xlab(" ")
 
 # Plot theta ======
-theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta1[3]",
+theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta1[3]","theta1[4]",
                                   "theta2[1]","theta2[2]", "theta2[3]","theta2[4]"),
                    probs = c(0.1, 0.9))$summary %>%
   data.frame() %>%
@@ -694,7 +691,6 @@ ggplot(data = sigma,aes(x= rowname, y = mean)) +
   theme_classic() +
   geom_errorbar(aes(ymin = mean - sd, ymax=mean+sd),width = 0.1)
 
-
 # look at n_eff ==========
 
 all_summ <- summary(bh_fit)$summary %>%
@@ -704,6 +700,7 @@ all_summ <- summary(bh_fit)$summary %>%
 low_n_eff <- all_summ %>% 
   filter(n_eff <20)
 
+low_n_eff
 
 # Plot covariates with respective salmon population ======
 brood_year_recruits <- summary(bh_fit, pars = c("N_recruit"), 
