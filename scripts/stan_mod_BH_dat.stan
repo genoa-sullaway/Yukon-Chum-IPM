@@ -40,8 +40,8 @@ matrix<lower=0, upper=1>[nRyrs,A] o_run_comp; // Observed age composition by yea
 // vector [nByrs] ess_age_comp;   // Effective input sample size for age comp "observations" -  currently fixed to 200 based on Hulson et al 2011
 real ess_age_comp; 
 
-// real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
-// real <lower=0, upper = 1> basal_p_2;
+real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
+real <lower=0, upper = 1> basal_p_2;
 }
 
   
@@ -75,13 +75,13 @@ vector<lower=0, upper=1> [A] pi; // actual age comps
 
 
 real log_catch_q; 
-// real log_F_mean;
+  real log_F_mean;
 vector [A] log_S; // log selectivity
-vector [nRyrs_T]  log_F;  
- // vector [nRyrs_T]  log_F_dev_y; 
+// vector [nRyrs_T]  log_F;  
+  vector [nRyrs_T]  log_F_dev_y; 
 
-real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
-real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
+// real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
+// real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
  }
 
 transformed parameters { 
@@ -134,18 +134,18 @@ matrix <lower=0, upper=1>[nRyrs,A] q;
 
   S = exp(log_S);
  
- //  for(t in 1:nRyrs_T){ 
- //  // instant fishing mortality
- //  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
- // }
+  for(t in 1:nRyrs_T){
+  // instant fishing mortality
+  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
+ }
  
  sigma_catch = exp(log_sigma_catch);
  sigma_sp = exp(log_sigma_sp); 
-
-  for(t in 1:nRyrs_T){//
-  // instant fishing mortality
-  F[t] = exp(log_F[t]);
- }
+// 
+//   for(t in 1:nRyrs_T){//
+//   // instant fishing mortality
+//   F[t] = exp(log_F[t]);
+//  }
 
 N_j_start = exp(N_j_start_log);
 N_brood_year_return_start = exp(N_brood_year_return_start_log);
@@ -229,7 +229,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            N_brood_year_return[t] = N_j[t]*kappa_marine_survival[t]; //)*exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
          
         for (a in 1:A) { 
-           N_recruit[t+a+2,a] = (N_brood_year_return[t]*p[t,a])*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
+           N_recruit[t+a+2,a] = (N_brood_year_return[t]*p[t,a]);//*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
           // N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; // add age structure, p is proportion per age class
 
@@ -266,14 +266,11 @@ model {
    
    log_catch_q ~ normal(-5,1);
    
-  log_c_1 ~  normal(16, 1); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 1); // carrying capacity prior - stage 2
-  
-  // log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
-  // log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
-  
- N_j_start_log ~ normal(17,1);
- N_brood_year_return_start_log~ normal(16,1);
+  log_c_1 ~  normal(16, 5); // carrying capacity prior - stage 1
+  log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
+ 
+ N_j_start_log ~ normal(17,10);
+ N_brood_year_return_start_log~ normal(16,10);
 
  for(t in 1:t_start){
    for(a in 1:A){ 
@@ -305,31 +302,31 @@ model {
   pi[i] ~ beta(1,1); // mean survival stage 1
   }
  
-  basal_p_1 ~ beta(1,1); // mean survival stage 1
-  basal_p_2 ~ beta(1,1); // mean survivial stage 2C
+  // basal_p_1 ~ beta(1,1); // mean survival stage 1
+  // basal_p_2 ~ beta(1,1); // mean survivial stage 2C
 
   D_scale ~ beta(1,1); // mean survivial stage 2C
 
 // age comp 
-//  for(t in 1:nByrs){
-//     for (a in 1:A) {
-//    target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
-//  }
-// }
+ for(t in 1:nByrs){
+    for (a in 1:A) {
+   target += gamma_lpdf(g[t,a]|Dir_alpha[a],1);
+ }
+}
 
-// log fishing mortality for each calendar year 
- // log_F_mean ~ normal(0,1);
- //  for(t in 1:nRyrs_T){
- //    log_F_dev_y[t] ~ normal(0, 1);
- // }
+// log fishing mortality for each calendar year
+log_F_mean ~ normal(0,1);
+ for(t in 1:nRyrs_T){
+   log_F_dev_y[t] ~ normal(0, 1);
+}
  
  for (a in 1:A) {
     log_S[a] ~ normal(0,1);
  }
 
-   for(t in 1:nRyrs_T){
- log_F[t] ~ normal(0,1); //log fishing mortatliy
-}
+//    for(t in 1:nRyrs_T){
+//  log_F[t] ~ normal(0,1); //log fishing mortatliy
+// }
 
 
  // age comp priors -- maturity schedules
