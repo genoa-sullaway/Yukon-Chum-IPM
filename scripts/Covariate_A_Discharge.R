@@ -73,10 +73,10 @@ dash <- yukon_discharge %>%
 yukon_fixed<-rbind(dash,slash)
  
 yukon_a <- yukon_fixed %>%  
-  filter(month %in% c(6,7),
-         case_when(month == 6 ~ !day < 15,
-                   month == 7 ~ !day > 15,
-                   TRUE ~ TRUE),
+  filter(month %in% c(5,6),
+         # case_when(month == 5 ~ !day < 15,
+         #           month == 6 ~ !day > 15,
+         #           TRUE ~ TRUE),
          !is.na(discharge_cubic_ft_sec))  %>%
   group_by(Year) %>% 
   summarise(max_discharge = max(discharge_cubic_ft_sec),

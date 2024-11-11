@@ -25,7 +25,7 @@ data { // all equation references are from proposal numbering
   // real  N_catch_start_log[t_start,A];
   // real  N_egg_start_log[t_start,A];
    
-  // vector<lower=0, upper=1> [A] pi; // actual age comps
+vector<lower=0, upper=1> [A] pi; // actual age comps
 
  // real <lower =10> log_c_1;
  // real <lower =10> log_c_2; // log carrying capacity
@@ -71,14 +71,14 @@ real theta2 [ncovars2];
 // vector <lower=0> [A-1] prob;
 real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 real <lower=0> g[nByrs,A]; // gamma random draws
-vector<lower=0, upper=1> [A] pi; // actual age comps
+// vector<lower=0, upper=1> [A] pi; // actual age comps
 
 
 real log_catch_q; 
-  real log_F_mean;
+real log_F_mean;
 vector [A] log_S; // log selectivity
 // vector [nRyrs_T]  log_F;  
-  vector [nRyrs_T]  log_F_dev_y; 
+vector [nRyrs_T]  log_F_dev_y; 
 
 // real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
 // real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
@@ -266,8 +266,8 @@ model {
    
    log_catch_q ~ normal(-5,1);
    
-  log_c_1 ~  normal(16, 5); // carrying capacity prior - stage 1
-  log_c_2 ~  normal(18, 5); // carrying capacity prior - stage 2
+  log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
+  log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
  
  N_j_start_log ~ normal(17,10);
  N_brood_year_return_start_log~ normal(16,10);
@@ -298,9 +298,9 @@ model {
  // theta2[3] ~ normal(0,0.01);
  // theta2[4] ~ normal(0,0.01);
   
-  for(i in 1:A){
-  pi[i] ~ beta(1,1); // mean survival stage 1
-  }
+  // for(i in 1:A){
+  // pi[i] ~ beta(1,1); // mean survival stage 1
+  // }
  
   // basal_p_1 ~ beta(1,1); // mean survival stage 1
   // basal_p_2 ~ beta(1,1); // mean survivial stage 2C
