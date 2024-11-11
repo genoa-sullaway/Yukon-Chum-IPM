@@ -15,15 +15,6 @@ data { // all equation references are from proposal numbering
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
   
   vector[nRyrs] data_sp_cv;
-  
-  // real <lower=0, upper=1> D_scale;  
-  
-  // real  N_j_start_log;
-  // real  N_brood_year_return_start_log;
-  // real  N_sp_start_log[t_start,A];
-  // real  N_recruit_start_log[t_start,A];
-  // real  N_catch_start_log[t_start,A];
-  // real  N_egg_start_log[t_start,A];
    
 vector<lower=0, upper=1> [A] pi; // actual age comps
 
@@ -61,7 +52,7 @@ real <lower =0> N_egg_start_log[t_start,A];
  // 
 real log_sigma_sp; 
 real log_sigma_catch; 
-// real <lower=0> sigma_y_j;
+real log_sigma_y_j;
 // real <lower =0> sigma_brood_return; 
  
 // covariate parameters 
@@ -107,6 +98,7 @@ real<lower=0> c_2;
 
 real<lower=0> sigma_catch;
 real<lower=0> sigma_sp;
+real<lower=0> sigma_juv;
  
 vector <lower = 0> [nRyrs_T] F;
  vector <lower = 0> [A] S; //selectivty
@@ -141,7 +133,7 @@ matrix <lower=0, upper=1>[nRyrs,A] q;
  
  sigma_catch = exp(log_sigma_catch);
  sigma_sp = exp(log_sigma_sp); 
-// 
+ sigma_juv = exp(log_sigma_y_j);
 //   for(t in 1:nRyrs_T){//
 //   // instant fishing mortality
 //   F[t] = exp(log_F[t]);
@@ -262,6 +254,7 @@ for(t in 1:nByrs){
 
 model {
    log_sigma_sp ~  normal(0,1); 
+   log_sigma_y_j ~  normal(0,1); 
    log_sigma_catch ~  normal(0,1); 
    
    log_catch_q ~ normal(-5,1);
@@ -281,22 +274,22 @@ model {
   }
  } 
     
-    for(i in 1:ncovars1){
-      theta1[i] ~ normal(0,0.01); 
-    }
+    // for(i in 1:ncovars1){
+    //   theta1[i] ~ normal(0,0.01); 
+    // }
     
-     for(i in 1:ncovars2){
-      theta2[i] ~ normal(0,0.01); 
-    }
-  // theta1[1] ~ normal(0,0.01);  
-  // theta1[2] ~ normal(0,0.01);  
-  // theta1[3] ~ normal(0,0.01);
-  // theta1[4] ~ normal(0,0.01);
+    //  for(i in 1:ncovars2){
+    //   theta2[i] ~ normal(0,0.01); 
+    // }
+  theta1[1] ~ normal(0,0.01);
+  theta1[2] ~ normal(0.1,0.01);
+  theta1[3] ~ normal(0,0.01);
+  theta1[4] ~ normal(0,0.01);
  
- // theta2[1] ~ normal(0,0.01);
- // theta2[2] ~ normal(0,0.01);
- // theta2[3] ~ normal(0,0.01);
- // theta2[4] ~ normal(0,0.01);
+ theta2[1] ~ normal(0,0.01);
+ theta2[2] ~ normal(0,0.01);
+ theta2[3] ~ normal(0,0.001);
+ theta2[4] ~ normal(0,0.01);
   
   // for(i in 1:A){
   // pi[i] ~ beta(1,1); // mean survival stage 1
@@ -336,7 +329,7 @@ log_F_mean ~ normal(0,1);
   
  // Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); // sigma_y_j;  
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sigma_juv); //sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); // sigma_y_j;  
   
   }
     for (t in 1:nByrs_return_dat) {

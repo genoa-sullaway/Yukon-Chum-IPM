@@ -73,18 +73,10 @@ sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv") %>%
   dplyr::rename(SST_CDD_Aleut = "CDD",
                 Year = "year") %>%
   dplyr::select(Year, SST_CDD_Aleut)
-#   
-# river_discharge_b <- read_csv("data/processed_covariates/Stage_B_YK_Discharge.csv") %>%
-#   dplyr::select(Year, mean_discharge,id) %>%
-#   spread(id, mean_discharge) %>%
-#   rename(kusko_mean_discharge_summer = "Kusko",
-#          yukon_mean_discharge_summer = "Yukon")
-  
-stage_b_cov<- left_join(river_discharge_b,sst_b)  %>%
-  left_join(hatchery_pink_b) %>%
-  left_join(hatchery_chum_b) %>%
-  left_join(fullness_df) 
 
+stage_b_cov<- left_join(hatchery_pink_b,sst_b) %>%
+              left_join(hatchery_chum_b) %>%
+              left_join(fullness_df) 
 
 # Stage B - Save DF ============= 
 write_csv(stage_b_cov, "data/processed_covariates/stage_b_all.csv")
