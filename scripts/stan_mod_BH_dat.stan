@@ -281,15 +281,15 @@ model {
     //  for(i in 1:ncovars2){
     //   theta2[i] ~ normal(0,0.01); 
     // }
-  theta1[1] ~ normal(0,0.01);
-  theta1[2] ~ normal(0.1,0.01);
-  theta1[3] ~ normal(0,0.01);
-  theta1[4] ~ normal(0,0.01);
+  theta1[1] ~ normal(0,0.1);
+  theta1[2] ~ normal(0,0.1);
+  theta1[3] ~ normal(0,0.1);
+  theta1[4] ~ normal(0,0.1);
  
- theta2[1] ~ normal(0,0.01);
- theta2[2] ~ normal(0,0.01);
- theta2[3] ~ normal(0,0.001);
- theta2[4] ~ normal(0,0.01);
+ theta2[1] ~ normal(0,0.1);
+ theta2[2] ~ normal(0,0.1);
+ theta2[3] ~ normal(0,0.1);
+ theta2[4] ~ normal(0,0.1);
   
   // for(i in 1:A){
   // pi[i] ~ beta(1,1); // mean survival stage 1

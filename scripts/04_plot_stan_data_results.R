@@ -33,9 +33,11 @@ traceplot(bh_fit,pars=  c(  "Dir_alpha"))
 
 # traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]"))
 
-traceplot(bh_fit,pars=  c("p_1","p_2"))
+# traceplot(bh_fit,pars=  c("p_1","p_2"))
 
 traceplot(bh_fit,pars=  c("sigma_sp"))
+traceplot(bh_fit,pars=  c("sigma_juv"))
+traceplot(bh_fit,pars=  c("sigma_catch"))
 
 traceplot(bh_fit,pars=  c("log_S"))
  
