@@ -53,6 +53,7 @@ real <lower =0> N_egg_start_log[t_start,A];
 real log_sigma_sp; 
 real log_sigma_catch; 
 real log_sigma_y_j;
+real log_sigma_return; 
 // real <lower =0> sigma_brood_return; 
  
 // covariate parameters 
@@ -99,6 +100,7 @@ real<lower=0> c_2;
 real<lower=0> sigma_catch;
 real<lower=0> sigma_sp;
 real<lower=0> sigma_juv;
+real<lower=0> sigma_rec;
  
 vector <lower = 0> [nRyrs_T] F;
  vector <lower = 0> [A] S; //selectivty
@@ -134,6 +136,8 @@ matrix <lower=0, upper=1>[nRyrs,A] q;
  sigma_catch = exp(log_sigma_catch);
  sigma_sp = exp(log_sigma_sp); 
  sigma_juv = exp(log_sigma_y_j);
+ sigma_rec = exp(log_sigma_return); 
+ 
 //   for(t in 1:nRyrs_T){//
 //   // instant fishing mortality
 //   F[t] = exp(log_F[t]);
@@ -256,6 +260,7 @@ model {
    log_sigma_sp ~  normal(0,1); 
    log_sigma_y_j ~  normal(0,1); 
    log_sigma_catch ~  normal(0,1); 
+   log_sigma_return  ~  normal(0,1); 
    
    log_catch_q ~ normal(-5,1);
    
@@ -334,7 +339,7 @@ log_F_mean ~ normal(0,1);
   }
     for (t in 1:nByrs_return_dat) {
  // recruit by brood year 
-     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
+     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
     } 
 
   for(t in 1:nRyrs){ // calendar years 
