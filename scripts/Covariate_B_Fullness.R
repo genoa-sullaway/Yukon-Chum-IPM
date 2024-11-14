@@ -31,7 +31,6 @@ ggplot(data = fullness_df)+
 full_mod <- mgcv::gam(fullness ~ SampleYear_factor + s(Lat,Lon) + GearCode, weights = Number_of_Stomachs,
                       data = fullness_df, family = tw(link="log"))
 
-
 summary(full_mod)
 
 # predict ===============

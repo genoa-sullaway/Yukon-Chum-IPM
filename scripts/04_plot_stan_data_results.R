@@ -41,7 +41,6 @@ traceplot(bh_fit,pars=  c("sigma_catch"))
 
 traceplot(bh_fit,pars=  c("log_S"))
  
-
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]", 
@@ -93,14 +92,25 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff2"),
      fill_color = "blue")
 
-plot(bh_fit,pars=  c(  "N_sp_start_log",
-                            "N_recruit_start_log"))
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "log_sigma_y_j"),
+     fill_color = "blue")
 
-plot(bh_fit,pars=  c(  "N_catch_start_log",
-                            "N_egg_start_log"))
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "log_sigma_catch"),
+     fill_color = "blue")
 
-plot(bh_fit,pars=  c(  "N_j_start_log",
-                            "N_brood_year_return_start_log"))
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "log_sigma_sp"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "sigma_rec"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "sigma_juv"),
+     fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "sigma_catch"),
@@ -110,6 +120,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "sigma_sp"),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c(  "log_sigma_return"),
+     fill_color = "blue")
+ 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "basal_p_1", "basal_p_2" ),
      fill_color = "blue")
