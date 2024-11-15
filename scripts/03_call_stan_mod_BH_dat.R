@@ -23,7 +23,8 @@ adapt_delta <- 0.95 # step size
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+# fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(1800,2351, 2902,3453))
 t_start = A +2  # to fill starting values 
 
 year_min = 2002
@@ -221,7 +222,9 @@ data_list_stan <- list(nByrs=nByrs,
                        Ps=Ps,
                        fs=fs,
                        M = M_fill_stan,
-                      
+                       
+                       lik_count = 3, # for sensitivity testing 
+                       
                        data_stage_j = as.vector(fall_juv$fall_abund), 
                        data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
                        #data_stage_return=as.vector(yukon_fall_recruits$total_run), 
@@ -244,7 +247,7 @@ data_list_stan <- list(nByrs=nByrs,
                        ess_age_comp=ess_age_comp,
                        basal_p_1 = 0.99,
                        basal_p_2 = 0.99,
-                       
+                      
                        pi = pi)
 
 # call mod  ===========================
@@ -255,7 +258,7 @@ bh_fit <- stan(
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 
-  verbose=FALSE, 
+  verbose = FALSE, 
   control = list(adapt_delta = 0.99)
   )
 
