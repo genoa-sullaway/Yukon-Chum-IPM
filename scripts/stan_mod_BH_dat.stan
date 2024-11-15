@@ -53,7 +53,7 @@ real <lower =0> N_egg_start_log[t_start,A];
  // 
 real log_sigma_sp; 
 real log_sigma_catch; 
-real log_sigma_y_j;
+// real log_sigma_y_j;
 // real log_sigma_return; 
 // real <lower =0> sigma_brood_return; 
  
@@ -100,7 +100,7 @@ real<lower=0> c_2;
 
 real<lower=0> sigma_catch;
 real<lower=0> sigma_sp; 
-real<lower=0> sigma_juv;
+// real<lower=0> sigma_juv;
 // real<lower=0> sigma_rec;
  
 vector <lower = 0> [nRyrs_T] F;
@@ -136,9 +136,9 @@ matrix <lower=0, upper=1>[nRyrs,A] q;
  
  sigma_catch = exp(log_sigma_catch);
  sigma_sp = exp(log_sigma_sp); 
- sigma_juv = exp(log_sigma_y_j);
+ // sigma_juv = exp(log_sigma_y_j);
  // sigma_rec = exp(log_sigma_return); 
- 
+ // 
 //   for(t in 1:nRyrs_T){//
 //   // instant fishing mortality
 //   F[t] = exp(log_F[t]);
@@ -259,14 +259,18 @@ for(t in 1:nByrs){
 
 model {
 
-   log_sigma_sp ~ normal(0,5);
-   log_sigma_catch ~ normal(0,5);
-   log_sigma_y_j ~ normal(0,5);
+   log_sigma_sp ~ normal(0,1);
+   log_sigma_catch ~ normal(0,1);
+   // log_sigma_y_j ~ normal(0,0.1);
+   // log_sigma_return ~ normal(0,0.1);
    
    log_catch_q ~ normal(-5,1);
    
-   log_c_1 ~  normal(16, 10); // carrying capacity prior - stage 1
-   log_c_2 ~  normal(18, 10); // carrying capacity prior - stage 2
+   // log_c_1 ~  log(uniform(1000, 1000000)); // carrying capacity prior - stage 1
+   // log_c_2 ~  log(uniform(1000, 1000000)); 
+  
+   log_c_1 ~  normal(0, 10); // carrying capacity prior - stage 1
+   log_c_2 ~  normal(0, 10); // carrying capacity prior - stage 2
  
 theta1[1] ~ normal(0,0.01);
 theta1[2] ~ normal(0,0.01);
@@ -315,11 +319,11 @@ log_F_mean ~ normal(0,1);
    
  // Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sigma_juv); //sqrt(log((0.1^2) + 1))); //sigma_juv); //sqrt(log((0.01^2) + 1))); 
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.1^2) + 1))); //sigma_juv); //sqrt(log((0.01^2) + 1))); 
   }
     for (t in 1:nByrs_return_dat) {
  // recruit by brood year 
-     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.1^2) + 1)));//sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
+     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.01^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
     } 
 
   for(t in 1:nRyrs){ // calendar years 
@@ -346,7 +350,7 @@ generated quantities{
   // joint log prior
   lprior = normal_lpdf(log_sigma_sp | 0, 5) + 
            normal_lpdf(log_sigma_catch | 0, 5) +
-            normal_lpdf(log_sigma_y_j | 0, 5) +
+            // normal_lpdf(log_sigma_y_j | 0, 5) +
            normal_lpdf(log_catch_q | -5, 1) +
            normal_lpdf(log_c_1 | 16, 10) + 
            normal_lpdf(log_c_2 | 18, 10) + 

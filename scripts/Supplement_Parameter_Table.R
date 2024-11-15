@@ -6,6 +6,8 @@ library(tidyverse)
 library(knitr)
 library(kableExtra)
 library(rstan)
+library(gtsummary)
+ 
 
 fit<- read_rds("output/stan_fit_DATA.RDS")
 
@@ -33,27 +35,7 @@ create_parameter_summary <- function(fit, parameter_name, notation, prior) {
 
 # Create summary for multiple parameters ==============
 # each param will need to be manual 
-
-# real  log_c_1;
-# real  log_c_2;  
-#  
-# real log_sigma_sp; 
-# real log_sigma_catch; 
-#   
-# real theta1 [ncovars1];  
-# real theta2 [ncovars2];
-#  
-# real <lower=0, upper=1> D_scale;    
-# real <lower=0> g[nByrs,A];  
-# vector<lower=0, upper=1> [A] pi;  
-# 
-# real log_catch_q;  
-# vector [A] log_S;  
-# vector [nRyrs_T]  log_F;   
-# 
-# real <lower=0, upper = 1> basal_p_1; 
-# real <lower=0, upper = 1> basal_p_2;  
-
+ 
 summary_df <- rbind(
   ### Carrying capacity 1   =======
   create_parameter_summary(
@@ -90,7 +72,7 @@ summary_df <- rbind(
   ### theta 1 =======
   create_parameter_summary(
     fit = fit,
-    parameter_name = "theta1",
+    parameter_name = "theta1[1]",
     notation = "$\\sigma_o$",
     prior = "Half-Cauchy(0, 2.5)"
   ),
@@ -98,7 +80,7 @@ summary_df <- rbind(
   ### theta 2 =======
   create_parameter_summary(
     fit = fit,
-    parameter_name = "theta2",
+    parameter_name = "theta2[1]",
     notation = "$\\sigma_o$",
     prior = "Half-Cauchy(0, 2.5)"
   ),
@@ -111,25 +93,37 @@ summary_df <- rbind(
     prior = "Half-Cauchy(0, 2.5)"
   ),
   
-  ### G ======= 
+  # F
   create_parameter_summary(
     fit = fit,
-    parameter_name = "g",
-    notation = "$\\sigma_o$",
-    prior = "Half-Cauchy(0, 2.5)"
+    parameter_name = "log_F_mean",
+    notation = "$K$",
+    prior = "LogNormal(5, 1)"
   ),
   
-  ### pi ======= 
+  # F SD
   create_parameter_summary(
     fit = fit,
-    parameter_name = "pi",
-    notation = "$\\sigma_o$",
-    prior = "Half-Cauchy(0, 2.5)"
+    parameter_name = "log_F_dev_y[1]",
+    notation = "$K$",
+    prior = "LogNormal(5, 1)"
+  ),
+  
+    # selectivity
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_S[1]",
+    notation = "$K$",
+    prior = "LogNormal(5, 1)"
   ))
 
 # Add parameter grouping
-summary_df$Group <- c("Population dynamics", "Population dynamics", 
-                      "Initial conditions", "Error terms", "Error terms")
+summary_df$Group <- c("Carrying capacity","Carrying capacity",
+                      "Observation Error", "Observation Error", 
+                      "Covariate Coefficient", "Covariate Coefficient", 
+                      "Age Structure Variability", "Mean Instantaneous Fishing Mortality",
+                      "Fishing Mortality Deviations", 
+                      "Selectivity")
 
 # Create formatted table with parameter grouping
 table <- summary_df %>%
@@ -147,41 +141,38 @@ table <- summary_df %>%
   pack_rows(index = table(summary_df$Group)) %>%
   # Add footnote explaining diagnostics
   footnote(
-    c("ESS: Effective Sample Size (higher is better, should be >1000)",
-      "R-hat: Gelman-Rubin convergence diagnostic (should be <1.01)"),
-    threepartslong = TRUE
+    c("ESS: Effective Sample Size",
+      "R-hat: Gelman-Rubin convergence diagnostic")#,
+   # threepartslong = TRUE
   )
 
 # Print table
 print(table)
-
-# Optional: Add color coding for diagnostics
-table_with_colors <- summary_df %>%
-  select(Group, Parameter, Notation, Estimate, CI_95, ESS, Rhat, Prior) %>%
-  mutate(
-    ESS = cell_spec(ESS, "latex", 
-                    color = ifelse(as.numeric(ESS) > 1000, "darkgreen", "red")),
-    Rhat = cell_spec(Rhat, "latex",
-                     color = ifelse(as.numeric(Rhat) < 1.01, "darkgreen", "red"))
-  ) %>%
-  kable(format = "latex", 
-        escape = FALSE,
-        col.names = c("Group", "Parameter", "Notation", "Estimate", 
-                      "95% CI", "ESS", "R-hat", "Prior"),
-        align = c("l", "l", "c", "c", "c", "r", "c", "l"),
-        booktabs = TRUE) %>%
-  kable_styling(latex_options = c("striped", "hold_position")) %>%
-  pack_rows(index = table(summary_df$Group)) %>%
-  footnote(
-    c("ESS: Effective Sample Size (higher is better, should be >1000)",
-      "R-hat: Gelman-Rubin convergence diagnostic (should be <1.01)"),
-    threepartslong = TRUE
-  )
-
-# Print colored table
-print(table_with_colors)
+ 
 
 # save ========
 
 # For Word paper
-save_publication_table(summary_df, "stan_results", format = "word")
+write.csv(table, "output/Supplemental_Table_Parameter_Estimates.csv", row.names = FALSE)
+# save_publication_table(table, "Supplemental_Table_Parameter_Estimates", format = "word")
+
+
+
+kable(summary_df, format = "html", escape = FALSE) %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
+  write_html("Supplemental_Table_Parameter_Estimates.html")
+
+ 
+# Save the HTML table to a file
+
+kable(summary_df, "latex") %>%
+  kable_styling(latex_options = "striped") %>%
+  save_kable("output/Supplemental_Table_Parameter_Estimates.png")
+
+library(kableExtra)
+
+kable(summary_df, "latex", booktabs = T) %>%
+  kable_styling(latex_options = c("striped", "scale_down")) %>%
+  row_spec(1, color = "red") %>%
+  as_image()
+ 
