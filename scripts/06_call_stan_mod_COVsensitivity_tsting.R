@@ -26,7 +26,7 @@ adapt_delta <- 0.95 # step size
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(1800,2351, 2902,3453)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 t_start = A +2  # to fill starting values 
 
 year_min = 2002
@@ -126,7 +126,7 @@ spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
 M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
-ess_age_comp = 300#as.vector(rep(400, times = nRyrs))
+ess_age_comp = 300 #as.vector(rep(400, times = nRyrs))
 
 # use all the above data consistently across models, its just the covariate that gets altered
 set_up_covariate_data <- function(exclusion_stage,covariate_exclude,covariate_name) {
@@ -336,9 +336,11 @@ if(covariate_exclude == "Chum_hatchery"){
                          cov2=stage_b_cov,
                          
                          data_sp_cv = spawner_cv$fall_spawner_cv,
-                         
+                         lik_count = 3, # for sensitivity testing
                          o_run_comp=(yukon_fall_obs_agecomp),
                          ess_age_comp=ess_age_comp,
+                         log_c_1 = 15, 
+                         log_c_2 =22, 
                          pi = pi)
   
   # call mod ========

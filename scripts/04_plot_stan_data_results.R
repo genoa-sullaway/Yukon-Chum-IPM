@@ -601,7 +601,6 @@ ggplot(data = kappasurvival,
   theme_classic() + 
   xlab("Brood Year") + 
   ylab("Survival Rate")
- 
 
 # plot estimated productivity ======
 productivity1 <- summary(bh_fit, pars = c("p_1"), 

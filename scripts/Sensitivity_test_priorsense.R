@@ -5,10 +5,14 @@ library(tidyverse)
 fit_all <- read_rds("output/stan_fit_DATA.RDS")
 
 t <- powerscale_sensitivity(fit_all) 
+t_a <-t[333,]
 
-a <- powerscale_plot_dens(fit_all, variable = "theta1") 
-a
-  powerscale_plot_dens(fit_all, variable = "log_c_1")
-  powerscale_plot_dens(fit_all, variable = "log_c_2")
+powerscale_plot_dens(fit_all, variable = "theta1") 
+powerscale_plot_ecdf(fit_all, variable = "theta1")  
 
-b <- powerscale_plot_quantities(fit_all)[[2]]
+powerscale_plot_dens(fit_all, variable = "theta2") 
+powerscale_plot_ecdf(fit_all, variable = "theta2")  
+
+powerscale_plot_ecdf(fit_all, variable = "basal_p_2") 
+
+powerscale_plot_ecdf(fit_all, variable = "log_S") 

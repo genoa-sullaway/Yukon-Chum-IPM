@@ -6,7 +6,6 @@ library(tidyverse)
 library(knitr)
 library(kableExtra)
 library(rstan)
-library(gtsummary)
  
 
 fit<- read_rds("output/stan_fit_DATA.RDS")

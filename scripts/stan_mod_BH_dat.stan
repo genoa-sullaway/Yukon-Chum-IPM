@@ -17,11 +17,11 @@ data { // all equation references are from proposal numbering
   
   vector[nRyrs] data_sp_cv;
    
-vector<lower=0, upper=1> [A] pi; // actual age comps
+// vector<lower=0, upper=1> [A] pi; // actual age comps
 
- // real <lower =10> log_c_1;
- // real <lower =10> log_c_2; // log carrying capacity
- //  
+ real  log_c_1;
+ real  log_c_2; // log carrying capacity
+  
 int<lower=0> ncovars1; //number of covariates for first lifestage  
 int<lower=0> ncovars2; //number of covariates for second lifestage  
 
@@ -46,8 +46,8 @@ real <lower =0> N_recruit_start_log[t_start,A];
 real <lower =0> N_catch_start_log[t_start,A];
 real <lower =0> N_egg_start_log[t_start,A];
 
- real  log_c_1;
- real  log_c_2; // log carrying capacity
+ // real  log_c_1;
+ // real  log_c_2; // log carrying capacity
  // real <lower =10> log_c_1;
  // real <lower =10> log_c_2; // log carrying capacity
  // 
@@ -64,7 +64,7 @@ real theta2 [ncovars2];
 // vector <lower=0> [A-1] prob;
 real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 real <lower=0> g[nByrs,A]; // gamma random draws
-// vector<lower=0, upper=1> [A] pi; // actual age comps
+  vector<lower=0, upper=1> [A] pi; // actual age comps
 
 
 real log_catch_q; 
@@ -269,8 +269,10 @@ model {
    // log_c_1 ~  log(uniform(1000, 1000000)); // carrying capacity prior - stage 1
    // log_c_2 ~  log(uniform(1000, 1000000)); 
   
-   log_c_1 ~  normal(0, 10); // carrying capacity prior - stage 1
-   log_c_2 ~  normal(0, 10); // carrying capacity prior - stage 2
+   // log_c_1 ~  normal(0, 10); // carrying capacity prior - stage 1
+   // log_c_2 ~  normal(0, 10); // carrying capacity prior - stage 2
+
+pi ~ beta(1,1); 
  
 theta1[1] ~ normal(0,0.01);
 theta1[2] ~ normal(0,0.01);
@@ -323,7 +325,7 @@ log_F_mean ~ normal(0,1);
   }
     for (t in 1:nByrs_return_dat) {
  // recruit by brood year 
-     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.01^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
+     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.05^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
     } 
 
   for(t in 1:nRyrs){ // calendar years 
@@ -352,8 +354,8 @@ generated quantities{
            normal_lpdf(log_sigma_catch | 0, 5) +
             // normal_lpdf(log_sigma_y_j | 0, 5) +
            normal_lpdf(log_catch_q | -5, 1) +
-           normal_lpdf(log_c_1 | 16, 10) + 
-           normal_lpdf(log_c_2 | 18, 10) + 
+           // normal_lpdf(log_c_1 | 16, 10) + 
+           // normal_lpdf(log_c_2 | 18, 10) + 
            normal_lpdf(theta1[1] | 0,0.1) +
            normal_lpdf(theta1[2] | 0,0.1) + 
            normal_lpdf(theta1[3] | 0,0.1) + 
