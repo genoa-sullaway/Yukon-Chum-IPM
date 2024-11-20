@@ -69,8 +69,7 @@ yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
 yukon_fall_return_brood_year<- read_csv("data/processed_data/yukon_fall_yukon_fall_return_brood_year.csv") %>%
   filter(Brood_Year >= year_min,
          !is.na(Brood_Year_Return))
-  # dplyr::select(2) %>% 
-  # as.vector()
+
 
 ## Fall Juveniles ================================================
 fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
@@ -247,8 +246,8 @@ data_list_stan <- list(nByrs=nByrs,
                        ess_age_comp=ess_age_comp,
                        # basal_p_1 = 0.9,
                        # basal_p_2 = 0.9,
-                       log_c_1 = 15, 
-                       log_c_2 =22, 
+                       log_c_1 = 20, 
+                       log_c_2 =30, 
                        pi = pi)
 
 # call mod  ===========================

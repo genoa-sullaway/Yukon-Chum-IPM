@@ -2,6 +2,7 @@
 library(viridis)
 library(tidyverse)
 library(here)
+library(bayestestR)
 
 stage_a_list <- readRDS("output/stan_sensitivity_stage_A_list.RDS")
 stage_b_list <- readRDS("output/stan_sensitivity_stage_B_list.RDS")
@@ -315,10 +316,10 @@ plot_sensitivity_a[[1]][[1]]
 
 # ggsave(plot_sensitivity_a,"output/sensitivity_a.png")
 pdf("output/sensitivity_a.pdf")
-plot_sensitivity_a[[1]][[1]]
-plot_sensitivity_a[[1]][[2]]
-plot_sensitivity_a[[1]][[3]]
-plot_sensitivity_a[[1]][[4]]
+plot_sensitivity_a[[1]] 
+plot_sensitivity_a[[2]]
+plot_sensitivity_a[[3]] 
+plot_sensitivity_a[[4]] 
 dev.off()
 
 for(i in 1:length(stage_b_list)){
@@ -335,7 +336,7 @@ plot_sensitivity_b[[1]][[3]]
 plot_sensitivity_b[[1]][[4]]
 dev.off()
 
-## load full model results ======
+# Calculate percent difference ======
 # add that into stage DF as a full model metric
 full_mod_df <- as.data.frame(full_mod, pars = c(
     "theta1[1]","theta1[2]","theta1[3]","theta1[4]",
@@ -366,8 +367,9 @@ full_mod_df <- as.data.frame(full_mod, pars = c(
  
 
 stage_a_df <- rbind(plot_sensitivity_a[[1]][[2]],plot_sensitivity_a[[2]][[2]],plot_sensitivity_a[[3]][[2]],plot_sensitivity_a[[4]][[2]])
+stage_b_df <- rbind(plot_sensitivity_b[[1]][[2]],plot_sensitivity_b[[2]][[2]],plot_sensitivity_b[[3]][[2]],plot_sensitivity_b[[4]][[2]])
 
-## join DFS calculate metrics =======
+## Join  =======
 joined_stage_a <- left_join(stage_a_df,full_mod_df) %>% 
   dplyr::mutate(abs_diff =(reduced_mod_median-full_mod_median),
                 percent_diff =(reduced_mod_median-full_mod_median)/full_mod_median,
@@ -379,47 +381,50 @@ joined_stage_a <- left_join(stage_a_df,full_mod_df) %>%
                                    TRUE ~ "Y"
                                    ))
 
-## code for plot [currently just stage A] ===========
-ggplot(data = joined_stage_a, 
-       aes(x=covariate_removed, y = abs_diff, color = variable, shape = stage)) +
-  geom_point()+
-  geom_hline(yintercept =0, linetype =2) +
-  theme_classic()+
- scale_color_viridis(discrete = TRUE)
+joined_stage_b <- left_join(stage_b_df,full_mod_df) %>% 
+  dplyr::mutate(abs_diff =(reduced_mod_median-full_mod_median),
+                percent_diff =(full_mod_median-reduced_mod_median)/full_mod_median,
+                relative_diff = (full_mod_median-reduced_mod_median)/sd_full) %>%
+  dplyr::select(stage,variable, covariate_removed,percent_diff,reduced_mod_median, full_mod_median,
+                abs_diff) %>%
+  dplyr::mutate(switch = case_when(reduced_mod_median < 0 & full_mod_median <0 ~ "N",
+                                   reduced_mod_median > 0 & full_mod_median >0 ~ "N",
+                                   TRUE ~ "Y"
+  ))
 
-### example plot for curry ===========
-ggplot(data = joined_stage_a %>% filter(covariate_removed %in% c("SST_CDD_NBS" , "mean_size")), 
-       aes(x=covariate_removed, y = abs_diff, color = variable, shape = stage)) +
-  geom_point()+
-  geom_hline(yintercept =0, linetype =2) +
-  theme_classic() +
-  scale_color_viridis(discrete = TRUE)
-  
-## more plots and save ================
-plot<- ggplot(data = joined_stage_a,# %>% filter(covariate_removed %in% c("SST_CDD_NBS" , "mean_size")), 
-       aes(x=covariate_removed, y = abs_diff, color = variable, shape = switch)) +
-  geom_point()+
-  geom_hline(yintercept =0, linetype =2) +
-  theme_classic()+
-  scale_color_viridis(discrete = TRUE) +
-  ylab("Absolute Difference") +
-  xlab("Covariate Removed")
 
-plot
-ggsave("output/example_sensitivity_plot_absdiff.png", width = 6, height = 3)
-
-plot<- ggplot(data = joined_stage_a,# %>% filter(covariate_removed %in% c("SST_CDD_NBS" , "mean_size")), 
-              aes(x=covariate_removed, y = percent_diff, color = variable, shape = switch)) +
+## plot Percent Diff ================
+ 
+plota<- ggplot(data = joined_stage_a  %>% filter(variable %in% 
+                                             c("Yukon River Mainstem Discharge", "NBS July/August Temperature", "Pollock Recruitment", "Mean Return Size")), 
+              aes(x=covariate_removed, y = relative_diff, color = variable, shape = switch)) +
   geom_point()+
   geom_hline(yintercept =0, linetype =2) +
   theme_classic()+
   scale_color_viridis(discrete = TRUE) +
-  ylab("Absolute Difference") +
-  xlab("Covariate Removed")
+  ylab("Percent Difference") +
+  xlab("Covariate Removed")+
+  ggtitle("Stage A")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-plot
-ggsave("output/example_sensitivity_plot_percent_diff.png", width = 6, height = 3)
+plota
+ggsave("output/Plot_StageA_percentDiff.png", width = 6, height = 3)
 
+ 
+plotb<- ggplot(data = joined_stage_b %>% filter(!variable %in% 
+                                                  c("Yukon River Mainstem Discharge", "NBS July/August Temperature", "Pollock Recruitment", "Mean Return Size")), 
+               aes(x=covariate_removed, y = percent_diff , color = variable, shape = switch)) +
+  geom_point()+
+  geom_hline(yintercept =0, linetype =2) +
+  theme_classic()+
+  scale_color_viridis(discrete = TRUE) +
+  ylab("Percent Difference") +
+  xlab("Covariate Removed") +
+  ggtitle("Stage B") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+plotb
+ggsave("output/Plot_StageB_percentDiff.png", width = 6, height = 3)
 
 # Sensitivity with posterior correlations ========================= 
 ### reduced mod posterior =================================

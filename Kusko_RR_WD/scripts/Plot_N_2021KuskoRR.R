@@ -34,10 +34,10 @@ N_plot<- ggplot(data = pred_N, aes(x=Year, y = pred_N_est/1000)) +
   geom_point(size=2) + 
   theme_classic() +
   ylab("Total Run (thousands of fish)") +
-  # theme_ipsum()+
+  theme_ipsum()+
   ggtitle("Kuskokwim River Run Reconstruction") + 
-  theme(axis.title.x = element_text(hjust = 0.5 ), 
-        axis.title.y = element_text(hjust = 0.5 ),
+  theme(axis.title.x = element_text(hjust = 0.5, size = 15), 
+        axis.title.y = element_text(hjust = 0.5, size = 15),
         axis.text.x = element_text( size = 12),
         axis.text.y = element_text( size = 12),
         plot.title = element_text(size=15),

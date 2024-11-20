@@ -133,14 +133,13 @@ write_csv(yukon_fall_broodyear_ages, "data/processed_data/yukon_fall_broodyear_a
 juv <- read_csv("data/Juvenile_Index_CC/Index for Sabrina.csv") %>%
   dplyr::rename(Year = "Time",
                 Strata = "Stratum") %>% 
+  filter(Strata == "Stratum_1") %>% 
   dplyr::mutate(Strata  = case_when(Strata == "Stratum_1"~"strata1",
                                     Strata == "Stratum_2"~"strata2",
                                     Strata == "Stratum_3"~"strata3",
                                     Strata == "Stratum_4"~"strata4",
                                     Strata == "Stratum_5"~"strata5",
-                                    Strata == "Stratum_6"~"strata6")) %>%
-  group_by(Year) %>%
-  dplyr::summarise(Estimate = sum(Estimate))
+                                    Strata == "Stratum_6"~"strata6"))  
 
 # proportion of genetic groups in each strata
 MSA <- read_csv("data/Juvenile_Index_CC/Bering Sea Juvenile Chum Spatial Mixed Stock Analysis Summary.csv") %>%
@@ -149,27 +148,28 @@ MSA <- read_csv("data/Juvenile_Index_CC/Bering Sea Juvenile Chum Spatial Mixed S
   dplyr::mutate(mean_prop = case_when(Year == 2009 ~ 0.0082, # 0.008 is the DE from the estimate, i htink the model will get weird with 0 individuals...
                                       TRUE ~ mean_prop))
 
+
 # add rolling means to fill in blank years, I think this will get filled in with models later? 
-rollingmean_GSI_2008 <- MSA %>% 
-  filter(Year %in% c(2007,2009)) %>% 
-  ungroup() %>% 
+rollingmean_GSI_2008 <- MSA %>%
+  filter(Year %in% c(2007,2009)) %>%
+  ungroup() %>%
   dplyr::summarise(mean_prop = mean(mean_prop))
 
-rollingmean_GSI_2013 <- MSA %>% 
-  filter(Year %in% c(2012,2014)) %>% 
+rollingmean_GSI_2013 <- MSA %>%
+  filter(Year %in% c(2012,2014)) %>%
   dplyr::summarise(mean_prop = mean(mean_prop))
 
 rollingmean_GSI_2020 <- MSA %>%  
   filter(Year %in% c(2019,2021)) %>% 
   dplyr::summarise(mean_prop = mean(mean_prop))
 
-abund_2020 <- juv %>%  
-  filter(Year %in% c(2019,2021)) %>% 
+abund_2020 <- juv %>%
+  filter(Year %in% c(2019,2021)) %>%
   dplyr::summarise(Estimate = mean(Estimate))
 
-
 juv_df <- MSA %>%
-  rbind(data.frame(Year = c(2008, 2013,2020),
+  rbind(data.frame(Year = c(2008, 2013,
+                            2020),
                          mean_prop = c(rollingmean_GSI_2008$mean_prop,
                                        rollingmean_GSI_2013$mean_prop,
                                        rollingmean_GSI_2020$mean_prop))) %>%

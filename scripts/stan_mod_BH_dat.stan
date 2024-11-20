@@ -345,17 +345,16 @@ generated quantities{
   for (n in 1:nByrs){
     log_lik[1,n] =  normal_lpdf(log(data_stage_j[n]) | log(N_j_predicted[n]), sqrt(log((0.1^2) + 1))); 
     log_lik[2,n] =  normal_lpdf(log(data_stage_harvest[n]) | log(sum(N_catch[n,1:A])), sigma_catch);  
-    log_lik[3,n] =  normal_lpdf(log(data_stage_j[n]) | log(N_j_predicted[n]), sqrt(log((0.1^2) + 1)));
+    // log_lik[3,n] =  normal_lpdf(log(data_stage_j[n]) | log(N_j_predicted[n]), sqrt(log((0.1^2) + 1)));
     }
- 
  
   // joint log prior
   lprior = normal_lpdf(log_sigma_sp | 0, 5) + 
            normal_lpdf(log_sigma_catch | 0, 5) +
             // normal_lpdf(log_sigma_y_j | 0, 5) +
            normal_lpdf(log_catch_q | -5, 1) +
-           // normal_lpdf(log_c_1 | 16, 10) + 
-           // normal_lpdf(log_c_2 | 18, 10) + 
+           normal_lpdf(log_c_1 | 0, 10) + 
+           normal_lpdf(log_c_2 | 0, 10) + 
            normal_lpdf(theta1[1] | 0,0.1) +
            normal_lpdf(theta1[2] | 0,0.1) + 
            normal_lpdf(theta1[3] | 0,0.1) + 
