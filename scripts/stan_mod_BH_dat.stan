@@ -36,7 +36,16 @@ real ess_age_comp;
 // real <lower=0, upper = 1> basal_p_2;
 }
 
-  
+transformed data {
+    
+real<lower=0> c_1; // estimate on log, transform back to normal scale
+real<lower=0> c_2;
+
+  // transform log carrying capacity to normal scale
+c_1 = exp(log_c_1);
+c_2 = exp(log_c_2);
+    
+  }
 parameters {
  // starting values 
 real <lower =10> N_j_start_log;
@@ -95,8 +104,6 @@ real N_egg_start[t_start,A];
 real N_brood_year_return_start; 
 real N_j_start;
 
-real<lower=0> c_1; // estimate on log, transform back to normal scale
-real<lower=0> c_2;
 
 real<lower=0> sigma_catch;
 real<lower=0> sigma_sp; 
@@ -166,10 +173,7 @@ for(t in 1:t_start){
   N_catch[1:t_start,a] = N_catch_start[1:t_start,a];
   N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
      }
- 
-  // transform log carrying capacity to normal scale
-   c_1 = exp(log_c_1);
-   c_2 = exp(log_c_2);
+  
 
 // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
   for(t in 1:nByrs){
@@ -274,15 +278,15 @@ model {
 
 pi ~ beta(1,1); 
  
-theta1[1] ~ normal(0,0.01);
-theta1[2] ~ normal(0,0.01);
-theta1[3] ~ normal(0,0.01);
-theta1[4] ~ normal(0,0.01);
+theta1[1] ~ normal(0,0.1);
+theta1[2] ~ normal(0,0.1);
+theta1[3] ~ normal(0,0.1);
+theta1[4] ~ normal(0,0.1);
  
- theta2[1] ~ normal(0,0.01);
- theta2[2] ~ normal(0,0.01);
- theta2[3] ~ normal(0,0.01);
- theta2[4] ~ normal(0,0.01);
+ theta2[1] ~ normal(0,0.1);
+ theta2[2] ~ normal(0,0.1);
+ theta2[3] ~ normal(0,0.1);
+ theta2[4] ~ normal(0,0.1);
   
   D_scale ~ beta(1,1); // mean survivial stage 2C
 
@@ -353,8 +357,8 @@ generated quantities{
            normal_lpdf(log_sigma_catch | 0, 5) +
             // normal_lpdf(log_sigma_y_j | 0, 5) +
            normal_lpdf(log_catch_q | -5, 1) +
-           normal_lpdf(log_c_1 | 0, 10) + 
-           normal_lpdf(log_c_2 | 0, 10) + 
+           // normal_lpdf(log_c_1 | 0, 10) + 
+           // normal_lpdf(log_c_2 | 0, 10) + 
            normal_lpdf(theta1[1] | 0,0.1) +
            normal_lpdf(theta1[2] | 0,0.1) + 
            normal_lpdf(theta1[3] | 0,0.1) + 

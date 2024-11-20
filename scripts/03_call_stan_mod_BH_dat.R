@@ -14,11 +14,11 @@ library(readxl)
 
 # setup inputs ===============================================================
 warmups <- 2000
-total_iterations <- 4000
+total_iterations <- 6000
 max_treedepth <-  15
 n_chains <- 4
 n_cores <- 4
-adapt_delta <- 0.95 # step size 
+# adapt_delta <- 0.95 # step size 
 
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
@@ -246,15 +246,15 @@ data_list_stan <- list(nByrs=nByrs,
                        ess_age_comp=ess_age_comp,
                        # basal_p_1 = 0.9,
                        # basal_p_2 = 0.9,
-                       log_c_1 = 20, 
-                       log_c_2 =30, 
+                       log_c_1 = 18, 
+                       log_c_2 =25, 
                        pi = pi)
 
 # call mod  ===========================
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 1, #n_chains,  
+  chains = n_chains,  
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 

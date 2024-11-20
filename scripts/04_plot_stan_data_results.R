@@ -23,7 +23,7 @@ traceplot(bh_fit,pars=  c( "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,
 
 traceplot(bh_fit,pars=  c("D_scale"))
 
-traceplot(bh_fit,pars=  c( "log_c_1","log_c_2"))
+# traceplot(bh_fit,pars=  c( "log_c_1","log_c_2"))
 
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
@@ -38,6 +38,8 @@ traceplot(bh_fit,pars=  c("sigma_juv"))
 traceplot(bh_fit,pars=  c("sigma_catch"))
 
 traceplot(bh_fit,pars=  c("log_S"))
+
+traceplot(bh_fit,pars=  c("pi"))
 
 traceplot(bh_fit,pars=  c("basal_p_1", "basal_p_2"))
  
