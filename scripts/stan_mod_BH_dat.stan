@@ -302,7 +302,7 @@ theta1[4] ~ normal(0,0.1);
 }
 
 // log fishing mortality for each calendar year
-log_F_mean ~ normal(0,1);
+log_F_mean ~ normal(0,0.1);
  for(t in 1:nRyrs_T){
    log_F_dev_y[t] ~ normal(0, 1);
 }
