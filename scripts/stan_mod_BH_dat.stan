@@ -62,8 +62,8 @@ real <lower =0> N_egg_start_log[t_start,A];
  // 
 real log_sigma_sp; 
 real log_sigma_catch; 
-// real log_sigma_y_j;
-// real log_sigma_return; 
+real log_sigma_y_j;
+real log_sigma_return;
 // real <lower =0> sigma_brood_return; 
  
 // covariate parameters 
@@ -107,8 +107,8 @@ real N_j_start;
 
 real<lower=0> sigma_catch;
 real<lower=0> sigma_sp; 
-// real<lower=0> sigma_juv;
-// real<lower=0> sigma_rec;
+real<lower=0> sigma_juv;
+real<lower=0> sigma_rec;
  
 vector <lower = 0> [nRyrs_T] F;
  vector <lower = 0> [A] S; //selectivty
@@ -143,8 +143,8 @@ matrix <lower=0, upper=1>[nRyrs,A] q;
  
  sigma_catch = exp(log_sigma_catch);
  sigma_sp = exp(log_sigma_sp); 
- // sigma_juv = exp(log_sigma_y_j);
- // sigma_rec = exp(log_sigma_return); 
+ sigma_juv = exp(log_sigma_y_j);
+ sigma_rec = exp(log_sigma_return);
  // 
 //   for(t in 1:nRyrs_T){//
 //   // instant fishing mortality
@@ -265,8 +265,8 @@ model {
 
    log_sigma_sp ~ normal(0,1);
    log_sigma_catch ~ normal(0,1);
-   // log_sigma_y_j ~ normal(0,0.1);
-   // log_sigma_return ~ normal(0,0.1);
+   log_sigma_y_j ~ normal(0,0.1);
+   log_sigma_return ~ normal(0,0.1);
    
    log_catch_q ~ normal(-5,1);
    
@@ -325,11 +325,11 @@ log_F_mean ~ normal(0,0.1);
    
  // Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.1^2) + 1))); //sigma_juv); //sqrt(log((0.01^2) + 1))); 
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sigma_juv); //sqrt(log((0.1^2) + 1))); //sigma_juv); //sqrt(log((0.01^2) + 1))); 
   }
     for (t in 1:nByrs_return_dat) {
  // recruit by brood year 
-     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.05^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
+     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sigma_rec); // sqrt(log((0.05^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
     } 
 
   for(t in 1:nRyrs){ // calendar years 
@@ -347,26 +347,43 @@ generated quantities{
  
  // log likelihood
   for (n in 1:nByrs){
-    log_lik[1,n] =  normal_lpdf(log(data_stage_j[n]) | log(N_j_predicted[n]), sqrt(log((0.1^2) + 1))); 
+    log_lik[1,n] =  normal_lpdf(log(data_stage_j[n]) | log(N_j_predicted[n]), sigma_juv); //sqrt(log((0.1^2) + 1))); 
     log_lik[2,n] =  normal_lpdf(log(data_stage_harvest[n]) | log(sum(N_catch[n,1:A])), sigma_catch);  
-    // log_lik[3,n] =  normal_lpdf(log(data_stage_j[n]) | log(N_j_predicted[n]), sqrt(log((0.1^2) + 1)));
+    log_lik[3,n] =  normal_lpdf(log(data_stage_return[n]) | log(N_brood_year_return[n]),sigma_rec);  
+    log_lik[4,n] =  normal_lpdf(log(data_stage_sp[n]) | log(N_sp[n]), sigma_sp);
+    
     }
  
   // joint log prior
-  lprior = normal_lpdf(log_sigma_sp | 0, 5) + 
-           normal_lpdf(log_sigma_catch | 0, 5) +
-            // normal_lpdf(log_sigma_y_j | 0, 5) +
+  lprior = normal_lpdf(log_sigma_sp | 0, 1) + 
+           normal_lpdf(log_sigma_catch | 0, 1) +
+           normal_lpdf(log_sigma_return | 0, 0.1) +
+           normal_lpdf(log_sigma_y_j | 0, 0.1) +
            normal_lpdf(log_catch_q | -5, 1) +
-           // normal_lpdf(log_c_1 | 0, 10) + 
-           // normal_lpdf(log_c_2 | 0, 10) + 
+           
            normal_lpdf(theta1[1] | 0,0.1) +
            normal_lpdf(theta1[2] | 0,0.1) + 
            normal_lpdf(theta1[3] | 0,0.1) + 
            normal_lpdf(theta1[4] | 0,0.1) +
+           
            normal_lpdf(theta2[1] | 0,0.1) + 
            normal_lpdf(theta2[2] | 0,0.1) +
            normal_lpdf(theta2[3] | 0,0.1) +
            normal_lpdf(theta2[4] | 0,0.1) + 
+           
+           beta_lpdf(basal_p_1 | 1,1) +       
+           beta_lpdf(basal_p_2 | 1,1) + 
+           
+           beta_lpdf(pi[1] | 1,1) +       
+           beta_lpdf(pi[2] | 1,1) + 
+           beta_lpdf(pi[3] | 1,1) + 
+           beta_lpdf(pi[4] | 1,1) +
+           
+           normal_lpdf(log_S[1] | 0,1) +       
+           normal_lpdf(log_S[2] | 0,1) + 
+           normal_lpdf(log_S[3] | 0,1) + 
+           normal_lpdf(log_S[4] | 0,1) +
+           
            beta_lpdf(D_scale | 1,1) + 
            normal_lpdf(log_F_mean | 0,1);
  
