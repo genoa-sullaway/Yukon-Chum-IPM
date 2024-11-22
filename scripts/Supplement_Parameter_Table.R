@@ -32,48 +32,80 @@ create_parameter_summary <- function(fit, parameter_name, notation, prior) {
   )
 }
 
-# Create summary for multiple parameters ==============
+# Call Function ==============
 # each param will need to be manual 
- 
-summary_df <- rbind(
-  ### Carrying capacity 1   =======
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "log_c_1",
-    notation = "$\\omega$",
-    prior = "Normal(0.5, 0.25)"
-  ),
-  
-  ### Carrying capacity 2   =======
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "log_c_2",
-    notation = "$K$",
-    prior = "LogNormal(5, 1)"
-  ),
-  
+summary_df <- rbind( 
   ### sigma sp  =======
   create_parameter_summary(
     fit = fit,
     parameter_name = "log_sigma_sp",
     notation = "$N_0$",
-    prior = "LogNormal(3, 0.5)"
+    prior = "Normal(0,1)"
   ),
+  ### sigma return =======
+  # create_parameter_summary(
+  #   fit = fit,
+  #   parameter_name = "log_sigma_return",
+  #   notation = "$N_0$",
+  #   prior = "Normal(0,1)"
+  # ),
   
   ### sigma catch =======
   create_parameter_summary(
     fit = fit,
     parameter_name = "log_sigma_catch",
     notation = "$\\sigma_p$",
-    prior = "Half-Cauchy(0, 2.5)"
+    prior = "Normal(0,1)"
   ),
+  #  
+  # ### sigma juv =======
+  # create_parameter_summary(
+  #   fit = fit,
+  #   parameter_name = "log_sigma_y_j",
+  #   notation = "$\\sigma_p$",
+  #   prior = "Normal(0,1)"
+  # ),
   
+  ### basal survival 1 =======
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "basal_p_1",
+    notation = "$\\sigma_o$",
+    prior = "Beta(1,1)"
+  ),
+
+  ### basal survival 2 =======
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "basal_p_2",
+    notation = "$\\sigma_o$",
+    prior = "Beta(1,1)"
+  ),
+ 
   ### theta 1 =======
   create_parameter_summary(
     fit = fit,
     parameter_name = "theta1[1]",
     notation = "$\\sigma_o$",
-    prior = "Half-Cauchy(0, 2.5)"
+    prior = "Beta(0,0.1)"
+  ),
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "theta1[2]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(0,0.1)"
+  ),
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "theta1[3]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(0,0.1)"
+  ),
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "theta1[4]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(0,0.1)"
   ),
   
   ### theta 2 =======
@@ -81,97 +113,168 @@ summary_df <- rbind(
     fit = fit,
     parameter_name = "theta2[1]",
     notation = "$\\sigma_o$",
-    prior = "Half-Cauchy(0, 2.5)"
+    prior = "Beta(0,0.1)"
   ),
-  
-  ### D_scale =======
   create_parameter_summary(
     fit = fit,
-    parameter_name = "D_scale",
+    parameter_name = "theta2[2]",
     notation = "$\\sigma_o$",
-    prior = "Half-Cauchy(0, 2.5)"
+    prior = "Beta(0,0.1)"
   ),
-  
-  # F
   create_parameter_summary(
     fit = fit,
-    parameter_name = "log_F_mean",
-    notation = "$K$",
-    prior = "LogNormal(5, 1)"
+    parameter_name = "theta2[3]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(0,0.1)"
   ),
-  
-  # F SD
   create_parameter_summary(
     fit = fit,
-    parameter_name = "log_F_dev_y[1]",
-    notation = "$K$",
-    prior = "LogNormal(5, 1)"
-  ),
-  
-    # selectivity
+    parameter_name = "theta2[4]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(0,0.1)"),
+  # selectivity
   create_parameter_summary(
     fit = fit,
     parameter_name = "log_S[1]",
     notation = "$K$",
-    prior = "LogNormal(5, 1)"
-  ))
+    prior = "Normal(0,1)"),
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_S[2]",
+    notation = "$K$",
+    prior = "Normal(0,1)"),
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_S[3]",
+    notation = "$K$",
+    prior = "Normal(0,1)"),
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_S[4]",
+    notation = "$K$",
+    prior = "Normal(0,1)"),
+   
+  # Mean F ===== 
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_F_mean",
+    notation = "$K$",
+    prior = "Normal(0,1)"
+  ),
+  
+  # F SD ====== 
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_F_dev_y[1]",
+    notation = "$K$",
+    prior = "Normal(0,1)"),
+  
+  # catch Q ======= 
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_catch_q",
+    notation = "$\\sigma_o$",
+    prior = "Normal(-5,1)"),
+
+  # Pi ======= 
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "pi[1]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(1,1)"),
+  
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "pi[2]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(1,1)"),
+  
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "pi[3]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(1,1)"),
+  
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "pi[4]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(1,1)"),
+  
+  ## D_scale =======
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "D_scale",
+    notation = "$\\sigma_o$",
+    prior = "Beta(1,1)")
+)
 
 # Add parameter grouping
-summary_df$Group <- c("Carrying capacity","Carrying capacity",
-                      "Observation Error", "Observation Error", 
-                      "Covariate Coefficient", "Covariate Coefficient", 
-                      "Age Structure Variability", "Mean Instantaneous Fishing Mortality",
-                      "Fishing Mortality Deviations", 
-                      "Selectivity")
+summary_df$Group <- c(
+                      "Observation Error", "Observation Error",
+                      # "Observation Error", "Observation Error",
+                      "Basal Productivity - Juvenile",  "Basal Productivity - Marine",
+                      "Covariate Coefficient- Juvenile", "Covariate Coefficient- Juvenile", 
+                      "Covariate Coefficient- Juvenile", "Covariate Coefficient- Juvenile", 
+                      "Covariate Coefficient- Marine", "Covariate Coefficient- Marine",
+                      "Covariate Coefficient- Marine", "Covariate Coefficient- Marine",
+                      "Selectivity", "Selectivity", 
+                      "Selectivity", "Selectivity", 
+                      "Mean Instantaneous Fishing Mortality", "Fishing Mortality Deviations", 
+                      "Juvenile Abundance Constant", 
+                      "Mean Age at Maturity",  "Mean Age at Maturity", 
+                      "Mean Age at Maturity",  "Mean Age at Maturity", 
+                      "Age Structure Variability")
 
 # Create formatted table with parameter grouping
 table <- summary_df %>%
   # Reorder columns to include grouping
-  select(Group, Parameter, Notation, Estimate, CI_95, ESS, Rhat, Prior) %>%
+  dplyr::select(Group, Parameter,# Notation, 
+         Estimate, CI_95, ESS, Rhat, Prior) #%>%
   # Create the table
-  kable(format = "latex", 
-        escape = FALSE,
-        col.names = c("Group", "Parameter", "Notation", "Estimate", 
-                      "95% CI", "ESS", "R-hat", "Prior"),
-        align = c("l", "l", "c", "c", "c", "r", "c", "l"),
-        booktabs = TRUE) %>%
-  kable_styling(latex_options = c("striped", "hold_position")) %>%
-  # Add grouping
-  pack_rows(index = table(summary_df$Group)) %>%
-  # Add footnote explaining diagnostics
-  footnote(
-    c("ESS: Effective Sample Size",
-      "R-hat: Gelman-Rubin convergence diagnostic")#,
-   # threepartslong = TRUE
-  )
+  # kable(format = "latex", 
+  #       escape = FALSE,
+  #       col.names = c("Group", "Parameter", "Notation", "Estimate", 
+  #                     "95% CI", "ESS", "R-hat", "Prior"),
+  #       align = c("l", "l", "c", "c", "c", "r", "c", "l"),
+  #       booktabs = TRUE) %>%
+  # kable_styling(latex_options = c("striped", "hold_position")) %>%
+  # # Add grouping
+  # pack_rows(index = table(summary_df$Group)) %>%
+  # # Add footnote explaining diagnostics
+  # footnote(
+  #   c("ESS: Effective Sample Size",
+  #     "R-hat: Gelman-Rubin convergence diagnostic")#,
+  #  # threepartslong = TRUE
+  # )
 
 # Print table
-print(table)
+#  print(table)
  
 
 # save ========
 
 # For Word paper
-write.csv(table, "output/Supplemental_Table_Parameter_Estimates.csv", row.names = FALSE)
+write.csv(table, "output/Supplemental_Table_Parameter_Estimates_forCOPY.csv")#, row.names = FALSE)
 # save_publication_table(table, "Supplemental_Table_Parameter_Estimates", format = "word")
 
-
-
-kable(summary_df, format = "html", escape = FALSE) %>%
-  kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
-  write_html("Supplemental_Table_Parameter_Estimates.html")
-
- 
-# Save the HTML table to a file
-
-kable(summary_df, "latex") %>%
-  kable_styling(latex_options = "striped") %>%
-  save_kable("output/Supplemental_Table_Parameter_Estimates.png")
-
-library(kableExtra)
-
-kable(summary_df, "latex", booktabs = T) %>%
-  kable_styling(latex_options = c("striped", "scale_down")) %>%
-  row_spec(1, color = "red") %>%
-  as_image()
- 
+# 
+# 
+# kable(summary_df, format = "html", escape = FALSE) %>%
+#   kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
+#   write_html("Supplemental_Table_Parameter_Estimates.html")
+# 
+#  
+# # Save the HTML table to a file
+# 
+# kable(summary_df, "latex") %>%
+#   kable_styling(latex_options = "striped") %>%
+#   save_kable("output/Supplemental_Table_Parameter_Estimates.png")
+# 
+# library(kableExtra)
+# 
+# kable(summary_df, "latex", booktabs = T) %>%
+#   kable_styling(latex_options = c("striped", "scale_down")) %>%
+#   row_spec(1, color = "red") %>%
+#   as_image()
+#  
