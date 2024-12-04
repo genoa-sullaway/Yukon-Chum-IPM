@@ -369,62 +369,72 @@ full_mod_df <- as.data.frame(full_mod, pars = c(
 stage_a_df <- rbind(plot_sensitivity_a[[1]][[2]],plot_sensitivity_a[[2]][[2]],plot_sensitivity_a[[3]][[2]],plot_sensitivity_a[[4]][[2]])
 stage_b_df <- rbind(plot_sensitivity_b[[1]][[2]],plot_sensitivity_b[[2]][[2]],plot_sensitivity_b[[3]][[2]],plot_sensitivity_b[[4]][[2]])
 
-## Join  =======
+## DFs with percent and relative diff  =======
 joined_stage_a <- left_join(stage_a_df,full_mod_df) %>% 
   dplyr::mutate(abs_diff =(reduced_mod_median-full_mod_median),
                 percent_diff =(reduced_mod_median-full_mod_median)/full_mod_median,
                 relative_diff = (reduced_mod_median-full_mod_median)/sd_full) %>%
-  dplyr::select(stage,variable, covariate_removed,percent_diff,reduced_mod_median, full_mod_median,
+  dplyr::select(stage,variable, covariate_removed,percent_diff,relative_diff,reduced_mod_median, full_mod_median,
                 abs_diff) %>%
   dplyr::mutate(switch = case_when(reduced_mod_median < 0 & full_mod_median <0 ~ "N",
                                    reduced_mod_median > 0 & full_mod_median >0 ~ "N",
-                                   TRUE ~ "Y"
-                                   ))
+                                   TRUE ~ "Y"),
+                covariate_removed = case_when(covariate_removed== "SST_CDD_NBS" ~ "CDD SST-NBS",
+                                              covariate_removed== "yukon_mean_discharge" ~ "Yukon River - Mean Flow",
+                                              covariate_removed== "pollock_recruit_scale" ~ "Pollock Recruit. Index",
+                                              covariate_removed== "mean_size" ~ "Mean Spawner Size"))  
+ 
 
 joined_stage_b <- left_join(stage_b_df,full_mod_df) %>% 
   dplyr::mutate(abs_diff =(reduced_mod_median-full_mod_median),
                 percent_diff =(full_mod_median-reduced_mod_median)/full_mod_median,
                 relative_diff = (full_mod_median-reduced_mod_median)/sd_full) %>%
-  dplyr::select(stage,variable, covariate_removed,percent_diff,reduced_mod_median, full_mod_median,
+  dplyr::select(stage,variable, covariate_removed,percent_diff,relative_diff,reduced_mod_median, full_mod_median,
                 abs_diff) %>%
   dplyr::mutate(switch = case_when(reduced_mod_median < 0 & full_mod_median <0 ~ "N",
                                    reduced_mod_median > 0 & full_mod_median >0 ~ "N",
-                                   TRUE ~ "Y"
-  ))
+                                   TRUE ~ "Y"),
+                covariate_removed = case_when(covariate_removed== "SST_CDD_Aleut" ~ "CDD SST-ALeut",
+                                              covariate_removed== "Chum_hatchery" ~ "Chum Hatchery Abund.",
+                                              covariate_removed== "Pink_hatchery" ~ "Pink Hatchery Abund.",
+                                              covariate_removed== "full_index" ~ "SFI"))
 
-
-## plot Percent Diff ================
+## plot Relative Diff ================
  
 plota<- ggplot(data = joined_stage_a  %>% filter(variable %in% 
                                              c("Yukon River Mainstem Discharge", "NBS July/August Temperature", "Pollock Recruitment", "Mean Return Size")), 
-              aes(x=covariate_removed, y = relative_diff, color = variable, shape = switch)) +
+              aes(x=covariate_removed, y = relative_diff, color = variable#, shape = switch
+                  )) +
   geom_point()+
   geom_hline(yintercept =0, linetype =2) +
   theme_classic()+
-  scale_color_viridis(discrete = TRUE) +
-  ylab("Percent Difference") +
-  xlab("Covariate Removed")+
+  scale_color_viridis(discrete = TRUE, name = "Covariate Sensitivity Response") +
+  ylab("Relative Difference") +
+  xlab("Covariate Removed") +
   ggtitle("Stage A")+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 plota
 ggsave("output/Plot_StageA_percentDiff.png", width = 6, height = 3)
 
- 
 plotb<- ggplot(data = joined_stage_b %>% filter(!variable %in% 
                                                   c("Yukon River Mainstem Discharge", "NBS July/August Temperature", "Pollock Recruitment", "Mean Return Size")), 
-               aes(x=covariate_removed, y = percent_diff , color = variable, shape = switch)) +
+               aes(x=covariate_removed, y = percent_diff , color = variable #, shape = switch
+                   )) +
   geom_point()+
   geom_hline(yintercept =0, linetype =2) +
   theme_classic()+
-  scale_color_viridis(discrete = TRUE) +
-  ylab("Percent Difference") +
+  scale_color_viridis(discrete = TRUE,name = "Covariate Sensitivity Response") +
+  ylab("Relative Difference") +
   xlab("Covariate Removed") +
   ggtitle("Stage B") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 plotb
-ggsave("output/Plot_StageB_percentDiff.png", width = 6, height = 3)
+ggsave("output/Plot_StageB_percentDiff.png", width = 8, height = 5)
+
+ggpubr::ggarrange(plota, plotb, labels = c("a.", "b."),nrow = 2)
+ggsave("output/Plot_Supplement_Covariate_Sensitivity.png", width = 6, height = 8)
 
 # Sensitivity with posterior correlations ========================= 
 ### reduced mod posterior =================================

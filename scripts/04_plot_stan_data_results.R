@@ -138,8 +138,8 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "D_scale"),
      fill_color = "blue") 
  
-plot(bh_fit, show_density = TRUE, ci_level = 0.89, 
-     pars=  c( "theta_1_1_pp","theta_1_2_pp","theta_1_3_pp",
+plot(bh_fit, show_density = TRUE, ci_level = 0.5, 
+     pars=  c( "theta_1_1_pp","theta_1_2_pp","theta_1_3_pp","theta_1_4_pp",
                "theta_2_1_pp","theta_2_2_pp","theta_2_3_pp","theta_2_4_pp"),
      fill_color = "blue")
 

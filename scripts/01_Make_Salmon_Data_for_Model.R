@@ -176,9 +176,10 @@ juv_df <- MSA %>%
   left_join(juv) %>%
   dplyr::mutate(Estimate = case_when(Year == 2020 ~ abund_2020$Estimate,
                                        TRUE ~ Estimate),
-                fall_abund = Estimate*mean_prop) %>% 
-  dplyr::select(Year, fall_abund,mean_prop) %>%
-  arrange(Year)
+                fall_abund = Estimate*mean_prop,
+                Std..Error.for.Estimate = Std..Error.for.Estimate*mean_prop) %>% 
+  dplyr::select(Year, fall_abund,mean_prop,Std..Error.for.Estimate) %>%
+  dplyr::arrange(Year)
 
 ggplot(data = juv_df) +
   geom_path(aes(x=Year, y = fall_abund))

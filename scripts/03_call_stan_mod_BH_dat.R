@@ -222,7 +222,7 @@ data_list_stan <- list(nByrs=nByrs,
                        fs=fs,
                        M = M_fill_stan,
                        
-                       lik_count = 3, # for sensitivity testing 
+                       lik_count = 4, # for sensitivity testing 
                        
                        data_stage_j = as.vector(fall_juv$fall_abund), 
                        data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
@@ -247,8 +247,9 @@ data_list_stan <- list(nByrs=nByrs,
                        # basal_p_1 = 0.9,
                        # basal_p_2 = 0.9,
                        log_c_1 = 18, 
-                       log_c_2 =25, 
-                       pi = pi)
+                       log_c_2 =25#, 
+                       #pi = pi
+                       )
 
 # call mod  ===========================
 bh_fit <- stan(
