@@ -67,8 +67,8 @@ real log_sigma_return;
 // real <lower =0> sigma_brood_return; 
  
 // covariate parameters 
-real theta1 [ncovars1]; // covariate estimated for each covariate and each population
-real theta2 [ncovars2];
+real <lower =-1, upper = 1> theta1 [ncovars1]; // covariate estimated for each covariate and each population
+real <lower =-1, upper = 1> theta2 [ncovars2];
 
 // vector <lower=0> [A-1] prob;
 real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
@@ -279,14 +279,14 @@ model {
 pi ~ beta(1,1); 
  
 theta1[1] ~ normal(0,0.1);
-theta1[2] ~ normal(0,0.1);
+theta1[2] ~ normal(0,0.2);
 theta1[3] ~ normal(0,0.1);
-theta1[4] ~ normal(0.003,0.1);
+theta1[4] ~ normal(0.14,0.1);
  
- theta2[1] ~ normal(0,0.1);
- theta2[2] ~ normal(0,0.1);
+ theta2[1] ~ normal(-0.05,0.2);
+ theta2[2] ~ normal(-0.1,0.1);
  theta2[3] ~ normal(0,0.1);
- theta2[4] ~ normal(0,0.1);
+ theta2[4] ~ normal(0.3,0.1);
   
   D_scale ~ beta(1,1); // mean survivial stage 2C
 

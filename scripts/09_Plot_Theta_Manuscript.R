@@ -7,13 +7,12 @@ library(bayestestR)
 # load model ==============
 bh_fit <- read_rds("output/stan_fit_DATA.RDS")
  
-
 theta_df <- as.data.frame(bh_fit, pars = c("theta1[1]", "theta1[2]","theta1[3]","theta1[4]",
                                            "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>%
   mutate(draw = 1:nrow(.)) %>%
   gather(1:8, key = "rowname", value = "value") %>%
   dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
-                                     rowname== "theta1[2]" ~ "Yukon River - Mean Flow",
+                                     rowname== "theta1[2]"~ "Yukon River - Mean Flow",
                                      rowname=="theta1[3]" ~ "Pollock Recruitment",
                                      rowname=="theta1[4]" ~ "Mean Spawner Size",
                                      
