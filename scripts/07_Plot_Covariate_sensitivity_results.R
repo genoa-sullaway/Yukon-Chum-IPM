@@ -312,15 +312,15 @@ for(i in 1:length(stage_a_list)){
   plot_sensitivity_a[[i]]<-plot_function(input_cov_list=bh_fit, stage = "a",cov_removed = cov_removed)
 }
 
-plot_sensitivity_a[[1]][[1]]
+# plot_sensitivity_a[[1]][[1]]
 
 # ggsave(plot_sensitivity_a,"output/sensitivity_a.png")
-pdf("output/sensitivity_a.pdf")
-plot_sensitivity_a[[1]] 
-plot_sensitivity_a[[2]]
-plot_sensitivity_a[[3]] 
-plot_sensitivity_a[[4]] 
-dev.off()
+# pdf("output/sensitivity_a.pdf")
+# plot_sensitivity_a[[1]] 
+# plot_sensitivity_a[[2]]
+# plot_sensitivity_a[[3]] 
+# plot_sensitivity_a[[4]] 
+# dev.off()
 
 for(i in 1:length(stage_b_list)){
   bh_fit <- stage_b_list[[i]] # pull out specific model output for plot
@@ -329,12 +329,12 @@ for(i in 1:length(stage_b_list)){
 }
 
 # ggsave(plot_sensitivity_a,"output/sensitivity_a.png")
-pdf("output/sensitivity_b.pdf")
-plot_sensitivity_b[[1]][[1]]
-plot_sensitivity_b[[1]][[2]]
-plot_sensitivity_b[[1]][[3]]
-plot_sensitivity_b[[1]][[4]]
-dev.off()
+# pdf("output/sensitivity_b.pdf")
+# plot_sensitivity_b[[1]][[1]]
+# plot_sensitivity_b[[1]][[2]]
+# plot_sensitivity_b[[1]][[3]]
+# plot_sensitivity_b[[1]][[4]]
+# dev.off()
 
 # Calculate percent difference ======
 # add that into stage DF as a full model metric
@@ -409,7 +409,7 @@ plota<- ggplot(data = joined_stage_a  %>% filter(variable %in%
   geom_hline(yintercept =0, linetype =2) +
   theme_classic()+
   scale_color_viridis(discrete = TRUE, name = "Covariate Sensitivity Response") +
-  ylab("Relative Difference") +
+  ylab("Percent Relative Difference") +
   xlab("Covariate Removed") +
   ggtitle("Stage A")+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -425,7 +425,7 @@ plotb<- ggplot(data = joined_stage_b %>% filter(!variable %in%
   geom_hline(yintercept =0, linetype =2) +
   theme_classic()+
   scale_color_viridis(discrete = TRUE,name = "Covariate Sensitivity Response") +
-  ylab("Relative Difference") +
+  ylab("Percent Relative Difference") +
   xlab("Covariate Removed") +
   ggtitle("Stage B") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -433,9 +433,11 @@ plotb<- ggplot(data = joined_stage_b %>% filter(!variable %in%
 plotb
 ggsave("output/Plot_StageB_percentDiff.png", width = 8, height = 5)
 
-ggpubr::ggarrange(plota, plotb, labels = c("a.", "b."),nrow = 2)
-ggsave("output/Plot_Supplement_Covariate_Sensitivity.png", width = 6, height = 8)
+# Look here for saved manuscript plot =================
+ggpubr::ggarrange(plota, plotb, labels = c("A.", "B."),ncol = 1)
+ggsave("output/Plot_Supplement_Covariate_Sensitivity.png", width = 6, height = 10)
 
+# OLD ================
 # Sensitivity with posterior correlations ========================= 
 ### reduced mod posterior =================================
 reduced_posterior_function<-function(input_cov_list,stage,cov_removed,cov_match){
