@@ -17,7 +17,16 @@ fullness_df <- Fullness %>%
   dplyr::mutate(#num_stomachs_scale = as.numeric(scale(Number_of_Stomachs)),
                 SampleYear_factor = as.factor(SampleYear),
                 GearCode = as.factor(GearCode)) %>% 
-        filter(!Lat>65) 
+        filter(!Lat>65)
+
+mean(fullness_df$Lat)
+mean(fullness_df$Lon)
+unique(fullness_df$GearCode)
+
+ggplot(data = fullness_df, aes(x=SampleYear, y = GearCode)) +
+  geom_point()
+
+
 
 # plot
 
@@ -27,8 +36,7 @@ ggplot(data = fullness_df)+
 
 # model
 # stomach fullness index with a tweedie
-
-full_mod <- mgcv::gam(fullness ~ SampleYear_factor + s(Lat,Lon) + GearCode, weights = Number_of_Stomachs,
+full_mod <- mgcv::gam(fullness ~ SampleYear_factor + s(Lat,Lon), weights = Number_of_Stomachs,
                       data = fullness_df, family = tw(link="log"))
 
 summary(full_mod)
@@ -36,9 +44,11 @@ summary(full_mod)
 # predict ===============
 pred_df = data.frame(expand_grid(SampleYear_factor = unique(fullness_df$SampleYear_factor),
                                  Lat=mean(fullness_df$Lat),
-                                 Lon=mean(fullness_df$Lon),
-                                 GearCode = "300400"))
- 
+                                 Lon=mean(fullness_df$Lon)
+                                 #GearCode = "300400"
+                                 ))
+
+
 temp <- predict(full_mod,pred_df, se.fit = T,type = "response" )
 
 pred_df$pred<-  (temp[[1]]) 
@@ -55,8 +65,13 @@ temp <- pred_df %>%
   left_join(unique_year) %>%
   as.data.frame()
 
+mean_df <- fullness_df %>%
+  group_by(SampleYear) %>%
+  dplyr::summarise(mean = mean(fullness))
+
  ggplot(data =  temp, aes(x=SampleYear, y =pred)) +
   geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci),alpha = 0.5 ) +
+  geom_point(data = mean_df, aes(x=SampleYear, y =mean))+
   geom_point() +
   geom_line() +
   theme_classic() + 
@@ -69,7 +84,7 @@ temp <- pred_df %>%
  
  # add in rolling means for blank years??
  
- # 2002,2008, 2014
+ # 2002,2008, 2014, 2020,2022
  y2002<- test %>% 
    filter(SampleYear %in% c(2003,2004,2005 )) %>%
    dplyr::summarise(mean = mean(pred))
@@ -100,7 +115,7 @@ temp <- pred_df %>%
    dplyr::mutate(year_addone = SampleYear+1) # must add one so that they can all be -2 for cov b... 
  
  ggplot(data =  temp_full, aes(x=SampleYear, y =pred)) +
-   geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci),alpha = 0.5 ) +
+   geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci),width = 0.1 ) +
    geom_point() +
    geom_line() +
    theme_classic() + 
