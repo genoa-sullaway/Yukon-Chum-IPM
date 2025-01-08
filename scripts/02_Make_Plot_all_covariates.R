@@ -34,8 +34,8 @@ pollock <- read_csv("data/processed_covariates/Stage_A_Pollock_Recruitment.csv")
   dplyr::select(Year, Recruit_age_1_millions)
 
 size <- read_csv("data/processed_covariates/Stage_A_Size.csv") %>%
-  dplyr::rename(Year = "cal_year",
-                mean_size = "mean")
+  dplyr::rename(#Year = "cal_year",
+                mean_size = "trend")
 
   # Stage A - One DF for model ============= 
 stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%

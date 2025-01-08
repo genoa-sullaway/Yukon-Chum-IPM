@@ -12,13 +12,15 @@ cov_a <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   dplyr::rename(cal_year = Year) %>% 
   dplyr::mutate(brood_year = cal_year-1) %>%  
   dplyr::select(cal_year,brood_year,SST_CDD_NBS,pollock_recruit_millions,mean_size,
-                yukon_mean_discharge)
+                yukon_mean_discharge) 
 
 # Plot JUST covariates ==============
 ## A SST ========= 
 sst_cov_plot <- cov_a %>%
   gather(3:ncol(.), key = "variable", value = "value") %>%
-  filter(cal_year >1999)
+  filter(cal_year >1999) %>%
+  dplyr::mutate(variable = factor(variable, levels = c("mean_size","yukon_mean_discharge",
+                                  "SST_CDD_NBS","pollock_recruit_millions")))
 
 labels = c("mean_size"="Spawner Size" ,
            "pollock_recruit_millions"="Pollock Recruitment",
@@ -49,7 +51,6 @@ cov_b <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                 Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
                 Pink_hatchery= as.numeric(scale(Pink_hatchery)), 
-               
                 full_index = case_when(Year %in% c(2002,2008, 2014, 2020,2022) ~ NA,
                                        TRUE ~ full_index),
                 full_index = as.numeric(scale(full_index))) %>% 
@@ -60,7 +61,9 @@ cov_b <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                 full_index) %>%  
   gather(2:ncol(.), key = "variable", value = "value") %>%
   filter(!cal_year<1999) %>%
-  dplyr::mutate(variable = case_when(variable == "SST_CDD_Aleut" ~ "Aleutian Winter Temperature",
+  dplyr::mutate(variable = factor(variable, levels = c("full_index","SST_CDD_Aleut",
+                                                       "Chum_hatchery","Pink_hatchery")),
+                variable = case_when(variable == "SST_CDD_Aleut" ~ "Aleutian Winter Temperature",
                                      variable == "Chum_hatchery" ~ "Chum Salmon Hatchery Release Abundance",
                                      variable == "Pink_hatchery" ~ "Pink Salmon Hatchery Release Abundance",
                                      variable == "full_index" ~   "Fullness Index")) 

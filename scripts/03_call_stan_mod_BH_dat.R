@@ -7,7 +7,7 @@ library(rstanarm)
 library(tidync)
 library(lubridate) 
 library(readxl)
-
+ 
 # Load data ==================================================================
 # see 01_make salmon data.R for salmon data tidying 
 # see 02_make covariates for data tidying 
