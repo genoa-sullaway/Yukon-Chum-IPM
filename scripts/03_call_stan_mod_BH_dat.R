@@ -2,12 +2,17 @@ library(rstan)
 library(tidyverse)
 library(here)
 library(bayesplot)
-library(rstanarm) 
+# library(rstanarm) 
 
 library(tidync)
 library(lubridate) 
 library(readxl)
- 
+# remove.packages(c("StanHeaders", "rstan"))
+# 
+#  install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies = TRUE)
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+
 # Load data ==================================================================
 # see 01_make salmon data.R for salmon data tidying 
 # see 02_make covariates for data tidying 

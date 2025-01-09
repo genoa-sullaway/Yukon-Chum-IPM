@@ -161,7 +161,8 @@ summ_n_sp <- pred_N_SP %>%
             sd = mean(sd)) %>%
   left_join(data.frame(cal_year = c(data_list_stan$years_data_sp),
                        obs = c(data_list_stan$data_stage_sp))) %>%
-  dplyr::mutate(rowname = "sp")   
+  dplyr::mutate(rowname = "sp")  # %>%
+#  filter(!cal_year <2010)
 
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=cal_year, y = obs)) +
