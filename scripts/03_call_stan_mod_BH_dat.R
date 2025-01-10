@@ -252,7 +252,9 @@ data_list_stan <- list(nByrs=nByrs,
                        # basal_p_1 = 0.9,
                        # basal_p_2 = 0.9,
                        log_c_1 = 18, 
-                       log_c_2 =25#, 
+                       log_c_2 =25
+                       # ricker_beta = 0.0002,
+                       # ricker_alpha = 1.6
                        #pi = pi
                        )
 
@@ -260,7 +262,7 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = n_chains,  
+  chains = 1, #n_chains,  
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 

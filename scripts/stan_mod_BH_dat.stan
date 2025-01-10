@@ -16,7 +16,9 @@ data { // all equation references are from proposal numbering
   vector[nRyrs] data_stage_harvest;   // number of spawners for each group (escapement)
   
   vector[nRyrs] data_sp_cv;
-   
+  
+  // real <lower=0> ricker_beta; // maybe try -8? thats what AI suggests...         
+  // real <lower=0> ricker_alpha;
 // vector<lower=0, upper=1> [A] pi; // actual age comps
 
  real  log_c_1;
@@ -84,6 +86,10 @@ vector [nRyrs_T]  log_F_dev_y;
 
 real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
 real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
+
+// ricker aprameters 
+real <lower=0> log_ricker_beta; // maybe try -8? thats what AI suggests...
+real <lower=0> log_ricker_alpha;
  }
 
 transformed parameters { 
@@ -96,14 +102,13 @@ transformed parameters {
  real N_sp [nRyrs_T,A];
  real N_catch [nRyrs_T,A]; 
  real N_e [nRyrs_T,A];
-// 
+ 
 real N_sp_start [t_start,A];
 real N_recruit_start [t_start,A];
 real N_catch_start [t_start,A];
 real N_egg_start[t_start,A];
 real N_brood_year_return_start; 
 real N_j_start;
-
 
 real<lower=0> sigma_catch;
 real<lower=0> sigma_sp; 
@@ -132,13 +137,21 @@ real <lower=0>  catch_q; // related juvebile data to spawner data (on different 
 matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year that mature at a certain age
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
-matrix <lower=0, upper=1>[nRyrs,A] q; 
+matrix  [nRyrs,A] q; 
+//<lower=0, upper=1>
+
+// ricker params ========
+real ricker_beta;
+real ricker_alpha;
+
+ricker_beta = exp(log_ricker_beta);
+ricker_alpha = exp(log_ricker_alpha);
 
   S = exp(log_S);
  
   for(t in 1:nRyrs_T){
   // instant fishing mortality
-  F[t]  = exp(log_F_mean +log_F_dev_y[t]);
+  F[t]  = exp(log_F_mean + log_F_dev_y[t]);
  }
  
  sigma_catch = exp(log_sigma_catch);
@@ -243,8 +256,10 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
           //N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2])));
            
           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
-             
-          N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; 
+          
+          N_e[t+a+2,a] = N_sp[t+a+2,a] * exp(ricker_alpha - (ricker_beta * N_sp[t+a+2,a])); //sum(N_sp[t+a+2,1:A])));
+   
+          // N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; 
             }
      }
      
@@ -265,11 +280,15 @@ model {
 
    log_sigma_sp ~ normal(0,1);
    log_sigma_catch ~ normal(0,1);
-   log_sigma_y_j ~ normal(0,1);
+   log_sigma_y_j ~ normal(0,0.1);
    log_sigma_return ~ normal(0,1);
    
    log_catch_q ~ normal(-5,1);
    
+  log_ricker_alpha ~ normal(0, 1);   # for spawner egg link
+  log_ricker_beta ~ normal(-20, 1);    # for spawner egg link
+  
+  
    // log_c_1 ~  log(uniform(1000, 1000000)); // carrying capacity prior - stage 1
    // log_c_2 ~  log(uniform(1000, 1000000)); 
   
@@ -329,14 +348,14 @@ log_F_mean ~ normal(0,0.1);
   }
     for (t in 1:nByrs_return_dat) {
  // recruit by brood year 
-     target += 0.25 * normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sigma_rec); // sqrt(log((0.05^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
+     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sigma_rec); // sqrt(log((0.05^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
     } 
 
   for(t in 1:nRyrs){ // calendar years 
-     target += 0.25 * ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
+     target +=  ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
-     target += 0.25 * normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_catch);//sqrt(log((0.07^2) + 1)));  //sigma_catch) ; 
-     target += 0.25 * normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp); //sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
+     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_catch);//sqrt(log((0.07^2) + 1)));  //sigma_catch) ; 
+     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp); //sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
     }
   }
   
@@ -409,4 +428,3 @@ theta_2_3_pp = normal_rng(theta2[3]- 0.5 * 0.01^2,0.05);
 theta_2_4_pp = normal_rng(theta2[4]- 0.5 * 0.01^2,0.02);
 
 }
-

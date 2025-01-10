@@ -51,6 +51,16 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_ricker_alpha" ),
+     fill_color = "blue")
+
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_ricker_beta" ),
+     fill_color = "blue")
+
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_F"),
      fill_color = "blue")
 
@@ -170,35 +180,35 @@ ggplot(data = summ_n_sp) +
   ggtitle("Spawners: obs and predicted")+
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
   theme_classic()
-
+# 
 ## recruit ==========
-pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
-                     probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>%
-  # dplyr::mutate(time = 1:17) %>% 
-  dplyr::mutate(time = rep(1:26, each=4),
-              age = rep(3:6, length.out = nrow(.))) %>%
-  # filter(!time>20) %>% # remove years without full return estimates 
-  left_join(years)   
-
-# sum to compare with data 
-summ_n_rec <- pred_N_recruit %>%
-  group_by(cal_year) %>%
-  summarise(mean = sum(mean),
-            sd = mean(sd)) %>%
-  left_join(data.frame(cal_year = c(data_list_stan$years_data_sp),
-                       obs = c(data_list_stan$data_stage_return))) %>%
-  dplyr::mutate(rowname = "rec")   
-
-ggplot(data = summ_n_rec) +
-  geom_point(aes(x=cal_year, y = obs)) +
-  geom_line(aes(x=cal_year, y = mean)) +
-  # geom_ribbon(aes(x=cal_year, ymin = mean-sd,
-  #                 ymax = mean+sd)) +
-  ggtitle("recruits: obs and predicted")+
-  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
-  theme_classic()
+# pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
+#                      probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()  %>%
+#   # dplyr::mutate(time = 1:17) %>% 
+#   dplyr::mutate(time = rep(1:26, each=4),
+#               age = rep(3:6, length.out = nrow(.))) %>%
+#   # filter(!time>20) %>% # remove years without full return estimates 
+#   left_join(years)   
+# 
+# # sum to compare with data 
+# summ_n_rec <- pred_N_recruit %>%
+#   group_by(cal_year) %>%
+#   summarise(mean = sum(mean),
+#             sd = mean(sd)) %>%
+#   left_join(data.frame(cal_year = c(data_list_stan$years_data_sp),
+#                        obs = c(data_list_stan$data_stage_return))) %>%
+#   dplyr::mutate(rowname = "rec")   
+# 
+# ggplot(data = summ_n_rec) +
+#   geom_point(aes(x=cal_year, y = obs)) +
+#   geom_line(aes(x=cal_year, y = mean)) +
+#   # geom_ribbon(aes(x=cal_year, ymin = mean-sd,
+#   #                 ymax = mean+sd)) +
+#   ggtitle("recruits: obs and predicted")+
+#   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
+#   theme_classic()
 
 ## recruits by age no data ====== 
 # pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"),
@@ -564,6 +574,21 @@ ggplot(data = S,aes(x=rowname, y = mean)) +
   ylab("Selectivity")+
   theme_classic() + 
   xlab(" ")
+
+#   ricker alpha  ======
+# literature has alpha less than 3.7
+  summary(bh_fit, pars = c("log_ricker_alpha"),
+                 probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()
+
+#   ricker beta  ======
+# literature has beta at 6^e-7
+# currently its like 0.003 though 
+summary(bh_fit, pars = c("log_ricker_beta"),
+        probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()
 
 # Plot theta ======
 theta <- summary(bh_fit, pars = c("theta1[1]","theta1[2]","theta1[3]","theta1[4]",
