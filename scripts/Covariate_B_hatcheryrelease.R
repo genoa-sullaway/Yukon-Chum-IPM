@@ -77,15 +77,15 @@ ggplot(data = pink_sum_df,
 #   xlab("Release Year")
 
 # all Chum =====================
-# chum_hatchery <- read_excel("data/NPAFC_Hatchery_Stat-1952-2022.xlsx") %>%
-#   janitor::row_to_names(row_number = 1) %>%
-#   data.frame() %>% 
-#   filter(Species == "Chum",
-#          Reporting.Area == "Whole country") %>%
-#   dplyr::select(c(1:5, 54:76)) %>%
-#   gather(c(6:28), key = "Year", value = "Releases") %>%
-#   separate(Year, into = c("delete", "Year"), sep = 1) %>%
-#   dplyr::select(-delete)
+chum_hatchery <- read_excel("data/NPAFC_Hatchery_Stat-1952-2022.xlsx") %>%
+  janitor::row_to_names(row_number = 1) %>%
+  data.frame() %>%
+  filter(Species == "Chum",
+         Reporting.Area == "Whole country") %>%
+  dplyr::select(c(1:5, 54:76)) %>%
+  gather(c(6:28), key = "Year", value = "Releases") %>%
+  separate(Year, into = c("delete", "Year"), sep = 1) %>%
+  dplyr::select(-delete)
 # 
 # ggplot(data = chum_hatchery) +
 #   geom_point(aes(x=Year, y = Releases, color = Country, group = Country))
@@ -120,24 +120,39 @@ ggplot(data = pink_sum_df,
 #   xlab("Release Year")
 
 # Chum in Ak and the asian continent 
-chum_hatchery_akNP <- read_excel("data/NPAFC_Hatchery_Stat-1952-2022.xlsx") %>%
-  janitor::row_to_names(row_number = 1) %>%
-  data.frame() %>% 
-  filter(Species == "Chum",
-         case_when(Country == "United States" ~ Whole.country.Province.State == "Alaska",
-                   !Country == "United States" ~ Whole.country.Province.State == "Whole country",
-                   TRUE ~ TRUE)) %>%
-  dplyr::select(c(1:5, 54:76)) %>%
-  gather(c(6:28), key = "Year", value = "Releases") %>%
-  separate(Year, into = c("delete", "Year"), sep = 1) %>%
-  dplyr::select(-delete)
+# chum_hatchery_akNP <- read_excel("data/NPAFC_Hatchery_Stat-1952-2022.xlsx") %>%
+#   janitor::row_to_names(row_number = 1) %>%
+#   data.frame() %>% 
+#   filter(Species == "Chum",
+#          case_when(Country == "United States" ~ Whole.country.Province.State == "Alaska",
+#                    !Country == "United States" ~ Whole.country.Province.State == "Whole country",
+#                    TRUE ~ TRUE)) %>%
+#   dplyr::select(c(1:5, 54:76)) %>%
+#   gather(c(6:28), key = "Year", value = "Releases") %>%
+#   separate(Year, into = c("delete", "Year"), sep = 1) %>%
+#   dplyr::select(-delete)
 
+library(zoo)
 chum_sum_df <- chum_hatchery %>% 
   group_by(Year) %>%
   summarise(sum = sum(Releases)) %>%
-  mutate(id = "N Pacific") %>%
-  mutate(rolling_avg = rollmean(sum, k = 3, align = "right", partial = TRUE))
+  dplyr::mutate(id = "N Pacific",
+                rolling_avg = zoo::rollmean(sum, 
+                                                   k = 3, 
+                                                   align = "right", 
+                                                   partial = TRUE,
+                                                   na.pad = TRUE))
 
+chum_fill <- chum_hatchery %>% 
+  group_by(Year) %>%
+  summarise(sum = sum(Releases)) %>%
+  dplyr::mutate(id = "N Pacific") %>%
+  filter(Year %in% c("2000","2001"))
+
+chum_sum_df[1,4] <- chum_fill[1,2]
+
+chum_sum_df[2,4] <- chum_fill %>%
+                        dplyr::summarise(sum = mean(sum))
 
 ggplot(data = chum_sum_df,
        aes(x=Year, y = sum, group = id)) +

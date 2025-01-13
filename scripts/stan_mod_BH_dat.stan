@@ -96,6 +96,8 @@ transformed parameters {
  vector [nByrs] N_j; // predicted juveniles 
  vector [nByrs] N_j_predicted; // predicted juveniles this goes into the liklihood- gets transformed by estimates of Q
  vector [nByrs] N_e_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
+ // vector [nByrs] N_sp_sum; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
+ 
  vector [nByrs] N_brood_year_return; // sum eggs across ages to then go into the lifecycle section that doesnt use age 
 
  real N_recruit [nRyrs_T,A]; 
@@ -228,8 +230,11 @@ for(t in 1:nByrs){
 catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
 
      for (t in 1:nByrs){ // loop for each brood year 
-         N_e_sum[t] = sum(N_e[t,1:A]);
-                  
+           N_e_sum[t] = sum(N_e[t,1:A]);
+          // N_sp_sum[t] = sum(N_sp[t,1:A]);
+          // 
+          // N_e_sum[t] = N_sp_sum[t] * exp(ricker_alpha - (ricker_beta * N_sp_sum[t])); //sum(N_sp[t+a+2,1:A])));
+   
          kappa_j_survival[t] =  p_1[t]/(1 + ((p_1[t]*N_e_sum[t])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
 
          N_j[t] = kappa_j_survival[t]*N_e_sum[t]; // Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
@@ -256,9 +261,8 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
           //N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2])));
            
           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
-          
-          N_e[t+a+2,a] = N_sp[t+a+2,a] * exp(ricker_alpha - (ricker_beta * N_sp[t+a+2,a])); //sum(N_sp[t+a+2,1:A])));
-   
+           
+          N_e[t+a+2,a] = Ps*(N_sp[t+a+2,a] * exp(ricker_alpha - (ricker_beta * N_sp[t+a+2,a]))); //sum(N_sp[t+a+2,1:A])));
           // N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; 
             }
      }
@@ -286,7 +290,7 @@ model {
    log_catch_q ~ normal(-5,1);
    
   log_ricker_alpha ~ normal(0, 1);   # for spawner egg link
-  log_ricker_beta ~ normal(-20, 1);    # for spawner egg link
+  log_ricker_beta ~ normal(-15, 1);    # for spawner egg link
   
   
    // log_c_1 ~  log(uniform(1000, 1000000)); // carrying capacity prior - stage 1

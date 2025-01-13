@@ -180,7 +180,7 @@ ggplot(data = summ_n_sp) +
   ggtitle("Spawners: obs and predicted")+
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
   theme_classic()
-# 
+ 
 ## recruit ==========
 # pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
 #                      probs = c(0.1, 0.9))$summary %>%
