@@ -250,15 +250,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         for (a in 1:A) { 
            N_recruit[t+a+2,a] = (N_brood_year_return[t]*p[t,a]);//*exp(-(sum(M[1:a]))); //exp(-(kappa_marine_mortality[t])) #add age specific mortality, 
            
-          // N_first_winter[t+a+1,a] =  N_j[t]*p[t+a+1,a]; // add age structure, p is proportion per age class
-
-          // N_recruit[t+a+1,a] = N_first_winter[t+a+1,a]*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality,
-          
-           // N_recruit[t+a+1,a] = (N_j[t]*p[t,a])*exp(-(sum(M[1:a]) + kappa_marine_mortality[t])); // add age specific mortality, 
-           // N_recruit[t+a,a] = (N_j[t]*p[t,a])*exp(-(kappa_marine_mortality[t])); // add age specific mortality, 
-        
-          N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
-          //N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2])));
+           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
            
           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
            
@@ -290,7 +282,7 @@ model {
    log_catch_q ~ normal(-5,1);
    
   log_ricker_alpha ~ normal(0, 1);   # for spawner egg link
-  log_ricker_beta ~ normal(-15, 1);    # for spawner egg link
+  log_ricker_beta ~ normal(-10, 1);    # for spawner egg link
   
   
    // log_c_1 ~  log(uniform(1000, 1000000)); // carrying capacity prior - stage 1
@@ -300,17 +292,39 @@ model {
    // log_c_2 ~  normal(0, 10); // carrying capacity prior - stage 2
 
 pi ~ beta(1,1); 
- 
+//  
+// theta1[1] ~ normal(0,0.1);
+// theta1[2] ~ normal(0,0.2);
+// theta1[3] ~ normal(0,0.1);
+// theta1[4] ~ normal(0.14,0.1);
+//  
+//  theta2[1] ~ normal(-0.05,0.2);
+//  theta2[2] ~ normal(-0.1,0.1);
+//  theta2[3] ~ normal(0,0.1);
+//  theta2[4] ~ normal(0.3,0.1);
+
+// 
 theta1[1] ~ normal(0,0.1);
-theta1[2] ~ normal(0,0.2);
+theta1[2] ~ normal(0,0.1);
 theta1[3] ~ normal(0,0.1);
 theta1[4] ~ normal(0.14,0.1);
- 
- theta2[1] ~ normal(-0.05,0.2);
+
+ theta2[1] ~ normal(-0.05,0.1);
  theta2[2] ~ normal(-0.1,0.1);
  theta2[3] ~ normal(0,0.1);
  theta2[4] ~ normal(0.3,0.1);
-  
+
+// 
+// theta1[1] ~ normal(0,0.1);
+// theta1[2] ~ normal(0,0.1);
+// theta1[3] ~ normal(0,0.1);
+// theta1[4] ~ normal(0,0.1);
+// 
+//  theta2[1] ~ normal(0,0.1);
+//  theta2[2] ~ normal(0,0.1);
+//  theta2[3] ~ normal(0,0.1);
+//  theta2[4] ~ normal(0,0.1);
+
   D_scale ~ beta(1,1); // mean survivial stage 2C
 
   basal_p_1 ~ beta(1,1); // mean survival stage 1
@@ -339,10 +353,10 @@ log_F_mean ~ normal(0,0.1);
 
  for(t in 1:t_start){
    for(a in 1:A){ 
-    N_sp_start_log[t,a] ~ normal(5,5);
+    N_sp_start_log[t,a] ~ normal(2,5);
     N_recruit_start_log[t,a] ~  normal(5,5);
-    N_catch_start_log[t,a] ~ normal(5,5);
-    N_egg_start_log[t,a] ~  normal(10,5);
+    N_catch_start_log[t,a] ~ normal(2,5);
+    N_egg_start_log[t,a] ~  normal(8,5);
   }
  }    
    

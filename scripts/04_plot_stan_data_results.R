@@ -171,8 +171,7 @@ summ_n_sp <- pred_N_SP %>%
             sd = mean(sd)) %>%
   left_join(data.frame(cal_year = c(data_list_stan$years_data_sp),
                        obs = c(data_list_stan$data_stage_sp))) %>%
-  dplyr::mutate(rowname = "sp")  # %>%
-#  filter(!cal_year <2010)
+  dplyr::mutate(rowname = "sp")  
 
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=cal_year, y = obs)) +
@@ -328,7 +327,7 @@ ggplot(data= age_comp_Q) +
   theme_classic() + 
   ylab("Proportion")
   
-# align all stages on one plot to look at scale. =====
+# align all stages on one plot to look at scale =====
 # summ_n_eggs <- summary(bh_fit, pars = c("N_e_sum"), 
 #                            probs = c(0.1, 0.9))$summary %>%
 #   data.frame() %>%
@@ -617,7 +616,8 @@ ggplot(data = kappasurvival,
   geom_line( ) +
   geom_ribbon(aes(x=cal_year, ymin = mean-se_mean,
                   ymax = mean+se_mean), alpha = 0.5) + 
-  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022))
+  scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
+  scale_y_continuous(limits = c(0,1))
 
 ggplot(data = kappasurvival, 
        aes(x=cal_year, y = mean, group = variable ,color = variable)) + 
@@ -656,57 +656,15 @@ ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = vari
 ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5)
+                  ymax = mean+se_mean), alpha = 0.5)+
+  scale_y_continuous(limits = c(0,1))
 
                     productivity %>%
                               group_by(variable) %>% 
                               dplyr::mutate(mean = as.numeric(scale(mean))) %>% 
                             ggplot(aes(x=time, y = mean, group = variable ,color = variable)) +
-                            geom_line( ) #+
-                            # geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                            #                 ymax = mean+se_mean), 
-                            #             alpha = 0.5)
-
-
-# calculate correlation in productivity ...
-# productivity_split <- productivity %>% 
-#   dplyr::select(time, variable,mean) %>% 
-#   spread(variable, mean)
-# 
-# cor.test(productivity_split$p_1,productivity_split$p_2)
-# 
-# # calculate rolling correlation in productivity....
-# # make a list of 5 year chunks .... 
-# # could also look at warm vs cold year productivity 
-# n <- 5
-# productivity_group <- productivity %>% 
-#   select(time, variable,mean) %>% 
-#   spread(variable, mean) %>% 
-#    filter(!time %in% c(23,1,2)) %>% 
-#   mutate(id = rep(1:n, times=1, each=4)) 
-#  
-# corr <- list()
-# 
-# for (i in 1:n) {
-#   temp <- productivity_group %>% 
-#     filter(id == i)
-#   
-#   corr[[i]]<- cor.test(temp$p_1,temp$p_2)
-#   
-# }
-# 
-# corr
-
-
-# productivity_late <- productivity %>% 
-#   select(time, variable,mean) %>% 
-#   spread(variable, mean) %>% 
-#   filter(time>9)
-# 
-# cor.test(productivity_early$p_1,productivity_early$p_2)
-# cor.test(productivity_late$p_1,productivity_late$p_2)
-
-
+                            geom_line( )  
+                           
 # plot sigma  ======
 sigma <- summary(bh_fit, pars = c(
                                   "sigma_catch",

@@ -50,10 +50,11 @@ write_csv(stage_a_cov, "data/processed_covariates/stage_a_all.csv")
   
 # Stage B - Load data ============= 
 fullness_df<-readRDS("data/processed_covariates/fullness_cov.RDS") %>%
-  dplyr::rename(Year = "year_addone",
-                full_index = "pred") %>%
-  dplyr::select(Year, full_index ) %>%
-  dplyr::mutate(full_index=as.numeric(full_index))
+  dplyr::rename(Year = "brood_year",
+                # full_index = "pred"
+                ) %>%
+  dplyr::select(Year, full_index_scale ) %>%
+  dplyr::mutate(full_index_scale=as.numeric(full_index_scale))
 
 hatchery_chum_df<-read_csv("data/hatchery_Chum_Covariate_AKandAsia.csv") 
 hatchery_chum_b<-hatchery_chum_df %>%

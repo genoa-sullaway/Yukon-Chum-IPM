@@ -39,7 +39,7 @@ ggplot(data = fullness_df)+
 full_mod <- mgcv::gam(fullness ~ SampleYear_factor + s(Lat,Lon), weights = Number_of_Stomachs,
                       data = fullness_df, family = tw(link="log"))
 
-summary(full_mod)
+# summary(full_mod)
 
 # predict ===============
 pred_df = data.frame(expand_grid(SampleYear_factor = unique(fullness_df$SampleYear_factor),
@@ -71,7 +71,6 @@ mean_df <- fullness_df %>%
 
  ggplot(data =  temp, aes(x=SampleYear, y =pred)) +
   geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci),alpha = 0.5 ) +
-  geom_point(data = mean_df, aes(x=SampleYear, y =mean))+
   geom_point() +
   geom_line() +
   theme_classic() + 
@@ -79,42 +78,50 @@ mean_df <- fullness_df %>%
   ylab("Predicted Fullness")   
 
  year = data.frame(SampleYear = c(seq(from = 2002, to = 2023, by =1)))
+ 
+temp_scale <- temp %>%
+  dplyr::mutate(full_index_scale = as.numeric(scale(pred))) %>%  
+  right_join(year) %>%
+  dplyr::mutate(brood_year = SampleYear+1,
+                full_index_scale = replace_na(full_index_scale, 0)) %>%
+  dplyr::select(brood_year,full_index_scale) %>%
+  dplyr::arrange(brood_year)
 
- test <- left_join(year,temp)
+# temp_scale$full_index_scale[is.na(temp_scale$full_index_scale)] <- 0
  
- # add in rolling means for blank years??
- 
- # 2002,2008, 2014, 2020,2022
- y2002<- test %>% 
-   filter(SampleYear %in% c(2003,2004,2005 )) %>%
-   dplyr::summarise(mean = mean(pred))
- 
- y2008<- test %>% 
-   filter(SampleYear %in% c(2007,2009,2010)) %>%
-   dplyr::summarise(mean = mean(pred))
- 
- y2014<- test %>% 
-   filter(SampleYear %in% c(2013,2015,2016)) %>%
-   dplyr::summarise(mean = mean(pred))
- 
- y2020<- test %>% 
-   filter(SampleYear %in% c(2021,2018,2019)) %>%
-   dplyr::summarise(mean = mean(pred))
+ # add in zero for blank years??
+  
+ # # 2002,2008, 2014, 2020,2022
+ # y2002<- test %>% 
+ #   filter(SampleYear %in% c(2003,2004,2005 )) %>%
+ #   dplyr::summarise(mean = mean(pred))
+ # 
+ # y2008<- test %>% 
+ #   filter(SampleYear %in% c(2007,2009,2010)) %>%
+ #   dplyr::summarise(mean = mean(pred))
+ # 
+ # y2014<- test %>% 
+ #   filter(SampleYear %in% c(2013,2015,2016)) %>%
+ #   dplyr::summarise(mean = mean(pred))
+ # 
+ # y2020<- test %>% 
+ #   filter(SampleYear %in% c(2021,2018,2019)) %>%
+ #   dplyr::summarise(mean = mean(pred))
+ # 
+ # y2022<- test %>% 
+ #   filter(SampleYear %in% c(2023,2021, 2019)) %>%
+ #   dplyr::summarise(mean = mean(pred))
+ # 
+ # temp_full <- test %>%
+ #   dplyr::mutate(pred = case_when(SampleYear ==2002 ~ y2002[1,1],
+ #                                  SampleYear ==2008 ~ y2008[1,1],
+ #                                  SampleYear ==2014 ~ y2014[1,1],
+ #                                  SampleYear ==2020 ~ y2020[1,1],
+ #                                  SampleYear ==2022 ~ y2022[1,1],
+ #                                  TRUE ~ pred)) %>%
+ #   dplyr::mutate(year_addone = SampleYear+1) # must add one so that they can all be -2 for cov b...
 
- y2022<- test %>% 
-   filter(SampleYear %in% c(2023,2021, 2019)) %>%
-   dplyr::summarise(mean = mean(pred))
- 
- temp_full <- test %>%
-   dplyr::mutate(pred = case_when(SampleYear ==2002 ~ y2002[1,1],
-                                  SampleYear ==2008 ~ y2008[1,1],
-                                  SampleYear ==2014 ~ y2014[1,1],
-                                  SampleYear ==2020 ~ y2020[1,1],
-                                  SampleYear ==2022 ~ y2022[1,1],
-                                  TRUE ~ pred)) %>%
-   dplyr::mutate(year_addone = SampleYear+1) # must add one so that they can all be -2 for cov b... 
- 
- ggplot(data =  temp_full, aes(x=SampleYear, y =pred)) +
+ ggplot(data =  test, aes(x=SampleYear, y =pred)) +
    geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci),width = 0.1 ) +
    geom_point() +
    geom_line() +
@@ -125,7 +132,7 @@ mean_df <- fullness_df %>%
 # save factor year fullness index
  # write_csv(temp, "data/processed_covariates/fullness_cov.csv")
 
- saveRDS(temp_full, "data/processed_covariates/fullness_cov.RDS")
+ saveRDS(temp_scale, "data/processed_covariates/fullness_cov.RDS")
  
  
 # mod with year smooth =====

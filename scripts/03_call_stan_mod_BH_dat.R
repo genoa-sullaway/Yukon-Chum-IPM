@@ -140,14 +140,16 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
  
 # the temp in 2001 is gonna effect fish from brood year 1999
 stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-  dplyr::rename(cal_year = Year) %>% 
+  dplyr::rename(cal_year = Year,
+                full_index=full_index_scale) %>% 
   dplyr::mutate(brood_year = cal_year-2) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>% 
   dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                  Chum_hatchery= as.numeric(scale(Chum_hatchery)),
                  Pink_hatchery= as.numeric(scale(Pink_hatchery)),
-                 full_index = as.numeric(scale(full_index))) %>% 
+                 # full_index = as.numeric(scale(full_index))
+                 ) %>%
   dplyr::select(SST_CDD_Aleut,
                 Chum_hatchery,
                 Pink_hatchery,
