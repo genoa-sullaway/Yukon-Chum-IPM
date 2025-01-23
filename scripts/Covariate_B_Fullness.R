@@ -21,10 +21,8 @@ fullness_df <- Fullness %>%
 
 mean(fullness_df$Lat)
 mean(fullness_df$Lon)
-unique(fullness_df$GearCode)
-
-ggplot(data = fullness_df, aes(x=SampleYear, y = GearCode)) +
-  geom_point()
+unique(fullness_df$SampleYear_factor)
+ 
 
 
 
@@ -82,102 +80,19 @@ mean_df <- fullness_df %>%
 temp_scale <- temp %>%
   dplyr::mutate(full_index_scale = as.numeric(scale(pred))) %>%  
   right_join(year) %>%
-  dplyr::mutate(brood_year = SampleYear+1,
+  dplyr::mutate(SampleYear_add1 = SampleYear+1, # only have +1 here so that all can get a -3 for brood year  
                 full_index_scale = replace_na(full_index_scale, 0)) %>%
-  dplyr::select(brood_year,full_index_scale) %>%
-  dplyr::arrange(brood_year)
-
-# temp_scale$full_index_scale[is.na(temp_scale$full_index_scale)] <- 0
+  dplyr::select(SampleYear_add1,full_index_scale) %>%
+  dplyr::arrange(SampleYear_add1)
  
- # add in zero for blank years??
+ # ggplot(data =  temp_scale, aes(x=SampleYear_add1, y =pred)) +
+ #   geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci),width = 0.1 ) +
+ #   geom_point() +
+ #   geom_line() +
+ #   theme_classic() + 
+ #   xlab(" ") + 
+ #   ylab("Predicted Fullness")   
   
- # # 2002,2008, 2014, 2020,2022
- # y2002<- test %>% 
- #   filter(SampleYear %in% c(2003,2004,2005 )) %>%
- #   dplyr::summarise(mean = mean(pred))
- # 
- # y2008<- test %>% 
- #   filter(SampleYear %in% c(2007,2009,2010)) %>%
- #   dplyr::summarise(mean = mean(pred))
- # 
- # y2014<- test %>% 
- #   filter(SampleYear %in% c(2013,2015,2016)) %>%
- #   dplyr::summarise(mean = mean(pred))
- # 
- # y2020<- test %>% 
- #   filter(SampleYear %in% c(2021,2018,2019)) %>%
- #   dplyr::summarise(mean = mean(pred))
- # 
- # y2022<- test %>% 
- #   filter(SampleYear %in% c(2023,2021, 2019)) %>%
- #   dplyr::summarise(mean = mean(pred))
- # 
- # temp_full <- test %>%
- #   dplyr::mutate(pred = case_when(SampleYear ==2002 ~ y2002[1,1],
- #                                  SampleYear ==2008 ~ y2008[1,1],
- #                                  SampleYear ==2014 ~ y2014[1,1],
- #                                  SampleYear ==2020 ~ y2020[1,1],
- #                                  SampleYear ==2022 ~ y2022[1,1],
- #                                  TRUE ~ pred)) %>%
- #   dplyr::mutate(year_addone = SampleYear+1) # must add one so that they can all be -2 for cov b...
-
- ggplot(data =  test, aes(x=SampleYear, y =pred)) +
-   geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci),width = 0.1 ) +
-   geom_point() +
-   geom_line() +
-   theme_classic() + 
-   xlab(" ") + 
-   ylab("Predicted Fullness")   
- 
-# save factor year fullness index
- # write_csv(temp, "data/processed_covariates/fullness_cov.csv")
-
  saveRDS(temp_scale, "data/processed_covariates/fullness_cov.RDS")
  
- 
-# mod with year smooth =====
-#  
-# smooth_mod <- mgcv::gam(fullness ~ s(SampleYear) + s(Lat,Lon) + GearCode, weights = Number_of_Stomachs,
-#                        data = fullness_df, family = tw(link="log"))
-#  
-#  
-#  pred_df = data.frame(expand_grid(  
-#    SampleYear  = unique(fullness_df$SampleYear),
-#    Lat=mean(fullness_df$Lat),
-#    Lon=mean(fullness_df$Lon),
-#    GearCode = "300400"))
-#  
-#  # aug_temp=unique(zoop_df$aug_temp))) %>% 
-#  # left_join(temperatures )
-#  
-#  
-#  temp <- predict(smooth_mod,pred_df, se.fit = T,type = "response" )
-#  
-#  pred_df$pred<-  (temp[[1]]) 
-#  
-#  pred_df$se<-   (temp[[2]]) 
-#  
-#  temp <- pred_df %>% 
-#    # group_by(CPUE_stickleback) %>% 
-#    # dplyr::summarise(se = sd(pred)/sqrt(length(pred)),
-#    #                  pred = mean(pred)) %>% 
-#    dplyr::mutate(
-#      lower_ci =  (pred - (1.96*(se))),
-#      upper_ci =  (pred + (1.96*(se))),
-#      pred =  (pred)
-#    )   
-#  
-#  ggplot(data =  temp, aes(x=SampleYear, y =pred)) +
-#    geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci),alpha = 0.5 ) +
-#    geom_point() +
-#    geom_line() +
-#    theme_classic() + 
-#    xlab(" ") + 
-#    ylab("Predicted Fullness")   
-#  
-#  
-#  
-#  
-#  
-#  
-#  
+  

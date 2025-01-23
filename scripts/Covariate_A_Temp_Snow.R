@@ -4,6 +4,7 @@ library(here)
 library(purrr)
 library(readr)
 
+# downloaded here : https://akclimate.org/data/data-portal/ 
 
 # this is for snow depth ============
 # List all CSV files in the snow_depth folder
@@ -99,19 +100,19 @@ combined_data_temp <- files %>%
   filter(!year <1950)
 
 # combine both =====
-data <- left_join(combined_data_snow, combined_data_temp) %>%
+combined_dat <- left_join(combined_data_snow, combined_data_temp) 
+  
+ 
+data_plot <- combined_dat %>% 
   group_by(month) %>%
   dplyr::mutate(max_snow_depth_in = as.numeric(scale(max_snow_depth_in)),
-               min_temperature = as.numeric(scale(min_temperature)),
-               mean_temperature= as.numeric(scale(mean_temperature)))
-
-
-data_plot <- data %>%
-  gather(3:5, key = "id", value = "value")
+                min_temperature = as.numeric(scale(min_temperature)),
+                mean_temperature= as.numeric(scale(mean_temperature))) %>% 
+  gather(3:5, key = "id", value = "value") 
 
 ggplot(data = data_plot, aes(x=year, y =value, color = id, group =id)) +
   geom_path() +
   facet_wrap(~month)
 
 # Optionally save the combined dataset
-readr::write_csv(combined_data, "data/Fairbanks_airport_covariates/combined_temp_fairbanks.csv")
+readr::write_csv(combined_dat, "data/Fairbanks_airport_covariates/combined_temp_fairbanks.csv")

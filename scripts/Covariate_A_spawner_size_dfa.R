@@ -5,8 +5,7 @@ library(tidyverse)
 ## load older data already compiled by oke et al  ==================
 asl_dat <-read.csv("data/ASL_summary_byFWSWage.csv") %>%
   filter(Species == "chum",
-         !sampleYear < 1980,
-         # ASLProjectType %in% c("commercial catch", "escapement"),
+         !sampleYear < 1980, 
          SASAP.Region %in% c("Yukon"), 
          !Fresh.Water.Age == "NA", 
          !is.na(Fresh.Water.Age),
