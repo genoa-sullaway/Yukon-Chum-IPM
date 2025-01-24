@@ -44,7 +44,7 @@ traceplot(bh_fit,pars=  c("pi"))
 traceplot(bh_fit,pars=  c("basal_p_1", "basal_p_2"))
  
 # parameter plots ======== 
-plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
+plot(bh_fit, show_density = TRUE, ci_level = 0.5, 
      pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]","theta1[5]","theta1[6]", 
                "theta2[1]","theta2[2]","theta2[3]","theta2[4]" 
      ),
