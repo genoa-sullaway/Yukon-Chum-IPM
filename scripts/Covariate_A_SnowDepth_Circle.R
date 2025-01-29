@@ -1,0 +1,11 @@
+# Load required libraries
+library(tidyverse)
+library(here)
+library(purrr)
+library(readr)
+ 
+circle_snow <- readxl::read_xlsx("data/Circle_Snow_Depth.xlsx") %>%
+   separate(Date, into = c("year", "month"), sep = "-") %>% 
+   filter(month %in% c(10,11,12))
+
+write_csv(circle_snow, "data/circle_snow_processed.csv")

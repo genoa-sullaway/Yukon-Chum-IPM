@@ -275,7 +275,7 @@ for(t in 1:nByrs){
 model {
 
    log_sigma_sp ~ normal(0,1);
-   log_sigma_catch ~ normal(0,1);
+   log_sigma_catch ~ normal(0,0.01);
    log_sigma_y_j ~ normal(0,0.1);
    log_sigma_return ~ normal(0,1);
    
@@ -293,29 +293,29 @@ model {
 
 pi ~ beta(1,1); 
 
-// theta1[1] ~ normal(0,0.1);
-// theta1[2] ~ normal(0,0.1);
-// theta1[3] ~ normal(0,0.1);
-// theta1[4] ~ normal(0.14,0.1);
-// theta1[5] ~ normal(0,0.1);
+theta1[1] ~ normal(0,0.1);
+theta1[2] ~ normal(0,0.15);
+theta1[3] ~ normal(0,0.1);
+theta1[4] ~ normal(0.15,0.11);
+theta1[5] ~ normal(0.08,0.1);
 // theta1[6] ~ normal(0.03,0.1);
-// 
-//  theta2[1] ~ normal(-0.05,0.1);
-//  theta2[2] ~ normal(-0.1,0.1);
-//  theta2[3] ~ normal(0,0.1);
-//  theta2[4] ~ normal(0.3,0.1);
 
-  theta1[1] ~ normal(0,0.1);
-  theta1[2] ~ normal(0,0.1);
-  theta1[3] ~ normal(0,0.1);
-  theta1[4] ~ normal(0,0.1);
-  theta1[5] ~ normal(0,0.1);
-  theta1[6] ~ normal(0,0.1);
+ theta2[1] ~ normal(-0.02,0.1);
+ theta2[2] ~ normal(-0.1,0.1);
+ theta2[3] ~ normal(0,0.11);
+ theta2[4] ~ normal(0.2,0.1);
 
-  theta2[1] ~ normal(0,0.1);
-  theta2[2] ~ normal(0,0.1);
-  theta2[3] ~ normal(0,0.1);
-  theta2[4] ~ normal(0,0.1);
+  // theta1[1] ~ normal(0,0.1);
+  // theta1[2] ~ normal(0,0.1);
+  // theta1[3] ~ normal(0,0.1);
+  // theta1[4] ~ normal(0,0.1);
+  // theta1[5] ~ normal(0,0.1);
+  // // theta1[6] ~ normal(0,0.1);
+  // 
+  // theta2[1] ~ normal(0,0.1);
+  // theta2[2] ~ normal(0,0.1);
+  // theta2[3] ~ normal(0,0.1);
+  // theta2[4] ~ normal(0,0.1);
 
   D_scale ~ beta(1,1); // mean survivial stage 2C
 

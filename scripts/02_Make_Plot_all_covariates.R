@@ -10,17 +10,32 @@ library(here)
 ### Fairbanks airport temp and snow ========
 # Group by year and get cummulative degree and snow days?? 
 # min and mean temp is super correlated (81%) so just focusing on mean and max snow, they are not correlated! -11%
-temperature_snow <- read.csv("data/Fairbanks_airport_covariates/combined_temp_fairbanks.csv")  %>% 
-  group_by(year) %>% 
-  dplyr::summarise(fall_mintemp_CDD = sum(min_temperature),
-                   fall_meantemp_CDD = sum(mean_temperature),
-                   fall_max_snow_depth = sum(max_snow_depth_in)) %>%
-  filter(year > 2000) %>% 
-  dplyr::mutate(fall_mintemp_CDD = as.numeric(scale(fall_mintemp_CDD)),
-                # fall_meantemp_CDD = as.numeric(scale(fall_meantemp_CDD)),
-                fall_max_snow_depth= as.numeric(scale(fall_max_snow_depth)))  %>%
-  dplyr::rename(brood_year = "year") %>%
-  dplyr::select(brood_year,fall_mintemp_CDD,fall_max_snow_depth)  
+# temperature_snow <- read.csv("data/Fairbanks_airport_covariates/combined_temp_fairbanks.csv")  %>% 
+#   group_by(year) %>% 
+#   dplyr::summarise(fall_mintemp_CDD = sum(min_temperature),
+#                    fall_meantemp_CDD = sum(mean_temperature),
+#                    fall_max_snow_depth = sum(max_snow_depth_in)) %>%
+#   filter(year > 2000) %>% 
+#   dplyr::mutate(fall_mintemp_CDD = as.numeric(scale(fall_mintemp_CDD)),
+#                 # fall_meantemp_CDD = as.numeric(scale(fall_meantemp_CDD)),
+#                 fall_max_snow_depth= as.numeric(scale(fall_max_snow_depth)))  %>%
+#   dplyr::rename(brood_year = "year") %>%
+#   dplyr::select(brood_year,fall_mintemp_CDD,fall_max_snow_depth)  
+
+# circle snow ============
+circle_snow <- read.csv("data/circle_snow_processed.csv") %>%
+  dplyr::rename(brood_year = "year") %>% 
+  group_by(brood_year) %>% 
+  dplyr::summarise(fall_snow_cummulative = sum(Monthly.Mean.Snow.Depth..in.))  
+
+                 #                    fall_meantemp_CDD = sum(mean_temperature),
+                 #                    fall_max_snow_depth = sum(max_snow_depth_in)) %>%
+                 #   filter(year > 2000) %>% 
+                 #   dplyr::mutate(fall_mintemp_CDD = as.numeric(scale(fall_mintemp_CDD)),
+                 #                 # fall_meantemp_CDD = as.numeric(scale(fall_meantemp_CDD)),
+                 #                 fall_max_snow_depth= as.numeric(scale(fall_max_snow_depth)))  %>%
+                 #   dplyr::rename(brood_year = "year") %>%
+                 #   dplyr::select(brood_year,fall_mintemp_CDD,fall_max_snow_depth)  
 
 # cor.test(temperature_snow$fall_mintemp_CDD,temperature_snow$fall_meantemp_CDD)
 # cor.test(temperature_snow$fall_mintemp_CDD,temperature_snow$fall_max_snow_depth)
@@ -64,7 +79,7 @@ stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
               left_join(zoop)  %>%
               left_join(pollock) %>%
               left_join(size) %>%
-              left_join(temperature_snow) %>% 
+              left_join(circle_snow) %>% 
   data.frame()
 
 # Stage A - Save DF ============= 

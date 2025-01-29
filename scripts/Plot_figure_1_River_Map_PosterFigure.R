@@ -8,54 +8,11 @@ library(sf)
 library(here)
 library(raster)
 library(concaveman)
+library(akgfmaps)
 
-# get outline for region origin of temperature data ===== 
-# code from: https://github.com/MattCallahan-NOAA/SST-shiny/blob/main/ak-sst-mhw/esr_region_map.R
- # cant install ak marine areas... maybe try again later. 
-devtools::install_github("MattCallahan-NOAA/akmarineareas2")
-library(AKmarineareas)
-library(odbc)
-library(getPass)
-
-#import spatial lookup table from akfin
-
-#establish akfin connection
-#con <- dbConnect(odbc::odbc(), "akfin", UID=getPass(msg="USER NAME"), PWD=getPass())
-
-#download spatial lookup table and save as RDS
-#dbFetch(dbSendQuery(con, paste0("select * from afsc.erddap_crw_sst_spatial_lookup")))%>%
-#  saveRDS("Data/crw_sst_spatial_lookup_06132022.RDS")
-
-#Load Lookup table
-lkp<-readRDS("Data/crw_sst_spatial_lookup_06132022.RDS")%>%
-  mutate(lon2=LONGITUDE, lat2=LATITUDE)%>%
-  st_as_sf(coords = c('lon2', 'lat2'), crs = 4326, agr = 'constant')%>%
-  st_transform(crs=3338)
-#filter BS and GOA between 10 and 200 m
-BS<-lkp%>%filter(ECOSYSTEM %in% c("Gulf of Alaska", "Eastern Bering Sea") & DEPTH< -10 & DEPTH> -200)
-AI<-lkp%>%filter(ECOSYSTEM == "Aleutian Islands")
-
-#download ESR regions (projected)
-ESR<-AK_marine_area(area="Ecosystem Subarea", prj="prj")%>%
-  remove_dateline()
-
-#download basemap
-AK<-AK_basemap()%>%
-  st_transform(crs=3338)
-
-#plot
-png(filename="Figures/esr_map_depth_filters.png", width=1500, height=750)
-ggplot()+
-  geom_sf(data=AI, color="light gray", size=0.5)+
-  geom_sf(data=BS, color="light gray", size=0.5)+
-  geom_sf(data=AK, fill="dark gray")+
-  geom_sf(data=ESR, fill=NA)+
-  coord_sf(crs=3338)+
-  theme_void()
-dev.off()
-
-
-
+# devtools::install_github("afsc-gap-products/akgfmaps", build_vignettes = TRUE)
+ test <- akgfmaps::get_nmfs_areas(set.crs = "auto")
+ plot(test)
 
 # load stomach fullness data to extract NBS survey grid! =========
 fullnessdf <- read_xlsx("data/NBS_JChumFullness.xlsx") %>% 
@@ -277,12 +234,13 @@ fall_plot <- ggplot() +
       "#08306b", "#1c4680", "#305d94", "#4574a7",
       "#5d8cb9", "#77a4cb", "#deebf7", "#deebf7", "#deebf7"), drop = F ) +
   geom_point(data = fall_df, aes(x=Lon, y = Lat), color= "darkgreen", size = 2 ) +
-  geom_point(aes(x= -162.6, y = 61.9), color= "black", size = 2, shape = 17 ) + # pilot station 
+  geom_point(aes(x= -162.4, y = 61.9), color= "purple", size = 2, shape = 17 ) + # pilot station 
   geom_sf(data = russia_box, fill = "white", color = "white") +  
   geom_sf(data = canada_box, fill = "white", color = "white") + 
   # geom_sf(data = lower_box, fill = "white", color = "white") + 
  # geom_sf(data = polygon_NBS, fill = NA, color = "black") + 
   geom_point(data = NBS_survey_grid, aes(x = Lon, y= Lat), size = 1) + 
+  geom_point(aes(x= -144.0657, y= 65.8252), color = "orange", size = 2, shape = 18) + # plot Circle lat long (source of snow data)
    coord_sf(
     crs = crsLONGLAT,
     xlim = c(-173,#bb["xmin"], 
@@ -305,6 +263,7 @@ fall_plot <- ggplot() +
     panel.grid = element_blank(), 
     axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))  
 
+# save manuscript figure ========
 ggsave(
   filename = "output/ak_rivers_fall_weirs.png",
   width = 9, height = 6, dpi = 600,

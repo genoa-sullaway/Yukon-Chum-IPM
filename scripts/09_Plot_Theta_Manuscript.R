@@ -7,20 +7,22 @@ library(bayestestR)
 # load model ==============
 bh_fit <- read_rds("output/stan_fit_DATA.RDS")
  
-theta_df <- as.data.frame(bh_fit, pars = c("theta1[1]", "theta1[2]","theta1[3]","theta1[4]",
+theta_df <- as.data.frame(bh_fit, pars = c("theta1[1]", "theta1[2]","theta1[3]","theta1[4]","theta1[5]",
                                            "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>%
   mutate(draw = 1:nrow(.)) %>%
-  gather(1:8, key = "rowname", value = "value") %>%
+  gather(1:9, key = "rowname", value = "value") %>%
   dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
                                      rowname== "theta1[2]"~ "Yukon River - Mean Flow",
                                      rowname=="theta1[3]" ~ "Pollock Recruitment",
                                      rowname=="theta1[4]" ~ "Mean Spawner Size",
+                                     rowname=="theta1[5]" ~ "Fall Snowpack",   
                                      
                                      rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
                                      rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
                                      rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
                                      rowname=="theta2[4]" ~ "Fullness Index"),
                 variable = factor(variable, levels = rev(c("Mean Spawner Size",
+                                                           "Fall Snowpack",
                                                            "Yukon River - Mean Flow", 
                                                            "NBS July/August Temperature",
                                                            "Pollock Recruitment",
@@ -31,6 +33,7 @@ theta_df <- as.data.frame(bh_fit, pars = c("theta1[1]", "theta1[2]","theta1[3]",
                                                            "Pink Salmon Hatchery Release Abundance"))),
                 stage = case_when(variable %in% c("NBS July/August Temperature",
                                                   "Yukon River - Mean Flow", 
+                                                  "Fall Snowpack",
                                                   "Pollock Recruitment",
                                                   "Mean Spawner Size") ~ "Juvenile",
                                   variable %in% c( "Aleutian Winter Temperature",

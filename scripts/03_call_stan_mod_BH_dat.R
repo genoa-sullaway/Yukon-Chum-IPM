@@ -127,14 +127,15 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
          filter(brood_year >= year_min, 
                 brood_year <= year_max_brood) %>%
   dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
-                pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
+                yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+                fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+                pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
   dplyr::select(SST_CDD_NBS, 
                  yukon_mean_discharge,
                  pollock_recruit_scale,
                 mean_size, # was already mean scaled because of the averaging across ages
-                fall_mintemp_CDD,
-                fall_max_snow_depth) %>% 
+                # fall_mintemp_CDD,
+                fall_snow_cummulative) %>% 
   as.matrix() 
 
 # the temp in 2001 is gonna effect fish from brood year 1999

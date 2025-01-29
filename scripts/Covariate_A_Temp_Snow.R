@@ -46,8 +46,9 @@ read_snow_data <- function(file) {
 combined_data_snow <- files %>%
   purrr::map_df(read_snow_data) %>%  # Apply the function to all files
   dplyr::arrange(year, month) %>% # Sort by year and month
-  dplyr::mutate(year = case_when(month == 1 ~ year -1,
-                                  TRUE ~ year)) %>%
+  filter(!month ==1) %>% 
+  # dplyr::mutate(year = case_when(month == 1 ~ year -1,
+  #                                 TRUE ~ year)) %>%
   filter(!year <1950)
  
 
@@ -95,14 +96,14 @@ read_temp_data <- function(file) {
 combined_data_temp <- files %>%
   purrr::map_df(read_temp_data) %>%  # Apply the function to all files
   dplyr::arrange(year, month) %>% # Sort by year and month
-  dplyr::mutate(year = case_when(month == 1 ~ year -1,
-                                 TRUE ~ year)) %>%
+  filter(!month ==1) %>% 
+   # dplyr::mutate(year = case_when(month == 1 ~ year -1,
+   #                               TRUE ~ year)) %>%
   filter(!year <1950)
 
 # combine both =====
 combined_dat <- left_join(combined_data_snow, combined_data_temp) 
   
- 
 data_plot <- combined_dat %>% 
   group_by(month) %>%
   dplyr::mutate(max_snow_depth_in = as.numeric(scale(max_snow_depth_in)),
