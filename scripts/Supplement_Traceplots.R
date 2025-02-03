@@ -11,6 +11,7 @@ library(cowplot)
 library(tidyverse)
 
 fit<- read_rds("output/stan_fit_DATA.RDS")
+
 posterior_samples <- as.matrix(fit)
 any(is.na(posterior_samples))
 clean_posterior <- posterior_samples[, colSums(is.na(posterior_samples)) == 0]

@@ -3,7 +3,7 @@ library(tidyverse)
 library(here)
 library(purrr)
 library(readr)
- 
+# source: https://akclimate.org/data/time-series-data/
 circle_snow <- readxl::read_xlsx("data/Circle_Snow_Depth.xlsx") %>%
    separate(Date, into = c("year", "month"), sep = "-") %>% 
    filter(month %in% c(10,11,12))

@@ -43,12 +43,12 @@ summary_df <- rbind(
     prior = "Normal(0,1)"
   ),
   ### sigma return =======
-  # create_parameter_summary(
-  #   fit = fit,
-  #   parameter_name = "log_sigma_return",
-  #   notation = "$N_0$",
-  #   prior = "Normal(0,1)"
-  # ),
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_sigma_return",
+    notation = "$N_0$",
+    prior = "Normal(0,1)"
+  ),
   
   ### sigma catch =======
   create_parameter_summary(
@@ -59,12 +59,12 @@ summary_df <- rbind(
   ),
   #  
   # ### sigma juv =======
-  # create_parameter_summary(
-  #   fit = fit,
-  #   parameter_name = "log_sigma_y_j",
-  #   notation = "$\\sigma_p$",
-  #   prior = "Normal(0,1)"
-  # ),
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_sigma_y_j",
+    notation = "$\\sigma_p$",
+    prior = "Normal(0,1)"
+  ),
   
   ### basal survival 1 =======
   create_parameter_summary(
@@ -212,7 +212,7 @@ summary_df <- rbind(
 # Add parameter grouping
 summary_df$Group <- c(
                       "Observation Error", "Observation Error",
-                      # "Observation Error", "Observation Error",
+                      "Observation Error", "Observation Error",
                       "Basal Productivity - Juvenile",  "Basal Productivity - Marine",
                       "Covariate Coefficient- Juvenile", "Covariate Coefficient- Juvenile", 
                       "Covariate Coefficient- Juvenile", "Covariate Coefficient- Juvenile", 
@@ -249,7 +249,8 @@ table <- summary_df %>%
   # )
 
 # Print table
-#  print(table)
+
+print(table)
  
 
 # save ========

@@ -61,12 +61,12 @@ real <lower =0> N_egg_start_log[t_start,A];
  // real  log_c_2; // log carrying capacity
  // real <lower =10> log_c_1;
  // real <lower =10> log_c_2; // log carrying capacity
- // 
-real log_sigma_sp; 
-real log_sigma_catch; 
-real log_sigma_y_j;
-real log_sigma_return;
-// real <lower =0> sigma_brood_return; 
+  
+real<lower =0> log_sigma_sp; 
+real<lower =0> log_sigma_catch; 
+real<lower =0> log_sigma_y_j;
+real<lower =0> log_sigma_return;
+  // real <lower =0> sigma_brood_return; 
  
 // covariate parameters 
 real <lower =-1, upper = 1> theta1 [ncovars1]; // covariate estimated for each covariate and each population
@@ -111,11 +111,11 @@ real N_catch_start [t_start,A];
 real N_egg_start[t_start,A];
 real N_brood_year_return_start; 
 real N_j_start;
-
-real<lower=0> sigma_catch;
-real<lower=0> sigma_sp; 
-real<lower=0> sigma_juv;
-real<lower=0> sigma_rec;
+// 
+// real<lower=0> sigma_catch;
+// real<lower=0> sigma_sp; 
+// real<lower=0> sigma_juv;
+// real<lower=0> sigma_rec;
  
 vector <lower = 0> [nRyrs_T] F;
  vector <lower = 0> [A] S; //selectivty
@@ -140,7 +140,6 @@ matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix  [nRyrs,A] q; 
-//<lower=0, upper=1>
 
 // ricker params ========
 real ricker_beta;
@@ -149,6 +148,17 @@ real ricker_alpha;
 ricker_beta = exp(log_ricker_beta);
 ricker_alpha = exp(log_ricker_alpha);
 
+// sum likelihoods ======= 
+  //    vector [nRyrs_T] N_catch_sum ;
+  //    matrix[nRyrs_T, 1] N_catch_sum;
+  //    matrix[nRyrs_T, 1] N_sp_sum;
+  //    vector [nRyrs_T] N_sp_sum  ;
+  // 
+  //   for (t in 1:nRyrs_T) {
+  //     N_catch_sum[t,1] = sum(N_catch[t,1:A]);
+  //     N_sp_sum[t,1] = sum(N_sp[t,1:A]);
+  //   }
+  
   S = exp(log_S);
  
   for(t in 1:nRyrs_T){
@@ -156,11 +166,11 @@ ricker_alpha = exp(log_ricker_alpha);
   F[t]  = exp(log_F_mean + log_F_dev_y[t]);
  }
  
- sigma_catch = exp(log_sigma_catch);
- sigma_sp = exp(log_sigma_sp); 
- sigma_juv = exp(log_sigma_y_j);
- sigma_rec = exp(log_sigma_return);
- // 
+ // sigma_catch = exp(log_sigma_catch);
+ //  sigma_sp = exp(log_sigma_sp); 
+ // sigma_juv = exp(log_sigma_y_j);
+ // sigma_rec = exp(log_sigma_return);
+ 
 //   for(t in 1:nRyrs_T){//
 //   // instant fishing mortality
 //   F[t] = exp(log_F[t]);
@@ -189,7 +199,6 @@ for(t in 1:t_start){
   N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
      }
   
-
 // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
   for(t in 1:nByrs){
    for (c in 1:ncovars1) {
@@ -274,22 +283,16 @@ for(t in 1:nByrs){
 
 model {
 
-   log_sigma_sp ~ normal(0,1);
-   log_sigma_catch ~ normal(0,0.01);
-   log_sigma_y_j ~ normal(0,0.1);
-   log_sigma_return ~ normal(0,1);
+   log_sigma_sp ~ lognormal(0,2);
+   log_sigma_catch ~ lognormal(0,2);
+   log_sigma_y_j ~ lognormal(0,2);
+   log_sigma_return ~ lognormal(0,2);
    
    log_catch_q ~ normal(-5,1);
    
   log_ricker_alpha ~ normal(0, 1);   # for spawner egg link
   log_ricker_beta ~ normal(-10, 1);    # for spawner egg link
   
-  
-   // log_c_1 ~  log(uniform(1000, 1000000)); // carrying capacity prior - stage 1
-   // log_c_2 ~  log(uniform(1000, 1000000)); 
-  
-   // log_c_1 ~  normal(0, 10); // carrying capacity prior - stage 1
-   // log_c_2 ~  normal(0, 10); // carrying capacity prior - stage 2
 
 pi ~ beta(1,1); 
 
@@ -297,25 +300,24 @@ theta1[1] ~ normal(0,0.1);
 theta1[2] ~ normal(0,0.15);
 theta1[3] ~ normal(0,0.1);
 theta1[4] ~ normal(0.15,0.11);
-theta1[5] ~ normal(0.08,0.1);
-// theta1[6] ~ normal(0.03,0.1);
+theta1[5] ~ normal(0.08,0.1); 
 
  theta2[1] ~ normal(-0.02,0.1);
  theta2[2] ~ normal(-0.1,0.1);
  theta2[3] ~ normal(0,0.11);
  theta2[4] ~ normal(0.2,0.1);
-
-  // theta1[1] ~ normal(0,0.1);
-  // theta1[2] ~ normal(0,0.1);
-  // theta1[3] ~ normal(0,0.1);
-  // theta1[4] ~ normal(0,0.1);
-  // theta1[5] ~ normal(0,0.1);
-  // // theta1[6] ~ normal(0,0.1);
-  // 
-  // theta2[1] ~ normal(0,0.1);
-  // theta2[2] ~ normal(0,0.1);
-  // theta2[3] ~ normal(0,0.1);
-  // theta2[4] ~ normal(0,0.1);
+// 
+//   theta1[1] ~ normal(0,1);
+//   theta1[2] ~ normal(0,1);
+//   theta1[3] ~ normal(0,1);
+//   theta1[4] ~ normal(0,1);
+//   theta1[5] ~ normal(0,1);
+//   // theta1[6] ~ normal(0,0.1);
+// 
+//   theta2[1] ~ normal(0,1);
+//   theta2[2] ~ normal(0,1);
+//   theta2[3] ~ normal(0,1);
+//   theta2[4] ~ normal(0,1);
 
   D_scale ~ beta(1,1); // mean survivial stage 2C
 
@@ -354,87 +356,87 @@ log_F_mean ~ normal(0,0.1);
    
  // Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sigma_juv); //sqrt(log((0.1^2) + 1))); //sigma_juv); //sqrt(log((0.01^2) + 1))); 
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), log_sigma_y_j); //sqrt(log((0.1^2) + 1))); //sigma_juv); //sqrt(log((0.01^2) + 1))); 
   }
     for (t in 1:nByrs_return_dat) {
  // recruit by brood year 
-     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sigma_rec); // sqrt(log((0.05^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
+     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), log_sigma_return); //sqrt(log((0.25^2) + 1)));//log_sigma_return); // sqrt(log((0.05^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
     } 
 
   for(t in 1:nRyrs){ // calendar years 
      target +=  ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
      
-     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sigma_catch);//sqrt(log((0.07^2) + 1)));  //sigma_catch) ; 
-     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sigma_sp); //sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
+     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), log_sigma_catch); // sqrt(log((0.25^2) + 1)));  //log_sigma_catch);//) ; 
+     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), log_sigma_sp);// sqrt(log((0.25^2) + 1)));//log_sigma_sp); // sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
     }
   }
-  
-generated quantities{
-// this is for prior sense
-matrix[lik_count,nByrs] log_lik;// will want to eventually make these arrays i think so we look at more than the global sensitiviity
-real lprior;
-  
-real  theta_1_1_pp;
-real  theta_1_2_pp;
-real  theta_1_3_pp;
-real  theta_1_4_pp;
-
-real  theta_2_1_pp;
-real  theta_2_2_pp;
-real  theta_2_3_pp;
-real  theta_2_4_pp;
  
- // log likelihood
-  for (n in 1:nByrs){
-    log_lik[1,n] =  normal_lpdf(log(data_stage_j[n]) | log(N_j_predicted[n]), sigma_juv); //sqrt(log((0.1^2) + 1))); 
-    log_lik[2,n] =  normal_lpdf(log(data_stage_harvest[n]) | log(sum(N_catch[n,1:A])), sigma_catch);  
-    // log_lik[3,n] =  normal_lpdf(log(data_stage_return[n]) | log(N_brood_year_return[n]),sigma_rec);  
-    log_lik[4,n] =  normal_lpdf(log(data_stage_sp[n]) | log(sum(N_sp[n,1:A])), sigma_sp);
-    
-    }
- 
-  // joint log prior
-  lprior = normal_lpdf(log_sigma_sp | 0, 1) + 
-           normal_lpdf(log_sigma_catch | 0, 1) +
-           normal_lpdf(log_sigma_return | 0, 0.1) +
-           normal_lpdf(log_sigma_y_j | 0, 0.1) +
-           normal_lpdf(log_catch_q | -5, 1) +
-           
-           normal_lpdf(theta1[1] | 0,0.1) +
-           normal_lpdf(theta1[2] | 0,0.1) + 
-           normal_lpdf(theta1[3] | 0,0.1) + 
-           normal_lpdf(theta1[4] | 0,0.1) +
-           
-           normal_lpdf(theta2[1] | 0,0.1) + 
-           normal_lpdf(theta2[2] | 0,0.1) +
-           normal_lpdf(theta2[3] | 0,0.1) +
-           normal_lpdf(theta2[4] | 0,0.1) + 
-           
-           beta_lpdf(basal_p_1 | 1,1) +       
-           beta_lpdf(basal_p_2 | 1,1) + 
-           
-           beta_lpdf(pi[1] | 1,1) +       
-           beta_lpdf(pi[2] | 1,1) + 
-           beta_lpdf(pi[3] | 1,1) + 
-           beta_lpdf(pi[4] | 1,1) +
-           
-           normal_lpdf(log_S[1] | 0,1) +       
-           normal_lpdf(log_S[2] | 0,1) + 
-           normal_lpdf(log_S[3] | 0,1) + 
-           normal_lpdf(log_S[4] | 0,1) +
-           
-           beta_lpdf(D_scale | 1,1) + 
-           normal_lpdf(log_F_mean | 0,1);
- 
-// added log normal correcrtions
-theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.08);
-theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.05);
-theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.02);
-theta_1_4_pp = normal_rng(theta1[4]- 0.5 * 0.01^2,0.01);
-
-theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.02);
-theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.01);
-theta_2_3_pp = normal_rng(theta2[3]- 0.5 * 0.01^2,0.05);
-theta_2_4_pp = normal_rng(theta2[4]- 0.5 * 0.01^2,0.02);
-
-}
+// generated quantities{
+// // this is for prior sense
+// matrix[lik_count,nByrs] log_lik;// will want to eventually make these arrays i think so we look at more than the global sensitiviity
+// real lprior;
+//   
+// real  theta_1_1_pp;
+// real  theta_1_2_pp;
+// real  theta_1_3_pp;
+// real  theta_1_4_pp;
+// 
+// real  theta_2_1_pp;
+// real  theta_2_2_pp;
+// real  theta_2_3_pp;
+// real  theta_2_4_pp;
+//  
+//  // log likelihood
+//   for (n in 1:nByrs){
+//     log_lik[1,n] =  normal_lpdf(log(data_stage_j[n]) | log(N_j_predicted[n]), sigma_juv); //sqrt(log((0.1^2) + 1))); 
+//     log_lik[2,n] =  normal_lpdf(log(data_stage_harvest[n]) | log(sum(N_catch[n,1:A])), sigma_catch);  
+//     // log_lik[3,n] =  normal_lpdf(log(data_stage_return[n]) | log(N_brood_year_return[n]),sigma_rec);  
+//     log_lik[4,n] =  normal_lpdf(log(data_stage_sp[n]) | log(sum(N_sp[n,1:A])), sigma_sp);
+//     
+//     }
+//  
+//   // joint log prior
+//   lprior = normal_lpdf(log_sigma_sp | 0, 1) + 
+//            normal_lpdf(log_sigma_catch | 0, 1) +
+//            normal_lpdf(log_sigma_return | 0, 0.1) +
+//            normal_lpdf(log_sigma_y_j | 0, 0.1) +
+//            normal_lpdf(log_catch_q | -5, 1) +
+//            
+//            normal_lpdf(theta1[1] | 0,0.1) +
+//            normal_lpdf(theta1[2] | 0,0.1) + 
+//            normal_lpdf(theta1[3] | 0,0.1) + 
+//            normal_lpdf(theta1[4] | 0,0.1) +
+//            
+//            normal_lpdf(theta2[1] | 0,0.1) + 
+//            normal_lpdf(theta2[2] | 0,0.1) +
+//            normal_lpdf(theta2[3] | 0,0.1) +
+//            normal_lpdf(theta2[4] | 0,0.1) + 
+//            
+//            beta_lpdf(basal_p_1 | 1,1) +       
+//            beta_lpdf(basal_p_2 | 1,1) + 
+//            
+//            beta_lpdf(pi[1] | 1,1) +       
+//            beta_lpdf(pi[2] | 1,1) + 
+//            beta_lpdf(pi[3] | 1,1) + 
+//            beta_lpdf(pi[4] | 1,1) +
+//            
+//            normal_lpdf(log_S[1] | 0,1) +       
+//            normal_lpdf(log_S[2] | 0,1) + 
+//            normal_lpdf(log_S[3] | 0,1) + 
+//            normal_lpdf(log_S[4] | 0,1) +
+//            
+//            beta_lpdf(D_scale | 1,1) + 
+//            normal_lpdf(log_F_mean | 0,1);
+//  
+// // added log normal correcrtions
+// theta_1_1_pp = normal_rng(theta1[1]- 0.5 * 0.01^2,0.08);
+// theta_1_2_pp = normal_rng(theta1[2]- 0.5 * 0.01^2,0.05);
+// theta_1_3_pp = normal_rng(theta1[3]- 0.5 * 0.01^2,0.02);
+// theta_1_4_pp = normal_rng(theta1[4]- 0.5 * 0.01^2,0.01);
+// 
+// theta_2_1_pp = normal_rng(theta2[1]- 0.5 * 0.01^2,0.02);
+// theta_2_2_pp = normal_rng(theta2[2]- 0.5 * 0.01^2,0.01);
+// theta_2_3_pp = normal_rng(theta2[3]- 0.5 * 0.01^2,0.05);
+// theta_2_4_pp = normal_rng(theta2[4]- 0.5 * 0.01^2,0.02);
+// 
+// }
