@@ -56,60 +56,6 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
      ),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_ricker_alpha" ),
-     fill_color = "blue")
-
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_ricker_beta" ),
-     fill_color = "blue")
-
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_F"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_S"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "pi"),
-     fill_color = "blue") 
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "basal_p_2"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "basal_p_1"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "prob[1]", "prob[2]","prob[3]", "basal_p_1", "basal_p_2"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "log_c_1","log_c_2"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c("log_catch_q"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "g"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "cov_eff1"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "cov_eff2"),
-     fill_color = "blue")
-
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "log_sigma_return"),
@@ -126,6 +72,32 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "log_sigma_y_j"),
      fill_color = "blue")
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_ricker_alpha" ),
+     fill_color = "blue")
+
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_ricker_beta" ),
+     fill_color = "blue")
+
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c("log_catch_q"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
+     pars=  c( "g"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c( "cov_eff1"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c( "cov_eff2"),
+     fill_color = "blue")
+ 
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "basal_p_1", "basal_p_2" ),

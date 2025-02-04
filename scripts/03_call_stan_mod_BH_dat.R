@@ -264,7 +264,7 @@ bh_fit <- stan(
   data = data_list_stan,
   chains = 1, #n_chains,  
   warmup = warmups, 
-  iter = total_iterations, 
+  iter = 4000,#total_iterations, 
   cores = n_cores, 
   verbose = FALSE, 
   control = list(adapt_delta = 0.99)
