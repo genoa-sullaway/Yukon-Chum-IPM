@@ -88,8 +88,10 @@ real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 
 real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
 
 // ricker aprameters 
-real <lower=0> log_ricker_beta; // maybe try -8? thats what AI suggests...
-real <lower=0> log_ricker_alpha;
+real <lower=0> alpha;
+real <lower=0> beta; 
+// real <lower=0> log_ricker_beta; // maybe try -8? thats what AI suggests...
+// real <lower=0> log_ricker_alpha;
  }
 
 transformed parameters { 
@@ -142,11 +144,11 @@ vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma d
 matrix  [nRyrs,A] q; 
 
 // ricker params ========
-real ricker_beta;
-real ricker_alpha;
+// real ricker_beta;
+// real ricker_alpha;
 
-ricker_beta = exp(log_ricker_beta);
-ricker_alpha = exp(log_ricker_alpha);
+// ricker_beta = exp(log_ricker_beta);
+// ricker_alpha = exp(log_ricker_alpha);
 
 // sum likelihoods ======= 
   //    vector [nRyrs_T] N_catch_sum ;
@@ -263,7 +265,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            
           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a]; // fishing occurs before spawning -- 
            
-          N_e[t+a+2,a] = Ps*(N_sp[t+a+2,a] * exp(ricker_alpha - (ricker_beta * N_sp[t+a+2,a]))); //sum(N_sp[t+a+2,1:A])));
+          N_e[t+a+2,a] = Ps*(N_sp[t+a+2,a] * exp(alpha - (beta * N_sp[t+a+2,a]))); //sum(N_sp[t+a+2,1:A])));
           // N_e[t+a+2,a] = fs[a]*Ps*N_sp[t+a+2,a]; 
             }
      }
@@ -289,34 +291,34 @@ model {
    
    log_catch_q ~ normal(-5,1);
    
-  log_ricker_alpha ~ normal(0, 1);   # for spawner egg link
-  log_ricker_beta ~ normal(-10, 1);    # for spawner egg link
-  
+  // log_ricker_alpha ~ normal(0, 1);   # for spawner egg link
+  // log_ricker_beta ~  normal(0.00001,0.01);//normal(-10, 1);    # for spawner egg link
+  alpha ~  normal(1,5);
+  beta ~  normal(0.00001,0.01);
 
 pi ~ beta(1,1); 
 
-theta1[1] ~ normal(0,0.1);
-theta1[2] ~ normal(0,0.15);
-theta1[3] ~ normal(0,0.1);
-theta1[4] ~ normal(0.15,0.11);
-theta1[5] ~ normal(0.08,0.1); 
+// theta1[1] ~ normal(0,0.1);
+// theta1[2] ~ normal(0,0.15);
+// theta1[3] ~ normal(0,0.1);
+// theta1[4] ~ normal(0.15,0.11);
+// theta1[5] ~ normal(0.08,0.1); 
+// 
+//  theta2[1] ~ normal(-0.02,0.1);
+//  theta2[2] ~ normal(-0.1,0.1);
+//  theta2[3] ~ normal(0,0.11);
+//  theta2[4] ~ normal(0.2,0.1);
+// 
+  theta1[1] ~ normal(0,0.1);
+  theta1[2] ~ normal(0,0.1);
+  theta1[3] ~ normal(0,0.1);
+  theta1[4] ~ normal(0,0.1);
+  theta1[5] ~ normal(0,0.1);
 
- theta2[1] ~ normal(-0.02,0.1);
- theta2[2] ~ normal(-0.1,0.1);
- theta2[3] ~ normal(0,0.11);
- theta2[4] ~ normal(0.2,0.1);
-// 
-//   theta1[1] ~ normal(0,1);
-//   theta1[2] ~ normal(0,1);
-//   theta1[3] ~ normal(0,1);
-//   theta1[4] ~ normal(0,1);
-//   theta1[5] ~ normal(0,1);
-//   // theta1[6] ~ normal(0,0.1);
-// 
-//   theta2[1] ~ normal(0,1);
-//   theta2[2] ~ normal(0,1);
-//   theta2[3] ~ normal(0,1);
-//   theta2[4] ~ normal(0,1);
+  theta2[1] ~ normal(0,0.1);
+  theta2[2] ~ normal(0,0.1);
+  theta2[3] ~ normal(0,0.1);
+  theta2[4] ~ normal(0,0.1);
 
   D_scale ~ beta(1,1); // mean survivial stage 2C
 

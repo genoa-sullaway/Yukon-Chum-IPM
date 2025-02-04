@@ -57,21 +57,6 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
      fill_color = "blue")
 
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "log_sigma_return"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "log_sigma_catch"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "log_sigma_sp"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "log_sigma_y_j"),
-     fill_color = "blue")
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_ricker_alpha" ),
      fill_color = "blue")
@@ -98,7 +83,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff2"),
      fill_color = "blue")
  
- 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "basal_p_1", "basal_p_2" ),
      fill_color = "blue")
@@ -111,11 +95,6 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "D_scale"),
      fill_color = "blue") 
  
-plot(bh_fit, show_density = TRUE, ci_level = 0.5, 
-     pars=  c( "theta_1_1_pp","theta_1_2_pp","theta_1_3_pp","theta_1_4_pp",
-               "theta_2_1_pp","theta_2_2_pp","theta_2_3_pp","theta_2_4_pp"),
-     fill_color = "blue")
-
 # Plot Observed vs Predicted ========
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 

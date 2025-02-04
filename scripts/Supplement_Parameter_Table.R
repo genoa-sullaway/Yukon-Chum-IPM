@@ -36,35 +36,35 @@ create_parameter_summary <- function(fit, parameter_name, notation, prior) {
 # each param will need to be manual 
 summary_df <- rbind( 
   ### sigma sp  =======
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "log_sigma_sp",
-    notation = "$N_0$",
-    prior = "Normal(0,1)"
-  ),
+  # create_parameter_summary(
+  #   fit = fit,
+  #   parameter_name = "log_sigma_sp",
+  #   notation = "$N_0$",
+  #   prior = "Normal(0,1)"
+  # ),
   ### sigma return =======
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "log_sigma_return",
-    notation = "$N_0$",
-    prior = "Normal(0,1)"
-  ),
-  
+  # create_parameter_summary(
+  #   fit = fit,
+  #   parameter_name = "log_sigma_return",
+  #   notation = "$N_0$",
+  #   prior = "Normal(0,1)"
+  # ),
+  # 
   ### sigma catch =======
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "log_sigma_catch",
-    notation = "$\\sigma_p$",
-    prior = "Normal(0,1)"
-  ),
+  # create_parameter_summary(
+  #   fit = fit,
+  #   parameter_name = "log_sigma_catch",
+  #   notation = "$\\sigma_p$",
+  #   prior = "Normal(0,1)"
+  # ),
   #  
   # ### sigma juv =======
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "log_sigma_y_j",
-    notation = "$\\sigma_p$",
-    prior = "Normal(0,1)"
-  ),
+  # create_parameter_summary(
+  #   fit = fit,
+  #   parameter_name = "log_sigma_y_j",
+  #   notation = "$\\sigma_p$",
+  #   prior = "Normal(0,1)"
+  # ),
   
   ### basal survival 1 =======
   create_parameter_summary(
