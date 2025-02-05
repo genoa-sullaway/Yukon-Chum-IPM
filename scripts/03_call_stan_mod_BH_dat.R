@@ -53,6 +53,27 @@ yukon_fall_broodyear_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age
 ### mean age comp brood year ========  
 pi <- colMeans(yukon_fall_broodyear_obs_agecomp)
 
+# add CV =========
+return_CVs <- read_xlsx("data/chum_cv.xlsx") %>%
+  filter(year >= year_min, 
+         year <= year_max_cal) 
+
+# add juvenile index CV ========
+fall_juv_CV <- read_csv("data/Juvenile_Index_CC/Index for Sabrina.csv") %>%
+  filter(Stratum == "Stratum_1")  
+
+mean_2020 <- mean(fall_juv_CV$CV, na.rm = TRUE)
+
+fall_juv_CV_all <- fall_juv_CV %>%
+  dplyr::select(Time,CV) %>%
+  dplyr::mutate(CV = case_when(Time == 2020 ~ mean_2020,
+                               TRUE ~ CV)) %>%
+  dplyr::mutate(brood_year = Time-1) %>%
+  filter(!brood_year>year_max_brood) %>%
+  dplyr::select(brood_year,CV) %>% 
+  filter(!brood_year ==2001)
+
+
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min, 
@@ -252,7 +273,9 @@ data_list_stan <- list(nByrs=nByrs,
                        # basal_p_1 = 0.9,
                        # basal_p_2 = 0.9,
                        log_c_1 = 18, 
-                       log_c_2 =25
+                       log_c_2 =25,
+                       juv_CV= fall_juv_CV_all$CV,
+                       return_CV = return_CVs$fall_spawner_cv
                        # ricker_beta = 0.0002,
                        # ricker_alpha = 1.6
                        #pi = pi

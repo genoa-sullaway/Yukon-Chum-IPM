@@ -43,12 +43,17 @@ traceplot(bh_fit,pars=  c("log_S"))
 traceplot(bh_fit,pars=  c("pi"))
 
 traceplot(bh_fit,pars=  c("basal_p_1", "basal_p_2"))
+
 # ess and rhat  =====
 # Find parameters with both low ESS and high Rhat
 diagnostics <- summary(fit)$summary[,c("n_eff", "Rhat")]
 problems <- which(diagnostics[,"n_eff"] < 400 | diagnostics[,"Rhat"] > 1.01)
 print(diagnostics[problems,])
 
+good <- (which( diagnostics[,"Rhat"] < 1.05))
+print(diagnostics[good,])
+
+#diagnostics[,"n_eff"] > 400 &
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
      pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]","theta1[5]",#"theta1[6]", 
@@ -58,12 +63,12 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
 
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_ricker_alpha" ),
+     pars=  c( "alpha" ),
      fill_color = "blue")
 
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_ricker_beta" ),
+     pars=  c( "beta" ),
      fill_color = "blue")
 
 
@@ -79,9 +84,9 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "cov_eff1"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "cov_eff2"),
-     fill_color = "blue")
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+#      pars=  c( "log_sigma_y_j"),
+#      fill_color = "blue")
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "basal_p_1", "basal_p_2" ),
