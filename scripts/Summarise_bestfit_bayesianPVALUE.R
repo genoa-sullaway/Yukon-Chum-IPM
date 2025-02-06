@@ -23,10 +23,10 @@ yrep <- juv_rep_clean
 plot <- ppc_stat(y, yrep, stat = "median")
 
 # calculate proportion of stat(yrep) > stat(y)
-p <- mean(apply(yrep, 1, median) > median(y))
+p_juv <- mean(apply(yrep, 1, median) > median(y))
 plot + 
   yaxis_text() + # just so I can see y-axis values for specifying them in annotate() below, but can remove this if you don't want the useless y-axis values displayed 
-  annotate("text", x = 89, y = 40, label = paste("p =", p))
+  annotate("text", x = 89, y = 40, label = paste("p =", p_juv))
 
 # returns ====== 
 # y <- example_y_data()
@@ -42,11 +42,11 @@ ncol(yrep)
 plot <- ppc_stat(y, yrep, stat = "median")
 
 # calculate proportion of stat(yrep) > stat(y)
-p <- mean(apply(yrep, 1, median) > median(y))
+p_return <- mean(apply(yrep, 1, median) > median(y))
  
 plot + 
   yaxis_text() + # just so I can see y-axis values for specifying them in annotate() below, but can remove this if you don't want the useless y-axis values displayed 
-  annotate("text", x = 89, y = 40, label = paste("p =", p))
+  annotate("text", x = 89, y = 40, label = paste("p =", p_return))
  
 # harvest ====== 
 # y <- example_y_data()
@@ -57,7 +57,6 @@ total_harvest_clean <- total_harvest[, colSums(is.na(total_harvest)) == 0]
 
 y <- data_list_stan$data_stage_harvest
 yrep <- total_harvest_clean 
- 
  
 yrep_clean <- as.data.frame(yrep) %>%
   # Add a draw_id column to keep track of posterior draws
@@ -88,11 +87,11 @@ yrep_clean <- as.data.frame(yrep) %>%
 plot <- ppc_stat(y, yrep_clean, stat = "median")
 
 # calculate proportion of stat(yrep) > stat(y)
-p <- mean(apply(yrep_clean, 1, median) > median(y))
+p_harvest <- mean(apply(yrep_clean, 1, median) > median(y))
 p
 plot + 
   yaxis_text() + # just so I can see y-axis values for specifying them in annotate() below, but can remove this if you don't want the useless y-axis values displayed 
-  annotate("text", x = 89, y = 40, label = paste("p =", p))
+  annotate("text", x = 89, y = 40, label = paste("p =", p_harvest))
 
 
 # spawners =========== 
@@ -134,8 +133,14 @@ yrep_clean <- as.data.frame(yrep) %>%
 plot <- ppc_stat(y, yrep_clean, stat = "median")
  
 # calculate proportion of stat(yrep) > stat(y)
-p <- mean(apply(yrep_clean, 1, median) > median(y))
+p_spawners <- mean(apply(yrep_clean, 1, median) > median(y))
 
 plot + 
   yaxis_text() + # just so I can see y-axis values for specifying them in annotate() below, but can remove this if you don't want the useless y-axis values displayed 
-  annotate("text", x = 89, y = 40, label = paste("p =", p))
+  annotate("text", x = 89, y = 40, label = paste("p =", p_spawners))
+
+# paste all p's together: =====
+p_juv
+p_return
+p_harvest
+p_spawners
