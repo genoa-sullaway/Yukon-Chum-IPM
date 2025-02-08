@@ -60,11 +60,11 @@ real <lower =0> N_egg_start_log[t_start,A];
  // real  log_c_2; // log carrying capacity
  // real <lower =10> log_c_1;
  // real <lower =10> log_c_2; // log carrying capacity
-//   
-real<lower =0> log_sigma_sp;
-real<lower =0> log_sigma_catch;
- real<lower =0> log_sigma_y_j;
- real<lower =0> log_sigma_return;
+   
+// real<lower =0, upper = 1> log_sigma_sp;
+// real<lower =0, upper = 1> log_sigma_catch;
+//  real<lower =0, upper = 1> log_sigma_y_j;
+//  real<lower =0, upper = 1> log_sigma_return;
   // real <lower =0> sigma_brood_return; 
  
 // covariate parameters 
@@ -276,10 +276,10 @@ for(t in 1:nByrs){
 }
 
 model {
-    log_sigma_sp ~ normal(0,1);//cauchy(0,2.5);// lognormal(0,1); // log_sigma_sp ~ cauchy(0,2.5)T[0,]; consider 
-    log_sigma_catch ~ normal(0,1);
-    log_sigma_y_j ~ normal(0,1);
-    log_sigma_return ~ normal(0,1);
+    // log_sigma_sp ~ normal(0,1);//cauchy(0,2.5);// lognormal(0,1); // log_sigma_sp ~ cauchy(0,2.5)T[0,]; consider 
+    // log_sigma_catch ~ normal(0,1);
+    // log_sigma_y_j ~ normal(0,1);
+    // log_sigma_return ~ normal(0,1);
    
    log_catch_q ~ normal(-5,1);
    
@@ -329,33 +329,35 @@ log_F_mean ~ normal(0,0.1);
  //    S[a] ~ normal(0,1);//beta(1,1);
  // }
 
- N_j_start_log ~ normal(12,2);
- N_brood_year_return_start_log~ normal(10,2);
+ N_j_start_log ~ normal(14,2);
+ N_brood_year_return_start_log~ normal(12,2);
 
  for(t in 1:t_start){
    for(a in 1:A){ 
-    N_sp_start_log[t,a] ~ normal(2,2);
-    N_recruit_start_log[t,a] ~  normal(2.2,2);
-    N_catch_start_log[t,a] ~ normal(1,2);
-    N_egg_start_log[t,a] ~  normal(5,2);
+    N_sp_start_log[t,a] ~ normal(3,2);
+    N_recruit_start_log[t,a] ~  normal(3.2,2);
+    N_catch_start_log[t,a] ~ normal(3,2);
+    N_egg_start_log[t,a] ~  normal(6,2);
   }
  }    
    
  // Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), log_sigma_y_j); //sqrt(log((0.25^2) + 1)));//sqrt(log((juv_CV[t]^2) + 1))); ////log_sigma_y_j); //sqrt(log((0.1^2) + 1))); //sigma_juv); //sqrt(log((0.01^2) + 1))); 
+     target += lognormal_lpdf(data_stage_j[t] | log(N_j_predicted[t]), sqrt(log((0.5^2) + 1)));//sqrt(log((juv_CV[t]^2) + 1))); ////log_sigma_y_j); //sqrt(log((0.1^2) + 1))); //sigma_juv); //sqrt(log((0.01^2) + 1))); 
+  // target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), sqrt(log((0.25^2) + 1)));//sqrt(log((juv_CV[t]^2) + 1))); ////log_sigma_y_j); //sqrt(log((0.1^2) + 1))); //sigma_juv); //sqrt(log((0.01^2) + 1))); 
+  
   }
     for (t in 1:nByrs_return_dat) {
  // recruit by brood year 
-     target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), log_sigma_return);//sqrt(log((return_CV[t]^2) + 1)));//sqrt(log((0.11^2) + 1)));//log_sigma_return); //sqrt(log((0.25^2) + 1)));//log_sigma_return); // sqrt(log((0.05^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
+    target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.35^2) + 1)));//sqrt(log((return_CV[t]^2) + 1)));// ); //sqrt(log((0.25^2) + 1)));//log_sigma_return); // sqrt(log((0.05^2) + 1))); //sigma_rec);//sqrt(log((0.01^2) + 1)));//sqrt(log((0.01^2) + 1)));  //sigma_brood_return);// sqrt(log((0.01^2) + 1)));  
     } 
 
   for(t in 1:nRyrs){ // calendar years 
      target +=  ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
-     
-     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), log_sigma_catch);//sqrt(log((0.3^2) + 1))); //sqrt(log((return_CV[t]^2) + 1))); //sqrt(log((0.11^2) + 1)));//log_sigma_catch); // sqrt(log((0.25^2) + 1)));  //log_sigma_catch);//) ; 
-     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), log_sigma_sp);//sqrt(log((0.3^2) + 1))); //sqrt(log((return_CV[t]^2) + 1))); // sqrt(log((0.11^2) + 1)));//log_sigma_sp); // sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
-    }
+  
+     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.35^2) + 1))); //sqrt(log((return_CV[t]^2) + 1))); //sqrt(log((0.11^2) + 1)));//log_sigma_catch); // sqrt(log((0.25^2) + 1)));  //log_sigma_catch);//) ; 
+     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.35^2) + 1))); //sqrt(log((return_CV[t]^2) + 1))); // sqrt(log((0.11^2) + 1)));//log_sigma_sp); // sqrt(log((0.01^2) + 1))); //sqrt(log((data_sp_cv[t]) + 1))); // sigma_sp);
+     }
   }
  
 // generated quantities{

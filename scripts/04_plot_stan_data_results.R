@@ -61,17 +61,21 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
      ),
      fill_color = "blue")
 
-
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_sigma_sp" ),
+     fill_color = "blue")
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_sigma_catch" ),
+     fill_color = "blue")
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_sigma_sp" ),
+     fill_color = "blue")
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "alpha" ),
      fill_color = "blue")
-
-
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "beta" ),
      fill_color = "blue")
-
-
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c("log_catch_q"),
      fill_color = "blue")
@@ -123,6 +127,8 @@ summ_n_sp <- pred_N_SP %>%
 ggplot(data = summ_n_sp) +
   geom_point(aes(x=cal_year, y = obs)) +
   geom_line(aes(x=cal_year, y = mean)) + 
+  geom_errorbar(aes(x=cal_year, ymin = mean-sd, ymax = mean+sd), 
+                width = 0.1)+
   ggtitle("Spawners: obs and predicted")+
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
   theme_classic()
@@ -246,8 +252,7 @@ ggplot(data = summ_n_j) +
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
 
- 
-# plot age comp through time =================
+ # plot age comp through time =================
 age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 
     dplyr::mutate(time = 1:21) %>% 
     left_join(years) %>%
