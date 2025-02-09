@@ -609,8 +609,8 @@ ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = vari
 ggplot(data = productivity, aes(x=time, y = mean, group = variable ,color = variable)) + 
   geom_line( ) +
   geom_ribbon(aes(x=time, ymin = mean-se_mean,
-                  ymax = mean+se_mean), alpha = 0.5)+
-  scale_y_continuous(limits = c(0,1))
+                  ymax = mean+se_mean), alpha = 0.5)#+
+#  scale_y_continuous(limits = c(0,1))
 
                     productivity %>%
                               group_by(variable) %>% 

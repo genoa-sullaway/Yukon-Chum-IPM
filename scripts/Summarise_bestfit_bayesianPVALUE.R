@@ -88,7 +88,7 @@ plot <- ppc_stat(y, yrep_clean, stat = "median")
 
 # calculate proportion of stat(yrep) > stat(y)
 p_harvest <- mean(apply(yrep_clean, 1, median) > median(y))
-p
+
 plot + 
   yaxis_text() + # just so I can see y-axis values for specifying them in annotate() below, but can remove this if you don't want the useless y-axis values displayed 
   annotate("text", x = 89, y = 40, label = paste("p =", p_harvest))

@@ -155,8 +155,9 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
                  yukon_mean_discharge,
                  pollock_recruit_scale,
                 mean_size, # was already mean scaled because of the averaging across ages
-                # fall_mintemp_CDD,
-                fall_snow_cummulative) %>% 
+                # fall_mintemp_CDD#,
+                fall_snow_cummulative
+                ) %>% 
   as.matrix() 
 
 # the temp in 2001 is gonna effect fish from brood year 1999
@@ -285,9 +286,9 @@ data_list_stan <- list(nByrs=nByrs,
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 1, #n_chains,  
+  chains = n_chains,  
   warmup = warmups, 
-  iter = 4000,#total_iterations, 
+  iter = total_iterations, 
   cores = n_cores, 
   verbose = FALSE, 
   control = list(adapt_delta = 0.99)
