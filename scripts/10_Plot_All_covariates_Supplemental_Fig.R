@@ -7,10 +7,11 @@ library(here)
 cov_a <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   dplyr::mutate( pollock_recruit_millions = as.numeric(scale(Recruit_age_1_millions)), 
                   SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
+                 fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)),
                   yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)) 
                  ) %>% 
   dplyr::select( brood_year,SST_CDD_NBS,pollock_recruit_millions,mean_size,
-                yukon_mean_discharge,fall_mintemp_CDD,fall_max_snow_depth) 
+                yukon_mean_discharge,fall_snow_cummulative) 
  
 # Plot JUST covariates ==============
 ## A SST ========= 
@@ -18,13 +19,13 @@ cov_a <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   gather(2:ncol(.), key = "variable", value = "value") %>%
   filter(brood_year >1999) %>%
   dplyr::mutate(variable = factor(variable, levels = c("mean_size","yukon_mean_discharge", 
-                                                       "fall_mintemp_CDD","fall_max_snow_depth",
+                                                       "fall_snow_cummulative",
                                                        "SST_CDD_NBS","pollock_recruit_millions")))
 
 labels = c("mean_size"="Spawner Size" , 
            "yukon_mean_discharge"= "Yukon River Flow",
-           "fall_mintemp_CDD" = "Min. Temperature Brood Fall",
-           "fall_max_snow_depth" = "Max. Snow Depth Brood Fall", 
+           # "fall_mintemp_CDD" = "Min. Temperature Brood Fall",
+           "fall_snow_cummulative" = "Winter Snow Depth", 
            "SST_CDD_NBS" = "CDD NBS",
            "pollock_recruit_millions"="Pollock Recruitment"  )
  

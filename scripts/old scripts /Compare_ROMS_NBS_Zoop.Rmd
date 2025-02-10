@@ -1,0 +1,361 @@
+---
+title: "Compare ROMS to NBS Zoop"
+author: "Genoa Sullaway"
+date: "11/28/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+ 
+library(tidyverse)
+library(ggpubr)
+library(viridis)
+library(visreg)
+library(mgcv)
+library(mgcViz)
+library(here)
+library(lubridate)
+
+#calanus model for GAM and empirical
+source(here("scripts","Function_AKMap.R"))
+
+   #save DF for model 
+df<-readRDS(here("data","ROMS_EMAcalanus.RDS")) %>%
+   dplyr::mutate(day_of_year = yday(ecofoci_date)) %>% 
+     dplyr::filter(!LAT < 60) %>%
+     dplyr::filter(!LON < -175) %>%
+  dplyr::select(-BIOMASS_C_MG_M3_MEAN) %>%
+    dplyr::rename(BIOMASS_C_MG_M3_MEAN = "depth_integrated_biomass") # fix this long term, change script below to look at depth integrated rather than M
+ 
+color = c("#2A8572",  "#F2AD00")
+color3 = c("#2A8572",  "#F2AD00", "#808080")
+  
+```
+
+## Background
+- I want to see how ROMS and NBS zoop data compare, point to point to inform how I use zooplankton data/ROMS in the AYK prey index. 
+- I combined the EcoDAAT zoop data and the EMA zoop data (has NBS) using scripts adapted from DK, in scripts/Ecodaat_ema_combine_data.R, this script also converts to biomass. Next I matched in ROMS L2 using scripts/Compare_ROMS_Empirical.R, ROMS is matched to empirical data using nearest neighbor through space and time. 
+
+- In Sullaway et al in prep, I did not have this data, so I add it in here. Below, I plot estimated trends from both sources of information from a GAM and I show predicted differences in absolute values between the two. I see if predicted values change through space and time to inform which source of information I should use in the AYK prey index model. 
+- Right now everything shown is just for Calanus. 
+
+- First lets highlight the ROMS region that I crop to compare with zooplankton surveys. 
+Chum are known to distribute to in the EBS - stock specific distributions are in Urawa et al 2009 GSI specific from 2003 surveys. 
+
+```{r ROMS crop}
+ 
+# plot of ROMS locations 
+# right now not doing this because I am just comparing point to point, later if I do use ROMS I can include ROMS cropped plot 
+#Match ROMS and zoop 
+#check spatial extent of ROMS
+# check <- data.frame(unique(ROMS[c("latitude", "longitude")]))
+# 
+# ggplot(data = check) +
+#   geom_point(aes(x=longitude, y = latitude))
+
+```
+
+- Plot of all Zoop stations surveyed (irrespective of year)
+- This will need a little more work in terms of thinking about how I want to trim the info
+- Options - DFA on a smaller area from when they first enter near shore? or option 2 DFA for the whole EBS and let it work itself out... 
+
+```{r Empirical crop }
+check <- data.frame(unique(df[c("LAT", "LON")]))
+
+ggplot(data = check) +
+  geom_point(aes(x=LON, y = LAT)) #+
+  #geom_sf(data = ak)
+
+```
+
+# look at survey stations by year 
+
+```{r}
+ggplot(data = df) +
+  geom_point(aes(x=LON, y = LAT)) +
+  geom_sf(data = ak) +
+  facet_wrap(~YEAR)
+
+```
+
+- Now I am going to run through some point to point comparisons to see if ROMS and empirical data have similar relative and absolute trends in the NBS. 
+- Below, I mean-scaled both sources of info (to their own mean) and plotted them to ask if relative values are the same. 
+- They are generally not - if you run a basic linear model, R2 is <1%. 
+
+```{r}
+# mean scale and regress the two against each other
+df2 <- df %>%
+  dplyr::mutate(empirical_scaled = scale(BIOMASS_C_MG_M3_MEAN),
+         ROMS_scaled = scale(NCaS)) %>% 
+   dplyr::filter(!empirical_scaled > 10)
+
+ggplot(df2) +
+  geom_point(aes(x= empirical_scaled, y= ROMS_scaled)) + 
+  facet_wrap(~YEAR)
+
+# 
+# m1 <- lm(ROMS_scaled~empirical_scaled, data = df2)
+# summary(m1)
+# m2 <- lm(empirical_scaled~ROMS_scaled, data = df2)
+# summary(m2)
+```
+
+- Now lets see if ROMS is sampled in the same manner as the survey points, do we get similar estimated patterns?  
+
+```{r fig 2, echo=FALSE}
+ 
+fig2<-function(df_input,sp,labels){
+  
+  pred_eco <- mgcv::gam(BIOMASS_C_MG_M3_MEAN ~ s(day_of_year, k=4) + 
+                          s(YEAR,k=5) + te(LON, LAT, bs=c("tp", "tp")),
+                        data = df_input,
+                        family = tw(link = "log")) 
+  
+  pred_roms <- mgcv::gam(NCaS ~ s(day_of_year, k=4) + 
+                           s(YEAR, k=5 ) + te(LON, LAT, bs=c("tp", "tp")),
+                         data = df_input,
+                         family = tw(link = "log")) 
+  
+  #day of year 
+  p1<- plot.gamViz(getViz(pred_eco))
+  
+  temp <- p1$plots[[1]]$ggObj
+  
+  p1df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                     ty=temp$data$ty, se =  temp$data$se) %>%
+    mutate(id = "sr-EM") %>%
+    dplyr::filter(!x<100)
+  
+  p2<-plot.gamViz(getViz(pred_roms))
+  temp <- p2$plots[[1]]$ggObj
+  df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                   ty=temp$data$ty, se =  temp$data$se) %>%
+    mutate(id = "sr-ROMS-NPZ") %>% 
+    dplyr::filter(!x<100) %>%
+    rbind(p1df)
+  
+  mean <- df %>%
+    group_by(id) %>%
+    dplyr::slice_max(y)
+ 
+  day_of_year <- ggplot(data = df,aes(x=x, y=y, group =id)) +
+    geom_path(color = "gray", show.legend = FALSE) +
+    geom_ribbon(aes(ymin = y-se, ymax = y+se, color = id), alpha = 0.5,show.legend = FALSE) +
+    geom_point(data = mean, aes(x=x, y=y, group =id, color = id), inherit.aes = TRUE) +
+    theme_classic()+
+    labs(x= "Day of Year", y="Log(Biomass)") +
+    scale_color_manual(values= color,labels=c("sr-EM", "sr-ROMS-NPZ")) +
+    theme(legend.position = "none" ) +  
+    ggtitle(paste0("",sp,"")) 
+  
+  leg <- get_legend(ggplot(data = df,aes(x=x, y=y, group =id)) +
+                      geom_path(color = "gray", show.legend = FALSE) +
+                      geom_ribbon(aes(ymin = y-se, ymax = y+se, color = id), alpha = 0.5,show.legend = FALSE) +
+                      geom_point(data = mean, aes(x=x, y=y, group =id, color = id), inherit.aes = TRUE) +
+                      theme_classic()+
+                      labs(x= "Day of Year", y="Log(Biomass)") +
+                      scale_color_manual(values= color,labels=c("sr-EM", "sr-ROMS-NPZ")) +
+                      theme(legend.title = element_blank()) +  
+                      ggtitle(paste0("",sp,"")) )
+  
+  # Convert to a ggplot and print
+  legend<-as_ggplot(leg)
+  
+  #########################################################################################################   
+  # YEAR 
+  temp <- p1$plots[[2]]$ggObj 
+  p1df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                     ty=temp$data$ty, se =  temp$data$se) %>%
+    mutate(id = "sr-EM")  
+  
+  p2<-plot.gamViz(getViz(pred_roms))
+  temp <- p2$plots[[2]]$ggObj 
+  df <- data.frame(y = temp$data$y, x =  temp$data$x,
+                   ty=temp$data$ty, se =  temp$data$se) %>%
+    mutate(id = "sr-ROMS-NPZ")  %>%
+    rbind(p1df)
+  
+  year<-ggplot(data = df,aes(x=x, y=y, group =id)) +
+    geom_path(color = "gray",) +
+    geom_ribbon(aes(ymin = y-se, ymax = y+se, color = id), alpha = 0.5) +
+    theme_classic()+
+    labs(x= "Year", y="Log(Biomass)") +
+    scale_color_manual(values= color,
+                       labels=c("sr-EM", "sr-ROMS-NPZ")) +
+    theme(legend.position = "none")
+  
+  ############################################################################
+  
+  #space
+  # ---------- Instead of plotting tensor field, just predict across points and compare that- done below in next section  
+  # 
+  # temp <- p1$plots[[3]]$ggObj 
+  # p1df <- data.frame(y = temp$data$y, x =  temp$data$x,
+  #                    z=temp$data$z, se =  temp$data$se) %>%
+  #   mutate(id = " sr-EM")  
+  # 
+  # temp <- p2$plots[[3]]$ggObj 
+  # 
+  # df <- data.frame(y = temp$data$y, x =  temp$data$x,
+  #                  z=temp$data$z, se =  temp$data$se) %>%
+  #   mutate(id = "sr-ROMS-NPZ")  %>%
+  #   rbind(p1df)  %>%
+  #   dplyr::filter(!z< -10) %>%
+  #   dplyr::rename(Biomass = "z")  %>%
+  #   dplyr::filter(!is.na(Biomass))  
+  # 
+  # space<-ggplot(data = df,aes(x=x, y=y, fill = Biomass)) +
+  #   geom_raster() +
+  #   theme_void() + 
+  #  geom_sf(data = ak, fill= "white", inherit.aes = FALSE) + 
+  #   facet_wrap(~id) +
+  #   scale_fill_viridis(name = "Log(Biomass)")  
+  
+  p1<-ggarrange(legend,day_of_year, year,
+                #space, 
+                nrow = 1, 
+                labels = labels,
+                widths=c(0.5,1,1,1), heights =c(0.5,1,1,1))
+ 
+  return(p1)
+}
+
+a<-fig2(df_input = df, sp="Calanus", labels = c("", "a.", "d.", "g."))
+ 
+a
+```
+
+- What do absolute patterns look like?
+- Predict biomass from both models across sapce and look at averages for both predictions for both ROMS and Empirical model. 
+- Result: pretty different, surveys dont get much in these regions compared to what ROMS predicts. 
+```{r}
+ 
+color = c("#2A8572",  "#F2AD00")
+#color3 = c("#2A8572",  "#F2AD00", "#808080")
+ 
+fig3 <- function(sp, df_input){
+  
+  pred_eco <- mgcv::gam(BIOMASS_C_MG_M3_MEAN ~ s(day_of_year, k=4) + 
+                          s(YEAR,k=5) + te(LON, LAT, bs=c("tp", "tp")),
+                        data = df_input,
+                        family = tw(link = "log")) 
+  
+  pred_roms <- mgcv::gam(NCaS ~ s(day_of_year, k=4) + 
+                           s(YEAR, k=5 ) + te(LON, LAT, bs=c("tp", "tp")),
+                         data = df_input,
+                         family = tw(link = "log")) 
+  
+############# plot relative difference in biomass 
+  
+new.dat = data.frame(day_of_year = rep(round(mean(df_input$day_of_year)), 
+                     times = nrow(df_input)),
+                     YEAR = rep(round(mean(df_input$YEAR)), #mean is 2010.8 - just round so it makes more sense..
+                                times = nrow(df_input)),
+                     LAT = df_input$LAT,
+                     LON = df_input$LON)
+
+new.dat <- unique(new.dat[c("day_of_year", "YEAR", "LAT", "LON")])
+
+eco_pred =  predict.gam(pred_eco, newdata = new.dat, se.fit = TRUE)#, type = "response")
+
+roms_pred = predict(pred_roms, newdata = new.dat, se.fit = TRUE)#, type = "response")
+
+pred <- data.frame(eco_pred  =  exp(eco_pred[[1]]),
+                   roms_pred  =  exp(roms_pred[[1]]),
+                   eco_se  = exp(eco_pred[[2]]),
+                   roms_se  =  exp(roms_pred[[2]])) %>%
+# pred <- data.frame(eco_pred  =  eco_pred[[1]],
+#                    roms_pred  =  roms_pred[[1]],
+#                    eco_se  = eco_pred[[2]],
+#                    roms_se  = roms_pred[[2]]) %>%
+  cbind(new.dat) %>%
+  gather(1:4, key = "id", value= "value") %>%
+  dplyr::mutate(type = case_when(id %in% c("eco_pred","roms_pred") ~ "prediction",
+                                 TRUE ~ "SE"),
+                id = case_when(id %in% c("eco_pred", "eco_se") ~ "ECOFOCI",
+                               id %in% c("roms_pred", "roms_se") ~ "ROMS",
+                               TRUE ~ "check")) %>%
+  spread(type , value)
+
+
+# plot across space 
+ 
+  space <- ggplot(data = pred, aes(x=LON, y=LAT )) +
+  geom_point(aes( color = log(prediction))) + 
+  geom_sf(data = ak, fill= "white", inherit.aes = FALSE) +
+  facet_wrap(~id) +
+  theme_void() +
+  scale_fill_viridis(name = "Log(Biomass)")
+
+
+
+diff_df <- pred %>% # set a flag to group by depths to show different areas on the shelf... 
+   mutate(depth_id = case_when(LON > - 165 & LAT < 66 ~ "Norton Sound",
+                               LAT > 64.5 ~ "North of Norton",
+                               LON > -170 & LAT <= 64.5 ~ "S Inner",
+                               LON <= -170 & LAT <= 64.5 ~ "S Outer",
+                               TRUE ~ "check")) %>% 
+  # mutate(depth_id = case_when(bottom_depth <= 50 ~ "Inner Shelf",
+  #                             bottom_depth > 50 & bottom_depth <=100 ~ "Middle Shelf",
+  #                             bottom_depth > 100 ~ "Outer Shelf" )) %>% 
+  group_by(depth_id,id) %>% 
+  dplyr::summarise(#total_biomass = sum(prediction),
+    avg_pred = mean(prediction), 
+    # se = sd(prediction)/sqrt(length(prediction)),
+    #total_weighted_biomass = sum(prediction*SE),
+    avg_weighted_biomass = mean(prediction),#*SE),
+    #SE_total = sd(prediction*SE)/sqrt(length(prediction*SE)) 
+    SE_total = sd(prediction)/sqrt(length(prediction))) %>% 
+  dplyr::mutate(species = sp)
+
+return(list(diff_df,space))
+
+}
+
+a<-fig3(df_input = df, sp="Calanus") 
+ 
+# diff_df<-rbind(a,b,c) %>%
+#   dplyr::mutate(species = factor(species, levels = c("Calanus", "Pseudocalanus", "Neocalanus")))
+
+diff_plot<-ggplot(data = a[[1]], aes(x=depth_id, y = avg_weighted_biomass, color = id, group = id)) +
+  geom_point()+
+    geom_errorbar(aes(ymin =  avg_weighted_biomass- SE_total, ymax =  SE_total+ avg_weighted_biomass),
+                  width = 0.2) +
+  theme_classic() +
+  #theme_pubclean() +
+  ylab("Mean Predicted\nBiomass (mg C m-3)") +
+  xlab("") +
+  #facet_wrap(~species, ncol = 1,scales = "free")+
+  scale_color_manual(values= color,
+                     labels=c("sr-EM", "sr-ROMS-NPZ")) +
+  theme(legend.title = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))   
+
+diff_plot
+
+print(a[[2]])
+# 
+# a_test <- a %>%
+#   mutate(avg_weighted_biomass = case_when(id == "ROMS" ~ avg_weighted_biomass/10,
+#                                           TRUE ~ avg_weighted_biomass))
+# 
+# ggplot(data = a_test, aes(x=depth_id, y = avg_weighted_biomass, color = id, group = id)) +
+#   geom_point()+
+#     geom_errorbar(aes(ymin =  avg_weighted_biomass- SE_total, ymax =  SE_total+ avg_weighted_biomass),
+#                   width = 0.2) +
+#   theme_classic() +
+#   #theme_pubclean() +
+#   ylab("Mean Predicted\nBiomass (mg C m-3)") +
+#   xlab("") +
+#   #facet_wrap(~id, ncol = 1,scales = "free")+
+#   scale_color_manual(values= color,
+#                      labels=c("sr-EM", "sr-ROMS-NPZ")) +
+#   theme(legend.title = element_blank(),
+#         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))   
+
+ 
+
+```
+ 
+ 
