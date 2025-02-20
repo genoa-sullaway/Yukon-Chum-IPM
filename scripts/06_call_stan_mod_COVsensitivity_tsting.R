@@ -1,32 +1,35 @@
-# STAN SENSITIVITY TESTING
-# Run the stan model with just 1 covariate at a time and evaluate if its still in the neighborhood of same effects...
-# how to do this --- 
-  # Run through covariate 1, one at a time and fix survival estimate for stage 2 to what its estimated at in the full model??
-  # Run through covariate 2, one at a time and fix survivial for stage 1. 
-
 library(rstan)
 library(tidyverse)
 library(here)
 library(bayesplot)
-library(rstanarm) 
+# library(rstanarm) 
 
 library(tidync)
 library(lubridate) 
 library(readxl)
+# remove.packages(c("StanHeaders", "rstan"))
+# 
+#  install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies = TRUE)
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
 
+# Load data ==================================================================
+# see 01_make salmon data.R for salmon data tidying 
+# see 02_make covariates for data tidying 
 
- # setup inputs ===============================================================
+# setup inputs ===============================================================
 warmups <- 2000
-total_iterations <- 4000
-max_treedepth <-  12
+total_iterations <- 6000
+max_treedepth <-  15
 n_chains <- 4
 n_cores <- 4
-adapt_delta <- 0.95 # step size 
+# adapt_delta <- 0.95 # step size 
 
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-fs = as.vector(c(1800,2351, 2902,3453)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+# fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(1800,2351, 2902,3453))
 t_start = A +2  # to fill starting values 
 
 year_min = 2002
@@ -50,13 +53,31 @@ yukon_fall_broodyear_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age
 ### mean age comp brood year ========  
 pi <- colMeans(yukon_fall_broodyear_obs_agecomp)
 
+# add CV =========
+return_CVs <- read_xlsx("data/chum_cv.xlsx") %>%
+  filter(year >= year_min, 
+         year <= year_max_cal) 
+
+# add juvenile index CV ========
+fall_juv_CV <- read_csv("data/Juvenile_Index_CC/Index for Sabrina.csv") %>%
+  filter(Stratum == "Stratum_1")  
+
+mean_2020 <- mean(fall_juv_CV$CV, na.rm = TRUE)
+
+fall_juv_CV_all <- fall_juv_CV %>%
+  dplyr::select(Time,CV) %>%
+  dplyr::mutate(CV = case_when(Time == 2020 ~ mean_2020,
+                               TRUE ~ CV)) %>%
+  dplyr::mutate(brood_year = Time-1) %>%
+  filter(!brood_year>year_max_brood) %>%
+  dplyr::select(brood_year,CV) %>% 
+  filter(!brood_year ==2001)
+
 
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min, 
-         cal_year <= year_max_cal) #%>% 
-# dplyr::select(2) %>%
-#as.vector()
+         cal_year <= year_max_cal) 
 
 yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
   filter(cal_year >= year_min, 
@@ -75,6 +96,7 @@ yukon_fall_return_brood_year<- read_csv("data/processed_data/yukon_fall_yukon_fa
   filter(Brood_Year >= year_min,
          !is.na(Brood_Year_Return))
 
+
 ## Fall Juveniles ================================================
 fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
   dplyr::mutate(brood_year = Year-1) %>%
@@ -84,11 +106,12 @@ fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
 # specific year inputs ========
 nByrs = nrow(fall_juv) # Number of BROOD years                
 nRyrs = nrow(yukon_fall_harvest) # Number of CAL/RETURN  
+n_age_comp_yrs = nrow(yukon_fall_obs_agecomp)
 nByrs_return_dat = nrow(yukon_fall_return_brood_year)
 
 nRyrs_T = nByrs + 4 + 2
 
-# # starting values to fix  =============
+## starting values to fix  =============
 N_recruit_start = matrix(NA,nrow=t_start, ncol=A)
 N_catch_start = matrix(NA,nrow=t_start, ncol=A)
 N_egg_start = matrix(0,nrow=t_start, ncol=A)
@@ -115,11 +138,47 @@ N_sp_start_log = log(N_sp_start+ 1.001)
 N_catch_start_log = log(N_catch_start+ 1.001)
 N_egg_start_log  = log(N_egg_start+ 1.001)
 
-
 ## CV ========================================
 spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
   filter(year >= year_min,
          year <= year_max_cal)
+
+#  covariates =================  
+stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+  filter(brood_year >= year_min, 
+         brood_year <= year_max_brood) %>%
+  dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+                yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+                fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+                pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
+  dplyr::select(SST_CDD_NBS, 
+                yukon_mean_discharge,
+                pollock_recruit_scale,
+                mean_size, # was already mean scaled because of the averaging across ages
+                # fall_mintemp_CDD#,
+                fall_snow_cummulative
+  ) %>% 
+  as.matrix() 
+
+# the temp in 2001 is gonna effect fish from brood year 1999
+stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+  dplyr::rename(full_index=full_index_scale) %>% 
+  filter(brood_year >= year_min, 
+         brood_year <= year_max_brood) %>% 
+  dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                 Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+                 Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                 # full_index = as.numeric(scale(full_index))
+  ) %>%
+  dplyr::select(SST_CDD_Aleut,
+                Chum_hatchery,
+                Pink_hatchery,
+                full_index) %>%
+  as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
+
+# number covariates for each life stage 
+ncovars1 = ncol(stage_a_cov)
+ncovars2 = ncol(stage_b_cov)
 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
@@ -132,185 +191,210 @@ ess_age_comp = 300 #as.vector(rep(400, times = nRyrs))
 set_up_covariate_data <- function(exclusion_stage,covariate_exclude,covariate_name) {
 # exclude in covariate 1 category =============
 if(exclusion_stage == "a"){  
-  ncovars1 = 3
+  ncovars1 = 4
   ncovars2 = 4
 
           if(covariate_exclude == "SST_CDD_NBS"){
             stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-              dplyr::rename(cal_year = Year) %>% 
-              dplyr::mutate(brood_year = cal_year-1) %>% 
-              filter(brood_year >= year_min, 
-                     brood_year <= year_max_brood) %>%
+            filter(brood_year >= year_min, 
+                   brood_year <= year_max_brood) %>%
               dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                            yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
-                            pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
+                            yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+                            fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+                            pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
               dplyr::select(#SST_CDD_NBS, 
-                          yukon_mean_discharge,
-                          pollock_recruit_scale,
-                          mean_size) %>% 
-              as.matrix()
+                            yukon_mean_discharge,
+                            pollock_recruit_scale,
+                            mean_size, # was already mean scaled because of the averaging across ages
+                            fall_snow_cummulative
+              ) %>% 
+              as.matrix() 
+            
         }
          
   
   if(covariate_exclude == "yukon_mean_discharge"){
     stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-      dplyr::rename(cal_year = Year) %>% 
-      dplyr::mutate(brood_year = cal_year-1) %>% 
       filter(brood_year >= year_min, 
              brood_year <= year_max_brood) %>%
       dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
-                    pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
+        yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+        fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+        pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
       dplyr::select(SST_CDD_NBS, 
-                    # Large_zoop,
-                    # Cnideria,
-                    # yukon_mean_discharge,
-                    pollock_recruit_scale,
-                    mean_size) %>% 
+        #yukon_mean_discharge,
+        pollock_recruit_scale,
+        mean_size, # was already mean scaled because of the averaging across ages
+        fall_snow_cummulative
+      ) %>% 
       as.matrix()
   }
   
   if(covariate_exclude == "pollock_recruit_scale"){
     stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-      dplyr::rename(cal_year = Year) %>% 
-      dplyr::mutate(brood_year = cal_year-1) %>% 
       filter(brood_year >= year_min, 
              brood_year <= year_max_brood) %>%
       dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
-                    pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
-      dplyr::select(SST_CDD_NBS,
-                    yukon_mean_discharge,
-                    mean_size) %>% 
+        yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+        fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+        pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
+      dplyr::select(SST_CDD_NBS, 
+        yukon_mean_discharge,
+        #pollock_recruit_scale,
+        mean_size, # was already mean scaled because of the averaging across ages
+        fall_snow_cummulative
+      ) %>% 
       as.matrix()
   }
   if(covariate_exclude == "mean_size"){
     stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-      dplyr::rename(cal_year = Year) %>% 
-      dplyr::mutate(brood_year = cal_year-1) %>% 
       filter(brood_year >= year_min, 
              brood_year <= year_max_brood) %>%
       dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
-                    pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
+        yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+        fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+        pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
       dplyr::select(SST_CDD_NBS, 
-                    yukon_mean_discharge,
-                    pollock_recruit_scale) %>% 
+        yukon_mean_discharge,
+        pollock_recruit_scale,
+        #mean_size, # was already mean scaled because of the averaging across ages
+        fall_snow_cummulative
+      ) %>% 
+      as.matrix()
+  }
+  if(covariate_exclude == "fall_snow_cummulative"){
+    stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+      filter(brood_year >= year_min, 
+             brood_year <= year_max_brood) %>%
+      dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+        yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+        fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+        pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
+      dplyr::select(SST_CDD_NBS, 
+        yukon_mean_discharge,
+        pollock_recruit_scale,
+        mean_size, # was already mean scaled because of the averaging across ages
+        # fall_snow_cummulative
+      ) %>% 
       as.matrix()
   }
   
   stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-  dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                 Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
-                 Pink_hatchery= as.numeric(scale(Pink_hatchery)),
-                 full_index = as.numeric(scale(full_index))) %>% 
-  dplyr::rename(cal_year = Year) %>% 
-  dplyr::mutate(brood_year = cal_year-2) %>% 
-  filter(brood_year >= year_min, 
-         brood_year <= year_max_brood) %>% 
-  dplyr::select(SST_CDD_Aleut,
-                Chum_hatchery,
-                Pink_hatchery,
-                full_index)    %>%
-  as.matrix() 
+    dplyr::rename(full_index=full_index_scale) %>% 
+    filter(brood_year >= year_min, 
+           brood_year <= year_max_brood) %>% 
+    dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                   Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+                   Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                   # full_index = as.numeric(scale(full_index))
+    ) %>%
+    dplyr::select(SST_CDD_Aleut,
+                  Chum_hatchery,
+                  Pink_hatchery,
+                  full_index) %>%
+    as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
+  
 }
   
 # exclude in cov 2 category =============
   if(exclusion_stage == "b"){  
-    ncovars1 = 4
+    ncovars1 = 5
     ncovars2 = 3
     
     stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-      dplyr::rename(cal_year = Year) %>% 
-      dplyr::mutate(brood_year = cal_year-1) %>% 
       filter(brood_year >= year_min, 
              brood_year <= year_max_brood) %>%
       dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                    yukon_mean_discharge=as.numeric(scale(yukon_mean_discharge)),
-                    pollock_recruit_scale  =as.numeric(scale(Recruit_age_1_millions))) %>%
+                    yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+                    fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+                    pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
       dplyr::select(SST_CDD_NBS, 
-                    yukon_mean_discharge,
-                    pollock_recruit_scale,
-                    mean_size # was already mean scaled because of the averaging across ages
+        yukon_mean_discharge,
+        pollock_recruit_scale,
+        mean_size, # was already mean scaled because of the averaging across ages
+        fall_snow_cummulative
       ) %>% 
-      as.matrix()
+      as.matrix() 
     
 if(covariate_exclude == "SST_CDD_Aleut"){
   stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-      dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                     Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
-                     Pink_hatchery= as.numeric(scale(Pink_hatchery)),
-                     full_index = as.numeric(scale(full_index))) %>% 
-      dplyr::rename(cal_year = Year) %>% 
-      dplyr::mutate(brood_year = cal_year-2) %>% 
-      filter(brood_year >= year_min, 
-             brood_year <= year_max_brood) %>% 
-      dplyr::select(#SST_CDD_Aleut,
-                    Chum_hatchery,
-                    Pink_hatchery,
-                    full_index)    %>%
-      as.matrix() 
+    dplyr::rename(full_index=full_index_scale) %>% 
+    filter(brood_year >= year_min, 
+           brood_year <= year_max_brood) %>% 
+    dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                   Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+                   Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                   #full_index = as.numeric(scale(full_index))
+    ) %>%
+    dplyr::select(#SST_CDD_Aleut,
+                  Chum_hatchery,
+                  Pink_hatchery,
+                  full_index) %>%
+    as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
+  
 }
     
 if(covariate_exclude == "Chum_hatchery"){
   stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-        dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                       Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
-                       Pink_hatchery= as.numeric(scale(Pink_hatchery)),
-                       full_index = as.numeric(scale(full_index))) %>% 
-        dplyr::rename(cal_year = Year) %>% 
-        dplyr::mutate(brood_year = cal_year-2) %>% 
-               filter(brood_year >= year_min, 
-                      brood_year <= year_max_brood) %>% 
-        dplyr::select(SST_CDD_Aleut,
-                      # Chum_hatchery,
-                      Pink_hatchery,
-                      full_index)    %>%
-        as.matrix() 
+    dplyr::rename(full_index=full_index_scale) %>% 
+    filter(brood_year >= year_min, 
+           brood_year <= year_max_brood) %>% 
+    dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                   Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+                   Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                   # full_index = as.numeric(scale(full_index))
+    ) %>%
+    dplyr::select(SST_CDD_Aleut,
+                  #Chum_hatchery,
+                  Pink_hatchery,
+                  full_index) %>%
+    as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
+  
 }
     
     if(covariate_exclude == "Pink_hatchery"){
       stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-        dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                       Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
-                       Pink_hatchery= as.numeric(scale(Pink_hatchery)),
-                       full_index = as.numeric(scale(full_index))) %>% 
-        dplyr::rename(cal_year = Year) %>% 
-        dplyr::mutate(brood_year = cal_year-2) %>% 
+        dplyr::rename(full_index=full_index_scale) %>% 
         filter(brood_year >= year_min, 
                brood_year <= year_max_brood) %>% 
+        dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                       Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+                       Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                       # full_index = as.numeric(scale(full_index))
+        ) %>%
         dplyr::select(SST_CDD_Aleut,
                       Chum_hatchery,
                       #Pink_hatchery,
-                      full_index)    %>%
-        as.matrix() 
+                      full_index) %>%
+        as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
+      
     }
     
     if(covariate_exclude == "full_index"){
       stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-        dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                       Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
-                       Pink_hatchery= as.numeric(scale(Pink_hatchery)),
-                       full_index = as.numeric(scale(full_index))) %>% 
-        dplyr::rename(cal_year = Year) %>% 
-        dplyr::mutate(brood_year = cal_year-2) %>% 
+        dplyr::rename(full_index=full_index_scale) %>% 
         filter(brood_year >= year_min, 
                brood_year <= year_max_brood) %>% 
+        dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+                       Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+                       Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                       # full_index = as.numeric(scale(full_index))
+        ) %>%
         dplyr::select(SST_CDD_Aleut,
                       Chum_hatchery,
                       Pink_hatchery#,
-                      #full_index
-                      )    %>%
-        as.matrix() 
+                     # full_index
+                     ) %>%
+        as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
+      
     }
   }
   
-  # assign data 
-  
-  ## assign data ==========
+  # assign data ==========
   data_list_stan <- list(nByrs=nByrs,
                          nRyrs=nRyrs,
                          nRyrs_T = nRyrs_T, 
+                         
                          A=A,
                          t_start = t_start,
                          nByrs_return_dat=nByrs_return_dat,
@@ -319,9 +403,11 @@ if(covariate_exclude == "Chum_hatchery"){
                          fs=fs,
                          M = M_fill_stan,
                          
+                         lik_count = 4, # for sensitivity testing 
+                         
                          data_stage_j = as.vector(fall_juv$fall_abund), 
                          data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
-                         # adata_stage_return=as.vector(yukon_fall_recruits$total_run), 
+                         #data_stage_return=as.vector(yukon_fall_recruits$total_run), 
                          data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                          data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                          
@@ -336,12 +422,19 @@ if(covariate_exclude == "Chum_hatchery"){
                          cov2=stage_b_cov,
                          
                          data_sp_cv = spawner_cv$fall_spawner_cv,
-                         lik_count = 3, # for sensitivity testing
+                         
                          o_run_comp=(yukon_fall_obs_agecomp),
                          ess_age_comp=ess_age_comp,
-                         log_c_1 = 15, 
-                         log_c_2 =22, 
-                         pi = pi)
+                         # basal_p_1 = 0.9,
+                         # basal_p_2 = 0.9,
+                         log_c_1 = 18, 
+                         log_c_2 =25,
+                         juv_CV= fall_juv_CV_all$CV,
+                         return_CV = return_CVs$fall_spawner_cv
+                         # ricker_beta = 0.0002,
+                         # ricker_alpha = 1.6
+                         #pi = pi
+  )
   
   # call mod ========
   bh_fit <- stan(
@@ -362,7 +455,9 @@ if(covariate_exclude == "Chum_hatchery"){
 cov_a_list<- c("SST_CDD_NBS", 
                "yukon_mean_discharge",
                "pollock_recruit_scale",
-               "mean_size")
+               "mean_size",
+               "fall_snow_cummulative"
+               )
 
 cov_b_list<-  c("SST_CDD_Aleut",
                 "Chum_hatchery",
