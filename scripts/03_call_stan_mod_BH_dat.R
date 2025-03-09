@@ -155,8 +155,9 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
                  yukon_mean_discharge,
                  pollock_recruit_scale,
                 mean_size, # was already mean scaled because of the averaging across ages
-                # fall_mintemp_CDD#,
-                fall_snow_cummulative
+               sockeye_juv_index,
+                 # fall_mintemp_CDD#,
+                 fall_snow_cummulative
                 ) %>% 
   as.matrix() 
 

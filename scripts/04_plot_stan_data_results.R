@@ -53,10 +53,34 @@ print(diagnostics[problems,])
 good <- (which( diagnostics[,"Rhat"] < 1.05))
 print(diagnostics[good,])
 
+#LOOK AT WAIC =============
+library(loo)
+# Extract each component
+log_lik_j <- extract_log_lik(bh_fit, parameter_name = "log_lik_j")
+log_lik_return <- extract_log_lik(bh_fit, parameter_name = "log_lik_return")
+log_lik_age_comp <- extract_log_lik(bh_fit, parameter_name = "log_lik_age_comp")
+log_lik_harvest <- extract_log_lik(bh_fit, parameter_name = "log_lik_harvest")
+log_lik_sp <- extract_log_lik(bh_fit, parameter_name = "log_lik_sp")
+
+# Combine all log-likelihoods
+# You'll need to adjust the combining based on your specific needs
+log_lik_total <- cbind(log_lik_j, log_lik_return, log_lik_age_comp, 
+                       log_lik_harvest, log_lik_sp)
+
+# Calculate WAIC using combined log-likelihood
+waic_result <- waic(log_lik_total)
+
+# Calculate LOO instead of WAIC
+loo_result <- loo(log_lik_total)
+
+# Look at the diagnostics
+print(loo_result)
+
+
 #diagnostics[,"n_eff"] > 400 &
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]","theta1[5]",#"theta1[6]", 
+     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]","theta1[5]","theta1[6]", 
                "theta2[1]","theta2[2]","theta2[3]","theta2[4]" 
      ),
      fill_color = "blue")

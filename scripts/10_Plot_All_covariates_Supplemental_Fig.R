@@ -90,3 +90,123 @@ ggpubr::ggarrange(cov_a_plots,cov_b_plot, labels = c("A.", "B."), nrow = 2)
 
 ggsave("output/Supplemental_Plot_Covariates.png",width = 6, height = 6, bg = "white")
 
+
+# Cov plots for talks ===================
+## plot just spawner size for   =========
+
+ 
+cov_spawner <- cova_dfplot  %>% filter(variable == "mean_size") 
+
+labels = c("mean_size"="Spawner Size" )
+
+sp_plot <- ggplot(data = cov_spawner,
+                      aes(x=brood_year, y = value, group = variable, color = variable)) +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values= c("#b0cbe7")) +
+  theme_classic() +
+  facet_wrap(~variable, scales = "free", labeller = as_labeller(labels)) +
+  ylab("Mean Trend") + 
+  xlab("Calendar Year") +
+  geom_hline(yintercept =0, linetype =2, color = "white") + 
+  theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        strip.text = element_blank( ), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white"),
+        panel.spacing.y=unit(0, "lines"))  
+sp_plot
+ggsave("output/Spawner_size_covariate_plot.png", width = 5, height = 3 ) 
+
+# hatchery =============== 
+cov_b_hatchery <-ggplot(data = cov_b %>% 
+                            filter(variable %in% 
+                                     c("Chum Salmon Hatchery Release Abundance")),
+                          aes(x=brood_year, y = value, group = variable, color = variable)) +
+  geom_hline(yintercept =0, linetype =2, color = "white") +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values= c("#b0986c")) +
+  facet_wrap(~variable,nrow = 3) +
+  theme_classic() +
+  ylab("Mean Covariate Trend") + 
+  xlab("Brood Year") +
+  theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        strip.text = element_blank( ), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        # strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white"),
+        panel.spacing.y=unit(0, "lines"),
+        legend.position = "bottom")  
+
+cov_b_hatchery
+
+ggsave("output/Plot_hatchery_talk.png",width = 7, height = 3)
+
+ 
+# fullness + temp ========
+cov_b_tempSFI <-ggplot(data = cov_b %>% 
+                            filter(variable %in% 
+                                     c("Fullness Index","Aleutian Winter Temperature")) %>% 
+                         dplyr::mutate(variable = factor(variable, levels = c("Fullness Index","Aleutian Winter Temperature"))),
+                   aes(x=brood_year, y = value, group = variable, color = variable)) +
+  geom_hline(yintercept =0, linetype =2, color = "white") +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values= c("#72e1e1","#009474")) +
+  facet_wrap(~variable,nrow = 3) +
+  theme_classic() +
+  ylab("Mean Covariate Trend") + 
+  xlab("Brood Year") +
+  theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        strip.text = element_blank( ), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        # strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white"),
+        panel.spacing.y=unit(0, "lines"),
+        legend.position = "bottom")  
+  
+cov_b_tempSFI
+ 
+ggsave("output/Plot_temperature_talk.png",width = 7, height = 3)
+
+

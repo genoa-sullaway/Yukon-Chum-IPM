@@ -234,6 +234,7 @@ pi ~ beta(1,1);
   theta1[3] ~ normal(0,0.1);
   theta1[4] ~ normal(0,0.1);
   theta1[5] ~ normal(0,0.1);
+  theta1[6] ~ normal(0,0.1);
 
   theta2[1] ~ normal(0,0.1);
   theta2[2] ~ normal(0,0.1);
@@ -293,3 +294,27 @@ log_F_mean ~ normal(0,0.1);
      }
   }
  
+ generated quantities {
+  vector[nByrs] log_lik_j;                    // juvenile likelihood
+  vector[nByrs_return_dat] log_lik_return;    // return likelihood
+  vector[nRyrs] log_lik_age_comp;             // age composition likelihood
+  vector[nRyrs] log_lik_harvest;              // harvest likelihood
+  vector[nRyrs] log_lik_sp;                   // spawner likelihood
+  
+  // Juvenile likelihood
+  for (t in 1:nByrs) {
+    log_lik_j[t] = lognormal_lpdf(data_stage_j[t] | log(N_j_predicted[t]), sqrt(log((0.5^2) + 1)));
+  }
+  
+  // Return likelihood
+  for (t in 1:nByrs_return_dat) {
+    log_lik_return[t] = normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.35^2) + 1)));
+  }
+  
+  // Calendar year likelihoods
+  for (t in 1:nRyrs) {
+    log_lik_age_comp[t] = ess_age_comp * sum(o_run_comp[t,1:A] .* log(q[t,1:A]));
+    log_lik_harvest[t] = normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.35^2) + 1)));
+    log_lik_sp[t] = normal_lpdf(log(data_stage_sp[t]) | log(sum(N_sp[t,1:A])), sqrt(log((0.35^2) + 1)));
+  }
+}

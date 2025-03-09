@@ -40,6 +40,40 @@ fall_all <- left_join(fall_recruit, yukon_fall_harvest) %>%
                 id = factor(id, levels = c("Recruits", "Spawners", "Harvest")))
 
 ## all fall on one plot =============
+ggplot(data = fall_all %>% filter(!id == "Recruits"), aes(x=cal_year, y = value/1000000, group = id, fill = id )) +
+  geom_line( ) +
+  geom_area( ) +
+  geom_hline(yintercept = mean(yukon_fall_harvest$harvest + spawners$Spawners)/1000000, linetype = 2, alpha = 0.8, color = "white")+ 
+  scale_fill_manual(values = c("blue", "lightblue","gray"), name = " ") + 
+  theme_classic() +
+  ylab("Abundance (Millions)") +
+  xlab("Calendar Year") +
+  theme( panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+         plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+         legend.background = element_blank(),
+         legend.position = "top",
+         legend.text=element_text( colour="white"),
+         axis.text.x=element_text(colour="white"), 
+         axis.title.x = element_text(colour="white"), 
+         axis.ticks.x = element_line(colour="white"), 
+         axis.text.y=element_text(colour="white"), 
+         axis.title.y = element_text(colour="white"), 
+         axis.ticks.y = element_line(colour="white"), 
+         axis.line.x.bottom=element_line(color="white"),
+         axis.line.y =element_line(color="white"),
+         
+         panel.border = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.grid.major = element_blank()) + 
+  scale_x_continuous(expand = c(0, 0)) + 
+  scale_y_continuous(expand = c(0, 0))
+
+ggsave( "output/afs_talk_sp_harvest_FALL_chum.png",  bg = "transparent",
+        width = 9, height = 4)
+
+
+
+## all fall on one plot =============
 ggplot(data = fall_all, aes(x=cal_year, y = value/1000000, group = id, fill = id )) +
   geom_line( ) +
   geom_area( ) +

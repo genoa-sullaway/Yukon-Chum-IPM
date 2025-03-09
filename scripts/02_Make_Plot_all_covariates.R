@@ -69,17 +69,23 @@ sst_a <- read_csv("data/processed_covariates/Stage_A_CDD.csv") %>%
 
 ### Zoop  ========== 
 # this is a GAM zoop index
-zoop <- read_csv("data/processed_covariates/Stage_A_Zooplankton_Index.csv")  %>% 
-  dplyr::rename(Year = "YEAR")  %>%
-  dplyr::mutate(brood_year = Year-1)  %>%
-  dplyr::select(brood_year, Large_zoop, Cnideria)
+# zoop <- read_csv("data/processed_covariates/Stage_A_Zooplankton_Index.csv")  %>% 
+#   dplyr::rename(Year = "YEAR")  %>%
+#   dplyr::mutate(brood_year = Year-1)  %>%
+#   dplyr::select(brood_year, Large_zoop, Cnideria)
  
+# sockeye =========
+sockeye <- read_csv("data/processed_covariates/Cov_A_Sockeye_JuvIndex.csv")  
+  
+  
+  
   # Stage A - One DF for model ============= 
 stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
-              left_join(zoop)  %>%
+              # left_join(zoop)  %>%
               left_join(pollock) %>%
               left_join(size) %>%
               left_join(circle_snow) %>% 
+              left_join(sockeye) %>% 
   data.frame()
 
 # Stage A - Save DF ============= 
