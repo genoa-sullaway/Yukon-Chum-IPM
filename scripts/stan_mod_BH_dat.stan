@@ -68,14 +68,13 @@ real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors ac
 real <lower=0> g[nByrs,A]; // gamma random draws
  vector<lower=0, upper=1> [A] pi; // actual age comps
 
-
 real log_catch_q; 
 real log_F_mean; 
-vector [A] log_S; // log selectivity 
+// vector [A] log_S; // log selectivity 
 vector [nRyrs_T]  log_F_dev_y; 
 
 real <lower=0, upper = 1> basal_p_1; // mean alpha for covariate survival stage 1
-real <lower=0, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
+real <lower=0.5, upper = 1> basal_p_2; // mean alpha for covariate survival stage 2
 
 // ricker aprameters 
 real <lower=0> alpha;
@@ -102,7 +101,7 @@ real N_brood_year_return_start;
 real N_j_start; 
  
 vector <lower = 0> [nRyrs_T] F;
-vector <lower = 0> [A] S; //selectivty
+// vector <lower = 0> [A] S; //selectivty
 
 // survival and covariate section 
 vector  <lower=0,upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
@@ -128,7 +127,7 @@ real<lower=0> c_2;
 c_1 = exp(log_c_1);
 c_2 = exp(log_c_2);
  
-  S = exp(log_S);
+  // S = exp(log_S);
  
   for(t in 1:nRyrs_T){
   // instant fishing mortality
@@ -185,7 +184,7 @@ for(t in 1:nByrs){
 catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
 
      for (t in 1:nByrs){ // loop for each brood year 
-           N_e_sum[t] = sum(N_e[t,1:A]);
+         N_e_sum[t] = sum(N_e[t,1:A]);
            
          kappa_j_survival[t] =  p_1[t]/(1 + ((p_1[t]*N_e_sum[t])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
 
@@ -197,7 +196,8 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         for (a in 1:A) { 
            N_recruit[t+a+2,a] = (N_brood_year_return[t]*p[t,a]); #add age specific mortality, 
            
-           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
+           // N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
+           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]))); 
            
            N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a];  
            
@@ -226,20 +226,23 @@ model {
 
 pi ~ beta(1,1); 
 
-  log_c_1 ~ normal(16,2);
-  log_c_2 ~ normal(14, 2);
+  log_c_1 ~ normal(15,2);
+  log_c_2 ~ normal(17, 2);
+
+  // log_c_1 ~ normal(18,2);
+  // log_c_2 ~ normal(25, 2);
 
   theta1[1] ~ normal(0,0.1);
   theta1[2] ~ normal(0,0.1);
   theta1[3] ~ normal(0,0.1);
   theta1[4] ~ normal(0,0.1);
-  theta1[5] ~ normal(0,0.1);
-  theta1[6] ~ normal(0,0.1);
+  // theta1[5] ~ normal(0,0.1);
+  // theta1[6] ~ normal(0,0.1);
 
   theta2[1] ~ normal(0,0.1);
   theta2[2] ~ normal(0,0.1);
   theta2[3] ~ normal(0,0.1);
-  theta2[4] ~ normal(0,0.1);
+  // theta2[4] ~ normal(0,0.1);
 
   D_scale ~ beta(1,1);  
 
@@ -256,13 +259,14 @@ pi ~ beta(1,1);
 
 // log fishing mortality for each calendar year
 log_F_mean ~ normal(0,0.1);
+ 
  for(t in 1:nRyrs_T){
    log_F_dev_y[t] ~ normal(0, 1);
 }
  
- for (a in 1:A) {
-    log_S[a] ~ normal(0,1);
- } 
+ // for (a in 1:A) {
+ //    log_S[a] ~ normal(0,1);
+ // } 
 
  N_j_start_log ~ normal(14,2);
  N_brood_year_return_start_log~ normal(12,2);
@@ -278,19 +282,19 @@ log_F_mean ~ normal(0,0.1);
    
  // Observation model
   for (t in 1:nByrs) {
-     target += lognormal_lpdf(data_stage_j[t] | log(N_j_predicted[t]), sqrt(log((0.5^2) + 1)));  
+     target += lognormal_lpdf(data_stage_j[t] | log(N_j_predicted[t]), sqrt(log((0.25^2) + 1)));  
  
   }
     for (t in 1:nByrs_return_dat) {
  // recruit by brood year 
-    target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.35^2) + 1)));  
+    target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), sqrt(log((0.3^2) + 1)));  
     } 
 
   for(t in 1:nRyrs){ // calendar years 
      target +=  ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
   
-     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.35^2) + 1)));  
-     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.35^2) + 1)));  
+     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), sqrt(log((0.3^2) + 1)));  
+     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), sqrt(log((0.3^2) + 1)));  
      }
   }
  
@@ -303,7 +307,7 @@ log_F_mean ~ normal(0,0.1);
   
   // Juvenile likelihood
   for (t in 1:nByrs) {
-    log_lik_j[t] = lognormal_lpdf(data_stage_j[t] | log(N_j_predicted[t]), sqrt(log((0.5^2) + 1)));
+    log_lik_j[t] = lognormal_lpdf(data_stage_j[t] | log(N_j_predicted[t]), sqrt(log((0.39^2) + 1)));
   }
   
   // Return likelihood

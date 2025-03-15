@@ -40,7 +40,8 @@ pred_return <-  as.data.frame(bh_fit, pars = c("N_brood_year_return")) %>%
   left_join(adult_cvs) %>% 
   dplyr::select(brood_year,obs, fall_spawner_cv,
               mean,ci_95_low,ci_95_high) %>% 
-  dplyr::mutate(sd_obs =   (fall_spawner_cv*obs)) 
+  dplyr::mutate(sd_obs =   (fall_spawner_cv*obs)) %>%
+  filter(!brood_year > 2018)
 
 return_plot <- ggplot(data = pred_return) +
   geom_ribbon(aes(x=brood_year, ymin =ci_95_low/1000000,
@@ -73,7 +74,6 @@ return_plot
 
 # ggsave("output/return_est_plot.png", width = 7, height = 4, bg = "transparent")
 # plot with different confidence intervals=====
- 
 # Juveniles PP ====== 
 # multiply by catch q to fit observations
 juv_obs <-read_csv("data/processed_data/tidy_juv_fall_yukon.csv") %>% 
@@ -84,61 +84,43 @@ juv_obs <-read_csv("data/processed_data/tidy_juv_fall_yukon.csv") %>%
   filter(!Year %in% c(2020, 2008,2013)) %>% 
   dplyr::select(brood_year,obs,sd)  
 
-catch_q <- summary(bh_fit, pars = c("log_catch_q"), 
-                   probs = c(0.1, 0.9))$summary %>%
-  data.frame() %>%
-  rownames_to_column()  %>% 
-  mutate(mean = exp(mean))
+# catch_q <- summary(bh_fit, pars = c("log_catch_q"), 
+#                    probs = c(0.1, 0.9))$summary %>%
+#   data.frame() %>%
+#   rownames_to_column()  %>% 
+#   mutate(mean = exp(mean))
 
 catch_q <- as.data.frame(bh_fit, pars = c("log_catch_q")) %>%
-  dplyr::mutate(catch_q = exp(log_catch_q))
+  dplyr::mutate(catch_q = exp(log_catch_q)) %>%
+  dplyr::select(-log_catch_q)
 
-#             ci_80_low = exp(as.numeric(ci(log_catch_q, method = "HDI", ci = 0.80)$CI_low)),
-#             ci_80_high = exp(as.numeric(ci(log_catch_q, method = "HDI", ci = 0.80)$CI_high)),
-#             ci_95_low = exp(as.numeric(ci(log_catch_q, method = "HDI", ci = 0.95)$CI_low)),
-#             ci_95_high = exp(as.numeric(ci(log_catch_q, method = "HDI", ci = 0.95)$CI_high)))  
-
-pred_N_j <- as.data.frame(bh_fit, pars = c("N_j")) %>%
+pred_N_j_adjusted <- as.data.frame(bh_fit, pars = c("N_j")) %>%
   dplyr::mutate(draw = 1:nrow(.)) %>%
   cbind(catch_q) %>%
-  dplyr::mutate(catch_q*)
+  dplyr::mutate(across(starts_with("N_j"), ~ .x * catch_q))  
 
-## STOPPED HERE =========
-# need to multiply each colunm by catch q and preserve the 1_ 2_ etc structure so i can get years from it. 
-# then calculate mean and HDI etc. 
+# Process each column individually and create a clean dataframe
+n_j_cols <- grep("^N_j\\[", names(pred_N_j_adjusted), value = TRUE)
 
-  gather(1:(ncol(.)-1), key = "rowname", value = "value") %>%
-  data.frame() %>%
-  group_by(rowname) %>%
-  dplyr::summarise(mean = mean(value),
-            ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_low),
-            ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_high),
-            ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
-            ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high)) %>%
-  separate(rowname, into = c("del1","year", "del2"), sep = c(-3,-1)) %>%
-  arrange(row_number(.)) %>%
-  dplyr::mutate(brood_year = c(2002:2021)) %>%
-  left_join(juv_obs, by = "brood_year") 
-
-
-
-
-  data.frame() %>%
-  rownames_to_column()  %>%
-  dplyr::mutate(time = 1:nrow(.),
-                ci_10=(X10.),
-                ci_90=(X90.)) %>% 
-  dplyr::mutate(mean_J_Q = mean*catch_q$mean,
-                ci_10 = ci_10*catch_q$mean,
-                ci_90 = ci_90*catch_q$mean) %>% 
-  left_join(years) %>%
-  dplyr::select(-sd) %>% 
-  left_join(juv_obs, by = "time")  
-
-juv_plot <- ggplot(data = pred_N_j) +
-  geom_ribbon(aes(x=brood_year, ymin =ci_10/1000000,
-                  ymax = ci_90/1000000),   fill =  "#EAAA00") +
-  geom_line(aes(x=brood_year, y = mean_J_Q/1000000)) +
+n_j_summary_clean <- map_dfr(n_j_cols, function(col) {
+  values <- pred_N_j_adjusted[[col]]
+  tibble(
+    parameter = col,
+    mean = mean(values, na.rm = TRUE),
+    median = median(values, na.rm = TRUE),
+    ci_80_low = as.numeric(ci(values, ci = 0.8, method = "HDI")$CI_low),
+    ci_80_high = as.numeric(ci(values, ci = 0.8, method = "HDI")$CI_high),
+    ci_95_low = as.numeric(ci(values, ci = 0.95, method = "HDI")$CI_low),
+    ci_95_high = as.numeric(ci(values, ci = 0.95, method = "HDI")$CI_high)
+  )
+}) %>% 
+  cbind(brood_year=years$brood_year[1:20]) %>%
+  left_join(juv_obs)  
+ 
+juv_plot <- ggplot(data = n_j_summary_clean) +
+  geom_ribbon(aes(x=brood_year, ymin =ci_95_low/1000000,
+                  ymax = ci_95_high/1000000),   fill =  "#EAAA00") +
+  geom_line(aes(x=brood_year, y = mean/1000000)) +
   geom_errorbar(aes(x=brood_year, ymin = (obs-sd)/1000000,
                     ymax = (obs+sd)/1000000), width = 0.1, alpha = 0.6) + 
   geom_point(aes(x=brood_year, y = (obs)/1000000), alpha = 0.6) +
@@ -172,5 +154,5 @@ juv_plot
 obs_plot <- ggpubr::ggarrange(juv_plot,return_plot, nrow = 2, labels = c("a.", "b."))
 obs_plot
 
-ggsave("output/Plot_Manuscript_Juv_ReturnFit_Obs.png", width = 7, height = 5, bg="white")
+ggsave("output/Plot_Manuscript_Juv_ReturnFit_Obs.png", width = 6, height = 5, bg="white")
 

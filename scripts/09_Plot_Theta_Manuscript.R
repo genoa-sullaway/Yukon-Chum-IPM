@@ -8,21 +8,24 @@ library(bayestestR)
 bh_fit <- read_rds("output/stan_fit_DATA.RDS")
  
 theta_df <- as.data.frame(bh_fit, pars = c("theta1[1]", "theta1[2]","theta1[3]","theta1[4]",
-                                           "theta1[5]","theta1[6]",
-                                           "theta2[1]","theta2[2]","theta2[3]","theta2[4]")) %>%
+                                           # "theta1[5]","theta1[6]",
+                                           "theta2[1]","theta2[2]","theta2[3]"
+                                           #,"theta2[4]"
+                                           )) %>%
   mutate(draw = 1:nrow(.)) %>%
-  gather(1:10, key = "rowname", value = "value") %>%
-  dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "NBS July/August Temperature",
-                                     rowname=="theta1[2]"~ "Yukon River - Mean Flow",
-                                     rowname=="theta1[3]" ~ "Pollock Recruitment",
-                                     rowname=="theta1[4]" ~ "Mean Spawner Size",
-                                     rowname=="theta1[5]" ~ "Winter Snowpack",
-                                     rowname=="theta1[6]" ~ "Juvenile Sockeye Salmon Abundance",
+  gather(1:7, key = "rowname", value = "value") %>%
+  dplyr::mutate(variable = case_when(rowname=="theta1[1]" ~ "Mean Spawner Size", 
+                                     rowname=="theta1[2]"~  "Winter Snowpack", 
+                                     rowname=="theta1[3]" ~ "NBS July/August Temperature",
+                                     rowname=="theta1[4]" ~ "Pollock Recruitment",
+                                     # rowname=="theta1[5]" ~ "Winter Snowpack",
+                                     # rowname=="theta1[6]" ~ "Juvenile Sockeye Salmon Abundance",
                                      
                                      rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
                                      rowname=="theta2[2]" ~ "Chum Salmon Hatchery Release Abundance",
-                                     rowname=="theta2[3]" ~ "Pink Salmon Hatchery Release Abundance",
-                                     rowname=="theta2[4]" ~ "Fullness Index"),
+                                     rowname=="theta2[3]" ~ "Fullness Index"#"Pink Salmon Hatchery Release Abundance",
+                                     #rowname=="theta2[4]" ~ 
+                                       ),
                 variable = factor(variable, levels = rev(c("Mean Spawner Size",
                                                            "Winter Snowpack",
                                                            "Yukon River - Mean Flow", 
@@ -45,19 +48,19 @@ theta_df <- as.data.frame(bh_fit, pars = c("theta1[1]", "theta1[2]","theta1[3]",
                                                    "Pink Salmon Hatchery Release Abundance",
                                                    "Fullness Index") ~ "Marine")) %>%
   group_by(stage,variable) %>%
-  dplyr::summarise(mean = mean(value),
-                   ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.65)$CI_low),
-                   ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.65)$CI_high),
-                   ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_low),
-                   ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_high))
+  dplyr::summarise(mean = median(value),
+                   ci_50_low = as.numeric(ci(value, method = "HDI", ci = 0.50)$CI_low),
+                   ci_50_high = as.numeric(ci(value, method = "HDI", ci = 0.50)$CI_high),
+                   ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_low),
+                   ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_high))
 
 theta_plot <- ggplot(data = theta_df,
                      aes(x= mean, y = variable, 
                          group = variable, color = stage)) +
-  geom_errorbar(aes(xmin =ci_95_low, xmax = ci_95_high),
+  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high),
                 width = 0, linewidth = 0.5 ) + 
   geom_point(size = 2) + 
-  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high), linewidth = 1.5, width = 0) + 
+  geom_errorbar(aes(xmin =ci_50_low, xmax = ci_50_high), linewidth = 1.5, width = 0) + 
   theme_classic() +
   scale_color_manual(values =c("#EAAA00", "#2d9d92")) +
   theme(panel.background = element_blank(),  
@@ -73,7 +76,7 @@ theta_plot <- ggplot(data = theta_df,
         panel.spacing.y=unit(0, "lines")) + 
   geom_vline(xintercept=0 )+
   ylab("") +
-  xlab("Mean Covariate Coefficient Value") +
+  xlab("Median Covariate Coefficient Value") +
   facet_wrap(~stage, scales = "free_y", ncol = 1)  
 
 theta_plot
@@ -86,10 +89,10 @@ theta_plot1 <- ggplot(data = theta_df,
                          group = variable, color = stage)) +
   
   geom_vline(xintercept=0, color = "white", linetype = 2, alpha = 0.6 )+
-  geom_errorbar(aes(xmin =ci_95_low, xmax = ci_95_high),
+  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high),
                 width = 0, linewidth = 0.5 ) + 
   geom_point(size = 2) + 
-  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high), linewidth = 1.5, width = 0) + 
+  geom_errorbar(aes(xmin =ci_50_low, xmax = ci_50_high), linewidth = 1.5, width = 0) + 
   theme_classic() +
   scale_color_manual(values =c("#EAAA00", "#2d9d92")) +
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
@@ -127,10 +130,10 @@ theta_plot_juv <- ggplot(data = theta_df %>% filter(stage == "Juvenile"),
                       aes(x= mean, y = variable, 
                           group = variable, color = stage)) + 
   geom_vline(xintercept=0, color = "white", linetype = 2, alpha = 0.6 )+
-  geom_errorbar(aes(xmin =ci_95_low, xmax = ci_95_high),
+  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high),
                 width = 0, linewidth = 0.5 ) + 
   geom_point(size = 2) + 
-  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high), linewidth = 1.5, width = 0) + 
+  geom_errorbar(aes(xmin =ci_50_low, xmax = ci_50_high), linewidth = 1.5, width = 0) + 
   theme_classic() +
   scale_color_manual(values =c("#EAAA00")) +
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
@@ -164,10 +167,10 @@ theta_plot_mature <- ggplot(data = theta_df %>% filter(stage == "Marine"),
                       aes(x= mean, y = variable, 
                           group = variable, color = stage)) + 
   geom_vline(xintercept=0, color = "white", linetype = 2, alpha = 0.6 )+
-  geom_errorbar(aes(xmin =ci_95_low, xmax = ci_95_high),
+  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high),
                 width = 0, linewidth = 0.5 ) + 
   geom_point(size = 2) + 
-  geom_errorbar(aes(xmin =ci_80_low, xmax = ci_80_high), linewidth = 1.5, width = 0) + 
+  geom_errorbar(aes(xmin =ci_50_low, xmax = ci_50_high), linewidth = 1.5, width = 0) + 
   theme_classic() +
   scale_color_manual(values =c("#2d9d92")) +
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
@@ -195,22 +198,3 @@ theta_plot_mature <- ggplot(data = theta_df %>% filter(stage == "Marine"),
 theta_plot_mature
 
 ggsave("output/Plot_MATURE_Talk_White_Covariates.png", width = 7, height = 4 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

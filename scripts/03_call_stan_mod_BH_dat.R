@@ -18,12 +18,6 @@ rstan_options(auto_write = TRUE)
 # see 02_make covariates for data tidying 
 
 # setup inputs ===============================================================
-warmups <- 2000
-total_iterations <- 6000
-max_treedepth <-  15
-n_chains <- 4
-n_cores <- 4
-# adapt_delta <- 0.95 # step size 
 
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
@@ -151,13 +145,12 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
                 yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
                 fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
                 pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
-  dplyr::select(SST_CDD_NBS, 
-                 yukon_mean_discharge,
-                 pollock_recruit_scale,
-                mean_size, # was already mean scaled because of the averaging across ages
-               sockeye_juv_index,
-                 # fall_mintemp_CDD#,
-                 fall_snow_cummulative
+  dplyr::select(mean_size,
+                fall_snow_cummulative,
+                SST_CDD_NBS, 
+                 # yukon_mean_discharge,
+                 pollock_recruit_scale
+                  # sockeye_juv_index,  
                 ) %>% 
   as.matrix() 
 
@@ -168,13 +161,14 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
          brood_year <= year_max_brood) %>% 
   dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                  Chum_hatchery= as.numeric(scale(Chum_hatchery)),
-                 Pink_hatchery= as.numeric(scale(Pink_hatchery)),
+                 Pink_hatchery= as.numeric(scale(Pink_hatchery))
                  # full_index = as.numeric(scale(full_index))
                  ) %>%
-  dplyr::select(SST_CDD_Aleut,
-                Chum_hatchery,
-                Pink_hatchery,
-                full_index) %>%
+  dplyr::select(full_index,
+                SST_CDD_Aleut,
+                Chum_hatchery
+                # Pink_hatchery,
+                ) %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
 # number covariates for each life stage 
@@ -274,24 +268,36 @@ data_list_stan <- list(nByrs=nByrs,
                        ess_age_comp=ess_age_comp,
                        # basal_p_1 = 0.9,
                        # basal_p_2 = 0.9,
-                       # log_c_1 = 18, 
-                       # log_c_2 =25,
+                       # log_c_1 = 15,
+                       # log_c_2 =17,
                        juv_CV= fall_juv_CV_all$CV,
                        return_CV = return_CVs$fall_spawner_cv
-                       # ricker_beta = 0.0002,
-                       # ricker_alpha = 1.6
-                       #pi = pi
                        )
+
+# mod specifics ============
+# use these for full model
+# warmups <- 10000
+# total_iterations <- 25000
+
+# use these for exploring 
+warmups <- 2000
+total_iterations <- 6000
+max_treedepth <-  15
+n_chains <- 4
+n_cores <- 4
+thin <- 10 
+# adapt_delta <- 0.95 # step size 
 
 # call mod  ===========================
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = n_chains,  
+  chains = 1,  
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 
-  verbose = FALSE, 
+  verbose = FALSE,
+  thin = 10,
   control = list(adapt_delta = 0.99)
   )
 

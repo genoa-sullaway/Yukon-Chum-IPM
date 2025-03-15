@@ -19,11 +19,9 @@ years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
 
 # traceplot ========
 traceplot(bh_fit,pars=  c( "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,
-                           "theta2[1]","theta2[2]","theta2[3]","theta2[4]"))
+                           "theta2[1]","theta2[2]","theta2[3]")) #,"theta2[4]"))
 
 traceplot(bh_fit,pars=  c("D_scale"))
-
-# traceplot(bh_fit,pars=  c( "log_c_1","log_c_2"))
 
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
@@ -38,11 +36,13 @@ traceplot(bh_fit,pars=  c("sigma_juv"))
 
 traceplot(bh_fit,pars=  c("log_sigma_catch"))
 
-traceplot(bh_fit,pars=  c("log_S"))
+traceplot(bh_fit,pars=  c("S"))
 
 traceplot(bh_fit,pars=  c("pi"))
 
 traceplot(bh_fit,pars=  c("basal_p_1", "basal_p_2"))
+
+traceplot(bh_fit,pars=  c("log_c_1", "log_c_2"))
 
 # ess and rhat  =====
 # Find parameters with both low ESS and high Rhat
@@ -76,12 +76,10 @@ loo_result <- loo(log_lik_total)
 # Look at the diagnostics
 print(loo_result)
 
-
-#diagnostics[,"n_eff"] > 400 &
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]","theta1[5]","theta1[6]", 
-               "theta2[1]","theta2[2]","theta2[3]","theta2[4]" 
+     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",#"theta1[5]","theta1[6]", 
+               "theta2[1]","theta2[2]","theta2[3]"#,"theta2[4]" 
      ),
      fill_color = "blue")
 
@@ -323,6 +321,13 @@ age_comp_Q <- summary(bh_fit, pars = c("q"),
 ggplot(data= age_comp_Q) +
   geom_line(aes(x=time, y = value, group = id, color = id)) +
   facet_wrap(~age, scales = "free") +
+  theme_classic() + 
+  ylab("Proportion")
+
+ggplot(data= age_comp_Q %>% filter(id=="obs")) +
+  geom_bar(aes(x=time, y = value, group = age, fill = as.factor(age)),
+           stat = "identity", position = "stack") +
+  # facet_wrap(~age, scales = "free") +
   theme_classic() + 
   ylab("Proportion")
   

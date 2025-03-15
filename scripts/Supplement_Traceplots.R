@@ -29,13 +29,13 @@ parameters_to_plot <- c(
   "log_F_mean",
   # "log_S[1]", "log_S[2]", "log_S[3]", "log_S[4]",
   "basal_p_1",  "basal_p_2", 
-  "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,"theta1[5]" ,
-  "theta2[1]","theta2[2]","theta2[3]","theta2[4]",
+  "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,#"theta1[5]" ,
+  "theta2[1]","theta2[2]","theta2[3]",#"theta2[4]",
   "D_scale",
   "log_catch_q")
 
 parameters = parameters_to_plot
-
+color_scheme_set("viridis") 
 # Create individual traceplots with improved formatting
 trace_plots <- lapply(parameters, function(param) {
   # color_scheme_set("mix-blue-red")
@@ -73,9 +73,9 @@ traceplots_all <- ggpubr::ggarrange(trace_plots[[1]],
                   
                   trace_plots[[14]],
                   trace_plots[[15]],
-                  trace_plots[[16]],
-                  trace_plots[[17]],
-                  trace_plots[[18]]
+                  trace_plots[[16]]
+                  # trace_plots[[17]],
+                  # trace_plots[[18]]
                   # trace_plots[[19]],
                   # trace_plots[[20]]
                   # trace_plots[[21]],
