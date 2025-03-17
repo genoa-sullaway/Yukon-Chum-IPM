@@ -84,7 +84,7 @@ surv(base.prod=return_pars$basal_p_2, covar=0, coef=return_pars$`theta2[1]`, cap
 surv(base.prod=return_pars$basal_p_2, covar=1, coef=return_pars$`theta2[1]`, capacity=return_pars$c_2, N=max(pred_N_return$mean))
 
 # Percent difference in survival at low abundance
-(surv(base.prod=return_pars$basal_p_2, covar=1, coef=return_pars$`theta2[1]`, capacity=return_pars$c_2, N=min(pred_N_return$mean))-
+ (surv(base.prod=return_pars$basal_p_2, covar=1, coef=return_pars$`theta2[1]`, capacity=return_pars$c_2, N=min(pred_N_return$mean))-
   surv(base.prod=return_pars$basal_p_2, covar=0, coef=return_pars$`theta2[1]`, capacity=return_pars$c_2, N=min(pred_N_return$mean)))/
   surv(base.prod=return_pars$basal_p_2, covar=0, coef=return_pars$`theta2[1]`, capacity=return_pars$c_2, N=min(pred_N_return$mean))
 

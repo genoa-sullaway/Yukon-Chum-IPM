@@ -1,0 +1,11 @@
+"stage","covariate","abundance","survival_covar0","survival_covar1","percent_change"
+"Juvenile","Spawner Size","Low",0.666038809717006,0.668800471725337,0.41
+"Juvenile","Spawner Size","High",0.648914434482625,0.651535633681242,0.4
+"Juvenile","Snowmelt","Low",0.666038809717006,0.652675721236715,-2.01
+"Juvenile","Snowmelt","High",0.648914434482625,0.636223116382629,-1.96
+"Return","Fullness","Low",0.642393905300053,0.716573060787203,11.55
+"Return","Fullness","High",0.640682190492338,0.71444386336698,11.51
+"Return","AI Temp","Low",0.642393905300053,0.568591224522177,-11.49
+"Return","AI Temp","High",0.640682190492338,0.567249813537486,-11.46
+"Return","Chum","Low",0.642393905300053,0.581537939242321,-9.47
+"Return","Chum","High",0.640682190492338,0.580134820807677,-9.45

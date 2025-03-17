@@ -287,7 +287,7 @@ n_chains <- 4
 n_cores <- 4
 thin <- 10 
 # adapt_delta <- 0.95 # step size 
-
+ 
 # call mod  ===========================
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),

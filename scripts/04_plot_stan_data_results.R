@@ -88,6 +88,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "alpha[1]","alpha[2]", "alpha[3]", "alpha[4]"),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_c_2" ),
      fill_color = "blue")
  
@@ -97,14 +101,8 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 params <- get_posterior_mean(rstan::extract(bh_fit, pars = c("log_c_2", "log_c_1")))
 t <- get_posterior_mean(bh_fit, pars = 'basal_p_2')
 View(t) 
-# You can also use rstan's built-in functions:
-t <- get_posterior_mean(bh_fit, pars = 'log_c_1')
-# View(t)
-
-t<-quantile(params$log_c_1, probs = c(0.025, 0.975))  # 95% credible interval
-# View(t)
- get_posterior_mean(bh_fit, pars = 'p_2')
-
+ 
+ 
   mean(get_posterior_mean(bh_fit, pars = 'basal_p_2'))
   mean(get_posterior_mean(bh_fit, pars = 'basal_p_1'))
 
