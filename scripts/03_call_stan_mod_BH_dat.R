@@ -166,8 +166,8 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                  ) %>%
   dplyr::select(full_index,
                 SST_CDD_Aleut,
-                Chum_hatchery
-                # Pink_hatchery,
+                Chum_hatchery,
+                Pink_hatchery,
                 ) %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
@@ -282,10 +282,10 @@ data_list_stan <- list(nByrs=nByrs,
 # use these for exploring 
 warmups <- 2000
 total_iterations <- 6000
-max_treedepth <-  15
-n_chains <- 4
-n_cores <- 4
-thin <- 10 
+# max_treedepth <-  15
+# n_chains <- 4
+# n_cores <- 4
+# thin <- 10 
 # adapt_delta <- 0.95 # step size 
  
 # call mod  ===========================

@@ -21,6 +21,8 @@ years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
 traceplot(bh_fit,pars=  c( "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,
                            "theta2[1]","theta2[2]","theta2[3]")) #,"theta2[4]"))
 
+traceplot(bh_fit,pars=  c( "alpha[1]" ,"alpha[2]" ,"alpha[3]" ,"alpha[4]"))  
+
 traceplot(bh_fit,pars=  c("D_scale"))
 
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
@@ -46,12 +48,9 @@ traceplot(bh_fit,pars=  c("log_c_1", "log_c_2"))
 
 # ess and rhat  =====
 # Find parameters with both low ESS and high Rhat
-diagnostics <- summary(fit)$summary[,c("n_eff", "Rhat")]
-problems <- which(diagnostics[,"n_eff"] < 400 | diagnostics[,"Rhat"] > 1.01)
-print(diagnostics[problems,])
-
-good <- (which( diagnostics[,"Rhat"] < 1.05))
-print(diagnostics[good,])
+diagnostics <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat")]) %>%
+  filter(n_eff <400 | Rhat > 1.1)
+ 
 
 #LOOK AT WAIC =============
 library(loo)

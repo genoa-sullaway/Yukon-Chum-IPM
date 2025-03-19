@@ -73,7 +73,7 @@ real <lower=0, upper = 1> basal_p_1; // mean prod for covariate survival stage 1
 real <lower=0.5, upper = 1> basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
-vector [A] logalpha;
+vector <lower=0, upper = 5> [A] alpha;
 real <lower=0> beta; 
 
  }
@@ -97,7 +97,7 @@ real N_egg_start[t_start,A];
 real N_brood_year_return_start; 
 real N_j_start; 
  
- vector <lower=0> [A] alpha;
+ // vector <lower=0, upper =5> [A] alpha;
  
 vector <lower = 0> [nRyrs_T] F;
 // vector <lower = 0> [A] S; //selectivty
@@ -114,7 +114,7 @@ matrix  [nByrs, ncovars2] cov_eff2;
 
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
 
-alpha = exp(logalpha);
+// alpha = exp(logalpha);
  
 // Age related transformed params ====== 
 matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year that mature at a certain age
@@ -223,14 +223,14 @@ for(t in 1:nByrs){
 model { 
    log_catch_q ~ normal(-5,1);
    
-   // for(a in 1:A){
-   // alpha[a] ~  normal(1,5);
-   // }
-   logalpha[1] ~ normal(1, 1);
-   logalpha[2] ~ normal(1.5, 1);
-
-  logalpha[3] ~ normal(2, 1);
-  logalpha[4] ~ normal(2.5, 1);
+   for(a in 1:A){
+   alpha[a] ~  normal(1,5);
+   }
+  //  alpha[1] ~ normal(1, 5);
+  //  alpha[2] ~ normal(1.5, 5);
+  // 
+  // alpha[3] ~ normal(2, 5);
+  // alpha[4] ~ normal(2.5,5);
    
    beta ~  normal(0.00001,0.01);
 
@@ -247,7 +247,8 @@ model {
   theta2[1] ~ normal(0,0.1);
   theta2[2] ~ normal(0,0.1);
   theta2[3] ~ normal(0,0.1);
-
+  theta2[4] ~ normal(0,0.1);
+  
   D_scale ~ beta(1,1);  
 
   basal_p_1 ~ beta(1,1);  
@@ -272,15 +273,15 @@ log_F_mean ~ normal(0,0.1);
  //    log_S[a] ~ normal(0,1);
  // } 
 
- N_j_start_log ~ normal(14,2);
- N_brood_year_return_start_log~ normal(12,2);
+ N_j_start_log ~ normal(14,5);
+ N_brood_year_return_start_log~ normal(12,5);
 
  for(t in 1:t_start){
    for(a in 1:A){ 
-    N_sp_start_log[t,a] ~ normal(3,2);
-    N_recruit_start_log[t,a] ~  normal(3.2,2);
-    N_catch_start_log[t,a] ~ normal(3,2);
-    N_egg_start_log[t,a] ~  normal(6,2);
+    N_sp_start_log[t,a] ~ normal(3,5);
+    N_recruit_start_log[t,a] ~  normal(3.2,5);
+    N_catch_start_log[t,a] ~ normal(3,5);
+    N_egg_start_log[t,a] ~  normal(6,5);
   }
  }    
    
