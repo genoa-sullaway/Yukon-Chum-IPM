@@ -33,13 +33,11 @@ traceplot(bh_fit,pars=  c(  "Dir_alpha"))
 
 # traceplot(bh_fit,pars=  c("p_1","p_2"))
 
-traceplot(bh_fit,pars=  c("log_sigma_sp"))
+traceplot(bh_fit,pars=  c("sigma_sp"))
 traceplot(bh_fit,pars=  c("sigma_juv"))
 
-traceplot(bh_fit,pars=  c("log_sigma_catch"))
-
-traceplot(bh_fit,pars=  c("S"))
-
+traceplot(bh_fit,pars=  c("sigma_harvest"))
+ 
 traceplot(bh_fit,pars=  c("pi"))
 
 traceplot(bh_fit,pars=  c("basal_p_1", "basal_p_2"))
@@ -83,7 +81,11 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_c_1" ),
+     pars=  c( "sigma_juv" ),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "sigma_rec" ),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 

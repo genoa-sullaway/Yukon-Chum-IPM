@@ -51,8 +51,9 @@ pi <- colMeans(yukon_fall_broodyear_obs_agecomp)
 return_CVs <- read_xlsx("data/chum_cv.xlsx") %>%
   filter(year >= year_min, 
          year <= year_max_cal) 
+ 
 
-# add juvenile index CV ========
+## add juvenile index CV ========
 fall_juv_CV <- read_csv("data/Juvenile_Index_CC/Index for Sabrina.csv") %>%
   filter(Stratum == "Stratum_1")  
 
@@ -131,11 +132,6 @@ N_recruit_start_log = log(N_recruit_start+ 1.001)
 N_sp_start_log = log(N_sp_start+ 1.001)
 N_catch_start_log = log(N_catch_start+ 1.001)
 N_egg_start_log  = log(N_egg_start+ 1.001)
-
-## CV ========================================
-spawner_cv <- read_xlsx("data/chum_cv.xlsx") %>%
-  filter(year >= year_min,
-         year <= year_max_cal)
 
 #  covariates =================  
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
@@ -262,29 +258,27 @@ data_list_stan <- list(nByrs=nByrs,
                        cov1=stage_a_cov,
                        cov2=stage_b_cov,
                        
-                       data_sp_cv = spawner_cv$fall_spawner_cv,
-                       
                        o_run_comp=(yukon_fall_obs_agecomp),
                        ess_age_comp=ess_age_comp,
                        # basal_p_1 = 0.9,
                        # basal_p_2 = 0.9,
                        # log_c_1 = 15,
                        # log_c_2 =17,
-                       juv_CV= fall_juv_CV_all$CV,
+                       juv_CV= fall_juv_CV_all$CV, 
                        return_CV = return_CVs$fall_spawner_cv
                        )
 
 # mod specifics ============
 # use these for full model
-# warmups <- 10000
-# total_iterations <- 25000
+warmups <- 10000
+total_iterations <- 25000
 
 # use these for exploring 
-warmups <- 2000
-total_iterations <- 6000
+# warmups <- 2000
+# total_iterations <- 6000
 # max_treedepth <-  15
 # n_chains <- 4
-# n_cores <- 4
+ n_cores <- 4
 # thin <- 10 
 # adapt_delta <- 0.95 # step size 
  
@@ -292,12 +286,12 @@ total_iterations <- 6000
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 1,  
+  chains = 4,  
   warmup = warmups, 
   iter = total_iterations, 
   cores = n_cores, 
   verbose = FALSE,
-  thin = 10,
+  thin = 40,
   control = list(adapt_delta = 0.99)
   )
 
