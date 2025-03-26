@@ -29,8 +29,8 @@ pred_return <-  as.data.frame(bh_fit, pars = c("N_brood_year_return")) %>%
   summarise(mean = mean(value),
             ci_80_low = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_low),
             ci_80_high = as.numeric(ci(value, method = "HDI", ci = 0.80)$CI_high),
-            ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_low),
-            ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.95)$CI_high)) %>%
+            ci_95_low = as.numeric(ci(value, method = "HDI", ci = 0.99)$CI_low),
+            ci_95_high = as.numeric(ci(value, method = "HDI", ci = 0.99)$CI_high)) %>%
   separate(rowname, into = c("del1","year", "del2"), sep = c(-3,-1)) %>%
   arrange(row_number(.)) %>%
   dplyr::mutate(brood_year = c(2002:2021)) %>%
@@ -81,8 +81,45 @@ juv_obs <-read_csv("data/processed_data/tidy_juv_fall_yukon.csv") %>%
                 time = as.numeric(1:nrow(.)),
                 obs = (fall_abund),
                 sd = Std..Error.for.Estimate ) %>% #(CV*obs)) %>%  
-  filter(!Year %in% c(2020, 2008,2013)) %>% 
+  # filter(!Year %in% c(2020, 2008,2013)) %>% 
   dplyr::select(brood_year,obs,sd)  
+  # rbind(data.frame(brood_year = c(2008, 2013,2020),
+  #                  obs = c(NA,NA,NA),
+  #                  sd = c(NA,NA,NA)))  
+
+# plot juvenile observations ======
+juv_all_plot <- ggplot(data = juv_obs, aes(x=brood_year, y = obs)) +
+  geom_point(color ="#EAAA00") + 
+  geom_line(color ="#EAAA00") + 
+  geom_errorbar(aes(x=brood_year, ymin = obs-sd, 
+                    ymax= obs+sd), 
+                width = 0.1, color = "#EAAA00") +
+  theme_classic() +
+  ylab("Abundance Estimate") +
+  xlab("Brood Year") + 
+theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+      plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+      legend.background = element_blank(),
+      legend.text = element_text(color = "white"),
+      legend.title = element_blank(), 
+      strip.text = element_blank( ), 
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      strip.background = element_blank(),
+      panel.border = element_rect(colour = "white", fill = NA), 
+      strip.text.x = element_blank(), 
+      axis.line = element_line(color = "white"), 
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+      axis.text.y = element_text(color = "white"),
+      axis.title.y = element_text(color = "white"),
+      axis.title.x = element_text(color = "white"),
+      axis.ticks.y = element_line(color = "white"),
+      axis.ticks.x = element_line(color = "white"),
+      panel.spacing.y=unit(0, "lines")) 
+
+
+juv_all_plot
+ggsave("output/juvenile_observations_fallchum_plot.png", width = 5, height = 3)
 
 # catch_q <- summary(bh_fit, pars = c("log_catch_q"), 
 #                    probs = c(0.1, 0.9))$summary %>%
@@ -155,4 +192,78 @@ obs_plot <- ggpubr::ggarrange(juv_plot,return_plot, nrow = 2, labels = c("a.", "
 obs_plot
 
 ggsave("output/Plot_Manuscript_Juv_ReturnFit_Obs.png", width = 6, height = 5, bg="white")
+
+# juv plot for talk ===================
+juv_plot_talk <- ggplot(data = n_j_summary_clean) +
+  geom_ribbon(aes(x=brood_year, ymin =ci_95_low/1000000,
+                  ymax = ci_95_high/1000000),   fill =  "#EAAA00") +
+  geom_line(aes(x=brood_year, y = mean/1000000)) +
+  geom_errorbar(aes(x=brood_year, ymin = (obs-sd)/1000000,
+                    ymax = (obs+sd)/1000000), width = 0.1, alpha = 0.6,color = "white") + 
+  geom_point(aes(x=brood_year, y = (obs)/1000000), alpha = 0.6, color = "white") +
+  # geom_line(aes(x=brood_year, y = (obs)), color = "white" ) +
+  # scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
+  theme_classic() + 
+  xlab("Brood Year") + 
+  ylab("Est. Juv. Abundance\n (Millions)") +
+  theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        strip.text = element_blank( ), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white"),
+        panel.spacing.y=unit(0, "lines")) 
+
+   
+juv_plot_talk 
+ggsave("output/Plot_juv_fit_Obs_TALK.png", width = 8, height = 6, bg="transparent")
+
+# return plot for talk =======
+return_plot_talk <- ggplot(data = pred_return) +
+  geom_ribbon(aes(x=brood_year, ymin =ci_95_low/1000000,
+                  ymax = ci_95_high/1000000),   fill =  "#2d9d92") +
+  geom_line(aes(x=brood_year, y = mean/1000000)#, color = "white"
+  ) +
+  geom_errorbar(aes(x=brood_year, ymin = (obs-sd_obs)/1000000,
+                    ymax = (obs+sd_obs)/1000000), width = 0.1, color = "white",alpha = 0.7) +
+  geom_point(aes(x=brood_year, y = obs/1000000), color = "white",alpha = 0.7 ) +
+  theme_classic() + 
+  xlab("Brood Year") + 
+  ylab("Est. Return Abundance\n(Millions)") +
+  scale_y_continuous(limits = c(0, 2500000/1000000)) + 
+  theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        strip.text = element_blank( ), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white"),
+        panel.spacing.y=unit(0, "lines")) 
+
+
+return_plot_talk 
+ggsave("output/Plot_return_fit_Obs_TALK.png", width = 10, height = 6, bg="transparent")
 

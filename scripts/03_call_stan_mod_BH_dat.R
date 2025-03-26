@@ -24,7 +24,7 @@ K = 1 # number of stocks
 Ps = 0.5 # proportion of females - assumption, need to lit check
 # fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
 fs = as.vector(c(1800,2351, 2902,3453))
-t_start = A +2  # to fill starting values 
+t_start = A + 2  # to fill starting values 
 
 year_min = 2002
 year_max_cal = 2022
@@ -162,8 +162,8 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                  ) %>%
   dplyr::select(full_index,
                 SST_CDD_Aleut,
-                Chum_hatchery,
-                Pink_hatchery,
+                Chum_hatchery #,
+                 # Pink_hatchery,
                 ) %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
@@ -244,7 +244,6 @@ data_list_stan <- list(nByrs=nByrs,
                        
                        data_stage_j = as.vector(fall_juv$fall_abund), 
                        data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
-                       #data_stage_return=as.vector(yukon_fall_recruits$total_run), 
                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
                    
@@ -260,25 +259,22 @@ data_list_stan <- list(nByrs=nByrs,
                        
                        o_run_comp=(yukon_fall_obs_agecomp),
                        ess_age_comp=ess_age_comp,
-                       # basal_p_1 = 0.9,
-                       # basal_p_2 = 0.9,
-                       # log_c_1 = 15,
-                       # log_c_2 =17,
+                       
                        juv_CV= fall_juv_CV_all$CV, 
                        return_CV = return_CVs$fall_spawner_cv
                        )
 
 # mod specifics ============
 # use these for full model
-warmups <- 10000
-total_iterations <- 25000
+# warmups <- 10000
+# total_iterations <- 30000
 
 # use these for exploring 
-# warmups <- 2000
-# total_iterations <- 6000
+warmups <- 2000
+total_iterations <- 6000
 # max_treedepth <-  15
 # n_chains <- 4
- n_cores <- 4
+# n_cores <- 4
 # thin <- 10 
 # adapt_delta <- 0.95 # step size 
  
@@ -286,12 +282,12 @@ total_iterations <- 25000
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 4,  
+  chains = 1,  
   warmup = warmups, 
   iter = total_iterations, 
-  cores = n_cores, 
+  cores = 4, 
   verbose = FALSE,
-  thin = 40,
+  # thin = 10,
   control = list(adapt_delta = 0.99)
   )
 

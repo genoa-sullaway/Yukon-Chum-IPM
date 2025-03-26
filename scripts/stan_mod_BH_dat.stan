@@ -65,10 +65,10 @@ real log_F_mean;
 vector [nRyrs_T]  log_F_dev_y; 
 
 real <lower=0, upper = 1> basal_p_1; // mean prod for covariate survival stage 1
-real <lower=0.5, upper = 1> basal_p_2; // mean prod for covariate survival stage 2
+real <lower=0.4, upper = 1> basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
-vector <lower=0, upper = 5> [A] alpha;
+vector <lower=0, upper = 10> [A] alpha;
 real <lower=0> beta; 
 
 real <lower=0> sigma_juv;
@@ -95,8 +95,6 @@ real N_catch_start [t_start,A];
 real N_egg_start[t_start,A];
 real N_brood_year_return_start; 
 real N_j_start; 
- 
- // vector <lower=0, upper =5> [A] alpha;
  
 vector <lower = 0> [nRyrs_T] F;
 // vector <lower = 0> [A] S; //selectivty
@@ -136,7 +134,6 @@ c_2 = exp(log_c_2);
   
 N_j_start = exp(N_j_start_log);
 N_brood_year_return_start = exp(N_brood_year_return_start_log);
-
 
 for(t in 1:t_start){
   for(a in 1:A){
@@ -223,20 +220,16 @@ model {
    log_catch_q ~ normal(-5,1);
    
    for(a in 1:A){
-   alpha[a] ~  normal(1,5);
+      alpha[a] ~  normal(1,10); // 
+    // alpha[a] ~ uniform(0,10);
    }
-  //  alpha[1] ~ normal(1, 5);
-  //  alpha[2] ~ normal(1.5, 5);
-  // 
-  // alpha[3] ~ normal(2, 5);
-  // alpha[4] ~ normal(2.5,5);
    
    beta ~  normal(0.00001,0.01);
 
   pi ~ beta(1,1); 
 
   log_c_1 ~ normal(15,2);
-  log_c_2 ~ normal(17, 2);
+  log_c_2 ~ normal(17,2);
 
   theta1[1] ~ normal(0,0.1);
   theta1[2] ~ normal(0,0.1);
@@ -246,7 +239,7 @@ model {
   theta2[1] ~ normal(0,0.1);
   theta2[2] ~ normal(0,0.1);
   theta2[3] ~ normal(0,0.1);
-  theta2[4] ~ normal(0,0.1);
+  // theta2[4] ~ normal(0,0.1);
   
   D_scale ~ beta(1,1);  
 
@@ -268,10 +261,10 @@ log_F_mean ~ normal(0,0.1);
 }
  
  //sigmas ////
- sigma_juv ~ normal(0, 0.3);
- sigma_rec ~ normal(0, 0.3);
- sigma_harvest ~ normal(0, 0.3);
- sigma_sp ~ normal(0,0.3);
+ sigma_juv ~ normal(0, 0.2);
+ sigma_rec ~ normal(0, 0.2);
+ sigma_harvest ~ normal(0, 0.2);
+ sigma_sp ~ normal(0,0.2);
 
  // for (a in 1:A) {
  //    log_S[a] ~ normal(0,1);
@@ -289,21 +282,20 @@ log_F_mean ~ normal(0,0.1);
   }
  }    
    
- // Observation model
+ // Likelihoods - Observation model
   for (t in 1:nByrs) {
-     target += lognormal_lpdf(data_stage_j[t] | log(N_j_predicted[t]),  (sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));  
- 
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), (sigma_juv + sqrt(log((juv_CV[t]^2) + 1)))); //(sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));
   }
-    for (t in 1:nByrs_return_dat) {
- // recruit by brood year 
-    target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), (sigma_rec + sqrt(log((return_CV[t]^2) + 1)))); // sqrt(log((0.35^2) + 1))); // (sigma_rec));// + sqrt(log((return_CV[t]^2) + 1))));  //sqrt(log((0.35^2) + 1)));  
-    } 
+ // recruit by brood year
+  for (t in 1:nByrs_return_dat) {
+    target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), (sigma_rec + sqrt(log((return_CV[t]^2) + 1)))); // sqrt(log((0.35^2) + 1))); // (sigma_rec));// + sqrt(log((return_CV[t]^2) + 1))));  //sqrt(log((0.35^2) + 1)));
+    }
 
-  for(t in 1:nRyrs){ // calendar years 
+  for(t in 1:nRyrs){ // calendar years
      target +=  ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
-  
-     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), (sigma_harvest + sqrt(log((return_CV[t]^2) + 1))));// sqrt(log((0.35^2) + 1)));  // 
-     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), (sigma_sp + sqrt(log((return_CV[t]^2) + 1)))); //sqrt(log((0.35^2) + 1)));  //(sigma_sp));// 
+
+     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), (sigma_harvest + sqrt(log((return_CV[t]^2) + 1))));// sqrt(log((0.35^2) + 1)));  //
+     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), (sigma_sp + sqrt(log((return_CV[t]^2) + 1)))); //sqrt(log((0.35^2) + 1)));  //(sigma_sp));//
      }
   }
 
@@ -316,7 +308,7 @@ vector[nRyrs] log_lik_sp;                   // spawner likelihood
 
 // Juvenile likelihood
 for (t in 1:nByrs) {
-  log_lik_j[t] = lognormal_lpdf(data_stage_j[t] | log(N_j_predicted[t]), (sigma_juv + sqrt(log((juv_CV[t]^2) + 1)))); // sqrt(log((0.39^2) + 1)));
+  log_lik_j[t] = normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), (sigma_juv + sqrt(log((juv_CV[t]^2) + 1)))); // sqrt(log((0.39^2) + 1)));
 }
 
 // Return likelihood

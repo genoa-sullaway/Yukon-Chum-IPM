@@ -134,20 +134,90 @@ juv <- read_csv("data/Juvenile_Index_CC/Index for Sabrina.csv") %>%
   dplyr::rename(Year = "Time",
                 Strata = "Stratum") %>% 
   filter(Strata == "Stratum_1") %>% 
-  dplyr::mutate(Strata  = case_when(Strata == "Stratum_1"~"strata1",
-                                    Strata == "Stratum_2"~"strata2",
-                                    Strata == "Stratum_3"~"strata3",
-                                    Strata == "Stratum_4"~"strata4",
-                                    Strata == "Stratum_5"~"strata5",
-                                    Strata == "Stratum_6"~"strata6"))  
+  dplyr::mutate(Strata  = case_when(Strata == "Stratum_1"~"strata1"))#,
+                                    # Strata == "Stratum_2"~"strata2",
+                                    # Strata == "Stratum_3"~"strata3",
+                                    # Strata == "Stratum_4"~"strata4",
+                                    # Strata == "Stratum_5"~"strata5",
+                                    # Strata == "Stratum_6"~"strata6"))  
+
+# plot juvs =====
+juv_1 <- ggplot(data = juv,aes(x=Year, y = Estimate)) +
+  geom_point(color = "#EAAA00") + 
+  geom_line(color = "#EAAA00") + 
+  geom_errorbar(aes(x=Year, ymin = Estimate-Std..Error.for.Estimate, 
+                    ymax= Estimate+Std..Error.for.Estimate), 
+                width = 0.1, color = "#EAAA00") +
+  theme_classic() +
+  ylab("Abundance Estimate") +
+  xlab("Survey Year") + 
+  theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        strip.text = element_blank( ), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white"),
+        panel.spacing.y=unit(0, "lines")) 
+
+juv_1
+ggsave("output/juvenile_index_stratum1_plot.png", width = 5, height = 3)
 
 # proportion of genetic groups in each strata
 MSA <- read_csv("data/Juvenile_Index_CC/Bering Sea Juvenile Chum Spatial Mixed Stock Analysis Summary.csv") %>%
+  # spread(Year, Mean) %>%
+  # gather(8:ncol(.), key = "Year", value = "Mean") %>%
   group_by(Year) %>%
-  dplyr::summarise(mean_prop = mean(Mean)) %>%
-  dplyr::mutate(mean_prop = case_when(Year == 2009 ~ 0.0082, # 0.008 is the DE from the estimate, i htink the model will get weird with 0 individuals...
-                                      TRUE ~ mean_prop))
+  dplyr::summarise(mean_prop = mean(Mean, na.rm = TRUE),
+                   SD= mean(SD,na.rm = TRUE))  
 
+MSA_for_plot <- MSA %>% rbind(data.frame(Year = c(2008, 2013,2020),
+                 mean_prop = c(NA,NA,NA),
+                 SD = c(NA,NA,NA)))  
+
+ # Plot MSA =====
+MSA_plot <- ggplot(data = MSA_for_plot,aes(x=Year, y = mean_prop)) +
+  geom_point(color = "#EAAA00") + 
+  geom_line(color = "#EAAA00") + 
+  geom_errorbar(aes(x=Year, ymin = mean_prop-SD, 
+                    ymax= mean_prop+SD), 
+                width = 0.1, color = "#EAAA00") +
+  theme_classic() +
+  ylab("MSA Estimate") +
+  xlab("Survey Year") + 
+  theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
+        legend.background = element_blank(),
+        legend.text = element_text(color = "white"),
+        legend.title = element_blank(), 
+        strip.text = element_blank( ), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "white", fill = NA), 
+        strip.text.x = element_blank(), 
+        axis.line = element_line(color = "white"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,color = "white"),
+        axis.text.y = element_text(color = "white"),
+        axis.title.y = element_text(color = "white"),
+        axis.title.x = element_text(color = "white"),
+        axis.ticks.y = element_line(color = "white"),
+        axis.ticks.x = element_line(color = "white"),
+        panel.spacing.y=unit(0, "lines")) 
+
+MSA_plot
+ggsave("output/juvenile_MSA_plot.png", width = 5, height = 3)
 
 # add rolling means to fill in blank years, I think this will get filled in with models later? 
 rollingmean_GSI_2008 <- MSA %>%
@@ -168,6 +238,8 @@ abund_2020 <- juv %>%
   dplyr::summarise(Estimate = mean(Estimate))
 
 juv_df <- MSA %>%
+  dplyr::mutate(mean_prop = case_when(Year == 2009 ~ 0.0082, # 0.008 is the DE from the estimate, i htink the model will get weird with 0 individuals...
+                                      TRUE ~ mean_prop)) %>% 
   rbind(data.frame(Year = c(2008, 2013,
                             2020),
                          mean_prop = c(rollingmean_GSI_2008$mean_prop,

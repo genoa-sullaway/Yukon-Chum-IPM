@@ -74,10 +74,14 @@ loo_result <- loo(log_lik_total)
 print(loo_result)
 
 # parameter plots ======== 
-plot(bh_fit, show_density = TRUE, ci_level = 0.95, 
-     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",#"theta1[5]","theta1[6]", 
-               "theta2[1]","theta2[2]","theta2[3]"#,"theta2[4]" 
+plot(bh_fit, show_density = TRUE, ci_level = 0.5, 
+     pars=  c( "theta1[1]","theta1[2]","theta1[3]", "theta1[4]",  #"theta1[5]","theta1[6]", 
+               "theta2[1]","theta2[2]","theta2[3]"
      ),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "alpha[1]","alpha[2]", "alpha[3]", "alpha[4]"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
@@ -89,52 +93,21 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "alpha[1]","alpha[2]", "alpha[3]", "alpha[4]"),
+     pars=  c( "sigma_sp" ),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_c_2" ),
      fill_color = "blue")
  
-# Assuming your Stan fit object is called 'fit'
- 
-# For a specific parameter (e.g., 'beta'):
-params <- get_posterior_mean(rstan::extract(bh_fit, pars = c("log_c_2", "log_c_1")))
-t <- get_posterior_mean(bh_fit, pars = 'basal_p_2')
-View(t) 
- 
- 
-  mean(get_posterior_mean(bh_fit, pars = 'basal_p_2'))
-  mean(get_posterior_mean(bh_fit, pars = 'basal_p_1'))
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_sigma_catch" ),
-     fill_color = "blue")
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "log_sigma_sp" ),
-     fill_color = "blue")
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "alpha" ),
-     fill_color = "blue")
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "beta" ),
      fill_color = "blue")
+
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c("log_catch_q"),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
-     pars=  c( "g"),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "cov_eff1"),
-     fill_color = "blue")
-
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-#      pars=  c( "log_sigma_y_j"),
-#      fill_color = "blue")
- 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "basal_p_1", "basal_p_2" ),
      fill_color = "blue")
