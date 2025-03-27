@@ -201,7 +201,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            
            // N_e[t+a+1,a] = Ps*(N_sp[t+a+1,a] * exp(alpha[a] - (beta * N_sp[t+a+1,a])));  
            // try linear and dont estimate beta
-            N_e[t+a+1,a] = Ps*(N_sp[t+a+1,a] * exp(alpha[a] - N_sp[t+a+1,a]));
+            N_e[t+a+1,a] = Ps*(exp(alpha[a]) * N_sp[t+a+1,a]);
             }
      }
      
@@ -222,8 +222,8 @@ model {
    log_catch_q ~ normal(-5,1);
    
    for(a in 1:A){
-      alpha[a] ~  normal(7,5); // 
-    // alpha[a] ~ uniform(0,10);
+      //alpha[a] ~  normal(7,5); // 
+     alpha[a] ~ uniform(0,15);
    }
    
    // beta ~  normal(0.00001,0.01);
@@ -286,18 +286,18 @@ log_F_mean ~ normal(0,0.1);
    
  // Likelihoods - Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), ( sqrt(log((juv_CV[t]^2) + 1)))); //(sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), ( sqrt(log((0.2^2) + 1)))); //( sqrt(log((juv_CV[t]^2) + 1)))); //(sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));
   }
  // recruit by brood year
   for (t in 1:nByrs_return_dat) {
-    target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), ( sqrt(log((return_CV[t]^2) + 1)))); // sqrt(log((0.35^2) + 1))); // (sigma_rec));// + sqrt(log((return_CV[t]^2) + 1))));  //sqrt(log((0.35^2) + 1)));
+    target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), (sqrt(log((0.07^2) + 1)))); // (sqrt(log((return_CV[t]^2) + 1)))); // sqrt(log((0.35^2) + 1))); // (sigma_rec));// + sqrt(log((return_CV[t]^2) + 1))));  //sqrt(log((0.35^2) + 1)));
     }
 
   for(t in 1:nRyrs){ // calendar years
      target +=  ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
 
-     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), ( sqrt(log((return_CV[t]^2) + 1))));// sqrt(log((0.35^2) + 1)));  //
-     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), (  sqrt(log((return_CV[t]^2) + 1)))); //sqrt(log((0.35^2) + 1)));  //(sigma_sp));//
+     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), (sqrt(log((0.07^2) + 1))));//( sqrt(log((return_CV[t]^2) + 1))));// sqrt(log((0.35^2) + 1)));  //
+     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), (sqrt(log((0.07^2) + 1))));//(sqrt(log((return_CV[t]^2) + 1)))); //sqrt(log((0.35^2) + 1)));  //(sigma_sp));//
      }
   }
 

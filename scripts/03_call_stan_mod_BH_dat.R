@@ -52,10 +52,12 @@ return_CVs <- read_xlsx("data/chum_cv.xlsx") %>%
   filter(year >= year_min, 
          year <= year_max_cal) 
  
+mean(return_CVs$fall_spawner_cv)
 
 ## add juvenile index CV ========
 fall_juv_CV <- read_csv("data/Juvenile_Index_CC/Index for Sabrina.csv") %>%
   filter(Stratum == "Stratum_1")  
+
 
 mean_2020 <- mean(fall_juv_CV$CV, na.rm = TRUE)
 
@@ -68,6 +70,7 @@ fall_juv_CV_all <- fall_juv_CV %>%
   dplyr::select(brood_year,CV) %>% 
   filter(!brood_year ==2001)
 
+mean(fall_juv_CV_all$CV)
 
 ## Spawners, Recruits, Harvest ==================================== 
 yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%

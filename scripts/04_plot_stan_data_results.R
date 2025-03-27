@@ -33,9 +33,9 @@ traceplot(bh_fit,pars=  c(  "Dir_alpha"))
 
 # traceplot(bh_fit,pars=  c("p_1","p_2"))
 
-traceplot(bh_fit,pars=  c("sigma_sp"))
-traceplot(bh_fit,pars=  c("sigma_juv"))
-traceplot(bh_fit,pars=  c("sigma_harvest"))
+# traceplot(bh_fit,pars=  c("sigma_sp"))
+# traceplot(bh_fit,pars=  c("sigma_juv"))
+# traceplot(bh_fit,pars=  c("sigma_harvest"))
  
 traceplot(bh_fit,pars=  c("pi"))
 
@@ -82,26 +82,26 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.5,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "alpha[1]","alpha[2]", "alpha[3]", "alpha[4]"),
      fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "sigma_juv" ),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "sigma_rec" ),
-     fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "sigma_sp" ),
-     fill_color = "blue")
+# 
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+#      pars=  c( "sigma_juv" ),
+#      fill_color = "blue")
+# 
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+#      pars=  c( "sigma_rec" ),
+#      fill_color = "blue")
+# 
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+#      pars=  c( "sigma_sp" ),
+#      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_c_2" ),
      fill_color = "blue")
  
-plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "beta" ),
-     fill_color = "blue")
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+#      pars=  c( "beta" ),
+#      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,  
      pars=  c("log_catch_q"),
