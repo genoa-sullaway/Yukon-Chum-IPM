@@ -35,7 +35,6 @@ traceplot(bh_fit,pars=  c(  "Dir_alpha"))
 
 traceplot(bh_fit,pars=  c("sigma_sp"))
 traceplot(bh_fit,pars=  c("sigma_juv"))
-
 traceplot(bh_fit,pars=  c("sigma_harvest"))
  
 traceplot(bh_fit,pars=  c("pi"))

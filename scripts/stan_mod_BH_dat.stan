@@ -65,16 +65,16 @@ real log_F_mean;
 vector [nRyrs_T]  log_F_dev_y; 
 
 real <lower=0, upper = 1> basal_p_1; // mean prod for covariate survival stage 1
-real <lower=0.4, upper = 1> basal_p_2; // mean prod for covariate survival stage 2
+real <lower=0, upper = 1> basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
-vector <lower=0, upper = 10> [A] alpha;
-real <lower=0> beta; 
+vector <lower=0, upper = 15 > [A] alpha;
+// real <lower=0> beta; 
 
-real <lower=0> sigma_juv;
-real <lower=0> sigma_rec;
-real <lower=0> sigma_harvest;
-real <lower=0> sigma_sp;
+// real <lower=0> sigma_juv;
+// real <lower=0> sigma_rec;
+// real <lower=0> sigma_harvest;
+// real <lower=0> sigma_sp;
  }
 
 transformed parameters { 
@@ -192,14 +192,16 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
 
          N_brood_year_return[t] = N_j[t]*kappa_marine_survival[t];         
         for (a in 1:A) { 
-           N_recruit[t+a+2,a] = (N_brood_year_return[t]*p[t,a]); //add age specific mortality, 
+           N_recruit[t+a+1,a] = (N_brood_year_return[t]*p[t,a]); //add age specific mortality, 
            
            // N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
-           N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]))); 
+           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]))); 
            
-           N_sp[t+a+2,a] = N_recruit[t+a+2,a]-N_catch[t+a+2,a];  
+           N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a];  
            
-           N_e[t+a+2,a] = Ps*(N_sp[t+a+2,a] * exp(alpha[a] - (beta * N_sp[t+a+2,a])));  
+           // N_e[t+a+1,a] = Ps*(N_sp[t+a+1,a] * exp(alpha[a] - (beta * N_sp[t+a+1,a])));  
+           // try linear and dont estimate beta
+            N_e[t+a+1,a] = Ps*(N_sp[t+a+1,a] * exp(alpha[a] - N_sp[t+a+1,a]));
             }
      }
      
@@ -220,11 +222,11 @@ model {
    log_catch_q ~ normal(-5,1);
    
    for(a in 1:A){
-      alpha[a] ~  normal(1,10); // 
+      alpha[a] ~  normal(7,5); // 
     // alpha[a] ~ uniform(0,10);
    }
    
-   beta ~  normal(0.00001,0.01);
+   // beta ~  normal(0.00001,0.01);
 
   pi ~ beta(1,1); 
 
@@ -261,10 +263,10 @@ log_F_mean ~ normal(0,0.1);
 }
  
  //sigmas ////
- sigma_juv ~ normal(0, 0.2);
- sigma_rec ~ normal(0, 0.2);
- sigma_harvest ~ normal(0, 0.2);
- sigma_sp ~ normal(0,0.2);
+ // sigma_juv ~ normal(0, 0.2);
+ // sigma_rec ~ normal(0, 0.2);
+ // sigma_harvest ~ normal(0, 0.2);
+ // sigma_sp ~ normal(0,0.2);
 
  // for (a in 1:A) {
  //    log_S[a] ~ normal(0,1);
@@ -284,44 +286,44 @@ log_F_mean ~ normal(0,0.1);
    
  // Likelihoods - Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), (sigma_juv + sqrt(log((juv_CV[t]^2) + 1)))); //(sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), ( sqrt(log((juv_CV[t]^2) + 1)))); //(sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));
   }
  // recruit by brood year
   for (t in 1:nByrs_return_dat) {
-    target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), (sigma_rec + sqrt(log((return_CV[t]^2) + 1)))); // sqrt(log((0.35^2) + 1))); // (sigma_rec));// + sqrt(log((return_CV[t]^2) + 1))));  //sqrt(log((0.35^2) + 1)));
+    target += normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), ( sqrt(log((return_CV[t]^2) + 1)))); // sqrt(log((0.35^2) + 1))); // (sigma_rec));// + sqrt(log((return_CV[t]^2) + 1))));  //sqrt(log((0.35^2) + 1)));
     }
 
   for(t in 1:nRyrs){ // calendar years
      target +=  ess_age_comp*sum(o_run_comp[t,1:A] .* log(q[t,1:A])); // ESS_AGE_COMP right now is fixed
 
-     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), (sigma_harvest + sqrt(log((return_CV[t]^2) + 1))));// sqrt(log((0.35^2) + 1)));  //
-     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), (sigma_sp + sqrt(log((return_CV[t]^2) + 1)))); //sqrt(log((0.35^2) + 1)));  //(sigma_sp));//
+     target +=  normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), ( sqrt(log((return_CV[t]^2) + 1))));// sqrt(log((0.35^2) + 1)));  //
+     target +=  normal_lpdf(log(data_stage_sp[t]) |  log(sum(N_sp[t,1:A])), (  sqrt(log((return_CV[t]^2) + 1)))); //sqrt(log((0.35^2) + 1)));  //(sigma_sp));//
      }
   }
 
-generated quantities {
-vector[nByrs] log_lik_j;                    // juvenile likelihood
-vector[nByrs_return_dat] log_lik_return;    // return likelihood
-vector[nRyrs] log_lik_age_comp;             // age composition likelihood
-vector[nRyrs] log_lik_harvest;              // harvest likelihood
-vector[nRyrs] log_lik_sp;                   // spawner likelihood
-
-// Juvenile likelihood
-for (t in 1:nByrs) {
-  log_lik_j[t] = normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), (sigma_juv + sqrt(log((juv_CV[t]^2) + 1)))); // sqrt(log((0.39^2) + 1)));
-}
-
-// Return likelihood
-for (t in 1:nByrs_return_dat) {
-  log_lik_return[t] = normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), (sigma_rec + sqrt(log((return_CV[t]^2) + 1)))); //sqrt(log((0.35^2) + 1)));
-}
-
-// Calendar year likelihoods
-for (t in 1:nRyrs) {
-  log_lik_age_comp[t] = ess_age_comp * sum(o_run_comp[t,1:A] .* log(q[t,1:A]));
-  log_lik_harvest[t] = normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), (sigma_harvest + sqrt(log((return_CV[t]^2) + 1)))); // sqrt(log((0.35^2) + 1)));
-  log_lik_sp[t] = normal_lpdf(log(data_stage_sp[t]) | log(sum(N_sp[t,1:A])), (sigma_sp + sqrt(log((return_CV[t]^2) + 1)))); 
-}
-}
+// generated quantities {
+// // vector[nByrs] log_lik_j;                    // juvenile likelihood
+// vector[nByrs_return_dat] log_lik_return;    // return likelihood
+// vector[nRyrs] log_lik_age_comp;             // age composition likelihood
+// vector[nRyrs] log_lik_harvest;              // harvest likelihood
+// vector[nRyrs] log_lik_sp;                   // spawner likelihood
+// 
+// // // Juvenile likelihood
+// // for (t in 1:nByrs) {
+// //   log_lik_j[t] = normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), (sigma_juv + sqrt(log((juv_CV[t]^2) + 1)))); // sqrt(log((0.39^2) + 1)));
+// // }
+// 
+// // Return likelihood
+// for (t in 1:nByrs_return_dat) {
+//   log_lik_return[t] = normal_lpdf(log(data_stage_return[t]) | log(N_brood_year_return[t]), (sigma_rec + sqrt(log((return_CV[t]^2) + 1)))); //sqrt(log((0.35^2) + 1)));
+// }
+// 
+// // Calendar year likelihoods
+// for (t in 1:nRyrs) {
+//   log_lik_age_comp[t] = ess_age_comp * sum(o_run_comp[t,1:A] .* log(q[t,1:A]));
+//   log_lik_harvest[t] = normal_lpdf(log(data_stage_harvest[t]) | log(sum(N_catch[t,1:A])), (sigma_harvest + sqrt(log((return_CV[t]^2) + 1)))); // sqrt(log((0.35^2) + 1)));
+//   log_lik_sp[t] = normal_lpdf(log(data_stage_sp[t]) | log(sum(N_sp[t,1:A])), (sigma_sp + sqrt(log((return_CV[t]^2) + 1)))); 
+// }
+// }
 
 
