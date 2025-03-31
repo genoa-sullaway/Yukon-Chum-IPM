@@ -29,14 +29,6 @@ traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
 traceplot(bh_fit,pars=  c(  "Dir_alpha"))
 
-# traceplot(bh_fit,pars=  c("prob[1]", "prob[2]","prob[3]"))
-
-# traceplot(bh_fit,pars=  c("p_1","p_2"))
-
-# traceplot(bh_fit,pars=  c("sigma_sp"))
-# traceplot(bh_fit,pars=  c("sigma_juv"))
-# traceplot(bh_fit,pars=  c("sigma_harvest"))
- 
 traceplot(bh_fit,pars=  c("pi"))
 
 traceplot(bh_fit,pars=  c("basal_p_1", "basal_p_2"))
@@ -46,7 +38,8 @@ traceplot(bh_fit,pars=  c("log_c_1", "log_c_2"))
 # ess and rhat  =====
 # Find parameters with both low ESS and high Rhat
 diagnostics <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat")]) %>%
-  filter(n_eff <400 | Rhat > 1.1)
+  filter(#n_eff <400 | 
+    Rhat > 1.1)
  
 
 #LOOK AT WAIC =============
@@ -96,6 +89,10 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 #      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
+     pars=  c( "log_c_1" ),
+     fill_color = "blue")
+
+plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_c_2" ),
      fill_color = "blue")
  
@@ -110,10 +107,7 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "basal_p_1", "basal_p_2" ),
      fill_color = "blue")
-
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "N_j_pp"  ),
-     fill_color = "blue")
+ 
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "D_scale"),

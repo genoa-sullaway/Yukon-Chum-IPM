@@ -269,12 +269,12 @@ data_list_stan <- list(nByrs=nByrs,
 
 # mod specifics ============
 # use these for full model
-# warmups <- 10000
-# total_iterations <- 30000
+warmups <- 10000
+total_iterations <- 50000
 
 # use these for exploring 
-warmups <- 2000
-total_iterations <- 6000
+# warmups <- 2000
+# total_iterations <- 6000
 # max_treedepth <-  15
 # n_chains <- 4
 # n_cores <- 4
@@ -285,12 +285,12 @@ total_iterations <- 6000
 bh_fit <- stan(
   file = here::here("scripts", "stan_mod_BH_dat.stan"),
   data = data_list_stan,
-  chains = 1,  
+  chains = 4,  
   warmup = warmups, 
   iter = total_iterations, 
   cores = 4, 
   verbose = FALSE,
-  # thin = 10,
+   thin = 40,
   control = list(adapt_delta = 0.99)
   )
 

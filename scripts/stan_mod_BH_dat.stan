@@ -65,10 +65,11 @@ real log_F_mean;
 vector [nRyrs_T]  log_F_dev_y; 
 
 real <lower=0, upper = 1> basal_p_1; // mean prod for covariate survival stage 1
-real <lower=0, upper = 1> basal_p_2; // mean prod for covariate survival stage 2
+real <lower=0.4, upper = 1> basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
-vector <lower=0, upper = 15 > [A] alpha;
+  vector <lower=0, upper =10> [A] alpha;
+// vector <lower=0 > [A] alpha;
 // real <lower=0> beta; 
 
 // real <lower=0> sigma_juv;
@@ -201,7 +202,8 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            
            // N_e[t+a+1,a] = Ps*(N_sp[t+a+1,a] * exp(alpha[a] - (beta * N_sp[t+a+1,a])));  
            // try linear and dont estimate beta
-            N_e[t+a+1,a] = Ps*(exp(alpha[a]) * N_sp[t+a+1,a]);
+          N_e[t+a+1,a] = Ps*(exp(alpha[a]) * N_sp[t+a+1,a]);
+            // N_e[t+a+1,a] = Ps*(alpha[a] * N_sp[t+a+1,a]);
             }
      }
      
@@ -221,10 +223,14 @@ for(t in 1:nByrs){
 model { 
    log_catch_q ~ normal(-5,1);
    
-   for(a in 1:A){
-      //alpha[a] ~  normal(7,5); // 
-     alpha[a] ~ uniform(0,15);
-   }
+   // for(a in 1:A){
+     // alpha[a] ~  normal(7,5); // 
+     // alpha[a] ~ normal(1500,10);
+   // }
+   alpha[1] ~  normal(7,0.5);
+   alpha[2] ~  normal(7.2,0.5);
+   alpha[3] ~  normal(7.4,0.5);
+   alpha[4] ~  normal(7.6,0.5);
    
    // beta ~  normal(0.00001,0.01);
 
