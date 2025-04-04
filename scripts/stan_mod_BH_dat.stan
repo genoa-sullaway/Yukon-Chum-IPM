@@ -7,7 +7,7 @@ data { // all equation references are from proposal numbering
   int<lower=0> nByrs_return_dat; // brood years specifically for return data  
   int <lower=0> lik_count; // for generated quantities, how many likelihoods are there? 
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
-  vector [A] fs; // fecundity
+  // vector [A] fs; // fecundity
   vector [A] M; // fixed mortality for 3 older age classes
 
   vector[nByrs] juv_CV; 
@@ -267,16 +267,6 @@ log_F_mean ~ normal(0,0.1);
  for(t in 1:nRyrs_T){
    log_F_dev_y[t] ~ normal(0, 1);
 }
- 
- //sigmas ////
- // sigma_juv ~ normal(0, 0.2);
- // sigma_rec ~ normal(0, 0.2);
- // sigma_harvest ~ normal(0, 0.2);
- // sigma_sp ~ normal(0,0.2);
-
- // for (a in 1:A) {
- //    log_S[a] ~ normal(0,1);
- // } 
 
  N_j_start_log ~ normal(14,5);
  N_brood_year_return_start_log~ normal(12,5);
