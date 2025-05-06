@@ -57,8 +57,8 @@ real <lower =-1, upper = 1> theta2 [ncovars2];
 // vector <lower=0> [A-1] prob;
 real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 real <lower=0> g[nByrs,A]; // gamma random draws
-vector <lower=0, upper=1> [A] pi; // actual age comps
-
+vector<lower=0,upper=1>[3] prob;   // Maturity schedule probs
+  
 real log_catch_q; 
 real log_F_mean; 
 // vector [A] log_S; // log selectivity 
@@ -99,7 +99,7 @@ real N_j_start;
  
 vector <lower = 0> [nRyrs_T] F;
 // vector <lower = 0> [A] S; //selectivty
-
+ 
 // survival and covariate section 
 vector  <lower=0,upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
 vector <lower=0,upper = 1>  [nByrs] p_2;
@@ -119,6 +119,7 @@ matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year
 real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
 vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix  [nRyrs,A] q; 
+vector <lower=0, upper=1> [A] pi; // actual age comps
 
 real<lower=0> c_1; // estimate on log, transform back to normal scale
 real<lower=0> c_2;
@@ -128,6 +129,7 @@ c_2 = exp(log_c_2);
  
   // S = exp(log_S);
  
+ // Eq 4.8 
   for(t in 1:nRyrs_T){
   // instant fishing mortality
   F[t]  = exp(log_F_mean + log_F_dev_y[t]);
@@ -156,6 +158,7 @@ for(t in 1:t_start){
   N_e[1:t_start,a] = N_egg_start[1:t_start,a]; 
      }
   
+  // Set up estimates of productivity with covariates
 // the cov effects need seperate loop because number of covariates varies between lifestage (currently both 1 - eventually will vary)
   for(t in 1:nByrs){
    for (c in 1:ncovars1) {
@@ -166,12 +169,20 @@ for(t in 1:t_start){
    }
   } 
   
+  // Eq 4.3 - Part of Bev Holt transition funcitons 
 for(t in 1:nByrs){
     p_1[t]  = 1 / (1 + exp(-basal_p_1-sum(cov_eff1[t,1:ncovars1])));
     p_2[t]  = 1 / (1 + exp(-basal_p_2- sum(cov_eff2[t,1:ncovars2])));
   }
 
-  D_sum = 1/(D_scale^2);
+// this is all part of Eq 4.6 
+  pi[1] = prob[1];
+  pi[2] = prob[2] * (1 - pi[1]);
+  pi[3] = prob[3] * (1 - pi[1] - pi[2]);
+  pi[4] = 1 - pi[1] - pi[2] - pi[3];
+  
+  // D_sum = 1/(D_scale^2);
+    D_sum = 1/D_scale^2;
 
   for (a in 1:A) {
     Dir_alpha[a] = D_sum * pi[a];
@@ -183,27 +194,29 @@ for(t in 1:nByrs){
 catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data -- Is this right??
 
      for (t in 1:nByrs){ // loop for each brood year 
-         N_e_sum[t] = sum(N_e[t,1:A]);
+         N_e_sum[t] = sum(N_e[t,1:A]); // Eq. 4.11 
            
-         kappa_j_survival[t] =  p_1[t]/(1 + ((p_1[t]*N_e_sum[t])/c_1)); // Eq 4.1  - Bev holt transition estimating survival from Egg to Juvenile (plugs into Eq 4.4) 
-
-         N_j[t] = kappa_j_survival[t]*N_e_sum[t]; // Eq 4.4  generated estimate for the amount of fish each year and stock that survive to a juvenile stage
+         kappa_j_survival[t] =  p_1[t]/(1 + ((p_1[t]*N_e_sum[t])/c_1)); // Eq 4.2
+         
+         N_j[t] = kappa_j_survival[t]*N_e_sum[t]; // Eq 4.1
      
-         kappa_marine_survival[t] =  p_2[t]/(1 + ((p_2[t]*N_j[t])/c_2)); //Eq 4.1  - Bev holt transition estimating survival from juvenile to spawner (plugs into Eq 4.4) 
-
-         N_brood_year_return[t] = N_j[t]*kappa_marine_survival[t];         
+         kappa_marine_survival[t] =  p_2[t]/(1 + ((p_2[t]*N_j[t])/c_2)); 
+         
+         N_brood_year_return[t] = N_j[t]*kappa_marine_survival[t]; // Eq 4.4          
+        
         for (a in 1:A) { 
-           N_recruit[t+a+1,a] = (N_brood_year_return[t]*p[t,a]); //add age specific mortality, 
+           N_recruit[t+a+1,a] = (N_brood_year_return[t]*p[t,a]) * exp(-(sum(M[1:a]))); //Eq 4.5 - part of it, see above for the rest of age comp estiamtion 
+
+           // text has selectivity in this equation, I have removed it for now. 
+           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]))); // Eq 4.7 
            
-           // N_catch[t+a+2,a] = N_recruit[t+a+2,a]*(1-exp(-(F[t+a+2]*S[a])));
-           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]))); 
-           
-           N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a];  
+           N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a];  // Eq 4.9
+           // issues estimating traditional ricker - changed to linear scalar
            
            // N_e[t+a+1,a] = Ps*(N_sp[t+a+1,a] * exp(alpha[a] - (beta * N_sp[t+a+1,a])));  
            // try linear and dont estimate beta
-          N_e[t+a+1,a] = Ps*(exp(alpha[a]) * N_sp[t+a+1,a]);
-            // N_e[t+a+1,a] = Ps*(alpha[a] * N_sp[t+a+1,a]);
+          N_e[t+a+1,a] = Ps*(exp(alpha[a]) * N_sp[t+a+1,a]); // Eq 4.10
+          
             }
      }
      
@@ -224,16 +237,18 @@ model {
    log_catch_q ~ normal(-5,1);
    
    // for(a in 1:A){
-     // alpha[a] ~  normal(7,5); // 
-     // alpha[a] ~ normal(1500,10);
+     // alpha[a] ~  normal(7,5); //  
    // }
+   // in the middle of experimenting with different alpha priors - its sensitive here. 
    alpha[1] ~  normal(7,0.5);
    alpha[2] ~  normal(7.2,0.5);
    alpha[3] ~  normal(7.4,0.5);
    alpha[4] ~  normal(7.6,0.5);
-   
-   // beta ~  normal(0.00001,0.01);
-
+    
+  prob[1] ~ beta(1,1);
+  prob[2] ~ beta(1,1);
+  prob[3] ~ beta(1,1);
+  
   pi ~ beta(1,1); 
 
   log_c_1 ~ normal(15,2);

@@ -23,7 +23,9 @@ traceplot(bh_fit,pars=  c( "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,
 
 traceplot(bh_fit,pars=  c( "alpha[1]" ,"alpha[2]" ,"alpha[3]" ,"alpha[4]"))  
 
-traceplot(bh_fit,pars=  c("D_scale"))
+traceplot(bh_fit,pars=  c("prob[1]","prob[2]","prob[3]" ))
+
+traceplot(bh_fit,pars=  c("D_sum"))
 
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
 
