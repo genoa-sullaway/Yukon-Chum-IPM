@@ -269,16 +269,16 @@ data_list_stan <- list(nByrs=nByrs,
 
 # mod specifics ============
 # use these for full model
-# warmups <- 10000
-# total_iterations <- 50000
-# thin_rate <- 40
-# n_chains <- 4
+warmups <- 10000
+total_iterations <- 50000
+thin_rate <- 40
+n_chains <- 4
 
 # use these for exploring 
-warmups <- 2000
-total_iterations <- 6000 
-n_chains <- 1
-thin_rate <- 10
+# warmups <- 2000
+# total_iterations <- 6000 
+# n_chains <- 1
+# thin_rate <- 10
  
 # call mod  ===========================
 bh_fit <- stan(
