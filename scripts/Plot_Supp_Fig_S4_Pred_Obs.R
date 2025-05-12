@@ -2,7 +2,10 @@
 library(PNWColors)
 library(tidyverse)
 library(here)
-
+library(tidybayes)
+library(rstan)
+library(bayesplot)
+library(rstanarm)
 
 # year DF for joins ==================
 years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
@@ -82,7 +85,7 @@ sp <- ggplot(data= summ_n_sp) +
   xlab("Predicted Abund") +
   ggtitle("Stage: Spawners") +
   # scale_color_manual(values = pnw_palette("Sailboat", type = "continuous" ) ) +
-  guides(color = FALSE) #guide_legend(title = "Cal. year"))  # Add this line
+  guides(color = "none") #guide_legend(title = "Cal. year"))  # Add this line
 
 ## returns =======
 
@@ -105,7 +108,7 @@ return <- ggplot(data= brood_year) +
   xlab("Predicted Abund") +
   ggtitle("Stage: Return") +
   # scale_color_manual(values = pnw_palette("Sailboat", type = "continuous" ) ) +
-  guides(color = FALSE) #guide_legend(title = "Cal. year"))  # Add this line
+  guides(color = "none") #guide_legend(title = "Cal. year"))  # Add this line
 
 ## harvest ========= 
 harvest <- summary(bh_fit, pars = c("N_catch"), 

@@ -12,37 +12,43 @@ library(tidyverse)
 
 fit<- read_rds("output/stan_fit_DATA.RDS")
 
-posterior_samples <- as.matrix(fit)
-any(is.na(posterior_samples))
-clean_posterior <- posterior_samples[, colSums(is.na(posterior_samples)) == 0]
+# have to remove NAs so trace plot function works. 
+# posterior_samples <- as.matrix(fit)
+# any(is.na(posterior_samples))
+# clean_posterior <- posterior_samples[, colSums(is.na(posterior_samples)) == 0]
+#  
+posterior_array <- as.array(fit)
+has_na <- apply(posterior_array, 3, function(param_array) any(is.na(param_array)))
+# Keep only parameters without any NA values
+clean_posterior_array <- posterior_array[,, !has_na]
+parameters_to_plot <- c("Dir_alpha")
 
-# list parameters ======= 
+# list parameters to plot ======= 
 parameters_to_plot <- c(
-  # "log_c_1",
-  # "log_c_2",
-  # "log_sigma_sp",
-  # "log_sigma_catch",
-  # "log_sigma_y_j", 
-  # "theta1[[1]]",
-  # "alpha", "beta",
-  "pi[1]", "pi[2]", "pi[3]", "pi[4]", 
-  "log_F_mean",
-  # "log_S[1]", "log_S[2]", "log_S[3]", "log_S[4]",
-  "basal_p_1",  "basal_p_2", 
-  "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,#"theta1[5]" ,
-  "theta2[1]","theta2[2]","theta2[3]",#"theta2[4]",
+  "log_c_1",
+  "log_c_2",
+  "alpha[1]",  "alpha[2]",  "alpha[3]",  "alpha[4]", 
+  "prob[1]", "prob[2]", "prob[3]",  
   "D_scale",
+  "log_F_mean",   
+  "basal_p_1",  "basal_p_2", 
+  "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,
+  "theta2[1]","theta2[2]","theta2[3]", 
   "log_catch_q")
 
 parameters = parameters_to_plot
-color_scheme_set("viridis") 
+
+# color_scheme_set("viridisD") 
+# color_scheme_set("blue")
+
 # Create individual traceplots with improved formatting
 trace_plots <- lapply(parameters, function(param) {
-  # color_scheme_set("mix-blue-red")
-  mcmc_trace(clean_posterior, 
-             pars = param, 
-             div_color = "red",
-             n_warmup = floor(dim(clean_posterior)[1]/2)) +
+  color_scheme_set("mix-blue-red")
+  mcmc_trace(clean_posterior_array, 
+             pars = param#, 
+             # div_color = "red"#,
+             #n_warmup = floor(dim(clean_posterior)[1]/2)
+             ) +
     # theme_bw() +
     theme(
       plot.title = element_text(size = 12, face = "bold"),
@@ -56,6 +62,24 @@ trace_plots <- lapply(parameters, function(param) {
       x = "Iteration"
     )
 })
+
+
+# Create individual traceplots with improved formatting
+  
+legend <- get_legend(mcmc_trace(clean_posterior_array, 
+             pars = "theta2[1]") +
+    # theme_bw() +
+    theme(
+      plot.title = element_text(size = 12, face = "bold"),
+      axis.title = element_text(size = 10),
+      axis.text = element_text(size = 9)#,
+      # legend.position = "none"
+    ) +
+    labs(
+      title = "theta2[1]",
+      y = "Parameter Value",
+      x = "Iteration"
+    ) )
 
 traceplots_all <- ggpubr::ggarrange(trace_plots[[1]],
                   trace_plots[[2]],
@@ -73,17 +97,18 @@ traceplots_all <- ggpubr::ggarrange(trace_plots[[1]],
                   
                   trace_plots[[14]],
                   trace_plots[[15]],
-                  trace_plots[[16]]
-                  # trace_plots[[17]],
-                  # trace_plots[[18]]
-                  # trace_plots[[19]],
-                  # trace_plots[[20]]
-                  # trace_plots[[21]],
+                  trace_plots[[16]],
+                  trace_plots[[17]],
+                  trace_plots[[18]],
+                  trace_plots[[19]],
+                  trace_plots[[20]],
+                  trace_plots[[21]],
+                  legend  
                   # trace_plots[[22]],
                   # trace_plots[[23]],
                   # trace_plots[[24]]
                   
                   )
 
-traceplots_all
+#traceplots_all
 ggsave("output/Supplementary_Traceplots.png", width = 10, height = 6)

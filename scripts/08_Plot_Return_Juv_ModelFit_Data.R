@@ -1,6 +1,7 @@
 library(tidyverse)
 library(tidybayes)
 library(here)
+library(readxl)
 # library(rstan)
 library(bayesplot)
 # library(rstanarm)
@@ -188,7 +189,7 @@ juv_plot <- ggplot(data = n_j_summary_clean) +
 juv_plot 
 
 ## save ======== 
-obs_plot <- ggpubr::ggarrange(juv_plot,return_plot, nrow = 2, labels = c("a.", "b."))
+obs_plot <- ggpubr::ggarrange(juv_plot,return_plot, nrow = 2, labels = c("A.", "B."))
 obs_plot
 
 ggsave("output/Plot_Manuscript_Juv_ReturnFit_Obs.png", width = 6, height = 5, bg="white")

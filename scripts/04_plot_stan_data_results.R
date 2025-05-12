@@ -28,11 +28,7 @@ traceplot(bh_fit,pars=  c("prob[1]","prob[2]","prob[3]" ))
 traceplot(bh_fit,pars=  c("D_sum"))
 
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
-
-traceplot(bh_fit,pars=  c(  "Dir_alpha"))
-
-traceplot(bh_fit,pars=  c("pi"))
-
+ 
 traceplot(bh_fit,pars=  c("basal_p_1", "basal_p_2"))
 
 traceplot(bh_fit,pars=  c("log_c_1", "log_c_2"))

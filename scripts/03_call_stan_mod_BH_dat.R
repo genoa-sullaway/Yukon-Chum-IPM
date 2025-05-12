@@ -270,13 +270,13 @@ data_list_stan <- list(nByrs=nByrs,
 # mod specifics ============
 # use these for full model
 warmups <- 10000
-total_iterations <- 50000
+total_iterations <- 60000
 thin_rate <- 40
 n_chains <- 4
-
-# use these for exploring 
+# 
+# # use these for exploring 
 # warmups <- 2000
-# total_iterations <- 6000 
+# total_iterations <- 6000
 # n_chains <- 1
 # thin_rate <- 10
  
@@ -294,73 +294,74 @@ bh_fit <- stan(
   )
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
- 
-# run in a loop with different values for natural mortality ======
 
-# use settings for full model
-warmups <- 10000
-total_iterations <- 50000
-thin_rate <- 40
-n_chains <- 4
+# Below this all works fine, just removing it so that it doesn't get run accidentally 
 
-# create other values to test - these will compare with 0.06
-M_loop <- list(
-  c(0.1,0.1,0.1,0.1),
-  c(0.2,0.2,0.2,0.2)
-  )
-
-bh_fit_sensitivity <- list()
-
-for (i in 1:M_loop) {
-  
-data_list_stan <- list(nByrs=nByrs,
-                       nRyrs=nRyrs,
-                       nRyrs_T = nRyrs_T, 
-                       
-                       A=A,
-                       t_start = t_start,
-                       nByrs_return_dat=nByrs_return_dat,
-                       
-                       Ps=Ps, 
-                       M = M_loop[[i]],
-                       
-                       lik_count = 4, # for sensitivity testing 
-                       
-                       data_stage_j = as.vector(fall_juv$fall_abund), 
-                       data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
-                       data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
-                       data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
-                       
-                       years_data_sp = yukon_fall_spawners$cal_year,
-                       years_data_juv = fall_juv$brood_year,
-                       years_data_return = yukon_fall_return_brood_year$Brood_Year,
-                       
-                       ncovars1=ncovars1,
-                       ncovars2=ncovars2,
-                       
-                       cov1=stage_a_cov,
-                       cov2=stage_b_cov,
-                       
-                       o_run_comp=(yukon_fall_obs_agecomp),
-                       ess_age_comp=ess_age_comp,
-                       
-                       juv_CV= fall_juv_CV_all$CV, 
-                       return_CV = return_CVs$fall_spawner_cv
-)
-
-##  call M sensitiviy mod  ===========================
-bh_fit_sensitivity[[i]] <- stan(
-  file = here::here("scripts", "stan_mod_BH_dat.stan"),
-  data = data_list_stan,
-  chains = n_chains,  
-  warmup = warmups, 
-  iter = total_iterations, 
-  cores = 4, 
-  verbose = FALSE,
-  thin = thin_rate,
-  control = list(adapt_delta = 0.99)
-  )
-}
-
-write_rds(bh_fit_sensitivity, "output/stan_fit_M_sensitivity.RDS")
-
+# # run in a loop with different values for natural mortality ======
+# # use settings for full model
+# warmups <- 1000
+# total_iterations <- 50000
+# thin_rate <- 40
+# n_chains <- 4
+# 
+# # create other values to test - these will compare with 0.06
+# M_loop <- list(
+#   c(0.1,0.1,0.1,0.1),
+#   c(0.2,0.2,0.2,0.2)
+#   )
+#  
+# bh_fit_sensitivity <- list()
+# 
+# for (i in 1:length(M_loop)) {
+#   
+# data_list_stan <- list(nByrs=nByrs,
+#                        nRyrs=nRyrs,
+#                        nRyrs_T = nRyrs_T, 
+#                        
+#                        A=A,
+#                        t_start = t_start,
+#                        nByrs_return_dat=nByrs_return_dat,
+#                        
+#                        Ps=Ps, 
+#                        M = M_loop[[i]],
+#                        
+#                        lik_count = 4, # for sensitivity testing 
+#                        
+#                        data_stage_j = as.vector(fall_juv$fall_abund), 
+#                        data_stage_return = as.vector(yukon_fall_return_brood_year$Brood_Year_Return),
+#                        data_stage_sp = as.vector(yukon_fall_spawners$Spawners),
+#                        data_stage_harvest = as.vector(yukon_fall_harvest$harvest), 
+#                        
+#                        years_data_sp = yukon_fall_spawners$cal_year,
+#                        years_data_juv = fall_juv$brood_year,
+#                        years_data_return = yukon_fall_return_brood_year$Brood_Year,
+#                        
+#                        ncovars1=ncovars1,
+#                        ncovars2=ncovars2,
+#                        
+#                        cov1=stage_a_cov,
+#                        cov2=stage_b_cov,
+#                        
+#                        o_run_comp=(yukon_fall_obs_agecomp),
+#                        ess_age_comp=ess_age_comp,
+#                        
+#                        juv_CV= fall_juv_CV_all$CV, 
+#                        return_CV = return_CVs$fall_spawner_cv
+# )
+# 
+# ##  call M sensitiviy mod  ===========================
+# bh_fit_sensitivity[[i]] <- stan(
+#   file = here::here("scripts", "stan_mod_BH_dat.stan"),
+#   data = data_list_stan,
+#   chains = n_chains,  
+#   warmup = warmups, 
+#   iter = total_iterations, 
+#   cores = 4, 
+#   verbose = FALSE,
+#   thin = thin_rate,
+#   control = list(adapt_delta = 0.99)
+#   )
+# }
+# 
+# write_rds(bh_fit_sensitivity, "output/stan_fit_M_sensitivity.RDS")
+# 

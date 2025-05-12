@@ -10,6 +10,7 @@ library(raster)
 library(concaveman)
 library(akgfmaps)
 library(readxl)
+library(ggspatial)
 
 # devtools::install_github("afsc-gap-products/akgfmaps", build_vignettes = TRUE)
  # test <- akgfmaps::get_nmfs_areas(set.crs = "auto")
@@ -262,7 +263,24 @@ fall_plot <- ggplot() +
     panel.background = element_rect(fill = "white"),  # Makes the plot area blue
     plot.background = element_rect(fill = "white"),       # Keeps the outer margin white
     panel.grid = element_blank(), 
-    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))  
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  annotation_scale(
+    location = "br",
+    width_hint = 0.25,
+    style = "bar",
+    pad_x = unit(0.4, "cm"),
+    pad_y = unit(0.3, "cm")
+  ) +
+  annotation_north_arrow(
+    location = "br",
+    pad_x = unit(0.5, "cm"),
+    pad_y = unit(0.6, "cm"),  
+    height = unit(0.9, "cm"),
+    width = unit(0.9, "cm"),
+    which_north = "true",
+    style = north_arrow_fancy_orienteering
+  )
+
 
 # save manuscript figure ========
 ggsave(

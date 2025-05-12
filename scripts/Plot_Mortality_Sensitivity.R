@@ -1,0 +1,189 @@
+# load model 
+library(tidyverse) 
+library(tidybayes)
+library(here)
+library(rstan)
+library(bayesplot)
+library(rstanarm)
+
+# year DF for joins ==================
+years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
+  filter(cal_year >= year_min) %>%
+  dplyr::select(cal_year) %>%
+  dplyr::mutate(time = c(1:nrow(.)))
+
+## list of sensitivity testing ===
+fit_list <- read_rds("output/stan_fit_M_sensitivity.RDS")
+
+## load main model with 0.06 ===
+fit_0.06 <- read_rds("output/stan_fit_DATA.RDS")
+
+fit_all <- list(fit_0.06,fit_list[[1]], fit_list[[2]])
+name <- c(0.06, 0.1, 0.2)
+summ <- list()
+ 
+
+# function to summarise =====
+summarise_bhfit <- function(par) {
+  
+  for (i in 1:length(fit_all)) {
+    fit <- fit_all[[i]]
+    M <- name[[i]]
+  
+    if(par == c("N_sp")) { # this is for spawners  
+      summ[[i]] <- summary(fit, pars = par,
+                       probs = c(0.1, 0.9))$summary %>%
+    data.frame() %>%
+    rownames_to_column()  %>%
+    dplyr::mutate(time = rep(1:26, each=4),
+                  age = rep(3:6, length.out = nrow(.))) %>%
+    left_join(years) %>%
+    group_by(cal_year) %>%
+    summarise(mean = sum(mean),
+              se_mean = mean(se_mean) 
+              ) %>%
+    left_join(data.frame(cal_year = c(data_list_stan$years_data_sp),
+                         obs = c(data_list_stan$data_stage_sp))) %>%
+    dplyr::mutate(ID =  M)  
+  }
+    
+      if(par == c("N_j")){ 
+      # multiply by catch q to fit observations
+      catch_q <- summary(fit, pars = c("log_catch_q"), 
+                         probs = c(0.1, 0.9))$summary %>%
+        data.frame() %>%
+        rownames_to_column()  %>% 
+        mutate(mean = exp(mean))
+      
+      summ[[i]] <- summary(fit, pars = c("N_j"), 
+                          probs = c(0.1, 0.9))$summary %>%
+        data.frame() %>%
+        rownames_to_column()  %>%
+        dplyr::mutate(time = 1:nrow(.)) %>%
+        left_join(years) %>%
+        dplyr::mutate(mean_J_Q = mean*catch_q$mean,
+                      X10. = X10.*catch_q$mean,
+                      X90. = X90.*catch_q$mean) %>% 
+        left_join(data.frame(cal_year = c(data_list_stan$years_data_juv ),
+                             obs = c(data_list_stan$data_stage_j))) %>%
+        dplyr::mutate(rowname = "juv",
+                      ID =  M)   
+      }
+      
+if(par == c("N_brood_year_return")){ 
+      summ[[i]] <- summary(fit, pars = c("N_brood_year_return"),
+                                          probs = c(0.1, 0.9))$summary %>%
+      data.frame() %>%
+      rownames_to_column()  %>%
+      dplyr::mutate(time = (1:20)) %>%
+      left_join(years)%>%
+      left_join(data.frame(cal_year = c(data_list_stan$years_data_return),
+                           obs = data_list_stan$data_stage_return)) %>%
+      dplyr::mutate(rowname = "recruit",
+                    ID =  M)
+     }
+    } 
+  # bind list into one DF
+  df <- do.call(rbind, lapply(summ, as.data.frame))
+  return(df)
+}
+ 
+# Plot population fits with different levels of M =====
+
+## Spawners ==========
+spawner_df <- summarise_bhfit(par = c("N_sp")) %>% 
+  dplyr::mutate(ID = factor(ID, levels = c("0.06", "0.1", "0.2")),
+                mean = mean/1000000,
+                se_mean =se_mean/1000000,
+                # X10. =X10./1000000,
+                obs = obs/1000000)
+
+spawner_compare_plot <-  ggplot(data = spawner_df) +
+  geom_point(aes(x=cal_year, y = obs)) +
+  geom_line(aes(x=cal_year, y = mean, group = ID, color = ID)) + 
+  geom_errorbar(aes(x=cal_year, ymin = mean-se_mean, ymax = se_mean+mean,group = ID, color = ID), 
+                width = 0.1)+
+  guides(color = guide_legend(title = "M - Spawners")) +
+  xlab("Calendar Year") +  
+  ylab("Abundance (Millions)") +
+  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
+  theme_classic()
+
+spawner_compare_plot
+
+## return  =====
+return_df <- summarise_bhfit(par = c("N_brood_year_return")) %>% 
+  dplyr::mutate(ID = factor(ID, levels = c("0.06", "0.1", "0.2")),
+                mean = mean/1000000,
+                X90. = X90./1000000,
+                X10. = X10./1000000,
+                obs = obs/1000000)
+ 
+return_compare_plot <- ggplot(data = return_df) +
+  geom_line(aes(x=cal_year, y = mean, group = ID, color = ID)) + 
+  geom_point(aes(x=cal_year, y = obs )) + 
+  geom_errorbar(aes(x=cal_year, ymin = X10.,
+                  ymax = X90. , group = ID, color = ID), width = 0.1 ) +  
+  guides(color = guide_legend(title = "M - Return")) +
+  xlab("Brood Year") + 
+  ylab("Abundance (Millions)")   +
+  theme_classic()
+ 
+return_compare_plot
+
+## juvenile  =====
+juv_df <- summarise_bhfit(par = c("N_j")) %>% 
+  dplyr::mutate(ID = factor(ID, levels = c("0.06", "0.1", "0.2")),
+                mean_J_Q = mean_J_Q/1000000,
+                X90. =X90./1000000,
+                X10. =X10./1000000,
+                obs = obs/1000000)
+
+juv_compare_plot <- ggplot(data = juv_df) +
+                      geom_point(aes(x=cal_year, y = obs)) +
+                      geom_line(aes(x=cal_year, y = mean_J_Q, group = ID, color = ID)) + 
+                      geom_errorbar(aes(x=cal_year, ymin = X10.,
+                                        ymax = X90. , group = ID, color = ID), width = 0.1 ) +
+  guides(color = guide_legend(title = "M - Juvenile")) +
+  ylab("Abundance (Millions)") +
+  xlab("Brood Year") +
+  theme_classic()
+                 
+juv_compare_plot
+
+# Plot covariate fits with different levels of M =====
+theta <- list()
+for (i in 1:length(fit_all)) {
+  fit <- fit_all[[i]]
+  M <- name[[i]]
+   
+  theta[[i]] <- summary(fit, pars = c("theta1[1]","theta1[2]","theta1[3]","theta1[4]",
+                                    "theta2[1]","theta2[2]", "theta2[3]"),
+                   probs = c(0.1, 0.9))$summary %>%
+    data.frame() %>%
+    rownames_to_column() %>%
+    dplyr::mutate(ID = M)
+  
+  theta_df <- do.call(rbind, lapply(theta, as.data.frame)) %>% 
+    dplyr::mutate(ID = factor(ID, levels = c("0.06", "0.1", "0.2")))
+}
+
+theta_compare_plot <- ggplot(data = theta_df,aes(x=mean, y = rowname, group = ID, color = ID)) +
+  geom_point( ) +
+  geom_errorbar(aes(xmin = mean-sd, xmax = mean+sd), width = 0.1) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  guides(color = guide_legend(title = "M - Covariates"))+  
+  xlab("Mean Estimate") +
+  ylab("Covariate")+
+  theme_classic() 
+
+theta_compare_plot
+
+# put all plots together =====
+fig_supp <- ggpubr::ggarrange(spawner_compare_plot, return_compare_plot,
+                  juv_compare_plot, theta_compare_plot, 
+                  labels = c("A.", "B.","C.", "D."))
+
+fig_supp
+ggsave("output/Plot_Figure_mortality_sensitivity.png",width = 10, height = 8)
+

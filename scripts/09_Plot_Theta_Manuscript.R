@@ -5,6 +5,8 @@ library(bayesplot)
 library(bayestestR)
 
 # Plot percent change in survival ============
+source("scripts/Calculate_Percent_Survival.R")
+
 ci_df <- read_csv("output/survival_percent_diff.csv") %>%
           dplyr::mutate(covariate = factor(covariate, levels = rev(c("Spawner Size",
                                              "Snow Pack",
@@ -47,13 +49,13 @@ theta_plot <- ggplot(data = ci_df,
         panel.spacing.y=unit(0, "lines")) + 
   geom_vline(xintercept=0 )+
   ylab("") +
-  xlab("Median Covariate Coefficient Value") +
+  xlab("Mean Percent Change in Survival") +
   facet_wrap(~stage, scales = "free_y", ncol = 1)  
 
 theta_plot
 ggsave("output/Plot_Manuscript_Covariates.png", width = 7, height = 4 )
 
-
+# STOP HERE FOR MANUSCRIPT PLOTS ===== 
 ## perent change plot for talk - white ==========================
 theta_plot1 <- ggplot(data = ci_df,
                       aes(x= mean_percent_change, y = covariate, 

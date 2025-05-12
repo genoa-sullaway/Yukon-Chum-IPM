@@ -18,12 +18,13 @@ cov_a <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
  cova_dfplot <- cov_a %>%
   gather(2:ncol(.), key = "variable", value = "value") %>%
   filter(brood_year >1999) %>%
-  dplyr::mutate(variable = factor(variable, levels = c("mean_size","yukon_mean_discharge", 
+  dplyr::mutate(variable = factor(variable, levels = c("mean_size",#"yukon_mean_discharge", 
                                                        "fall_snow_cummulative",
-                                                       "SST_CDD_NBS","pollock_recruit_millions")))
+                                                       "SST_CDD_NBS","pollock_recruit_millions"))) %>%
+   filter(!variable =="yukon_mean_discharge")
 
 labels = c("mean_size"="Spawner Size" , 
-           "yukon_mean_discharge"= "Yukon River Flow",
+           # "yukon_mean_discharge"= "Yukon River Flow",
            # "fall_mintemp_CDD" = "Min. Temperature Brood Fall",
            "fall_snow_cummulative" = "Winter Snow Depth", 
            "SST_CDD_NBS" = "CDD NBS",
@@ -33,7 +34,11 @@ cov_a_plots <- ggplot(data = cova_dfplot,
                 aes(x=brood_year, y = value, group = variable, color = variable)) +
   geom_line() +
   geom_point() +
-  scale_color_manual(values= c("#5d74a5", "#b0cbe7", "#ba8e23", "#eba07e", "#a45851","#8B4B8B")) +
+  scale_color_manual(values= c("#5d74a5", "#b0cbe7", "#ba8e23", 
+                               #"#eba07e", 
+                               "#a45851"
+                               #,"#8B4B8B"
+                               )) +
   theme_classic() +
   facet_wrap(~variable, scales = "free", labeller = as_labeller(labels)) +
   ylab("Mean Covariate Trend") + 
@@ -52,20 +57,20 @@ cov_a_plots
 cov_b <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
                 Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
-                Pink_hatchery= as.numeric(scale(Pink_hatchery)), 
+                # Pink_hatchery= as.numeric(scale(Pink_hatchery)), 
                 full_index_scale = case_when(Year %in% c(2003,2009, 2015,  2021,2023) ~ NA,
                                        TRUE ~ full_index_scale)) %>% 
   dplyr::select(brood_year,SST_CDD_Aleut,
                 Chum_hatchery,
-                Pink_hatchery,
+                # Pink_hatchery,
                 full_index_scale) %>%  
   gather(2:ncol(.), key = "variable", value = "value") %>%
   filter(!brood_year<1999) %>%
   dplyr::mutate(variable = factor(variable, levels = c("full_index_scale","SST_CDD_Aleut",
                                                        "Chum_hatchery","Pink_hatchery")),
                 variable = case_when(variable == "SST_CDD_Aleut" ~ "Aleutian Winter Temperature",
-                                     variable == "Chum_hatchery" ~ "Chum Salmon Hatchery Release Abundance",
-                                     variable == "Pink_hatchery" ~ "Pink Salmon Hatchery Release Abundance",
+                                     variable == "Chum_hatchery" ~ "Chum Hatchery Release Abund.",
+                                     # variable == "Pink_hatchery" ~ "Pink Salmon Hatchery Release Abundance",
                                      variable == "full_index_scale" ~   "Fullness Index")) 
 
 cov_b_plot<-ggplot(data = cov_b,
@@ -73,7 +78,9 @@ cov_b_plot<-ggplot(data = cov_b,
   geom_hline(yintercept =0, linetype =2, color = "black") +
   geom_line() +
   geom_point() +
-  scale_color_manual(values= c("#b0986c", "#dcbe9b", "#72e1e1","#009474")) +
+  scale_color_manual(values= c(#"#b0986c", 
+                               "#dcbe9b", 
+                               "#72e1e1","#009474")) +
   facet_wrap(~variable ) +
   theme_classic() +
   ylab("Mean Covariate Trend") + 

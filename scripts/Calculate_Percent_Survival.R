@@ -177,7 +177,8 @@ library(rstan)
   }
   
   # Return stage analyses ===========
-  covariates <- c("Fullness", "AI Temp", "Chum")
+  covariates <- c("Fullness",
+                  "AI Temp", "Chum")
   coef_names <- c("theta2[1]", "theta2[2]", "theta2[3]")
   
   for (i in 1:length(covariates)) {
