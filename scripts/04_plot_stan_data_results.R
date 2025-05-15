@@ -25,7 +25,7 @@ traceplot(bh_fit,pars=  c( "alpha[1]" ,"alpha[2]" ,"alpha[3]" ,"alpha[4]"))
 
 traceplot(bh_fit,pars=  c("prob[1]","prob[2]","prob[3]" ))
 
-traceplot(bh_fit,pars=  c("D_sum"))
+traceplot(bh_fit,pars=  c("D_scale"))
 
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
  
@@ -40,28 +40,6 @@ diagnostics <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat")]) %>%
     Rhat > 1.1)
  
 
-#LOOK AT WAIC =============
-library(loo)
-# Extract each component
-log_lik_j <- extract_log_lik(bh_fit, parameter_name = "log_lik_j")
-log_lik_return <- extract_log_lik(bh_fit, parameter_name = "log_lik_return")
-log_lik_age_comp <- extract_log_lik(bh_fit, parameter_name = "log_lik_age_comp")
-log_lik_harvest <- extract_log_lik(bh_fit, parameter_name = "log_lik_harvest")
-log_lik_sp <- extract_log_lik(bh_fit, parameter_name = "log_lik_sp")
-
-# Combine all log-likelihoods
-# You'll need to adjust the combining based on your specific needs
-log_lik_total <- cbind(log_lik_j, log_lik_return, log_lik_age_comp, 
-                       log_lik_harvest, log_lik_sp)
-
-# Calculate WAIC using combined log-likelihood
-waic_result <- waic(log_lik_total)
-
-# Calculate LOO instead of WAIC
-loo_result <- loo(log_lik_total)
-
-# Look at the diagnostics
-print(loo_result)
 
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.5, 
@@ -82,9 +60,9 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 #      pars=  c( "sigma_rec" ),
 #      fill_color = "blue")
 # 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-#      pars=  c( "sigma_sp" ),
-#      fill_color = "blue")
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c( "D_scale" ),
+     fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_c_1" ),
@@ -110,8 +88,41 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "D_scale"),
      fill_color = "blue") 
+
+#LOOK AT WAIC =============
+library(loo)
+# Extract each component
+log_lik_j <- extract_log_lik(bh_fit, parameter_name = "log_lik_j")
+log_lik_return <- extract_log_lik(bh_fit, parameter_name = "log_lik_return")
+log_lik_age_comp <- extract_log_lik(bh_fit, parameter_name = "log_lik_age_comp")
+log_lik_harvest <- extract_log_lik(bh_fit, parameter_name = "log_lik_harvest")
+log_lik_sp <- extract_log_lik(bh_fit, parameter_name = "log_lik_sp")
+
+# Combine all log-likelihoods
+# You'll need to adjust the combining based on your specific needs
+log_lik_total <- cbind(log_lik_j, log_lik_return, log_lik_age_comp, 
+                       log_lik_harvest, log_lik_sp)
+
+# Calculate WAIC using combined log-likelihood
+waic_result <- waic(log_lik_total)
+
+# Calculate LOO instead of WAIC
+loo_result <- loo(log_lik_total)
+
+
+alpha <- summary(bh_fit, pars = c("alpha[1]","alpha[2]",
+                                      "alpha[3]", "alpha[4]"), 
+                     probs = c(0.1, 0.9))$summary
+
+# Look at the diagnostics
+print(loo_result)
+
+ summary(bh_fit, pars = c("basal_p_1"), 
+                     probs = c(0.1, 0.9))$summary
+ summary(bh_fit, pars = c("basal_p_2"), 
+         probs = c(0.1, 0.9))$summary
  
-# Plot Observed vs Predicted ========
+ # Plot Observed vs Predicted ========
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
               probs = c(0.1, 0.9))$summary %>%

@@ -21,13 +21,13 @@ posterior_array <- as.array(fit)
 has_na <- apply(posterior_array, 3, function(param_array) any(is.na(param_array)))
 # Keep only parameters without any NA values
 clean_posterior_array <- posterior_array[,, !has_na]
-parameters_to_plot <- c("Dir_alpha")
+# parameters_to_plot <- c("Dir_alpha")
 
 # list parameters to plot ======= 
 parameters_to_plot <- c(
   "log_c_1",
   "log_c_2",
-  "alpha[1]",  "alpha[2]",  "alpha[3]",  "alpha[4]", 
+  #"alpha[1]",  "alpha[2]",  "alpha[3]",  "alpha[4]", 
   "prob[1]", "prob[2]", "prob[3]",  
   "D_scale",
   "log_F_mean",   
@@ -38,18 +38,11 @@ parameters_to_plot <- c(
 
 parameters = parameters_to_plot
 
-# color_scheme_set("viridisD") 
-# color_scheme_set("blue")
-
-# Create individual traceplots with improved formatting
+# Create individual trace plots with improved formatting
 trace_plots <- lapply(parameters, function(param) {
   color_scheme_set("mix-blue-red")
   mcmc_trace(clean_posterior_array, 
-             pars = param#, 
-             # div_color = "red"#,
-             #n_warmup = floor(dim(clean_posterior)[1]/2)
-             ) +
-    # theme_bw() +
+             pars = param) +
     theme(
       plot.title = element_text(size = 12, face = "bold"),
       axis.title = element_text(size = 10),
@@ -63,17 +56,14 @@ trace_plots <- lapply(parameters, function(param) {
     )
 })
 
-
-# Create individual traceplots with improved formatting
-  
+# Create individual trace plots with improved formatting
 legend <- get_legend(mcmc_trace(clean_posterior_array, 
              pars = "theta2[1]") +
     # theme_bw() +
     theme(
       plot.title = element_text(size = 12, face = "bold"),
       axis.title = element_text(size = 10),
-      axis.text = element_text(size = 9)#,
-      # legend.position = "none"
+      axis.text = element_text(size = 9)
     ) +
     labs(
       title = "theta2[1]",
@@ -99,10 +89,10 @@ traceplots_all <- ggpubr::ggarrange(trace_plots[[1]],
                   trace_plots[[15]],
                   trace_plots[[16]],
                   trace_plots[[17]],
-                  trace_plots[[18]],
-                  trace_plots[[19]],
-                  trace_plots[[20]],
-                  trace_plots[[21]],
+                  # trace_plots[[18]],
+                  # trace_plots[[19]],
+                  # trace_plots[[20]],
+                  # trace_plots[[21]],
                   legend  
                   # trace_plots[[22]],
                   # trace_plots[[23]],

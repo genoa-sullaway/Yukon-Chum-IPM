@@ -255,17 +255,14 @@ model {
   log_c_2 ~ normal(17,2);
 
   // Dir_alpha ~ beta(1,1);
-
-  theta1[1] ~ normal(0,0.1);
-  theta1[2] ~ normal(0,0.1);
-  theta1[3] ~ normal(0,0.1);
-  theta1[4] ~ normal(0,0.1);
+for(i in 1:ncovars1) {
+  theta1[i] ~ normal(0,0.1);
+  }
   
-  theta2[1] ~ normal(0,0.1);
-  theta2[2] ~ normal(0,0.1);
-  theta2[3] ~ normal(0,0.1);
-  // // theta2[4] ~ normal(0,0.1);
-  
+  for(i in 1:ncovars2) {
+  theta2[i] ~ normal(0,0.1);
+  }
+   
   D_scale ~ beta(1,1);  
 
   basal_p_1 ~ beta(1,1);  

@@ -78,13 +78,6 @@ summary_df <- rbind(
     prior = "Beta(0,0.1)"
   ),
   
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "theta1[5]",
-    notation = "$\\sigma_o$",
-    prior = "Beta(0,0.1)"
-  ),
-  
   ### theta 2 =======
   create_parameter_summary(
     fit = fit,
@@ -104,33 +97,28 @@ summary_df <- rbind(
     notation = "$\\sigma_o$",
     prior = "Beta(0,0.1)"
   ),
+  # alpha ====== 
   create_parameter_summary(
     fit = fit,
-    parameter_name = "theta2[4]",
+    parameter_name = "alpha[1]",
     notation = "$\\sigma_o$",
-    prior = "Beta(0,0.1)"),
-  # selectivity
+    prior = "Normal(7.5,0.5)"),
   create_parameter_summary(
     fit = fit,
-    parameter_name = "log_S[1]",
-    notation = "$K$",
-    prior = "Normal(0,1)"),
+    parameter_name = "alpha[2]",
+    notation = "$\\sigma_o$",
+    prior = "Normal(7.5,0.5)"),
   create_parameter_summary(
     fit = fit,
-    parameter_name = "log_S[2]",
-    notation = "$K$",
-    prior = "Normal(0,1)"),
+    parameter_name = "alpha[3]",
+    notation = "$\\sigma_o$",
+    prior = "Normal(7.5,0.5)"),
   create_parameter_summary(
     fit = fit,
-    parameter_name = "log_S[3]",
-    notation = "$K$",
-    prior = "Normal(0,1)"),
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "log_S[4]",
-    notation = "$K$",
-    prior = "Normal(0,1)"),
-   
+    parameter_name = "alpha[4]",
+    notation = "$\\sigma_o$",
+    prior = "Normal(7.5,0.5)"),
+  
   # Mean F ===== 
   create_parameter_summary(
     fit = fit,
@@ -177,27 +165,25 @@ summary_df <- rbind(
     parameter_name = "pi[4]",
     notation = "$\\sigma_o$",
     prior = "Beta(1,1)"),
-  
-  
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "alpha",
-    notation = "$\\sigma_o$",
-    prior = "Beta(1,1)"),
-  
-  
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "beta",
-    notation = "$\\sigma_o$",
-    prior = "Beta(1,1)"),
-  
+ 
   ## D_scale =======
   create_parameter_summary(
     fit = fit,
     parameter_name = "D_scale",
     notation = "$\\sigma_o$",
-    prior = "Beta(1,1)")
+    prior = "Beta(1,1)"),
+  ## D_scale =======
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_c_1",
+    notation = "$\\sigma_o$",
+    prior = "XX"),
+  ## D_scale =======
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "log_c_2",
+    notation = "$\\sigma_o$",
+    prior = "XX")
 )
 
 # Add parameter grouping
@@ -221,7 +207,7 @@ summary_df <- rbind(
 table <- summary_df %>%
   # Reorder columns to include grouping
   dplyr::select( Parameter,# Notation, 
-         Estimate, CI_95, ESS, Rhat, Prior) #%>%
+         Estimate, CI_95, ESS, Rhat) #%>%
   # Create the table
   # kable(format = "latex", 
   #       escape = FALSE,
@@ -242,9 +228,8 @@ table <- summary_df %>%
 # Print table
 
 #print(
-  table
- 
-
+  View(table)
+  
 # save ========
 
 # For Word paper

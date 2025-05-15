@@ -7,8 +7,10 @@ data { // all equation references are from proposal numbering
   int<lower=0> nByrs_return_dat; // brood years specifically for return data  
   int <lower=0> lik_count; // for generated quantities, how many likelihoods are there? 
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
-  // vector [A] fs; // fecundity
+  // vector [A] alpha;
+   // vector [A] fs; // fecundity
   vector [A] M; // fixed mortality for 3 older age classes
+real<lower=0> beta;
 
   vector[nByrs] juv_CV; 
   vector[nRyrs] return_CV; 
@@ -64,11 +66,11 @@ real log_F_mean;
 // vector [A] log_S; // log selectivity 
 vector [nRyrs_T]  log_F_dev_y; 
 
-real <lower=0, upper = 1> basal_p_1; // mean prod for covariate survival stage 1
-real <lower=0.4, upper = 1> basal_p_2; // mean prod for covariate survival stage 2
+real <lower=0 , upper = 1> basal_p_1; // mean prod for covariate survival stage 1
+real <lower=0 , upper = 1> basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
-  vector <lower=0, upper =10> [A] alpha;
+ vector <lower=1, upper =8 > [A] alpha;
 // vector <lower=0 > [A] alpha;
 // real <lower=0> beta; 
 
@@ -213,9 +215,9 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a];  // Eq 4.9
            // issues estimating traditional ricker - changed to linear scalar
            
-           // N_e[t+a+1,a] = Ps*(N_sp[t+a+1,a] * exp(alpha[a] - (beta * N_sp[t+a+1,a])));  
+          N_e[t+a+1,a] = (Ps*N_sp[t+a+1,a]) * exp(alpha[a] - (beta * (Ps*N_sp[t+a+1,a])));  
            // try linear and dont estimate beta
-          N_e[t+a+1,a] = exp(alpha[a]) * (Ps*N_sp[t+a+1,a]); // Eq 4.10
+          //N_e[t+a+1,a] = (exp(alpha[a])) * (Ps*N_sp[t+a+1,a]); // Eq 4.10
           
             }
      }
@@ -240,11 +242,11 @@ model {
      // alpha[a] ~  normal(7,5); //  
    // }
    // in the middle of experimenting with different alpha priors - its sensitive here. 
-   alpha[1] ~  normal(7.4,0.5);
-   alpha[2] ~  normal(7.5,0.5);
-   alpha[3] ~  normal(7.6,0.5);
-   alpha[4] ~  normal(7.7,0.5);
-    
+   alpha[1] ~  normal(3.1, 1);//normal(5,1);
+   alpha[2] ~  normal(3.2, 1);
+   alpha[3] ~  normal(3.3, 1);
+   alpha[4] ~  normal(3.4, 1);
+
   prob[1] ~ beta(1,1);
   prob[2] ~ beta(1,1);
   prob[3] ~ beta(1,1);
@@ -266,7 +268,7 @@ model {
   theta2[3] ~ normal(0,0.1);
   // // theta2[4] ~ normal(0,0.1);
   
-  D_scale ~ beta(1,1);  
+  D_scale ~ beta(0.5,1);  
 
   basal_p_1 ~ beta(1,1);  
   basal_p_2 ~ beta(1,1);  
@@ -279,7 +281,7 @@ model {
 }
 
 // log fishing mortality for each calendar year
-log_F_mean ~ normal(0,0.1);
+log_F_mean ~ normal(0,1);
  
  for(t in 1:nRyrs_T){
    log_F_dev_y[t] ~ normal(0, 1);

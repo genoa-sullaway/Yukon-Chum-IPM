@@ -22,7 +22,8 @@ rstan_options(auto_write = TRUE)
 A = 4 # number of age classes, 3,4,5,6
 K = 1 # number of stocks 
 Ps = 0.5 # proportion of females - assumption, need to lit check
-# fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+fs = as.vector(c(1800, 2000, 2200, 2440)) # as.vector(c(1800, 2000, 2200, 2440)) #as.vector(c(2000, 2000, 2000, 2000)) # fecundity - Gilk-Baumer 2009 estimate for Kusko Chum is: 2440. I added extra numbers temporarily just so that younger fish reproduce less, but will have to look up data for this more...
+log_fs = log(fs)
 # fs = as.vector(c(1800,2351, 2902,3453))
 t_start = A + 1  # to fill starting values 
 
@@ -240,7 +241,8 @@ data_list_stan <- list(nByrs=nByrs,
                        nByrs_return_dat=nByrs_return_dat,
                        
                        Ps=Ps,
-                       # fs=fs,
+                       #alpha=log_fs,
+                       beta = 0.0001, 
                        M = M_fill_stan,
                        
                        lik_count = 4, # for sensitivity testing 
@@ -269,16 +271,16 @@ data_list_stan <- list(nByrs=nByrs,
 
 # mod specifics ============
 # use these for full model
-warmups <- 10000
-total_iterations <- 60000
-thin_rate <- 40
-n_chains <- 4
-# 
+# warmups <- 10000
+# total_iterations <- 60000
+# thin_rate <- 40
+# n_chains <- 4
+#  
 # # use these for exploring 
-# warmups <- 2000
-# total_iterations <- 6000
-# n_chains <- 1
-# thin_rate <- 10
+warmups <- 2000
+total_iterations <- 6000
+n_chains <- 1
+ # thin_rate <- 10
  
 # call mod  ===========================
 bh_fit <- stan(
@@ -289,7 +291,7 @@ bh_fit <- stan(
   iter = total_iterations, 
   cores = 4, 
   verbose = FALSE,
-  thin = thin_rate,
+ # thin = thin_rate,
   control = list(adapt_delta = 0.99)
   )
 
