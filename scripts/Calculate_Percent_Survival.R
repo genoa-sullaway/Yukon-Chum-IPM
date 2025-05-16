@@ -112,8 +112,8 @@ library(rstan)
       
       # Calculate credible intervals
       # 50% CI (25% to 75%)
-      lower_50 <- quantile(percent_changes, 0.25)
-      upper_50 <- quantile(percent_changes, 0.75)
+      lower_50 <- quantile(percent_changes, 0.20)
+      upper_50 <- quantile(percent_changes, 0.80)
       
       # 95% CI (2.5% to 97.5%)
       lower_95 <- quantile(percent_changes, 0.025)

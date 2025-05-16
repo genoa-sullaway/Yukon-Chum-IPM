@@ -242,10 +242,10 @@ model {
      // alpha[a] ~  normal(7,5); //  
    // }
    // in the middle of experimenting with different alpha priors - its sensitive here. 
-   alpha[1] ~  normal(3.1, 1);//normal(5,1);
-   alpha[2] ~  normal(3.2, 1);
-   alpha[3] ~  normal(3.3, 1);
-   alpha[4] ~  normal(3.4, 1);
+   alpha[1] ~  normal(5.1, 1);//normal(5,1); (3 went pretty well....but a lil low)
+   alpha[2] ~  normal(5.2, 1);
+   alpha[3] ~  normal(5.3, 1);
+   alpha[4] ~  normal(5.4, 1);
 
   prob[1] ~ beta(1,1);
   prob[2] ~ beta(1,1);

@@ -120,8 +120,7 @@ print(loo_result)
  summary(bh_fit, pars = c("basal_p_1"), 
                      probs = c(0.1, 0.9))$summary
  summary(bh_fit, pars = c("basal_p_2"), 
-         probs = c(0.1, 0.9))$summary
- 
+         probs = c(0.1, 0.9))$summary 
  # Plot Observed vs Predicted ========
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
