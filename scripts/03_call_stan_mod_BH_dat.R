@@ -242,7 +242,7 @@ data_list_stan <- list(nByrs=nByrs,
                        
                        Ps=Ps,
                        #alpha=log_fs,
-                       beta = 0.0001, 
+                       beta = 0.00001, 
                        M = M_fill_stan,
                        
                        lik_count = 4, # for sensitivity testing 
@@ -271,16 +271,16 @@ data_list_stan <- list(nByrs=nByrs,
 
 # mod specifics ============
 # use these for full model
-warmups <- 15000
-total_iterations <- 60000
-thin_rate <- 40
+warmups <- 5000
+total_iterations <- 30000
+thin_rate <- 10
 n_chains <- 4
-  
+
 # # use these for exploring 
 # warmups <- 2000
 # total_iterations <- 6000
 # n_chains <- 1
- # thin_rate <- 10
+# thin_rate <- 10
  
 # call mod  ===========================
 bh_fit <- stan(
@@ -297,7 +297,7 @@ bh_fit <- stan(
 
 write_rds(bh_fit, "output/stan_fit_DATA.RDS")
 
-# Below this all works fine, just removing it so that it doesn't get run accidentally 
+# Below this all works fine, just commenting it out so that it doesn't get run accidentally - it is SLOW!! 
 
 # # run in a loop with different values for natural mortality ======
 # # use settings for full model

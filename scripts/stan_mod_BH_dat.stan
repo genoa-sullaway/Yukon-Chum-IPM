@@ -70,8 +70,9 @@ real <lower=0 , upper = 1> basal_p_1; // mean prod for covariate survival stage 
 real <lower=0 , upper = 1> basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
- vector <lower=1, upper =8 > [A] alpha;
-// vector <lower=0 > [A] alpha;
+ // vector <lower=1, upper =9> [A] logalpha;
+ // vector <lower=1, upper =9> [A] alpha;
+ vector <lower=0 > [A] alpha;
 // real <lower=0> beta; 
 
 // real <lower=0> sigma_juv;
@@ -100,6 +101,8 @@ real N_brood_year_return_start;
 real N_j_start; 
  
 vector <lower = 0> [nRyrs_T] F;
+// vector <lower = 1> [A] alpha; 
+
 // vector <lower = 0> [A] S; //selectivty
  
 // survival and covariate section 
@@ -113,8 +116,6 @@ matrix  [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine cova
 matrix  [nByrs, ncovars2] cov_eff2; 
 
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
-
-// alpha = exp(logalpha);
  
 // Age related transformed params ====== 
 matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year that mature at a certain age
@@ -215,7 +216,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
            N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a];  // Eq 4.9
            // issues estimating traditional ricker - changed to linear scalar
            
-          N_e[t+a+1,a] = (Ps*N_sp[t+a+1,a]) * exp(alpha[a] - (beta * (Ps*N_sp[t+a+1,a])));  
+          N_e[t+a+1,a] = (Ps*N_sp[t+a+1,a]) * exp(alpha[a] - (beta * (Ps*N_sp[t+a+1,a])));
            // try linear and dont estimate beta
           //N_e[t+a+1,a] = (exp(alpha[a])) * (Ps*N_sp[t+a+1,a]); // Eq 4.10
           
@@ -242,14 +243,19 @@ model {
      // alpha[a] ~  normal(7,5); //  
    // }
    // in the middle of experimenting with different alpha priors - its sensitive here. 
-   alpha[1] ~  normal(5.1, 1);//normal(5,1); (3 went pretty well....but a lil low)
-   alpha[2] ~  normal(5.2, 1);
-   alpha[3] ~  normal(5.3, 1);
-   alpha[4] ~  normal(5.4, 1);
+   // alpha[1] ~  normal(5, 1);//normal(5,1) <- this works ok but trace plots bad; (3 went pretty well....but a lil low)
+   // alpha[2] ~  normal(5, 1); // normal(5,0.5) <- alpha 2/3 work well with this. its 1 and 4 that have issues
+   // alpha[3] ~  normal(5, 1);
+   // alpha[4] ~  normal(5, 1);
 
-  prob[1] ~ beta(1,1);
-  prob[2] ~ beta(1,1);
-  prob[3] ~ beta(1,1);
+   alpha[1] ~  normal(0, 5);
+   alpha[2] ~  normal(0, 5);
+   alpha[3] ~  normal(0, 5);
+   alpha[4] ~  normal(0, 5);
+   
+   prob[1] ~ beta(1,1);
+   prob[2] ~ beta(1,1);
+   prob[3] ~ beta(1,1);
   
   // pi ~ beta(1,1); 
 

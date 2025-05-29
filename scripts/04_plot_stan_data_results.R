@@ -23,6 +23,8 @@ traceplot(bh_fit,pars=  c( "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,
 
 traceplot(bh_fit,pars=  c( "alpha[1]" ,"alpha[2]" ,"alpha[3]" ,"alpha[4]"))  
 
+traceplot(bh_fit,pars=  c( "logalpha[1]" ,"logalpha[2]" ,"logalpha[3]" ,"logalpha[4]"))  
+
 traceplot(bh_fit,pars=  c("prob[1]","prob[2]","prob[3]" ))
 
 traceplot(bh_fit,pars=  c("D_scale"))
@@ -39,8 +41,6 @@ diagnostics <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat")]) %>%
   filter(#n_eff <400 | 
     Rhat > 1.1)
  
-
-
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.5, 
      pars=  c( "theta1[1]","theta1[2]","theta1[3]", "theta1[4]",  #"theta1[5]","theta1[6]", 
