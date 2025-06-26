@@ -112,8 +112,8 @@ library(rstan)
       
       # Calculate credible intervals
       # 50% CI (25% to 75%)
-      lower_50 <- quantile(percent_changes, 0.20)
-      upper_50 <- quantile(percent_changes, 0.80)
+      lower_50 <- quantile(percent_changes, 0.25)
+      upper_50 <- quantile(percent_changes, 0.75)
       
       # 95% CI (2.5% to 97.5%)
       lower_95 <- quantile(percent_changes, 0.025)
@@ -213,26 +213,41 @@ library(rstan)
   # Optional: Save results to CSV
   write.csv(ci_df, "output/survival_percent_diff.csv" )
   
-  
-  # load covariate data ========== 
+  ## load covariate data ========== 
 stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
     filter(brood_year >= year_min, 
-           brood_year <= year_max_brood) %>%
-    dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-                  yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
-                  fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
-                  pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions)))  
+           brood_year <= year_max_brood) #%>%
+    # dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+    #               yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+    #               fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+    #               pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions)))  
   
   # the temp in 2001 is gonna effect fish from brood year 1999
   stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
     dplyr::rename(full_index=full_index_scale) %>% 
     filter(brood_year >= year_min, 
-           brood_year <= year_max_brood) %>% 
-    dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                   Chum_hatchery= as.numeric(scale(Chum_hatchery)),
-                   Pink_hatchery= as.numeric(scale(Pink_hatchery))
-                   # full_index = as.numeric(scale(full_index))
-    )  
+           brood_year <= year_max_brood) #%>% 
+    # dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+    #                Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+    #                Pink_hatchery= as.numeric(scale(Pink_hatchery))
+    #                # full_index = as.numeric(scale(full_index))
+    # )  
+  
+# get 1 SD for each covariate ====
+cov_a_sd <- stage_a_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
+              gather(1:ncol(.), key = "id", value = "value") %>%           
+    group_by(id) %>%           
+    dplyr::summarise(sd = round(sd(value),6))
+  
+  cov_b_sd <- stage_b_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
+    gather(1:ncol(.), key = "id", value = "value") %>%           
+    group_by(id) %>%           
+    dplyr::summarise(sd = round(sd(value),6))
+
+   
+  
+# OLD ===============
+  
   
 ## Juvenile stage analyses specific years ========= 
   covariates <- c("Spawner Size")

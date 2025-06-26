@@ -4,6 +4,7 @@ library(here)
 library(rstan)
 library(bayesplot)
 library(rstanarm)
+library(LaplacesDemon)
  
 # load model ==============
 bh_fit<- read_rds("output/stan_fit_DATA.RDS")
@@ -23,11 +24,11 @@ traceplot(bh_fit,pars=  c( "theta1[1]" ,"theta1[2]" ,"theta1[3]" ,"theta1[4]" ,
 
 traceplot(bh_fit,pars=  c( "alpha[1]" ,"alpha[2]" ,"alpha[3]" ,"alpha[4]"))  
 
-traceplot(bh_fit,pars=  c( "logalpha[1]" ,"logalpha[2]" ,"logalpha[3]" ,"logalpha[4]"))  
-
 traceplot(bh_fit,pars=  c("prob[1]","prob[2]","prob[3]" ))
 
 traceplot(bh_fit,pars=  c("D_scale"))
+
+traceplot(bh_fit,pars=  c("log_F_mean"))
 
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
  
@@ -114,12 +115,23 @@ alpha <- summary(bh_fit, pars = c("alpha[1]","alpha[2]",
                                       "alpha[3]", "alpha[4]"), 
                      probs = c(0.1, 0.9))$summary
 
-# Look at the diagnostics
-print(loo_result)
+basal_prod <- summary(bh_fit, pars = c("basal_p_1","basal_p_2"), 
+                 probs = c(0.1, 0.9))$summary
 
+# Look at specific parameters ====
  summary(bh_fit, pars = c("basal_p_1"), 
                      probs = c(0.1, 0.9))$summary
  summary(bh_fit, pars = c("basal_p_2"), 
+         probs = c(0.1, 0.9))$summary 
+ summary(bh_fit, pars = c("log_c_1"), 
+         probs = c(0.1, 0.9))$summary
+ summary(bh_fit, pars = c("log_c_2"), 
+         probs = c(0.1, 0.9))$summary 
+ 
+ summary(bh_fit, pars = c("alpha[1]","alpha[2]", "alpha[3]", "alpha[4]"),
+         probs = c(0.1, 0.9))$summary
+         
+  summary(bh_fit, pars = c("log_catch_q"), 
          probs = c(0.1, 0.9))$summary 
  # Plot Observed vs Predicted ========
 ## Spawners ==========
@@ -268,6 +280,23 @@ ggplot(data = summ_n_j) +
   geom_ribbon(aes(x=cal_year, ymin = mean_J_Q-se_mean,
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
+
+## Eggs ==========
+pred_n_e <- summary(bh_fit, pars = c("N_e_sum"), 
+                     probs = c(0.1, 0.9))$summary %>%
+  data.frame() %>%
+  rownames_to_column()  %>%
+  dplyr::mutate(time = rep(1:20, each=1)) %>%
+  # filter(!time>20) %>% # remove years without full return estimates 
+  left_join(years)   
+
+ggplot(data = pred_n_e) +
+  geom_line(aes(x=time, y = mean)) + 
+  geom_errorbar(aes(x=time, ymin = mean-sd, ymax = mean+sd), 
+                width = 0.1)+
+  ggtitle("Eggs: predicted")+
+  # scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
+  theme_classic()
 
  # plot age comp through time =================
 age_comp_dat <- data.frame(yukon_fall_obs_agecomp) %>% 

@@ -49,7 +49,7 @@ theta_plot <- ggplot(data = ci_df,
         panel.spacing.y=unit(0, "lines")) + 
   geom_vline(xintercept=0 )+
   ylab("") +
-  xlab("Mean Percent Change in Survival") +
+  xlab("Estimated Percent Change in Survival") +
   facet_wrap(~stage, scales = "free_y", ncol = 1)  
 
 theta_plot

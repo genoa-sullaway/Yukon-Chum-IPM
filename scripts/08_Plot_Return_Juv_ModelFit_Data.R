@@ -2,9 +2,7 @@ library(tidyverse)
 library(tidybayes)
 library(here)
 library(readxl)
-# library(rstan)
 library(bayesplot)
-# library(rstanarm)
 library(bayestestR)
 
 # load model ==============
@@ -14,7 +12,7 @@ bh_fit <- read_rds("output/stan_fit_DATA.RDS")
 years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min) %>%
   dplyr::select(cal_year) %>%
-  dplyr::mutate(brood_year = cal_year) %>% 
+  # dplyr::mutate(brood_year = cal_year) %>% 
   dplyr::mutate(time = c(1:nrow(.)))
 
 # return  ====== 
@@ -78,26 +76,26 @@ return_plot
 # Juveniles PP ====== 
 # multiply by catch q to fit observations
 juv_obs <-read_csv("data/processed_data/tidy_juv_fall_yukon.csv") %>% 
-  dplyr::mutate(brood_year = Year - 1,
+  dplyr::mutate(#brood_year = Year - 1,
                 time = as.numeric(1:nrow(.)),
                 obs = (fall_abund),
                 sd = Std..Error.for.Estimate ) %>% #(CV*obs)) %>%  
   # filter(!Year %in% c(2020, 2008,2013)) %>% 
-  dplyr::select(brood_year,obs,sd)  
+  dplyr::select(Year,obs,sd)  
   # rbind(data.frame(brood_year = c(2008, 2013,2020),
   #                  obs = c(NA,NA,NA),
   #                  sd = c(NA,NA,NA)))  
 
 # plot juvenile observations ======
-juv_all_plot <- ggplot(data = juv_obs, aes(x=brood_year, y = obs)) +
+juv_all_plot <- ggplot(data = juv_obs, aes(x=Year, y = obs)) +
   geom_point(color ="#EAAA00") + 
   geom_line(color ="#EAAA00") + 
-  geom_errorbar(aes(x=brood_year, ymin = obs-sd, 
+  geom_errorbar(aes(x=Year, ymin = obs-sd, 
                     ymax= obs+sd), 
                 width = 0.1, color = "#EAAA00") +
   theme_classic() +
   ylab("Abundance Estimate") +
-  xlab("Brood Year") + 
+  xlab("Calendar Year") + 
 theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
       plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
       legend.background = element_blank(),
@@ -152,20 +150,21 @@ n_j_summary_clean <- map_dfr(n_j_cols, function(col) {
     ci_95_high = as.numeric(ci(values, ci = 0.95, method = "HDI")$CI_high)
   )
 }) %>% 
-  cbind(brood_year=years$brood_year[1:20]) %>%
-  left_join(juv_obs)  
- 
+  cbind(Year=years$cal_year[1:20]) %>%
+  left_join(juv_obs)    
+
+
 juv_plot <- ggplot(data = n_j_summary_clean) +
-  geom_ribbon(aes(x=brood_year, ymin =ci_95_low/1000000,
+  geom_ribbon(aes(x=Year, ymin =ci_95_low/1000000,
                   ymax = ci_95_high/1000000),   fill =  "#EAAA00") +
-  geom_line(aes(x=brood_year, y = mean/1000000)) +
-  geom_errorbar(aes(x=brood_year, ymin = (obs-sd)/1000000,
+  geom_line(aes(x=Year, y = mean/1000000)) +
+  geom_errorbar(aes(x=Year, ymin = (obs-sd)/1000000,
                     ymax = (obs+sd)/1000000), width = 0.1, alpha = 0.6) + 
-  geom_point(aes(x=brood_year, y = (obs)/1000000), alpha = 0.6) +
+  geom_point(aes(x=Year, y = (obs)/1000000), alpha = 0.6) +
   # geom_line(aes(x=brood_year, y = (obs)), color = "white" ) +
   # scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
   theme_classic() + 
-  xlab("Brood Year") + 
+  xlab("Calendar Year") + 
   ylab("Est. Juv. Abundance\n (Millions)") +
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
         plot.background = element_blank(), #element_rect(fill = "black", colour = NA),

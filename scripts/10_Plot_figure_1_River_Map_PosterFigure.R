@@ -16,20 +16,30 @@ library(ggspatial)
  # test <- akgfmaps::get_nmfs_areas(set.crs = "auto")
  # plot(test)
 
-# load stomach fullness data to extract NBS survey grid! =========
-fullnessdf <- read_xlsx("data/NBS_JChumFullness.xlsx") %>% 
-  filter(!is.na(Number_of_Stomachs)) %>% 
-  dplyr::rename(fullness =`Stomach_fullness_index(o/ooo)`,
-                Lat = `EQ Latitude`,
-                Lon = `EQ Longitude`,
-                stomach_weight = `Stomach_Weight(g)`) %>%
-  dplyr::mutate( 
-    SampleYear_factor = as.factor(SampleYear),
-    GearCode = as.factor(GearCode)) %>% 
-  filter(!Lat>65) 
+# load survey grid! =========
+# Curry sent this data June 26 2025. 
+survey <- readRDS("data/full_basis_combo_data.RDS") %>%
+  filter(CommonName == "Chum Salmon") %>%
+  dplyr::rename(Lat = "EQ.Latitude",
+                Lon = "EQ.Longitude") %>%
+  filter(!is.na(Lat),
+         !is.na(Lon))
 
- NBS_survey_grid <- data.frame(unique(fullnessdf[c("Lat", "Lon")]))
- 
+NBS_survey_grid <- data.frame(unique(survey[c("Lat", "Lon")]))
+
+# fullnessdf <- read_xlsx("data/NBS_JChumFullness.xlsx") %>% 
+#   filter(!is.na(Number_of_Stomachs)) %>% 
+#   dplyr::rename(fullness =`Stomach_fullness_index(o/ooo)`,
+#                 Lat = `EQ Latitude`,
+#                 Lon = `EQ Longitude`,
+#                 stomach_weight = `Stomach_Weight(g)`) %>%
+#   dplyr::mutate( 
+#     SampleYear_factor = as.factor(SampleYear),
+#     GearCode = as.factor(GearCode)) %>% 
+#   filter(!Lat>65) 
+
+ # NBS_survey_grid <- data.frame(unique(fullnessdf[c("Lat", "Lon")]))
+ # 
  points_sf <- st_as_sf(NBS_survey_grid, coords = c("Lon", "Lat"), crs = 4326)
  
  points_projected <- st_transform(points_sf, crs = 32603)

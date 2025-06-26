@@ -24,6 +24,9 @@ CDD_aleut <- alut_sst %>%
   filter(!year == 2024,
          !year < 2000)
 
+sd(CDD_aleut$CDD)
+
+
 ggplot(data = CDD_aleut) +
   geom_point(aes(x=year, y = CDD)) +
   geom_line(aes(x=year, y = CDD)) +

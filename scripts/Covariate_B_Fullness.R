@@ -4,12 +4,10 @@ library(readxl)
 
 # process stomach fullness, make fullness index. 
 
- Fullness <- read_xlsx("data/NBS_JChumFullness.xlsx")  
+Fullness <- read_xlsx("data/NBS_JChumFullness.xlsx")  
  
 fullness_df <- Fullness %>% 
-  filter(!is.na(Number_of_Stomachs)#,
-         #!SampleYear == 2023
-         ) %>% 
+  filter(!is.na(Number_of_Stomachs)) %>% 
   dplyr::rename(fullness =`Stomach_fullness_index(o/ooo)`,
                 Lat = `EQ Latitude`,
                 Lon = `EQ Longitude`,
@@ -19,13 +17,12 @@ fullness_df <- Fullness %>%
                 GearCode = as.factor(GearCode)) %>% 
         filter(!Lat>65)
 
+sd(fullness_df$fullness)
+
 mean(fullness_df$Lat)
 mean(fullness_df$Lon)
 unique(fullness_df$SampleYear_factor)
  
-
-
-
 # plot
 
 ggplot(data = fullness_df)+

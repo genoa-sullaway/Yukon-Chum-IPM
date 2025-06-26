@@ -27,7 +27,7 @@ circle_snow <- read.csv("data/circle_snow_processed.csv") %>%
   dplyr::rename(brood_year = "year") %>% 
   group_by(brood_year) %>% 
   dplyr::summarise(fall_snow_cummulative = sum(Monthly.Mean.Snow.Depth..in.))  
-
+ 
                  #                    fall_meantemp_CDD = sum(mean_temperature),
                  #                    fall_max_snow_depth = sum(max_snow_depth_in)) %>%
                  #   filter(year > 2000) %>% 

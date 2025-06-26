@@ -10,7 +10,7 @@ data { // all equation references are from proposal numbering
   // vector [A] alpha;
    // vector [A] fs; // fecundity
   vector [A] M; // fixed mortality for 3 older age classes
-real<lower=0> beta;
+  real<lower=0> beta;
 
   vector[nByrs] juv_CV; 
   vector[nRyrs] return_CV; 
@@ -66,14 +66,13 @@ real log_F_mean;
 // vector [A] log_S; // log selectivity 
 vector [nRyrs_T]  log_F_dev_y; 
 
-real <lower=0 , upper = 1> basal_p_1; // mean prod for covariate survival stage 1
-real <lower=0 , upper = 1> basal_p_2; // mean prod for covariate survival stage 2
+real  basal_p_1; // mean prod for covariate survival stage 1
+real  basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
  // vector <lower=1, upper =9> [A] logalpha;
  // vector <lower=1, upper =9> [A] alpha;
  vector <lower=0 > [A] alpha;
-// real <lower=0> beta; 
 
 // real <lower=0> sigma_juv;
 // real <lower=0> sigma_rec;
@@ -237,7 +236,7 @@ for(t in 1:nByrs){
 }
 
 model { 
-   log_catch_q ~ normal(-5,1);
+   log_catch_q ~ normal(0,5); // works but loosening it up, normal(-5,1);
    
    // for(a in 1:A){
      // alpha[a] ~  normal(7,5); //  
@@ -248,10 +247,10 @@ model {
    // alpha[3] ~  normal(5, 1);
    // alpha[4] ~  normal(5, 1);
 
-   alpha[1] ~  normal(0, 5);
-   alpha[2] ~  normal(0, 5);
-   alpha[3] ~  normal(0, 5);
-   alpha[4] ~  normal(0, 5);
+   alpha[1] ~  normal(0, 3); //normal(0, 5); <- was this testing 0,3 bc thats what curry has. 
+    alpha[2] ~  normal(0, 3);
+   alpha[3] ~  normal(0, 3);
+   alpha[4] ~  normal(0, 3);
    
    prob[1] ~ beta(1,1);
    prob[2] ~ beta(1,1);
@@ -272,12 +271,11 @@ model {
   theta2[1] ~ normal(0,0.1);
   theta2[2] ~ normal(0,0.1);
   theta2[3] ~ normal(0,0.1);
-  // // theta2[4] ~ normal(0,0.1);
   
-  D_scale ~ beta(0.5,1);  
+  D_scale ~ beta(1,1);  
 
-  basal_p_1 ~ beta(1,1);  
-  basal_p_2 ~ beta(1,1);  
+  basal_p_1 ~ normal(0,1.5);  
+  basal_p_2 ~ normal(0,1.5); 
 
 // age comp 
  for(t in 1:nByrs){
@@ -287,10 +285,10 @@ model {
 }
 
 // log fishing mortality for each calendar year
-log_F_mean ~ normal(0,1);
+log_F_mean ~ normal(0,0.1);
  
  for(t in 1:nRyrs_T){
-   log_F_dev_y[t] ~ normal(0, 1);
+   log_F_dev_y[t] ~ normal(0, 5);
 }
 
  N_j_start_log ~ normal(14,5);
