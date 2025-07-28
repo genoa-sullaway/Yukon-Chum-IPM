@@ -272,8 +272,8 @@ data_list_stan <- list(nByrs=nByrs,
 # mod specifics ============
 # use these for full model
 warmups <- 5000
-total_iterations <- 30000
-thin_rate <- 10
+total_iterations <- 50000
+thin_rate <- 20
 n_chains <- 4
 
 # # use these for exploring 

@@ -42,7 +42,7 @@ transformed data {
   }
 parameters {
  // starting values 
-real <lower =10> N_j_start_log;
+real <lower =0> N_j_start_log;
 real <lower =0> N_brood_year_return_start_log;
 real <lower =0> N_sp_start_log[t_start,A];
 real <lower =0> N_recruit_start_log[t_start,A];
@@ -59,10 +59,11 @@ real <lower =-1, upper = 1> theta2 [ncovars2];
 // vector <lower=0> [A-1] prob;
 real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 real <lower=0> g[nByrs,A]; // gamma random draws
+// vector[3] prob;   // Maturity schedule probs
 vector<lower=0,upper=1>[3] prob;   // Maturity schedule probs
   
 real log_catch_q; 
-real log_F_mean; 
+ real log_F_mean; 
 // vector [A] log_S; // log selectivity 
 vector [nRyrs_T]  log_F_dev_y; 
 
@@ -70,14 +71,8 @@ real  basal_p_1; // mean prod for covariate survival stage 1
 real  basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
- // vector <lower=1, upper =9> [A] logalpha;
- // vector <lower=1, upper =9> [A] alpha;
- vector <lower=0 > [A] alpha;
-
-// real <lower=0> sigma_juv;
-// real <lower=0> sigma_rec;
-// real <lower=0> sigma_harvest;
-// real <lower=0> sigma_sp;
+ vector <lower=1> [A] alpha;
+ 
  }
 
 transformed parameters { 
@@ -99,7 +94,7 @@ real N_egg_start[t_start,A];
 real N_brood_year_return_start; 
 real N_j_start; 
  
-vector <lower = 0> [nRyrs_T] F;
+vector [nRyrs_T] F;
 // vector <lower = 1> [A] alpha; 
 
 // vector <lower = 0> [A] S; //selectivty
@@ -118,8 +113,8 @@ real <lower=0>  catch_q; // related juvebile data to spawner data (on different 
  
 // Age related transformed params ====== 
 matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year that mature at a certain age
-real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
-vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
+real <lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
+vector <lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix  [nRyrs,A] q; 
 vector <lower=0, upper=1> [A] pi; // actual age comps
 
@@ -237,25 +232,16 @@ for(t in 1:nByrs){
 
 model { 
    log_catch_q ~ normal(0,5); // works but loosening it up, normal(-5,1);
-   
-   // for(a in 1:A){
-     // alpha[a] ~  normal(7,5); //  
-   // }
-   // in the middle of experimenting with different alpha priors - its sensitive here. 
-   // alpha[1] ~  normal(5, 1);//normal(5,1) <- this works ok but trace plots bad; (3 went pretty well....but a lil low)
-   // alpha[2] ~  normal(5, 1); // normal(5,0.5) <- alpha 2/3 work well with this. its 1 and 4 that have issues
-   // alpha[3] ~  normal(5, 1);
-   // alpha[4] ~  normal(5, 1);
 
-   alpha[1] ~  normal(0, 3); //normal(0, 5); <- was this testing 0,3 bc thats what curry has. 
-    alpha[2] ~  normal(0, 3);
-   alpha[3] ~  normal(0, 3);
-   alpha[4] ~  normal(0, 3);
-   
+   alpha[1] ~  normal(0, 5); 
+   alpha[2] ~  normal(0, 5);
+   alpha[3] ~  normal(0, 5);
+   alpha[4] ~  normal(0, 5);
+
    prob[1] ~ beta(1,1);
    prob[2] ~ beta(1,1);
    prob[3] ~ beta(1,1);
-  
+
   // pi ~ beta(1,1); 
 
   log_c_1 ~ normal(15,2);
@@ -273,6 +259,7 @@ model {
   theta2[3] ~ normal(0,0.1);
   
   D_scale ~ beta(1,1);  
+   // D_scale ~ beta(0.3,1);  
 
   basal_p_1 ~ normal(0,1.5);  
   basal_p_2 ~ normal(0,1.5); 
@@ -285,7 +272,7 @@ model {
 }
 
 // log fishing mortality for each calendar year
-log_F_mean ~ normal(0,0.1);
+  log_F_mean ~ normal(0,0.1);
  
  for(t in 1:nRyrs_T){
    log_F_dev_y[t] ~ normal(0, 5);
@@ -305,7 +292,7 @@ log_F_mean ~ normal(0,0.1);
    
  // Likelihoods - Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), ( sqrt(log((0.2^2) + 1)))); //( sqrt(log((juv_CV[t]^2) + 1)))); //(sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), (sqrt(log((0.2^2) + 1)))); //( sqrt(log((juv_CV[t]^2) + 1)))); //(sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));
   }
  // recruit by brood year
   for (t in 1:nByrs_return_dat) {

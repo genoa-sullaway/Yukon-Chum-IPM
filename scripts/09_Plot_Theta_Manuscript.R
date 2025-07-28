@@ -8,24 +8,20 @@ library(bayestestR)
 source("scripts/Calculate_Percent_Survival.R")
 
 ci_df <- read_csv("output/survival_percent_diff.csv") %>%
-          dplyr::mutate(covariate = factor(covariate, levels = rev(c("Spawner Size",
+          dplyr::mutate(covariate = case_when(covariate == "SST CDD" ~ "NBS SST",
+                                              covariate == "AI Temp" ~ "AI SST",
+                                              covariate == "Fullness" ~ "Fullness Index",
+                                              covariate == "Pollock" ~ "Pollock Recruitment",
+                                              covariate == "Chum" ~ "Hatchery Chum",
+                                              TRUE ~ covariate), 
+            covariate = factor(covariate, levels = rev(c("Spawner Size",
                                              "Snow Pack",
-                                             "SST CDD",
-                                             "Pollock",
+                                             "NBS SST",
+                                             "Pollock Recruitment",
                                              
-                                             "Fullness",
-                                             "AI Temp",
-                                             "Chum"
-                                             # "Yukon River - Mean Flow", 
-                                             # "NBS July/August Temperature",
-                                             # "Juvenile Sockeye Salmon Abundance",
-                                             # "Pollock Recruitment",
-                                             
-                                             # "Fullness Index",
-                                             # "Aleutian Winter Temperature",
-                                             # "Chum Salmon Hatchery Release Abundance",
-                                             # "Pink Salmon Hatchery Release Abundance"
-                                             ))))
+                                             "Fullness Index",
+                                             "AI SST",
+                                             "Hatchery Chum"))))
  
 theta_plot <- ggplot(data = ci_df,
                      aes(x= mean_percent_change, y = covariate, 

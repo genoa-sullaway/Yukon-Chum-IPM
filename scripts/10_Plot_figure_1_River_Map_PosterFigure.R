@@ -16,14 +16,17 @@ library(ggspatial)
  # test <- akgfmaps::get_nmfs_areas(set.crs = "auto")
  # plot(test)
 
-# load survey grid! =========
+# load BASIS survey grid =========
 # Curry sent this data June 26 2025. 
-survey <- readRDS("data/full_basis_combo_data.RDS") %>%
-  filter(CommonName == "Chum Salmon") %>%
-  dplyr::rename(Lat = "EQ.Latitude",
-                Lon = "EQ.Longitude") %>%
+survey <- read_xlsx("data/Sabrina_J_Chum_10.16.xlsx",sheet = "Event") %>%
+  # filter(CommonName == "Chum Salmon") %>%
+  dplyr::rename(Lat = "EQ Latitude",
+                Lon = "EQ Longitude") %>%
   filter(!is.na(Lat),
-         !is.na(Lon))
+         !is.na(Lon),
+         !(Lon < -170 & Lat < 55),
+         !Lon < -174)
+         # Lon > -170 & Lat > 55)
 
 NBS_survey_grid <- data.frame(unique(survey[c("Lat", "Lon")]))
 
@@ -39,35 +42,35 @@ NBS_survey_grid <- data.frame(unique(survey[c("Lat", "Lon")]))
 #   filter(!Lat>65) 
 
  # NBS_survey_grid <- data.frame(unique(fullnessdf[c("Lat", "Lon")]))
- # 
- points_sf <- st_as_sf(NBS_survey_grid, coords = c("Lon", "Lat"), crs = 4326)
- 
- points_projected <- st_transform(points_sf, crs = 32603)
- 
- # Buffer in meters (since UTM is in meters)
- buffered_points <- st_buffer(points_projected, dist = 30 * 1000)
- 
- # Transform back to WGS84 (lat/long)
- buffered_points_geo <- st_transform(buffered_points, crs = 4326)
- 
- # Extract coordinates from the buffer boundary
- coords <- st_coordinates(st_boundary(buffered_points_geo))
- 
- # Create a data frame with the coordinates
- points_df <- data.frame(
-   x = coords[, "X"],
-   y = coords[, "Y"]
- )
- 
- # Create an sf object that concaveman can use
- points_for_hull <- st_as_sf(points_df, coords = c("x", "y"), crs = 4326)
- 
- # Create concave hull
- polygon_NBS <- concaveman::concaveman(points_for_hull,
-                                   concavity = 2,
-                                   length_threshold = 0)
-
-plot(polygon_NBS)
+  
+#  points_sf <- st_as_sf(NBS_survey_grid, coords = c("Lon", "Lat"), crs = 4326)
+#  
+#  points_projected <- st_transform(points_sf, crs = 32603)
+#  
+#  # Buffer in meters (since UTM is in meters)
+#  buffered_points <- st_buffer(points_projected, dist = 30 * 1000)
+#  
+#  # Transform back to WGS84 (lat/long)
+#  buffered_points_geo <- st_transform(buffered_points, crs = 4326)
+#  
+#  # Extract coordinates from the buffer boundary
+#  coords <- st_coordinates(st_boundary(buffered_points_geo))
+#  
+#  # Create a data frame with the coordinates
+#  points_df <- data.frame(
+#    x = coords[, "X"],
+#    y = coords[, "Y"]
+#  )
+#  
+#  # Create an sf object that concaveman can use
+#  points_for_hull <- st_as_sf(points_df, coords = c("x", "y"), crs = 4326)
+#  
+#  # Create concave hull
+#  polygon_NBS <- concaveman::concaveman(points_for_hull,
+#                                    concavity = 2,
+#                                    length_threshold = 0)
+# 
+# plot(polygon_NBS)
  
 
 # load other data ==== 

@@ -65,6 +65,11 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "D_scale" ),
      fill_color = "blue")
 
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c( "log_F_dev_y" ),
+     fill_color = "blue")
+ 
+
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_c_1" ),
      fill_color = "blue")
@@ -85,9 +90,8 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c(  "basal_p_1", "basal_p_2" ),
      fill_color = "blue")
  
-
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c(  "D_scale"),
+     pars=  c(  "log_F_mean"),
      fill_color = "blue") 
 
 #LOOK AT WAIC =============
