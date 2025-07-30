@@ -11,6 +11,7 @@ library(concaveman)
 library(akgfmaps)
 library(readxl)
 library(ggspatial)
+library(ggnewscale)
 
 # devtools::install_github("afsc-gap-products/akgfmaps", build_vignettes = TRUE)
  # test <- akgfmaps::get_nmfs_areas(set.crs = "auto")
@@ -235,7 +236,7 @@ both <- st_difference(mask, mask2)
 # )
 
 ## manuscript figure  ===============
-# just fall, a little more detail o nthe plot 
+# just fall, a little more detail on the plot 
 
 fall_plot <- ggplot() +
     geom_sf(data = na_outline, fill = "white") +
@@ -247,46 +248,51 @@ fall_plot <- ggplot() +
     name = "",
     values = c(
       "#08306b", "#1c4680", "#305d94", "#4574a7",
-      "#5d8cb9", "#77a4cb", "#deebf7", "#deebf7", "#deebf7"), drop = F ) +
-  geom_point(data = fall_df, aes(x=Lon, y = Lat), color= "darkgreen", size = 3) +
-  geom_point(aes(x= -162.4, y = 61.9), color= "purple", size = 3, shape = 17 ) + # pilot station 
-  geom_sf(data = russia_box, fill = "white", color = "white") +  
-  geom_sf(data = canada_box, fill = "white", color = "white") + 
+      "#5d8cb9", "#77a4cb", "#deebf7", "#deebf7", "#deebf7"), 
+    guide = "none", drop = F ) +
+  new_scale_color() + 
+  geom_point(data = fall_df, aes(x=Lon, y = Lat, color = Project.Name), size = 3) +
+  scale_color_manual(values = c("#228B22","#32CD32", "#2E8B57", "#00A86B", "#6B8E23" ), name = "Project Name") + 
+  # geom_point(aes(x= -162.4, y = 61.9), color= "purple", size = 3, shape = 17 ) + # pilot station 
+  geom_sf(data = russia_box, fill = "#f2faff", color ="#f2faff") +  
+  geom_sf(data = canada_box, fill = "#f2faff", color ="#f2faff") + 
   # geom_sf(data = lower_box, fill = "white", color = "white") + 
  # geom_sf(data = polygon_NBS, fill = NA, color = "black") + 
-  geom_point(data = NBS_survey_grid, aes(x = Lon, y= Lat), size = 1) + 
-  geom_point(aes(x= -144.0657, y= 65.8252), color = "orange", size = 3, shape = 18) + # plot Circle lat long (source of snow data)
-   coord_sf(
+  geom_point(data = NBS_survey_grid, aes(x = Lon, y= Lat), color = "darkgray", size = 1, alpha = 0.7) + 
+  geom_point(aes(x= -144.0657, y= 65.8252), color = "#D4AF37", size = 4, shape = 18) + # plot Circle lat long (source of snow data)
+  coord_sf(
     crs = crsLONGLAT,
     xlim = c(-173,#bb["xmin"], 
-             -130.5),#bb["xmax"]),
+             -132.5),#bb["xmax"]),
     ylim = c(bb["ymin"], 71.5)# bb["ymax"])
   ) +
   labs(
     y = "Latitude", subtitle = "",
     x = "Longitude" ) +
-  scale_alpha(range = c(0, 1)) +
-  scale_size(range = c(0, .45)) +
+  scale_alpha(range = c(0, 1), guide = "none") +
+  scale_size(range = c(0, .45), guide = "none") +
   theme_classic() + 
   theme(
     text = element_text(family = "Montserrat"),
     # panel.background = element_blank(),
-    legend.background = element_blank(),
-    legend.position = "none",
-    panel.background = element_rect(fill = "white"),  # Makes the plot area blue
-    plot.background = element_rect(fill = "white"),       # Keeps the outer margin white
+    legend.key = element_rect(fill = "white", color = NA), 
+    legend.box.background = element_rect(fill = "white", color = NA),
+    legend.background = element_rect(fill = "white" ),
+    legend.position = "left",
+    panel.background = element_rect(fill = "#f2faff"),  # Makes the plot area blue
+    plot.background = element_rect(fill =  "white"),       # Keeps the outer margin white
     panel.grid = element_blank(), 
     axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
   annotation_scale(
     location = "br",
     width_hint = 0.25,
     style = "bar",
-    pad_x = unit(0.4, "cm"),
+    pad_x = unit(0.38, "cm"),
     pad_y = unit(0.3, "cm")
   ) +
   annotation_north_arrow(
     location = "br",
-    pad_x = unit(0.5, "cm"),
+    pad_x = unit(0.48, "cm"),
     pad_y = unit(0.6, "cm"),  
     height = unit(0.9, "cm"),
     width = unit(0.9, "cm"),
@@ -297,7 +303,7 @@ fall_plot <- ggplot() +
 
 # save manuscript figure ========
 ggsave(
-  filename = "output/ak_rivers_fall_weirs.png",
+  filename = "output/Figure_1_ak_rivers_fall_weirs.png",
   width = 9, height = 6, dpi = 600,
   # bg = "white", 
   device = "png", fall_plot

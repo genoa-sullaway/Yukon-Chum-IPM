@@ -273,7 +273,7 @@ data_list_stan <- list(nByrs=nByrs,
 # use these for full model
 warmups <- 5000
 total_iterations <- 50000
-thin_rate <- 20
+# thin_rate <- 20
 n_chains <- 4
 
 # # use these for exploring 
