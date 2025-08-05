@@ -11,7 +11,6 @@ notes/AYK_meetwithLR.pptx
 *.shp
 *.sbn
 *.shx
-
 HydroRIVERS_v10_ar_shp/HydroRIVERS_TechDoc_v10.pdf
 HydroRIVERS_v10_na_shp/HydroRIVERS_TechDoc_v10.pdf
 HW1/troptuna.csv
@@ -21,3 +20,5 @@ Chum RR Data_wTuluksak.xlsx
 output
 scripts/Plots_proper_model_output_AFS_Talk.R
 .RDataTmp1
+notes
+DK_Repo
