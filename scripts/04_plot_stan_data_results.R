@@ -26,9 +26,9 @@ traceplot(bh_fit,pars=  c( "alpha[1]" ,"alpha[2]" ,"alpha[3]" ,"alpha[4]"))
 
 traceplot(bh_fit,pars=  c("prob[1]","prob[2]","prob[3]" ))
 
-traceplot(bh_fit,pars=  c("D_scale"))
+# traceplot(bh_fit,pars=  c("D_scale"))
 
-traceplot(bh_fit,pars=  c("log_F_mean"))
+#traceplot(bh_fit,pars=  c("log_F_mean"))
 
 traceplot(bh_fit,pars=  c( "log_catch_q" ))
  
@@ -59,22 +59,21 @@ plot(bh_fit, show_density = TRUE, ci_level = 0.5,
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-     pars=  c( "alpha[1]","alpha[2]", "alpha[3]", "alpha[4]"),
+     pars=  c("alpha[3]", "alpha[1]","alpha[2]", "alpha[4]"),
      fill_color = "blue")
   
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "log_S" ),
      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "D_scale" ),
-     fill_color = "blue")
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+#      pars=  c( "D_scale" ),
+#      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "log_F_dev_y" ),
      fill_color = "blue")
  
-
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_c_1" ),
      fill_color = "blue")
@@ -143,6 +142,11 @@ basal_prod <- summary(bh_fit, pars = c("basal_p_1","basal_p_2"),
   summary(bh_fit, pars = c("log_catch_q"), 
          probs = c(0.1, 0.9))$summary 
  # Plot Observed vs Predicted ========
+ # year DF for joins ==================
+  years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
+    filter(cal_year >= year_min) %>%
+    dplyr::select(cal_year) %>%
+    dplyr::mutate(time = c(1:nrow(.)))
 ## Spawners ==========
 pred_N_SP <- summary(bh_fit, pars = c("N_sp"), 
               probs = c(0.1, 0.9))$summary %>%
