@@ -1,4 +1,4 @@
-data
+data/
 .Rproj.user
 notes/AYK Model Format .pptx
 AYK Model Format .pptx
@@ -17,11 +17,11 @@ HW1/troptuna.csv
 ~\Stat 611\Spring 17\Lecture notes\Chapter 9\9_3.eps
 .DS_Store
 Chum RR Data_wTuluksak.xlsx
-output
+output/
 scripts/Plots_proper_model_output_AFS_Talk.R
 .RDataTmp1
-notes
-DK_Repo
+DK_Repo/
 scripts/Ex scripts
 scripts/old scripts
 scripts/non_public_Scripts
+notes/
