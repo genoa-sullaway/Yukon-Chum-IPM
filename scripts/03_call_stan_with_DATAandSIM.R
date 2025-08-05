@@ -5,8 +5,11 @@ library(bayesplot)
 library(tidync)
 library(lubridate) 
 library(readxl)
-# remove.packages(c("StanHeaders", "rstan"))
-# 
+
+# this script is used to run the model without covariates and compare the outputs. 
+# not in main text, but asks: if covariates are not included in the model, but it uses the same paramters and process error, does the decline still occur?
+# answer is that it does still decrease a bit, likely a result of the high harves year, but it doesnt decrease as much and it rebound quicker. 
+
 #  install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies = TRUE)
 options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)

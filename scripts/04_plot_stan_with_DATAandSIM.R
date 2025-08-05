@@ -199,13 +199,23 @@ ggplot(data = summ_n_sp) +
   theme_classic()
 
 ### Spawners together ==== 
-ggplot() +
-  geom_line(data = summ_n_sp_NC, 
-            aes(x=cal_year, y = mean), color = "darkgreen") +
-  geom_line(data = summ_n_sp, aes(x=cal_year, y = mean)) + 
-  ggtitle("Spawners: obs and predicted")+
+sp_plot_together <- summ_n_sp_NC %>% 
+  dplyr::select(cal_year,mean,sd,obs) %>%
+  dplyr::mutate(id = "SP_NC") %>% 
+  rbind(summ_n_sp %>%  
+          dplyr::select(cal_year,mean,sd,obs) %>%
+          dplyr::mutate(id = "SP"))
+
+ggplot(data = sp_plot_together, aes(x=cal_year, y = mean, color = id)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd)) + 
+  ggtitle("Spawners")+
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
-  theme_classic()
+  theme_classic() + 
+  scale_color_manual(values= PNWColors::pnw_palette(n=2, name= "Sunset", type = "discrete"), name = " ") +
+  xlab("Calendar Year") + 
+  ylab("Mean") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 ## recruit ==========
 # pred_N_recruit <- summary(bh_fit, pars = c("N_recruit"), 
@@ -290,14 +300,24 @@ ggplot(data = pred_N_brood_year_return) +
   ggtitle(("brood year return"))
 
 ## returns plot both ===
-ggplot() +
-  geom_line(data = pred_N_brood_year_return_NC, 
-            aes(x=cal_year, y = mean), color = "darkgreen") +
-  geom_line(data = pred_N_brood_year_return, aes(x=cal_year, y = mean)) + 
-  ggtitle("returns: obs and predicted")+
-  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
-  theme_classic()
+ret_plot_together <- pred_N_brood_year_return_NC %>% 
+  dplyr::select(cal_year,mean,sd,obs) %>%
+  dplyr::mutate(id = "Return_NC") %>% 
+  rbind(pred_N_brood_year_return %>%  
+          dplyr::select(cal_year,mean,sd,obs) %>%
+          dplyr::mutate(id = "Return"))
 
+ggplot(data = ret_plot_together, aes(x=cal_year, y = mean, color = id)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd)) + 
+  ggtitle("Return")+
+  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
+  theme_classic() + 
+  scale_color_manual(values= PNWColors::pnw_palette(n=2, name= "Sunset", type = "discrete"), name = " ") +
+  xlab("Calendar Year") + 
+  ylab("Mean") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ 
 ## harvest ========= 
 pred_N_harvest <- summary(bh_fit, pars = c("N_catch"), 
                           probs = c(0.1, 0.9))$summary %>%
@@ -342,9 +362,27 @@ ggplot(data = pred_N_harvest_NC) +
                   ymax = mean+se_mean))+
   ggtitle(("Harvest, est and observed"))
 
+### harvest_together ===
+harvest_plot_together <- pred_N_harvest_NC %>% 
+  dplyr::select(cal_year,mean,se_mean,obs) %>%
+  dplyr::mutate(id = "Harvest_NC") %>% 
+  rbind(pred_N_harvest %>%  
+          dplyr::select(cal_year,mean,se_mean,obs) %>%
+          dplyr::mutate(id = "Harvest"))
+
+ggplot(data = harvest_plot_together, aes(x=cal_year, y = mean, color = id)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean-se_mean, ymax = mean+se_mean)) + 
+  ggtitle("harvest")+
+  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
+  theme_classic() + 
+  scale_color_manual(values= PNWColors::pnw_palette(n=2, name= "Sunset", type = "discrete"), name = " ") +
+  xlab("Calendar Year") + 
+  ylab("Mean") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
 
 ## juveniles ====== 
-
 ### juveniles NO COVARIATES ====== 
 # multiply by catch q to fit observations
 catch_q <- summary(bh_fit, pars = c("log_catch_q"), 
@@ -411,15 +449,25 @@ ggplot(data = summ_n_j) +
                   ymax = mean_J_Q+se_mean), alpha = 0.5)+
   ggtitle(("Juveniles, est and observed"))
  
-# juveniles together =====
-ggplot() +
-  geom_line(data = summ_n_j_NC, 
-            aes(x=cal_year, y = mean_J_Q), color = "darkgreen") +
-  geom_line(data = summ_n_j, aes(x=cal_year, y = mean_J_Q)) + 
-  ggtitle("Juv: obs and predicted")+
+# juveniles together =====  
+juv_plot_together <- summ_n_j_NC %>% 
+  dplyr::select(cal_year,mean,se_mean,obs) %>%
+  dplyr::mutate(id = "Juv_NC") %>% 
+  rbind(summ_n_j %>%  
+          dplyr::select(cal_year,mean,se_mean,obs) %>%
+          dplyr::mutate(id = "Juv"))
+
+ggplot(data = juv_plot_together, aes(x=cal_year, y = mean, color = id)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean-se_mean, ymax = mean+se_mean)) + 
+  ggtitle("Juvenile")+
   scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
-  theme_classic()
- 
+  theme_classic() + 
+  scale_color_manual(values= PNWColors::pnw_palette(n=2, name= "Sunset", type = "discrete"), name = " ") +
+  xlab("Calendar Year") + 
+  ylab("Mean") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
 ## Eggs ==========
 ### EGGS NO COVAR ====
 pred_n_e_NC <- summary(bh_fit, pars = c("N_e_sum_NC"), 
@@ -446,16 +494,28 @@ pred_n_e <- summary(bh_fit, pars = c("N_e_sum"),
   dplyr::mutate(time = rep(1:20, each=1)) %>%
   # filter(!time>20) %>% # remove years without full return estimates 
   left_join(years)   
+ 
+# Eggs together =====
+eggs_plot_together <- pred_n_e_NC %>% 
+  dplyr::select(cal_year,mean,se_mean) %>%
+  dplyr::mutate(id = "Eggs_NC") %>% 
+  rbind(pred_n_e %>%  
+          dplyr::select(cal_year,mean,se_mean) %>%
+          dplyr::mutate(id = "Eggs"))
 
-ggplot(data = pred_n_e) +
-  geom_line(aes(x=time, y = mean)) + 
-  # geom_errorbar(aes(x=time, ymin = mean-sd, ymax = mean+sd), 
-  #               width = 0.1)+
-  ggtitle("Eggs: predicted") +
-  geom_line(data = pred_n_e_NC, aes(x=time, y = mean),
-            color = "darkgreen") + 
-  # scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
-  theme_classic()
+ggplot(data = eggs_plot_together, aes(x=cal_year, y = mean, color = id)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean-se_mean, ymax = mean+se_mean)) + 
+  ggtitle("Eggs")+
+  scale_x_continuous(breaks = c(2002, 2006,2010, 2015,2020)) + 
+  theme_classic() + 
+  scale_color_manual(values= PNWColors::pnw_palette(n=2, name= "Sunset", type = "discrete"), name = " ") +
+  xlab("Calendar Year") + 
+  ylab("Mean") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+
 # Plot spawner recruit, N_SP to Eggs ====
 
 
@@ -794,13 +854,11 @@ ggplot(data = kappasurvival_NC,
 
 
 # plot kappas together =====
-
 ggplot() + 
   geom_line(data = kappasurvival_NC,
-            aes(x=cal_year, y = mean, group = variable ,color = variable) ) +
+            aes(x=cal_year, y = mean, group = variable ,color = variable)) +
   geom_line(data = kappasurvival,
-            aes(x=cal_year, y = mean, group = variable ,color = variable) ) +
-  
+            aes(x=cal_year, y = mean, group = variable ,color = variable)) +
   scale_x_continuous(breaks = c(2002,2006,2010, 2015,2020, 2022)) +
   scale_y_continuous(limits = c(0,1))
 

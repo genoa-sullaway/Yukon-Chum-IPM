@@ -233,17 +233,17 @@ for(t in 1:nByrs){
 }
 
 model { 
-   log_catch_q ~ normal(0,5); // works but loosening it up, normal(-5,1);
+   log_catch_q ~ normal(0,1); // works but loosening it up, normal(-5,1);
 
-  log_S[1] ~ normal(0,1); 
-  log_S[2] ~ normal(0,1); 
-  log_S[3] ~ normal(0,1); 
-  log_S[4] ~ normal(0,1); 
+  log_S[1] ~ normal(0,0.5); 
+  log_S[2] ~ normal(0,0.5); 
+  log_S[3] ~ normal(0,0.5); 
+  log_S[4] ~ normal(0,0.5); 
       
-   alpha[1] ~  normal(0, 5); 
-   alpha[2] ~  normal(0, 5);
-   alpha[3] ~  normal(0, 5);
-   alpha[4] ~  normal(0, 5);
+   alpha[1] ~  normal(1, 5); 
+   alpha[2] ~  normal(1, 5);
+   alpha[3] ~  normal(1, 5);
+   alpha[4] ~  normal(1, 5);
 
    prob[1] ~ beta(1,1);
    prob[2] ~ beta(1,1);
