@@ -12,10 +12,11 @@ library(rstan)
     abundance = character(),
     survival_covar0 = numeric(),
     survival_covar1 = numeric(),
+    surv_neg_1 = numeric(),
     percent_change = numeric(),
     stringsAsFactors = FALSE
   )
-  
+
   specific_results <- data.frame(
     stage = character(),
     covariate = character(),
@@ -39,7 +40,10 @@ library(rstan)
   calc_percent_change <- function(base.prod, coef, capacity, N, year = NULL, coef_input = NULL) {
     # Default behavior: use covar = 0 and covar = 1
     surv_0 <- surv(base.prod = base.prod, covar = 0, coef = coef, capacity = capacity, N = N)
- 
+   
+    # also add covariate = -1, to see what survival is when the covariate is 1 SD below mean.   
+    surv_neg_1 <- surv(base.prod = base.prod, covar = -1, coef = coef, capacity = capacity, N = N)
+    
     # If year and dataframe are provided, get the covar value from the dataframe
     if (!is.null(year) && !is.null(coef_input)) {
       if (nrow(coef_input) > 0) {
@@ -55,7 +59,8 @@ library(rstan)
     }
     
     percent_change <- (surv_1 - surv_0) / surv_0 * 100
-    return(list(surv_0 = surv_0, surv_1 = surv_1, percent_change = percent_change))
+    return(list(surv_0 = surv_0, surv_1 = surv_1, 
+                surv_neg_1 = surv_neg_1, percent_change = percent_change))
   }
   
   # Load parameters
@@ -78,7 +83,8 @@ library(rstan)
   # summarise 
   calculate_credible_intervals <- function(results_df) {
     # Create a unique grouping identifier that properly respects stage and covariate
-    results_df$group_id <- paste(results_df$stage, results_df$covariate, sep = "_")
+    results_df$group_id <- paste(results_df$stage, 
+                                 results_df$covariate, sep = "_")
     
     # Get unique groups
     unique_groups <- unique(results_df$group_id)
@@ -93,9 +99,10 @@ library(rstan)
       upper_50 = numeric(),
       lower_95 = numeric(),
       upper_95 = numeric(),
+      survival_neg_1 = numeric(),
       stringsAsFactors = FALSE
     )
-    
+ 
     # Calculate intervals for each group
     for (group in unique_groups) {
       # Filter data for current group
@@ -109,6 +116,13 @@ library(rstan)
       percent_changes <- group_data$percent_change
       mean_val <- mean(percent_changes)
       median_val <- median(percent_changes)
+      
+      # Add in mean survival at -1 SD and +1 SD. 
+      surv_neg_1 <- group_data$survival_covarneg1
+      survival_neg_1<- mean(surv_neg_1)
+      
+      survival_covar1 <- group_data$survival_covar1
+      survival_1 <- mean(survival_covar1)
       
       # Calculate credible intervals
       # 50% CI (25% to 75%)
@@ -128,7 +142,9 @@ library(rstan)
         lower_50 = lower_50,
         upper_50 = upper_50,
         lower_95 = lower_95,
-        upper_95 = upper_95
+        upper_95 = upper_95, 
+        survival_neg_1 = survival_neg_1,
+        survival_1 = survival_1
       ))
     }
     
@@ -171,9 +187,9 @@ library(rstan)
       abundance = "Mean",
       survival_covar0 = low_result$surv_0,
       survival_covar1 = low_result$surv_1,
+      survival_covarneg1 = low_result$surv_neg_1,
       percent_change = low_result$percent_change
     ))
-
   }
   
   # Return stage analyses ===========
@@ -198,13 +214,13 @@ library(rstan)
       abundance = "Mean",
       survival_covar0 = low_result$surv_0,
       survival_covar1 = low_result$surv_1,
+      survival_covarneg1 = low_result$surv_neg_1,
       percent_change = low_result$percent_change
     ))
   }
- 
+
   # summarise Mean and CI for each covariate among posterior draws.
   ci_df <- calculate_credible_intervals(results_df = results)
-  
   
   # Return the consolidated results dataframe
   # Format the percent_change for better readability

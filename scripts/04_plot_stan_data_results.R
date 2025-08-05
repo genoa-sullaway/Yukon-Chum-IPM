@@ -36,31 +36,36 @@ traceplot(bh_fit,pars=  c("basal_p_1", "basal_p_2"))
 
 traceplot(bh_fit,pars=  c("log_c_1", "log_c_2"))
 
+traceplot(bh_fit,pars= c("log_S"))
+
 # ess and rhat  =====
 # Find parameters with both low ESS and high Rhat
 diagnostics <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat")]) %>%
+  
   filter(#n_eff <400 | 
     Rhat > 1.1)
  
+diagnostics_carrying_cap <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat")]) %>%
+  rownames_to_column() %>% 
+  filter(rowname %in% c("log_c_1","log_c_2","theta1[1]","theta1[2]","theta1[3]", "theta1[4]", 
+                        "theta2[1]","theta2[2]","theta2[3]",
+                        "D_scale","log_F_dev_y",
+                        "alpha[1]","alpha[2]", "alpha[3]", "alpha[4]"))
+
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.5, 
      pars=  c( "theta1[1]","theta1[2]","theta1[3]", "theta1[4]",  #"theta1[5]","theta1[6]", 
-               "theta2[1]","theta2[2]","theta2[3]"
-     ),
+               "theta2[1]","theta2[2]","theta2[3]"),
      fill_color = "blue")
 
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "alpha[1]","alpha[2]", "alpha[3]", "alpha[4]"),
      fill_color = "blue")
-# 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-#      pars=  c( "sigma_juv" ),
-#      fill_color = "blue")
-# 
-# plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
-#      pars=  c( "sigma_rec" ),
-#      fill_color = "blue")
-# 
+  
+plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+     pars=  c( "log_S" ),
+     fill_color = "blue")
+
 plot(bh_fit, show_density = FALSE, ci_level = 0.95,
      pars=  c( "D_scale" ),
      fill_color = "blue")

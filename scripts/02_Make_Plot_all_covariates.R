@@ -111,9 +111,9 @@ hatchery_pink_b <- hatchery_pink_df%>%
                    Pink_hatchery = c(mean(hatchery_pink_df$sum) + 0.01)))
 
 sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv") %>%
-  dplyr::rename(SST_CDD_Aleut = "CDD",
+  dplyr::rename(SST_CDD_GOA = "CDD",
                 Year = "year") %>%
-  dplyr::select(Year, SST_CDD_Aleut)
+  dplyr::select(Year, SST_CDD_GOA)
 
 stage_b_cov<- left_join(hatchery_pink_b,sst_b) %>%
               left_join(hatchery_chum_b) %>%

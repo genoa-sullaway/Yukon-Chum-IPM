@@ -11,6 +11,7 @@ data { // all equation references are from proposal numbering
    // vector [A] fs; // fecundity
   vector [A] M; // fixed mortality for 3 older age classes
   real<lower=0> beta;
+  real<lower=0> D_scale;
 
   vector[nByrs] juv_CV; 
   vector[nRyrs] return_CV; 
@@ -57,14 +58,14 @@ real <lower =-1, upper = 1> theta1 [ncovars1]; // covariate estimated for each c
 real <lower =-1, upper = 1> theta2 [ncovars2];
 
 // vector <lower=0> [A-1] prob;
-real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
+// real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 real <lower=0> g[nByrs,A]; // gamma random draws
 // vector[3] prob;   // Maturity schedule probs
 vector<lower=0,upper=1>[3] prob;   // Maturity schedule probs
   
 real log_catch_q; 
- real log_F_mean; 
-// vector [A] log_S; // log selectivity 
+real log_F_mean; 
+vector [A] log_S; // log selectivity 
 vector [nRyrs_T]  log_F_dev_y; 
 
 real  basal_p_1; // mean prod for covariate survival stage 1
@@ -97,7 +98,7 @@ real N_j_start;
 vector [nRyrs_T] F;
 // vector <lower = 1> [A] alpha; 
 
-// vector <lower = 0> [A] S; //selectivty
+vector [A] S; //selectivty
  
 // survival and covariate section 
 vector  <lower=0,upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
@@ -124,7 +125,7 @@ real<lower=0> c_2;
 c_1 = exp(log_c_1);
 c_2 = exp(log_c_2);
  
-  // S = exp(log_S);
+S = exp(log_S);
  
  // Eq 4.8 
   for(t in 1:nRyrs_T){
@@ -178,8 +179,7 @@ for(t in 1:nByrs){
   pi[3] = prob[3] * (1 - pi[1] - pi[2]);
   pi[4] = 1 - pi[1] - pi[2] - pi[3];
   
-  // D_sum = 1/(D_scale^2);
-    D_sum = 1/D_scale^2;
+  D_sum = 1/(D_scale^2); 
 
   for (a in 1:A) {
     Dir_alpha[a] = D_sum * pi[a];
@@ -204,8 +204,10 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
         for (a in 1:A) { 
            N_recruit[t+a+1,a] = (N_brood_year_return[t]*p[t,a]) * exp(-(sum(M[1:a]))); //Eq 4.5 - part of it, see above for the rest of age comp estiamtion 
 
-           // text has selectivity in this equation, I have removed it for now. 
-           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]))); // Eq 4.7 
+           // no selectivity 
+           // N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]))); // Eq 4.7 
+           // selectivity included 
+           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]*S[a]))); // Eq 4.7  
            
            N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a];  // Eq 4.9
            // issues estimating traditional ricker - changed to linear scalar
@@ -233,6 +235,11 @@ for(t in 1:nByrs){
 model { 
    log_catch_q ~ normal(0,5); // works but loosening it up, normal(-5,1);
 
+  log_S[1] ~ normal(0,1); 
+  log_S[2] ~ normal(0,1); 
+  log_S[3] ~ normal(0,1); 
+  log_S[4] ~ normal(0,1); 
+      
    alpha[1] ~  normal(0, 5); 
    alpha[2] ~  normal(0, 5);
    alpha[3] ~  normal(0, 5);
@@ -241,9 +248,7 @@ model {
    prob[1] ~ beta(1,1);
    prob[2] ~ beta(1,1);
    prob[3] ~ beta(1,1);
-
-  // pi ~ beta(1,1); 
-
+ 
   log_c_1 ~ normal(15,2);
   log_c_2 ~ normal(17,2);
 
@@ -258,8 +263,7 @@ model {
   theta2[2] ~ normal(0,0.1);
   theta2[3] ~ normal(0,0.1);
   
-  D_scale ~ beta(1,1);  
-   // D_scale ~ beta(0.3,1);  
+  // D_scale ~ beta(1,1);   
 
   basal_p_1 ~ normal(0,1.5);  
   basal_p_2 ~ normal(0,1.5); 

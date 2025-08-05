@@ -429,7 +429,7 @@ transformed parameters {
   for (a in 1:A) {
     Dir_alpha[a] = D_sum * pi[a];
     for (y in 1:nRyrs) {
-      p[y,a] = g[y,a]/sum(g[y,]);
+      p[y,a] = g[y,a]/sum(g[y,1:A]);
     }
   }
 

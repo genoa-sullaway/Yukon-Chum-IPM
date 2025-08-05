@@ -1,14 +1,13 @@
 library(tidyverse)
 library(here) 
 
-
 # plot all covariates for supplemental figure 
 # load data =======
 cov_a <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate( pollock_recruit_millions = as.numeric(scale(Recruit_age_1_millions)), 
-                  SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
-                 fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)),
-                  yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)) 
+  dplyr::mutate( pollock_recruit_millions =Recruit_age_1_millions,# as.numeric(scale(Recruit_age_1_millions)), 
+                 #  SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
+                 # fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)),
+                 #  yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)) 
                  ) %>% 
   dplyr::select( brood_year,SST_CDD_NBS,pollock_recruit_millions,mean_size,
                 yukon_mean_discharge,fall_snow_cummulative) 
@@ -41,9 +40,9 @@ cov_a_plots <- ggplot(data = cova_dfplot,
                                )) +
   theme_classic() +
   facet_wrap(~variable, scales = "free", labeller = as_labeller(labels)) +
-  ylab("Mean Covariate Trend") + 
+  ylab("Mean Covariate") + 
   xlab("Brood Year") +
-  geom_hline(yintercept =0, linetype =2, color = "black") + 
+  # geom_hline(yintercept =0, linetype =2, color = "black") + 
   theme(panel.background = element_blank(),  
         plot.background = element_blank(),  
         legend.background = element_blank(),
@@ -52,38 +51,40 @@ cov_a_plots <- ggplot(data = cova_dfplot,
 cov_a_plots
 
 # ggsave("output/SST_plot_Values.png", width = 4, height = 2, bg = "transparent")
- 
+
 ## B ============== 
 cov_b <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-  dplyr::mutate(SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
+  dplyr::mutate(#STT_CDD_GOA = as.numeric(scale(STT_CDD_GOA)),
+                #Chum_hatchery= as.numeric(scale(Chum_hatchery)), 
                 # Pink_hatchery= as.numeric(scale(Pink_hatchery)), 
                 full_index_scale = case_when(Year %in% c(2003,2009, 2015,  2021,2023) ~ NA,
                                        TRUE ~ full_index_scale)) %>% 
-  dplyr::select(brood_year,SST_CDD_Aleut,
+  dplyr::select(brood_year,
+                SST_CDD_GOA,
                 Chum_hatchery,
                 # Pink_hatchery,
                 full_index_scale) %>%  
   gather(2:ncol(.), key = "variable", value = "value") %>%
   filter(!brood_year<1999) %>%
-  dplyr::mutate(variable = factor(variable, levels = c("full_index_scale","SST_CDD_Aleut",
+  dplyr::mutate(variable = factor(variable, levels = c("full_index_scale","SST_CDD_GOA",
                                                        "Chum_hatchery","Pink_hatchery")),
-                variable = case_when(variable == "SST_CDD_Aleut" ~ "Aleutian Winter Temperature",
-                                     variable == "Chum_hatchery" ~ "Chum Hatchery Release Abund.",
+                variable = case_when(variable == "SST_CDD_GOA" ~ "GOA Winter Temperature",
+                                     variable == "Chum_hatchery" ~ "Chum Hatchery Abund.",
                                      # variable == "Pink_hatchery" ~ "Pink Salmon Hatchery Release Abundance",
                                      variable == "full_index_scale" ~   "Fullness Index")) 
 
 cov_b_plot<-ggplot(data = cov_b,
-                   aes(x=brood_year, y = value, group = variable, color = variable)) +
-  geom_hline(yintercept =0, linetype =2, color = "black") +
+                   aes(x=brood_year, y = value, 
+                       group = variable, color = variable)) +
+  # geom_hline(yintercept =0, linetype =2, color = "black") +
   geom_line() +
   geom_point() +
   scale_color_manual(values= c(#"#b0986c", 
                                "#dcbe9b", 
                                "#72e1e1","#009474")) +
-  facet_wrap(~variable ) +
+  facet_wrap(~variable, scales = "free") +
   theme_classic() +
-  ylab("Mean Covariate Trend") + 
+  ylab("Mean Covariate") + 
   xlab("Brood Year") +
   theme(panel.background = element_blank(),  
         plot.background = element_blank(),  
@@ -113,7 +114,7 @@ sp_plot <- ggplot(data = cov_spawner,
   scale_color_manual(values= c("#b0cbe7")) +
   theme_classic() +
   facet_wrap(~variable, scales = "free", labeller = as_labeller(labels)) +
-  ylab("Mean Trend") + 
+  ylab("Mean Covariate") + 
   xlab("Calendar Year") +
   geom_hline(yintercept =0, linetype =2, color = "white") + 
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
@@ -149,7 +150,7 @@ cov_b_hatchery <-ggplot(data = cov_b %>%
   scale_color_manual(values= c("#b0986c")) +
   facet_wrap(~variable,nrow = 3) +
   theme_classic() +
-  ylab("Mean Covariate Trend") + 
+  ylab("Mean Covariate") + 
   xlab("Brood Year") +
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
         plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
@@ -189,7 +190,7 @@ cov_b_tempSFI <-ggplot(data = cov_b %>%
   scale_color_manual(values= c("#72e1e1","#009474")) +
   facet_wrap(~variable,nrow = 3) +
   theme_classic() +
-  ylab("Mean Covariate Trend") + 
+  ylab("Mean Covariate") + 
   xlab("Brood Year") +
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
         plot.background = element_blank(), #element_rect(fill = "black", colour = NA),

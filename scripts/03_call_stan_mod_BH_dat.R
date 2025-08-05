@@ -2,8 +2,6 @@ library(rstan)
 library(tidyverse)
 library(here)
 library(bayesplot)
-# library(rstanarm) 
-
 library(tidync)
 library(lubridate) 
 library(readxl)
@@ -159,13 +157,13 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   dplyr::rename(full_index=full_index_scale) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>% 
-  dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+  dplyr::mutate( SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
                  Chum_hatchery= as.numeric(scale(Chum_hatchery)),
                  Pink_hatchery= as.numeric(scale(Pink_hatchery))
                  # full_index = as.numeric(scale(full_index))
                  ) %>%
   dplyr::select(full_index,
-                SST_CDD_Aleut,
+                SST_CDD_GOA,
                 Chum_hatchery #,
                  # Pink_hatchery,
                 ) %>%
@@ -266,14 +264,15 @@ data_list_stan <- list(nByrs=nByrs,
                        ess_age_comp=ess_age_comp,
                        
                        juv_CV= fall_juv_CV_all$CV, 
-                       return_CV = return_CVs$fall_spawner_cv
+                       return_CV = return_CVs$fall_spawner_cv,
+                       D_scale = 0.3
                        )
 
 # mod specifics ============
 # use these for full model
 warmups <- 5000
 total_iterations <- 50000
-# thin_rate <- 20
+# thin_rate <- 10
 n_chains <- 4
 
 # # use these for exploring 
