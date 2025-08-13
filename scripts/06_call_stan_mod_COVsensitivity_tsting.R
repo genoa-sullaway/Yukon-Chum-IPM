@@ -167,25 +167,7 @@ if(exclusion_stage == "a"){
               as.matrix() 
             
         }
-         
-  
-  # if(covariate_exclude == "yukon_mean_discharge"){
-  #   stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  #     filter(brood_year >= year_min, 
-  #            brood_year <= year_max_brood) %>%
-  #     dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-  #       yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
-  #       fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
-  #       pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
-  #     dplyr::select(SST_CDD_NBS, 
-  #       #yukon_mean_discharge,
-  #       pollock_recruit_scale,
-  #       mean_size, # was already mean scaled because of the averaging across ages
-  #       fall_snow_cummulative
-  #     ) %>% 
-  #     as.matrix()
-  # }
-  
+        
   if(covariate_exclude == "pollock_recruit_scale"){
     stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
       filter(brood_year >= year_min, 
@@ -238,13 +220,14 @@ if(exclusion_stage == "a"){
     dplyr::rename(full_index=full_index_scale) %>% 
     filter(brood_year >= year_min, 
            brood_year <= year_max_brood) %>% 
-    dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+    dplyr::mutate( SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
                    Chum_hatchery= as.numeric(scale(Chum_hatchery))
                     # full_index = as.numeric(scale(full_index))
     ) %>%
-    dplyr::select(SST_CDD_Aleut,
-                  Chum_hatchery, 
-                  full_index) %>%
+    dplyr::select(SST_CDD_GOA,
+                  Chum_hatchery,
+                  full_index
+                  ) %>%
     as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
   
 }
@@ -269,12 +252,12 @@ if(exclusion_stage == "a"){
       ) %>% 
       as.matrix() 
     
-if(covariate_exclude == "SST_CDD_Aleut"){
+if(covariate_exclude == "SST_CDD_GOA"){
   stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
     dplyr::rename(full_index=full_index_scale) %>% 
     filter(brood_year >= year_min, 
            brood_year <= year_max_brood) %>% 
-    dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+    dplyr::mutate(# SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
                    Chum_hatchery= as.numeric(scale(Chum_hatchery))
                     #full_index = as.numeric(scale(full_index))
     ) %>%
@@ -290,50 +273,31 @@ if(covariate_exclude == "Chum_hatchery"){
     dplyr::rename(full_index=full_index_scale) %>% 
     filter(brood_year >= year_min, 
            brood_year <= year_max_brood) %>% 
-    dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-                   Chum_hatchery= as.numeric(scale(Chum_hatchery))
+    dplyr::mutate( SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA))#,
+                   #Chum_hatchery= as.numeric(scale(Chum_hatchery))
                     # full_index = as.numeric(scale(full_index))
     ) %>%
-    dplyr::select(SST_CDD_Aleut,
+    dplyr::select(SST_CDD_GOA,
                   #Chum_hatchery, 
                   full_index) %>%
     as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
   
-}
-    
-    # if(covariate_exclude == "Pink_hatchery"){
-    #   stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-    #     dplyr::rename(full_index=full_index_scale) %>% 
-    #     filter(brood_year >= year_min, 
-    #            brood_year <= year_max_brood) %>% 
-    #     dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-    #                    Chum_hatchery= as.numeric(scale(Chum_hatchery)),
-    #                    Pink_hatchery= as.numeric(scale(Pink_hatchery)),
-    #                    # full_index = as.numeric(scale(full_index))
-    #     ) %>%
-    #     dplyr::select(SST_CDD_Aleut,
-    #                   Chum_hatchery,
-    #                   #Pink_hatchery,
-    #                   full_index) %>%
-    #     as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
-    #   
-    # }
-    
+}   
+   
     if(covariate_exclude == "full_index"){
       stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
         dplyr::rename(full_index=full_index_scale) %>% 
         filter(brood_year >= year_min, 
                brood_year <= year_max_brood) %>% 
-        dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+        dplyr::mutate( SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
                        Chum_hatchery= as.numeric(scale(Chum_hatchery)
                        # full_index = as.numeric(scale(full_index))
         ))%>%
-        dplyr::select(SST_CDD_Aleut,
+        dplyr::select(SST_CDD_GOA,
                       Chum_hatchery
                      # full_index
                      ) %>%
-        as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
-      
+        as.matrix()  
     }
   }
   
@@ -371,14 +335,15 @@ if(covariate_exclude == "Chum_hatchery"){
                          ess_age_comp=ess_age_comp,
                          
                          juv_CV= fall_juv_CV_all$CV, 
-                         return_CV = return_CVs$fall_spawner_cv
+                         return_CV = return_CVs$fall_spawner_cv,
+                         D_scale = 0.3,
+                         beta = 0.00001
   )
   
   # mod specifics ============
   # use these for full model
-  warmups <- 10000
-  total_iterations <- 60000
-  thin_rate <- 40
+  warmups <- 5000
+  total_iterations <- 30000
   n_chains <- 4
   
   # call mod ========
@@ -404,13 +369,13 @@ cov_a_list<- c("SST_CDD_NBS",
                "fall_snow_cummulative"
                )
 
-cov_b_list<-  c("SST_CDD_Aleut",
+cov_b_list<-  c("SST_CDD_GOA",
                 "Chum_hatchery",
                 "full_index")
 
 stage_a <- list()
 stage_b <- list()
-
+ 
 # call function stage a =======
 for (i in 1:length(cov_a_list)) {
  cov <- cov_a_list[[i]]

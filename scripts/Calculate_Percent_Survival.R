@@ -194,7 +194,7 @@ library(rstan)
   
   # Return stage analyses ===========
   covariates <- c("Fullness",
-                  "AI Temp", "Chum")
+                  "GOA Temp", "Chum")
   coef_names <- c("theta2[1]", "theta2[2]", "theta2[3]")
   
   for (i in 1:length(covariates)) {
@@ -226,112 +226,112 @@ library(rstan)
   # Format the percent_change for better readability
   ci_df$mean_percent_change <- round(ci_df$mean_percent_change, 2)
   
-  # Optional: Save results to CSV
-  write.csv(ci_df, "output/survival_percent_diff.csv" )
+  #  Save results to CSV
+  write.csv(ci_df, "output_sullaway_etal/survival_percent_diff.csv" )
   
-  ## load covariate data ========== 
-stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-    filter(brood_year >= year_min, 
-           brood_year <= year_max_brood) #%>%
-    # dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-    #               yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
-    #               fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
-    #               pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions)))  
-  
-  # the temp in 2001 is gonna effect fish from brood year 1999
-  stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-    dplyr::rename(full_index=full_index_scale) %>% 
-    filter(brood_year >= year_min, 
-           brood_year <= year_max_brood) #%>% 
-    # dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-    #                Chum_hatchery= as.numeric(scale(Chum_hatchery)),
-    #                Pink_hatchery= as.numeric(scale(Pink_hatchery))
-    #                # full_index = as.numeric(scale(full_index))
-    # )  
-  
-# get 1 SD for each covariate ====
-cov_a_sd <- stage_a_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
-              gather(1:ncol(.), key = "id", value = "value") %>%           
-    group_by(id) %>%           
-    dplyr::summarise(sd = round(sd(value),6))
-  
-  cov_b_sd <- stage_b_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
-    gather(1:ncol(.), key = "id", value = "value") %>%           
-    group_by(id) %>%           
-    dplyr::summarise(sd = round(sd(value),6))
-
-   
-  
+#   ## load covariate data ========== 
+# stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+#     filter(brood_year >= year_min, 
+#            brood_year <= year_max_brood) #%>%
+#     # dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
+#     #               yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+#     #               fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
+#     #               pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions)))  
+#   
+#   # the temp in 2001 is gonna effect fish from brood year 1999
+#   stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+#     dplyr::rename(full_index=full_index_scale) %>% 
+#     filter(brood_year >= year_min, 
+#            brood_year <= year_max_brood) #%>% 
+#     # dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+#     #                Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+#     #                Pink_hatchery= as.numeric(scale(Pink_hatchery))
+#     #                # full_index = as.numeric(scale(full_index))
+#     # )  
+#   
+# # get 1 SD for each covariate ====
+# cov_a_sd <- stage_a_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
+#               gather(1:ncol(.), key = "id", value = "value") %>%           
+#     group_by(id) %>%           
+#     dplyr::summarise(sd = round(sd(value),6))
+#   
+#   cov_b_sd <- stage_b_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
+#     gather(1:ncol(.), key = "id", value = "value") %>%           
+#     group_by(id) %>%           
+#     dplyr::summarise(sd = round(sd(value),6))
+# 
+#    
+#   
 # OLD ===============
   
-  
-## Juvenile stage analyses specific years ========= 
-  covariates <- c("Spawner Size")
-  coef_names <- c("theta1[1]")
-  
-   #specific interest in spawner size in BY 2015
-  for (i in 1:length(covariates)) {
-    low_result <- calc_percent_change(
-      base.prod = juv_pars$basal_p_1,
-      coef = juv_pars[[coef_names[i]]],
-      capacity = juv_pars$c_1,
-      N = pred_N_j,
-      year = 2019, 
-      coef_input = stage_a_cov %>% 
-        dplyr::select(brood_year,mean_size) %>% 
-        filter(brood_year == 2019) %>%
-        dplyr::rename(coeff_value = mean_size)
-    )
-    
-    specific_results <- rbind(specific_results, data.frame(
-      stage = "Juvenile",
-      covariate = covariates[i],
-      abundance = "Mean",
-      survival_covar0 = low_result$surv_0,
-      survival_covar1 = low_result$surv_1,
-      percent_change = low_result$percent_change
-    ))
-    
-  }
-  
-  ## Return stage analyses ===========
-  covariates <- c("AI Temp")
-  coef_names <- c("theta2[2]")
-  
-  for (i in 1:length(covariates)) {
-    # Mean abundance
-    low_result <- calc_percent_change(
-      base.prod = return_pars$basal_p_2,
-      coef = return_pars[[coef_names[i]]],
-      capacity = return_pars$c_2,
-      N = pred_N_return,
-      year = 2019, 
-      coef_input = stage_b_cov %>% 
-        dplyr::select(brood_year,SST_CDD_Aleut) %>% 
-        filter(brood_year == 2019) %>%
-        dplyr::rename(coeff_value = SST_CDD_Aleut)
-    )
-    
-    specific_results <- rbind(specific_results, data.frame(
-      stage = "Return",
-      covariate = covariates[i],
-      abundance = "Mean",
-      survival_covar0 = low_result$surv_0,
-      survival_covar1 = low_result$surv_1,
-      percent_change = low_result$percent_change
-    ))
-  }
-  
-  # summarise Mean and CI for each covariate among posterior draws.
-  specific_ci_df <- calculate_credible_intervals(results_df = specific_results)
-  
-  # Return the consolidated results data frame
-  # Format the percent_change for better readability
-  specific_ci_df$mean_percent_change <- round(specific_ci_df$mean_percent_change, 2)
-  
-  # Optional: Save results to CSV
-  write.csv(specific_ci_df, "output/survival_percent_diff_specific_years.csv" )
-  
-  
-  
-  
+#   
+# ## Juvenile stage analyses specific years ========= 
+#   covariates <- c("Spawner Size")
+#   coef_names <- c("theta1[1]")
+#   
+#    #specific interest in spawner size in BY 2015
+#   for (i in 1:length(covariates)) {
+#     low_result <- calc_percent_change(
+#       base.prod = juv_pars$basal_p_1,
+#       coef = juv_pars[[coef_names[i]]],
+#       capacity = juv_pars$c_1,
+#       N = pred_N_j,
+#       year = 2019, 
+#       coef_input = stage_a_cov %>% 
+#         dplyr::select(brood_year,mean_size) %>% 
+#         filter(brood_year == 2019) %>%
+#         dplyr::rename(coeff_value = mean_size)
+#     )
+#     
+#     specific_results <- rbind(specific_results, data.frame(
+#       stage = "Juvenile",
+#       covariate = covariates[i],
+#       abundance = "Mean",
+#       survival_covar0 = low_result$surv_0,
+#       survival_covar1 = low_result$surv_1,
+#       percent_change = low_result$percent_change
+#     ))
+#     
+#   }
+#   
+#   ## Return stage analyses ===========
+#   covariates <- c("AI Temp")
+#   coef_names <- c("theta2[2]")
+#   
+#   for (i in 1:length(covariates)) {
+#     # Mean abundance
+#     low_result <- calc_percent_change(
+#       base.prod = return_pars$basal_p_2,
+#       coef = return_pars[[coef_names[i]]],
+#       capacity = return_pars$c_2,
+#       N = pred_N_return,
+#       year = 2019, 
+#       coef_input = stage_b_cov %>% 
+#         dplyr::select(brood_year,SST_CDD_Aleut) %>% 
+#         filter(brood_year == 2019) %>%
+#         dplyr::rename(coeff_value = SST_CDD_Aleut)
+#     )
+#     
+#     specific_results <- rbind(specific_results, data.frame(
+#       stage = "Return",
+#       covariate = covariates[i],
+#       abundance = "Mean",
+#       survival_covar0 = low_result$surv_0,
+#       survival_covar1 = low_result$surv_1,
+#       percent_change = low_result$percent_change
+#     ))
+#   }
+#   
+#   # summarise Mean and CI for each covariate among posterior draws.
+#   specific_ci_df <- calculate_credible_intervals(results_df = specific_results)
+#   
+#   # Return the consolidated results data frame
+#   # Format the percent_change for better readability
+#   specific_ci_df$mean_percent_change <- round(specific_ci_df$mean_percent_change, 2)
+#   
+#   # Optional: Save results to CSV
+#   write.csv(specific_ci_df, "output/survival_percent_diff_specific_years.csv" )
+#   
+#   
+#   
+#   

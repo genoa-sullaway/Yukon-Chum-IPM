@@ -44,7 +44,7 @@ pred_return <-  as.data.frame(bh_fit, pars = c("N_brood_year_return")) %>%
 
 return_plot <- ggplot(data = pred_return) +
   geom_ribbon(aes(x=brood_year, ymin =ci_95_low/1000000,
-                  ymax = ci_95_high/1000000),   fill =  "#2d9d92") +
+                  ymax = ci_95_high/1000000),   fill =  "#2d9d92",alpha = 0.6) +
   geom_line(aes(x=brood_year, y = mean/1000000)#, color = "white"
             ) +
   geom_errorbar(aes(x=brood_year, ymin = (obs-sd_obs)/1000000,
@@ -156,7 +156,7 @@ n_j_summary_clean <- map_dfr(n_j_cols, function(col) {
 
 juv_plot <- ggplot(data = n_j_summary_clean) +
   geom_ribbon(aes(x=Year, ymin =ci_95_low/1000000,
-                  ymax = ci_95_high/1000000),   fill =  "#EAAA00") +
+                  ymax = ci_95_high/1000000),   fill =  "#EAAA00",alpha = 0.6) +
   geom_line(aes(x=Year, y = mean/1000000)) +
   geom_errorbar(aes(x=Year, ymin = (obs-sd)/1000000,
                     ymax = (obs+sd)/1000000), width = 0.1, alpha = 0.6) + 
@@ -191,7 +191,7 @@ juv_plot
 obs_plot <- ggpubr::ggarrange(juv_plot,return_plot, nrow = 2, labels = c("A.", "B."))
 obs_plot
 
-ggsave("output/Plot_Manuscript_Juv_ReturnFit_Obs.png", width = 6, height = 5, bg="white")
+ggsave("output_sullaway_etal/Plot_Figure_3.png", width = 6, height = 5, bg="white")
 
 # juv plot for talk ===================
 juv_plot_talk <- ggplot(data = n_j_summary_clean) +

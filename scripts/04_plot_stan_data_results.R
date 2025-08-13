@@ -40,10 +40,10 @@ traceplot(bh_fit,pars= c("log_S"))
 
 # ess and rhat  =====
 # Find parameters with both low ESS and high Rhat
-diagnostics <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat")]) %>%
-  
-  filter(#n_eff <400 | 
-    Rhat > 1.1)
+# diagnostics <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat")]) %>%
+#   
+#   filter(#n_eff <400 | 
+#     Rhat > 1.1)
  
 diagnostics_carrying_cap <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat")]) %>%
   rownames_to_column() %>% 
@@ -70,9 +70,9 @@ plot(bh_fit, show_density = FALSE, ci_level = 0.95,
 #      pars=  c( "D_scale" ),
 #      fill_color = "blue")
 
-plot(bh_fit, show_density = FALSE, ci_level = 0.95,
-     pars=  c( "log_F_dev_y" ),
-     fill_color = "blue")
+# plot(bh_fit, show_density = FALSE, ci_level = 0.95,
+#      pars=  c( "log_F_dev_y" ),
+#      fill_color = "blue")
  
 plot(bh_fit, show_density = FALSE, ci_level = 0.95, 
      pars=  c( "log_c_1" ),

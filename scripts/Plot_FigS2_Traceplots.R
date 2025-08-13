@@ -101,4 +101,4 @@ traceplots_all <- ggpubr::ggarrange(trace_plots[[1]],
                   )
 
 #traceplots_all
-ggsave("output/Supplementary_Traceplots.png", width = 10, height = 6)
+ggsave("output_sullaway_etal/Supplementary_Traceplots.png", width = 10, height = 6)

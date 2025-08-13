@@ -180,11 +180,12 @@ MSA <- read_csv("data/Juvenile_Index_CC/Bering Sea Juvenile Chum Spatial Mixed S
   # gather(8:ncol(.), key = "Year", value = "Mean") %>%
   group_by(Year) %>%
   dplyr::summarise(mean_prop = mean(Mean, na.rm = TRUE),
-                   SD= mean(SD,na.rm = TRUE))  
+                   SD= mean(SD,na.rm = TRUE))  %>%
+  filter(!Year == 2009)
 
-MSA_for_plot <- MSA %>% rbind(data.frame(Year = c(2008, 2013,2020),
-                 mean_prop = c(NA,NA,NA),
-                 SD = c(NA,NA,NA)))  
+MSA_for_plot <- MSA %>% rbind(data.frame(Year = c(2008, 2009, 2013,2020),
+                 mean_prop = c(NA,NA,NA,NA),
+                 SD = c(NA,NA,NA,NA)))  
 
  # Plot MSA =====
 MSA_plot <- ggplot(data = MSA_for_plot,aes(x=Year, y = mean_prop)) +
@@ -220,8 +221,15 @@ MSA_plot
 ggsave("output/juvenile_MSA_plot.png", width = 5, height = 3)
 
 # add rolling means to fill in blank years, I think this will get filled in with models later? 
+# for 2008 and 2009, using total means via communication from Sabrina
+
 rollingmean_GSI_2008 <- MSA %>%
-  filter(Year %in% c(2007,2009)) %>%
+  # filter(Year %in% c(2007,2009)) %>%
+  ungroup() %>%
+  dplyr::summarise(mean_prop = mean(mean_prop))
+
+rollingmean_GSI_2009 <- MSA %>%
+  # filter(Year %in% c(2007,2009)) %>%
   ungroup() %>%
   dplyr::summarise(mean_prop = mean(mean_prop))
 
@@ -238,11 +246,12 @@ abund_2020 <- juv %>%
   dplyr::summarise(Estimate = mean(Estimate))
 
 juv_df <- MSA %>%
-  dplyr::mutate(mean_prop = case_when(Year == 2009 ~ 0.0082, # 0.008 is the DE from the estimate, i htink the model will get weird with 0 individuals...
-                                      TRUE ~ mean_prop)) %>% 
-  rbind(data.frame(Year = c(2008, 2013,
-                            2020),
+  dplyr::select(-SD) %>% 
+  # dplyr::mutate(#mean_prop = case_when(Year == 2009 ~ 0.0082, # 0.008 is the DE from the estimate, i htink the model will get weird with 0 individuals...
+  #                #                     TRUE ~ mean_prop)) %>% 
+  rbind(data.frame(Year = c(2008,2009,2013,2020),
                          mean_prop = c(rollingmean_GSI_2008$mean_prop,
+                                       rollingmean_GSI_2009$mean_prop,
                                        rollingmean_GSI_2013$mean_prop,
                                        rollingmean_GSI_2020$mean_prop))) %>%
   left_join(juv) %>%

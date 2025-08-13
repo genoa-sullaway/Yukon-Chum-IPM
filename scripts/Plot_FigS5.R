@@ -24,13 +24,13 @@ theta_df <- as.data.frame(bh_fit, pars = c(
                                      rowname=="theta1[3]" ~ "Pollock Recruitment",  
                                      
                                      rowname=="theta2[1]" ~ "Fullness Index",
-                                     rowname=="theta2[2]" ~ "Aleutian Winter Temperature", 
+                                     rowname=="theta2[2]" ~ "GOA Winter Temperature", 
                                      rowname=="theta2[3]" ~  "Chum Salmon Hatchery Release Abundance"),  
                 stage = case_when(variable %in% c( "NBS July/August Temperature",
                                                    "Pollock Recruitment", 
                                                    "Winter Snowpack",
                                                    "Mean Return Size") ~ "Juvenile",
-                                  variable %in% c("Aleutian Winter Temperature",
+                                  variable %in% c("GOA Winter Temperature",
                                                   "Chum Salmon Hatchery Release Abundance",
                                                   "Fullness Index") ~ "Marine")) %>% 
   group_by(stage,variable) %>% 
@@ -52,14 +52,14 @@ theta_df <- as.data.frame(bh_fit, pars = c(
                                          rowname=="theta1[3]" ~ "NBS July/August Temperature",
                                          
                                          rowname=="theta2[1]" ~ "Fullness Index",
-                                         rowname=="theta2[2]" ~ "Aleutian Winter Temperature", 
+                                         rowname=="theta2[2]" ~ "GOA Winter Temperature", 
                                          rowname=="theta2[3]" ~  "Chum Salmon Hatchery Release Abundance"),  
                   
         stage = case_when(variable %in% c( "NBS July/August Temperature",
                                            "Pollock Recruitment",
                                            "Winter Snowpack", 
                                            "Mean Return Size") ~ "Juvenile",
-                          variable %in% c("Aleutian Winter Temperature",
+                          variable %in% c("GOA Winter Temperature",
                                           "Chum Salmon Hatchery Release Abundance",
                                           "Fullness Index") ~ "Marine")) %>% 
       group_by(stage,variable) %>% 
@@ -80,14 +80,14 @@ theta_df <- as.data.frame(bh_fit, pars = c(
                                          rowname=="theta1[3]" ~ "Pollock Recruitment",
                                          
                                          rowname=="theta2[1]" ~ "Fullness Index",
-                                         rowname=="theta2[2]" ~ "Aleutian Winter Temperature", 
+                                         rowname=="theta2[2]" ~ "GOA Winter Temperature", 
                                          rowname=="theta2[3]" ~ "Chum Salmon Hatchery Release Abundance"),  
                     
         stage = case_when(variable %in% c( "NBS July/August Temperature",
                                            "Pollock Recruitment",
                                            "Winter Snowpack",
                                            "Mean Return Size") ~ "Juvenile",
-                          variable %in% c("Aleutian Winter Temperature",
+                          variable %in% c("GOA Winter Temperature",
                                           "Chum Salmon Hatchery Release Abundance",
                                           "Fullness Index") ~ "Marine")) %>% 
       group_by(stage,variable) %>% 
@@ -108,14 +108,14 @@ theta_df <- as.data.frame(bh_fit, pars = c(
                                          rowname=="theta1[3]" ~ "Pollock Recruitment",
                                          
                                          rowname=="theta2[1]" ~ "Fullness Index",
-                                         rowname=="theta2[2]" ~ "Aleutian Winter Temperature", 
+                                         rowname=="theta2[2]" ~ "GOA Winter Temperature", 
                                          rowname=="theta2[3]" ~  "Chum Salmon Hatchery Release Abundance"),  
                     
         stage = case_when(variable %in% c( "NBS July/August Temperature",
                                            "Pollock Recruitment",
                                            "Winter Snowpack",
                                            "Mean Return Size") ~ "Juvenile",
-                          variable %in% c("Aleutian Winter Temperature",
+                          variable %in% c("GOA Winter Temperature",
                                           "Chum Salmon Hatchery Release Abundance",
                                           "Fullness Index") ~ "Marine")) %>% 
       group_by(stage,variable) %>% 
@@ -128,7 +128,7 @@ theta_df <- as.data.frame(bh_fit, pars = c(
 }
   
   if(stage == "b"){
-if(cov_removed == "SST_CDD_Aleut"){
+if(cov_removed == "SST_CDD_GOA"){
     theta_df <- as.data.frame(bh_fit, pars = c(
       "theta1[1]","theta1[2]","theta1[3]","theta1[4]", 
       "theta2[1]","theta2[2]" )) %>% 
@@ -145,7 +145,7 @@ if(cov_removed == "SST_CDD_Aleut"){
                                                        "NBS July/August Temperature",
                                                        "Pollock Recruitment", 
                                                        "Mean Return Size") ~ "Juvenile",
-                                      variable %in% c("Aleutian Winter Temperature",
+                                      variable %in% c("GOA Winter Temperature",
                                                       "Chum Salmon Hatchery Release Abundance",
                                                       "Fullness Index") ~ "Marine")) %>% 
       group_by(stage,variable) %>% 
@@ -167,13 +167,13 @@ if(cov_removed == "Chum_hatchery"){
                                        rowname=="theta1[4]" ~ "Pollock Recruitment",
                                        
                                        rowname=="theta2[1]" ~ "Fullness Index",
-                                       rowname=="theta2[2]" ~ "Aleutian Winter Temperature"),  
+                                       rowname=="theta2[2]" ~ "GOA Winter Temperature"),  
                   
                   stage = case_when(variable %in% c( "NBS July/August Temperature",
                                                      "Pollock Recruitment", 
                                                      "Winter Snowpack",
                                                      "Mean Return Size") ~ "Juvenile",
-                                    variable %in% c("Aleutian Winter Temperature",
+                                    variable %in% c("GOA Winter Temperature",
                                                     "Chum Salmon Hatchery Release Abundance",
                                                     "Fullness Index") ~ "Marine")) %>% 
     group_by(stage,variable) %>% 
@@ -195,13 +195,13 @@ if(cov_removed == "full_index"){
                                        rowname=="theta1[3]" ~ "NBS July/August Temperature",
                                        rowname=="theta1[4]" ~ "Pollock Recruitment",
                                        
-                                       rowname=="theta2[1]" ~ "Aleutian Winter Temperature",
+                                       rowname=="theta2[1]" ~ "GOA Winter Temperature",
                                        rowname=="theta2[2]" ~  "Chum Salmon Hatchery Release Abundance"),  
                   stage = case_when(variable %in% c( "NBS July/August Temperature",
                                                      "Pollock Recruitment", 
                                                      "Winter Snowpack",
                                                      "Mean Return Size") ~ "Juvenile",
-                                    variable %in% c("Aleutian Winter Temperature",
+                                    variable %in% c("GOA Winter Temperature",
                                                     "Chum Salmon Hatchery Release Abundance"
                                                    ) ~ "Marine")) %>% 
     group_by(stage,variable) %>% 
@@ -260,10 +260,10 @@ cov_a_list<- c("SST_CDD_NBS",
                "mean_size",
                "fall_snow_cummulative")
 
-cov_b_list<-  c("SST_CDD_Aleut",
+cov_b_list<-  c("SST_CDD_GOA",
                 "Chum_hatchery",
                 "full_index")
-
+ 
 for(i in 1:length(stage_a_list)){
   bh_fit <- stage_a_list[[i]]
   cov_removed <- cov_a_list[[i]]
@@ -292,14 +292,13 @@ full_mod_df <- as.data.frame(full_mod, pars = c(
     rowname=="theta1[4]" ~  "Pollock Recruitment",  
     
     rowname=="theta2[1]" ~ "Fullness Index",  
-    rowname=="theta2[2]" ~ "Aleutian Winter Temperature",  
+    rowname=="theta2[2]" ~ "GOA Winter Temperature",  
     rowname=="theta2[3]" ~ "Chum Salmon Hatchery Release Abundance"), 
-    stage = case_when(variable %in% c( "Yukon River Mainstem Discharge",
-                                       "NBS July/August Temperature",
+    stage = case_when(variable %in% c( "NBS July/August Temperature",
                                        "Pollock Recruitment",
                                        "Winter Snowpack",
                                        "Mean Return Size") ~ "Juvenile",
-                      variable %in% c("Aleutian Winter Temperature",
+                      variable %in% c("GOA Winter Temperature",
                                       "Chum Salmon Hatchery Release Abundance", 
                                       "Fullness Index") ~ "Marine")) %>% 
   group_by(stage,variable) %>% 
@@ -339,16 +338,16 @@ joined_stage_b <- left_join(stage_b_df,full_mod_df) %>%
                 abs_diff) %>%
  
   dplyr::mutate( 
-                covariate_removed = case_when(covariate_removed== "SST_CDD_Aleut" ~ "CDD SST-Aleut",
+                covariate_removed = case_when(covariate_removed== "SST_CDD_GOA" ~ "CDD SST-GOA",
                                               covariate_removed== "Chum_hatchery" ~ "Chum Hatchery Abund.",
                                               covariate_removed== "full_index" ~ "Fullness Index"),
                 variable = case_when(variable == "Chum Salmon Hatchery Release Abundance" ~"Chum Hatchery Abund.",
-                                     variable == "Aleutian Winter Temperature" ~ "CDD SST-Aleut",
+                                     variable == "GOA Winter Temperature" ~ "CDD SST-GOA",
                                       TRUE ~ variable),
                 covariate_removed = factor(covariate_removed, 
-                                           levels = c("Fullness Index","CDD SST-Aleut",
+                                           levels = c("Fullness Index","CDD SST-GOA",
                                                        "Chum Hatchery Abund.")), 
-                variable = factor(variable, levels = c("Fullness Index","CDD SST-Aleut",
+                variable = factor(variable, levels = c("Fullness Index","CDD SST-GOA",
                                                        "Chum Hatchery Abund."))) %>%
   filter(!is.na(variable))
   
@@ -362,7 +361,7 @@ plota<- ggplot(data = joined_stage_a ,
   scale_color_viridis(discrete = TRUE, name = "Covariate Sensitivity Response") +
   ylab("Relative Difference") +
   xlab("Covariate Removed") +
-  ggtitle("Stage A")+
+  ggtitle("Juvenile")+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 plota
@@ -377,7 +376,7 @@ plotb<- ggplot(data = joined_stage_b ,
   scale_color_viridis(discrete = TRUE,name = "Covariate Sensitivity Response") +
   ylab("Relative Difference") +
   xlab("Covariate Removed") +
-  ggtitle("Stage B") +
+  ggtitle("Marine") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 plotb

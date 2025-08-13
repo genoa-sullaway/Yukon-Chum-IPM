@@ -167,11 +167,11 @@ summary_df <- rbind(
     prior = "Beta(1,1)"),
  
   ## D_scale =======
-  create_parameter_summary(
-    fit = fit,
-    parameter_name = "D_scale",
-    notation = "$\\sigma_o$",
-    prior = "Beta(1,1)"),
+  # create_parameter_summary(
+  #   fit = fit,
+  #   parameter_name = "D_scale",
+  #   notation = "$\\sigma_o$",
+  #   prior = "Beta(1,1)"),
   ## D_scale =======
   create_parameter_summary(
     fit = fit,
@@ -186,73 +186,12 @@ summary_df <- rbind(
     prior = "XX")
 )
 
-# Add parameter grouping
-# summary_df$Group <- c(
-#                       "Observation Error", "Observation Error",
-#                       "Observation Error", "Observation Error",
-#                       "Basal Productivity - Juvenile",  "Basal Productivity - Marine",
-#                       "Covariate Coefficient- Juvenile", "Covariate Coefficient- Juvenile", 
-#                       "Covariate Coefficient- Juvenile", "Covariate Coefficient- Juvenile", "Covariate Coefficient- Juvenile", 
-#                       "Covariate Coefficient- Marine", "Covariate Coefficient- Marine",
-#                       "Covariate Coefficient- Marine", "Covariate Coefficient- Marine",
-#                       "Selectivity", "Selectivity", 
-#                       "Selectivity", "Selectivity", 
-#                       "Mean Instantaneous Fishing Mortality", "Fishing Mortality Deviations", 
-#                       "Juvenile Abundance Constant", 
-#                       "Mean Age at Maturity",  "Mean Age at Maturity", 
-#                       "Mean Age at Maturity",  "Mean Age at Maturity", 
-#                       "Age Structure Variability")
-
 # Create formatted table with parameter grouping
 table <- summary_df %>%
   # Reorder columns to include grouping
-  dplyr::select( Parameter,# Notation, 
-         Estimate, CI_95, ESS, Rhat) #%>%
-  # Create the table
-  # kable(format = "latex", 
-  #       escape = FALSE,
-  #       col.names = c("Group", "Parameter", "Notation", "Estimate", 
-  #                     "95% CI", "ESS", "R-hat", "Prior"),
-  #       align = c("l", "l", "c", "c", "c", "r", "c", "l"),
-  #       booktabs = TRUE) %>%
-  # kable_styling(latex_options = c("striped", "hold_position")) %>%
-  # # Add grouping
-  # pack_rows(index = table(summary_df$Group)) %>%
-  # # Add footnote explaining diagnostics
-  # footnote(
-  #   c("ESS: Effective Sample Size",
-  #     "R-hat: Gelman-Rubin convergence diagnostic")#,
-  #  # threepartslong = TRUE
-  # )
-
-# Print table
+  dplyr::select(Parameter,# Notation, 
+         Estimate, CI_95) #%>%
 
 #print(
   View(table)
   
-# save ========
-
-# For Word paper
-# write.csv(table, "output/Supplemental_Table_Parameter_Estimates_forCOPY.csv")#, row.names = FALSE)
-# save_publication_table(table, "Supplemental_Table_Parameter_Estimates", format = "word")
-
-# 
-# 
-# kable(summary_df, format = "html", escape = FALSE) %>%
-#   kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
-#   write_html("Supplemental_Table_Parameter_Estimates.html")
-# 
-#  
-# # Save the HTML table to a file
-# 
-# kable(summary_df, "latex") %>%
-#   kable_styling(latex_options = "striped") %>%
-#   save_kable("output/Supplemental_Table_Parameter_Estimates.png")
-# 
-# library(kableExtra)
-# 
-# kable(summary_df, "latex", booktabs = T) %>%
-#   kable_styling(latex_options = c("striped", "scale_down")) %>%
-#   row_spec(1, color = "red") %>%
-#   as_image()
-#  

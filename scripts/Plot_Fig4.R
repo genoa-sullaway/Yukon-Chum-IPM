@@ -7,9 +7,9 @@ library(bayestestR)
 # Plot percent change in survival ============
 source("scripts/Calculate_Percent_Survival.R")
 
-ci_df <- read_csv("output/survival_percent_diff.csv") %>%
+ci_df <- read_csv("output_sullaway_etal/survival_percent_diff.csv") %>%
           dplyr::mutate(covariate = case_when(covariate == "SST CDD" ~ "NBS SST",
-                                              covariate == "AI Temp" ~ "AI SST",
+                                              covariate == "GOA Temp" ~ "GOA SST",
                                               covariate == "Fullness" ~ "Fullness Index",
                                               covariate == "Pollock" ~ "Pollock Recruitment",
                                               covariate == "Chum" ~ "Hatchery Chum",
@@ -20,7 +20,7 @@ ci_df <- read_csv("output/survival_percent_diff.csv") %>%
                                              "Pollock Recruitment",
                                              
                                              "Fullness Index",
-                                             "AI SST",
+                                             "GOA SST",
                                              "Hatchery Chum"))))
  
 theta_plot <- ggplot(data = ci_df,
@@ -49,7 +49,7 @@ theta_plot <- ggplot(data = ci_df,
   facet_wrap(~stage, scales = "free_y", ncol = 1)  
 
 theta_plot
-ggsave("output/Plot_Manuscript_Covariates.png", width = 7, height = 4 )
+ggsave("output_sullaway_etal/Plot_Figure_4.png", width = 7, height = 4 )
 
 # STOP HERE FOR MANUSCRIPT PLOTS ===== 
 ## perent change plot for talk - white ==========================

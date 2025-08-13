@@ -7,8 +7,11 @@ data { // all equation references are from proposal numbering
   int<lower=0> nByrs_return_dat; // brood years specifically for return data  
   int <lower=0> lik_count; // for generated quantities, how many likelihoods are there? 
   real<lower=0> Ps; // Proportion of females in spawning stock, based on lit - currently 50%
-  // vector [A] fs; // fecundity
+  // vector [A] alpha;
+   // vector [A] fs; // fecundity
   vector [A] M; // fixed mortality for 3 older age classes
+  real<lower=0> beta;
+  real<lower=0> D_scale;
 
   vector[nByrs] juv_CV; 
   vector[nRyrs] return_CV; 
@@ -40,7 +43,7 @@ transformed data {
   }
 parameters {
  // starting values 
-real <lower =10> N_j_start_log;
+real <lower =0> N_j_start_log;
 real <lower =0> N_brood_year_return_start_log;
 real <lower =0> N_sp_start_log[t_start,A];
 real <lower =0> N_recruit_start_log[t_start,A];
@@ -54,28 +57,20 @@ real <lower =0> N_egg_start_log[t_start,A];
 real <lower =-1, upper = 1> theta1 [ncovars1]; // covariate estimated for each covariate and each population
 real <lower =-1, upper = 1> theta2 [ncovars2];
 
-// vector <lower=0> [A-1] prob;
-real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 real <lower=0> g[nByrs,A]; // gamma random draws
 vector<lower=0,upper=1>[3] prob;   // Maturity schedule probs
   
 real log_catch_q; 
 real log_F_mean; 
-// vector [A] log_S; // log selectivity 
+vector [A] log_S; // log selectivity 
 vector [nRyrs_T]  log_F_dev_y; 
 
-real <lower=0, upper = 1> basal_p_1; // mean prod for covariate survival stage 1
-real <lower=0.4, upper = 1> basal_p_2; // mean prod for covariate survival stage 2
+real  basal_p_1; // mean prod for covariate survival stage 1
+real  basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
-  vector <lower=0, upper =10> [A] alpha;
-// vector <lower=0 > [A] alpha;
-// real <lower=0> beta; 
-
-// real <lower=0> sigma_juv;
-// real <lower=0> sigma_rec;
-// real <lower=0> sigma_harvest;
-// real <lower=0> sigma_sp;
+ vector <lower=5> [A] alpha;
+ 
  }
 
 transformed parameters { 
@@ -97,8 +92,10 @@ real N_egg_start[t_start,A];
 real N_brood_year_return_start; 
 real N_j_start; 
  
-vector <lower = 0> [nRyrs_T] F;
-// vector <lower = 0> [A] S; //selectivty
+vector [nRyrs_T] F;
+// vector <lower = 1> [A] alpha; 
+
+vector [A] S; //selectivty
  
 // survival and covariate section 
 vector  <lower=0,upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
@@ -111,13 +108,11 @@ matrix  [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine cova
 matrix  [nByrs, ncovars2] cov_eff2; 
 
 real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
-
-// alpha = exp(logalpha);
  
 // Age related transformed params ====== 
 matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year that mature at a certain age
-real<lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
-vector<lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
+real <lower=0> D_sum;                   // Inverse of D_scale which governs variability of age proportion vectors across cohorts
+vector <lower=0> [A] Dir_alpha;          // Dirichlet shape parameter for gamma distribution used to generate vector of age-at-maturity proportions
 matrix  [nRyrs,A] q; 
 vector <lower=0, upper=1> [A] pi; // actual age comps
 
@@ -127,7 +122,7 @@ real<lower=0> c_2;
 c_1 = exp(log_c_1);
 c_2 = exp(log_c_2);
  
-  // S = exp(log_S);
+S = exp(log_S);
  
  // Eq 4.8 
   for(t in 1:nRyrs_T){
@@ -181,8 +176,7 @@ for(t in 1:nByrs){
   pi[3] = prob[3] * (1 - pi[1] - pi[2]);
   pi[4] = 1 - pi[1] - pi[2] - pi[3];
   
-  // D_sum = 1/(D_scale^2);
-    D_sum = 1/D_scale^2;
+  D_sum = 1/(D_scale^2); 
 
   for (a in 1:A) {
     Dir_alpha[a] = D_sum * pi[a];
@@ -205,17 +199,19 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
          N_brood_year_return[t] = N_j[t]*kappa_marine_survival[t]; // Eq 4.4          
         
         for (a in 1:A) { 
-           N_recruit[t+a+1,a] = (N_brood_year_return[t]*p[t,a]) * exp(-(sum(M[1:a]))); //Eq 4.5 - part of it, see above for the rest of age comp estiamtion 
+           N_recruit[t+a+1,a] = (N_brood_year_return[t]*p[t,a]); //* exp(-(sum(M[1:a]))); //Eq 4.5 - part of it, see above for the rest of age comp estiamtion 
 
-           // text has selectivity in this equation, I have removed it for now. 
-           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]))); // Eq 4.7 
+           // no selectivity 
+           // N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]))); // Eq 4.7 
+           // selectivity included 
+           N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]*S[a]))); // Eq 4.7  
            
            N_sp[t+a+1,a] = N_recruit[t+a+1,a]-N_catch[t+a+1,a];  // Eq 4.9
            // issues estimating traditional ricker - changed to linear scalar
            
-           // N_e[t+a+1,a] = Ps*(N_sp[t+a+1,a] * exp(alpha[a] - (beta * N_sp[t+a+1,a])));  
+          N_e[t+a+1,a] = (Ps*N_sp[t+a+1,a]) * exp(alpha[a] - (beta * (Ps*N_sp[t+a+1,a])));
            // try linear and dont estimate beta
-          N_e[t+a+1,a] = exp(alpha[a]) * (Ps*N_sp[t+a+1,a]); // Eq 4.10
+          //N_e[t+a+1,a] = (exp(alpha[a])) * (Ps*N_sp[t+a+1,a]); // Eq 4.10
           
             }
      }
@@ -234,39 +230,41 @@ for(t in 1:nByrs){
 }
 
 model { 
-   log_catch_q ~ normal(-5,1);
-   
-   // for(a in 1:A){
-     // alpha[a] ~  normal(7,5); //  
-   // }
-   // in the middle of experimenting with different alpha priors - its sensitive here. 
-   alpha[1] ~  normal(7.4,0.5);
-   alpha[2] ~  normal(7.5,0.5);
-   alpha[3] ~  normal(7.6,0.5);
-   alpha[4] ~  normal(7.7,0.5);
-    
-  prob[1] ~ beta(1,1);
-  prob[2] ~ beta(1,1);
-  prob[3] ~ beta(1,1);
-  
-  // pi ~ beta(1,1); 
+   log_catch_q ~ normal(0,1); // works but loosening it up, normal(-5,1);
 
+  log_S[1] ~ normal(0,0.5); 
+  log_S[2] ~ normal(0,0.5); 
+  log_S[3] ~ normal(0,0.5); 
+  log_S[4] ~ normal(0,0.5); 
+      
+   alpha[1] ~  normal(7, 1); 
+   alpha[2] ~  normal(7, 1);
+   alpha[3] ~  normal(7, 1);
+   alpha[4] ~  normal(7, 1);
+  
+   // alpha[1] ~  normal(1, 5); 
+   // alpha[2] ~  normal(1, 5);
+   // alpha[3] ~  normal(1, 5);
+   // alpha[4] ~  normal(1, 5);
+
+   prob[1] ~ beta(1,1);
+   prob[2] ~ beta(1,1);
+   prob[3] ~ beta(1,1);
+ 
   log_c_1 ~ normal(15,2);
   log_c_2 ~ normal(17,2);
+ 
 
-  // Dir_alpha ~ beta(1,1);
-for(i in 1:ncovars1) {
+ for(i in 1:ncovars1) {
   theta1[i] ~ normal(0,0.1);
   }
   
   for(i in 1:ncovars2) {
   theta2[i] ~ normal(0,0.1);
-  }
-   
-  D_scale ~ beta(1,1);  
-
-  basal_p_1 ~ beta(1,1);  
-  basal_p_2 ~ beta(1,1);  
+  } 
+    
+  basal_p_1 ~ normal(0,1.5);  
+  basal_p_2 ~ normal(0,1.5); 
 
 // age comp 
  for(t in 1:nByrs){
@@ -276,10 +274,10 @@ for(i in 1:ncovars1) {
 }
 
 // log fishing mortality for each calendar year
-log_F_mean ~ normal(0,0.1);
+  log_F_mean ~ normal(0,0.1);
  
  for(t in 1:nRyrs_T){
-   log_F_dev_y[t] ~ normal(0, 1);
+   log_F_dev_y[t] ~ normal(0, 5);
 }
 
  N_j_start_log ~ normal(14,5);
@@ -296,7 +294,7 @@ log_F_mean ~ normal(0,0.1);
    
  // Likelihoods - Observation model
   for (t in 1:nByrs) {
-     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), ( sqrt(log((0.2^2) + 1)))); //( sqrt(log((juv_CV[t]^2) + 1)))); //(sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));
+     target += normal_lpdf(log(data_stage_j[t]) | log(N_j_predicted[t]), (sqrt(log((0.2^2) + 1)))); //( sqrt(log((juv_CV[t]^2) + 1)))); //(sigma_juv + sqrt(log((juv_CV[t]^2) + 1))));//sqrt(log((0.38^2) + 1)));  // (sigma_juv));// + sqrt(log((juv_CV[t]^2) + 1)))); //sqrt(log((0.38^2) + 1)));
   }
  // recruit by brood year
   for (t in 1:nByrs_return_dat) {

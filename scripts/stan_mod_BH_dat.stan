@@ -57,10 +57,7 @@ real <lower =0> N_egg_start_log[t_start,A];
 real <lower =-1, upper = 1> theta1 [ncovars1]; // covariate estimated for each covariate and each population
 real <lower =-1, upper = 1> theta2 [ncovars2];
 
-// vector <lower=0> [A-1] prob;
-// real <lower=0, upper=1> D_scale;     // Variability of age proportion vectors across cohorts
 real <lower=0> g[nByrs,A]; // gamma random draws
-// vector[3] prob;   // Maturity schedule probs
 vector<lower=0,upper=1>[3] prob;   // Maturity schedule probs
   
 real log_catch_q; 
@@ -72,7 +69,7 @@ real  basal_p_1; // mean prod for covariate survival stage 1
 real  basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
- vector <lower=1> [A] alpha;
+ vector <lower=6> [A] alpha;
  
  }
 
@@ -202,7 +199,7 @@ catch_q = exp(log_catch_q); // Q to relate basis data to recruit/escapement data
          N_brood_year_return[t] = N_j[t]*kappa_marine_survival[t]; // Eq 4.4          
         
         for (a in 1:A) { 
-           N_recruit[t+a+1,a] = (N_brood_year_return[t]*p[t,a]) * exp(-(sum(M[1:a]))); //Eq 4.5 - part of it, see above for the rest of age comp estiamtion 
+           N_recruit[t+a+1,a] = (N_brood_year_return[t]*p[t,a]); //* exp(-(sum(M[1:a]))); //Eq 4.5 - part of it, see above for the rest of age comp estiamtion 
 
            // no selectivity 
            // N_catch[t+a+1,a] = N_recruit[t+a+1,a]*(1-exp(-(F[t+a+1]))); // Eq 4.7 
@@ -240,10 +237,15 @@ model {
   log_S[3] ~ normal(0,0.5); 
   log_S[4] ~ normal(0,0.5); 
       
-   alpha[1] ~  normal(1, 5); 
-   alpha[2] ~  normal(1, 5);
-   alpha[3] ~  normal(1, 5);
-   alpha[4] ~  normal(1, 5);
+   alpha[1] ~  normal(7, 1); 
+   alpha[2] ~  normal(7, 1);
+   alpha[3] ~  normal(7, 1);
+   alpha[4] ~  normal(7, 1);
+  
+   // alpha[1] ~  normal(1, 5); 
+   // alpha[2] ~  normal(1, 5);
+   // alpha[3] ~  normal(1, 5);
+   // alpha[4] ~  normal(1, 5);
 
    prob[1] ~ beta(1,1);
    prob[2] ~ beta(1,1);

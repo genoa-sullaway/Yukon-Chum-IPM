@@ -79,7 +79,7 @@ yrep_clean <- as.data.frame(yrep) %>%
   ) %>%
   # Remove draw_id if you don't need it
   dplyr::select(-draw_id) %>%
-  dplyr::select(paste0("N_catch_sum_", 1:26)) %>%
+  dplyr::select(paste0("N_catch_sum_", 1:25)) %>%
   dplyr::select(c(1:21)) %>%
   as.matrix()
  
@@ -125,7 +125,7 @@ yrep_clean <- as.data.frame(yrep) %>%
   ) %>%
   # Remove draw_id if you don't need it
   dplyr::select(-draw_id) %>%
-  dplyr::select(paste0("N_sp_sum_", 1:26)) %>%
+  dplyr::select(paste0("N_sp_sum_", 1:25)) %>%
   dplyr::select(c(1:20)) %>%
   as.matrix()
 
