@@ -22,12 +22,18 @@ library(here)
 #   dplyr::rename(brood_year = "year") %>%
 #   dplyr::select(brood_year,fall_mintemp_CDD,fall_max_snow_depth)  
 
+# snow depth ======
+# new as of Sept 2025
+snow_depth <- read.csv("data/processed_covariates/Stage_A_Snow.csv") %>%
+  dplyr::rename( 
+                snow_depth = "trend")
+
 # circle snow ============
-circle_snow <- read.csv("data/circle_snow_processed.csv") %>%
-  dplyr::rename(brood_year = "year") %>% 
-  group_by(brood_year) %>% 
-  dplyr::summarise(fall_snow_cummulative = sum(Monthly.Mean.Snow.Depth..in.))  
- 
+# circle_snow <- read.csv("data/circle_snow_processed.csv") %>%
+#   dplyr::rename(brood_year = "year") #%>% 
+  # group_by(brood_year) %>% 
+  # dplyr::summarise(fall_snow_cummulative = sum(Monthly.Mean.Snow.Depth..in.))  
+  # 
                  #                    fall_meantemp_CDD = sum(mean_temperature),
                  #                    fall_max_snow_depth = sum(max_snow_depth_in)) %>%
                  #   filter(year > 2000) %>% 
@@ -77,14 +83,11 @@ sst_a <- read_csv("data/processed_covariates/Stage_A_CDD.csv") %>%
 # sockeye =========
 sockeye <- read_csv("data/processed_covariates/Cov_A_Sockeye_JuvIndex.csv")  
   
-  
-  
   # Stage A - One DF for model ============= 
 stage_a_cov<- left_join(river_discharge_a,sst_a)  %>%
-              # left_join(zoop)  %>%
               left_join(pollock) %>%
               left_join(size) %>%
-              left_join(circle_snow) %>% 
+              left_join(snow_depth) %>% 
               left_join(sockeye) %>% 
   data.frame()
 
@@ -96,17 +99,24 @@ fullness_df<-readRDS("data/processed_covariates/fullness_cov.RDS") %>%
   dplyr::rename(Year = "SampleYear_add1") %>%
   dplyr::select(Year, full_index_scale )  
 
-hatchery_chum_df<-read_csv("data/hatchery_Chum_Covariate_AKandAsia.csv") 
-hatchery_chum_b<-hatchery_chum_df %>%
-  dplyr::rename(Chum_hatchery="sum") %>%
-  dplyr::select(Year, Chum_hatchery) %>%
-  rbind(data.frame(Year = c(2023),
-                   Chum_hatchery = c(mean(hatchery_chum_df$sum) + 0.01)))
+# chum_df<-read_csv("output/total_chum_CovB.csv") %>%
+  # dplyr::rename(Year = "year")
 
-hatchery_pink_df <- read_csv("data/hatchery_Pink_Covariate_AKandAsia.csv") 
+# this has natural and hatchery and just hatchery, all rolling means scaled etc
+chum_df<-read_csv("output/Chum_CovB.csv.csv") %>%
+  dplyr::rename(Year = "year")
+
+# hatchery_chum_df<-read_csv("data/hatchery_Chum_Covariate_AKandAsia.csv") 
+# hatchery_chum_b<-hatchery_chum_df %>%
+#   dplyr::rename(Chum_hatchery="sum") %>%
+#   dplyr::select(Year, Chum_hatchery) %>%
+#   rbind(data.frame(Year = c(2023),
+#                    Chum_hatchery = c(mean(hatchery_chum_df$sum) + 0.01)))
+
+hatchery_pink_df <- read_csv("data/hatchery_Pink_Covariate_AKandAsia.csv")
 hatchery_pink_b <- hatchery_pink_df%>%
   dplyr::rename(Pink_hatchery="sum") %>%
-  dplyr::select(Year, Pink_hatchery) %>% 
+  dplyr::select(Year, Pink_hatchery) %>%
   rbind(data.frame(Year = c(2023),
                    Pink_hatchery = c(mean(hatchery_pink_df$sum) + 0.01)))
 
@@ -116,7 +126,8 @@ sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv") %>%
   dplyr::select(Year, SST_CDD_GOA)
 
 stage_b_cov<- left_join(hatchery_pink_b,sst_b) %>%
-              left_join(hatchery_chum_b) %>%
+              left_join(chum_df) %>%
+              # left_join(hatchery_chum_b) %>%
               left_join(fullness_df) %>%
   dplyr::mutate(brood_year = Year-2)
 

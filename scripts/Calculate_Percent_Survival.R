@@ -157,7 +157,7 @@ library(rstan)
   
 # Extract return parameters =======
   return_pars <- extract_params(fit = bh_fit, 
-                                param_names = c("c_2", "basal_p_2", "theta2[1]", "theta2[2]", "theta2[3]"))
+                                param_names = c("c_2", "basal_p_2", "theta2[1]", "theta2[2]", "theta2[3]","theta2[4]"))
   
   # Get mean abundance values that go into the calculation ==============
   # could adjust to get a specific year
@@ -194,8 +194,8 @@ library(rstan)
   
   # Return stage analyses ===========
   covariates <- c("Fullness",
-                  "GOA Temp", "Chum")
-  coef_names <- c("theta2[1]", "theta2[2]", "theta2[3]")
+                  "GOA Temp", "All Chum", "Hatchery Chum")
+  coef_names <- c("theta2[1]", "theta2[2]", "theta2[3]","theta2[4]")
   
   for (i in 1:length(covariates)) {
     # Mean abundance

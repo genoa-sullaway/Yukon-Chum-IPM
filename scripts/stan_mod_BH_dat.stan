@@ -69,7 +69,7 @@ real  basal_p_1; // mean prod for covariate survival stage 1
 real  basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
- vector <lower=6> [A] alpha;
+ vector <lower=7.5> [A] alpha;
  
  }
 
@@ -98,8 +98,11 @@ vector [nRyrs_T] F;
 vector [A] S; //selectivty
  
 // survival and covariate section 
-vector  <lower=0,upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
-vector <lower=0,upper = 1>  [nByrs] p_2;
+// vector  <lower=0,upper = 1> [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
+// vector <lower=0,upper = 1>  [nByrs] p_2;
+ 
+vector [nByrs] p_1; // productivity in bev holt transition funciton, 1 = FW early marine
+vector [nByrs] p_2;
  
 vector [nByrs] kappa_j_survival; // predicted survival for juvenile fish (FW and early marine)
 vector [nByrs] kappa_marine_survival; // predicted survival for marine fish
@@ -264,6 +267,8 @@ model {
   theta2[1] ~ normal(0,0.1);
   theta2[2] ~ normal(0,0.1);
   theta2[3] ~ normal(0,0.1);
+  // theta2[4] ~ normal(0,0.1);
+  
   
   // D_scale ~ beta(1,1);   
 

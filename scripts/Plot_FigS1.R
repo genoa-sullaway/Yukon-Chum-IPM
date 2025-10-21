@@ -4,13 +4,12 @@ library(here)
 # plot all covariates for supplemental figure 
 # load data =======
 cov_a <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-  dplyr::mutate( pollock_recruit_millions =Recruit_age_1_millions,# as.numeric(scale(Recruit_age_1_millions)), 
+  dplyr::mutate( pollock_recruit_millions =Recruit_age_1_millions# as.numeric(scale(Recruit_age_1_millions)), 
                  #  SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)),
-                 # fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)),
-                 #  yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)) 
+                #  yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)) 
                  ) %>% 
   dplyr::select( brood_year,SST_CDD_NBS,pollock_recruit_millions,mean_size,
-                yukon_mean_discharge,fall_snow_cummulative) 
+                yukon_mean_discharge,snow_depth) 
  
 # Plot JUST covariates ==============
 ## A SST ========= 
@@ -18,14 +17,14 @@ cov_a <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   gather(2:ncol(.), key = "variable", value = "value") %>%
   filter(brood_year >1999) %>%
   dplyr::mutate(variable = factor(variable, levels = c("mean_size",#"yukon_mean_discharge", 
-                                                       "fall_snow_cummulative",
+                                                       "snow_depth",
                                                        "SST_CDD_NBS","pollock_recruit_millions"))) %>%
    filter(!variable =="yukon_mean_discharge")
 
 labels = c("mean_size"="Spawner Size" , 
            # "yukon_mean_discharge"= "Yukon River Flow",
            # "fall_mintemp_CDD" = "Min. Temperature Brood Fall",
-           "fall_snow_cummulative" = "Winter Snow Depth", 
+           "snow_depth" = "Winter Snow Depth", 
            "SST_CDD_NBS" = "CDD NBS",
            "pollock_recruit_millions"="Pollock Recruitment"  )
  
@@ -40,7 +39,7 @@ cov_a_plots <- ggplot(data = cova_dfplot,
                                )) +
   theme_classic() +
   facet_wrap(~variable, scales = "free", labeller = as_labeller(labels)) +
-  ylab("Mean Covariate") + 
+  ylab("Value") + 
   xlab("Brood Year") +
   # geom_hline(yintercept =0, linetype =2, color = "black") + 
   theme(panel.background = element_blank(),  
@@ -61,7 +60,8 @@ cov_b <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                                        TRUE ~ full_index_scale)) %>% 
   dplyr::select(brood_year,
                 SST_CDD_GOA,
-                Chum_hatchery,
+                 chum,
+                 #Chum_hatchery,
                 # Pink_hatchery,
                 full_index_scale) %>%  
   gather(2:ncol(.), key = "variable", value = "value") %>%
@@ -69,7 +69,7 @@ cov_b <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   dplyr::mutate(variable = factor(variable, levels = c("full_index_scale","SST_CDD_GOA",
                                                        "Chum_hatchery","Pink_hatchery")),
                 variable = case_when(variable == "SST_CDD_GOA" ~ "GOA Winter Temperature",
-                                     variable == "Chum_hatchery" ~ "Chum Hatchery Abund.",
+                                     variable == "Chum_hatchery" ~ "Chum Hatchery Release #s",
                                      # variable == "Pink_hatchery" ~ "Pink Salmon Hatchery Release Abundance",
                                      variable == "full_index_scale" ~   "Fullness Index")) 
 
@@ -84,7 +84,7 @@ cov_b_plot<-ggplot(data = cov_b,
                                "#72e1e1","#009474")) +
   facet_wrap(~variable, scales = "free") +
   theme_classic() +
-  ylab("Mean Covariate") + 
+  ylab("Value") + 
   xlab("Brood Year") +
   theme(panel.background = element_blank(),  
         plot.background = element_blank(),  
@@ -96,16 +96,16 @@ cov_b_plot
 
 ggpubr::ggarrange(cov_a_plots,cov_b_plot, labels = c("A.", "B."), nrow = 2)
 
-ggsave("output/Supplemental_Plot_Covariates.png",width = 6, height = 6, bg = "white")
+ggsave("output_sullaway_etal/Supplemental_Plot_Covariates.png",width = 6, height = 6, bg = "white")
 
 
 # Cov plots for talks ===================
-## plot just spawner size for   =========
+## plot just snowpack for talk =========
 
  
-cov_spawner <- cova_dfplot  %>% filter(variable == "mean_size") 
+cov_spawner <- cova_dfplot  %>% filter(variable == "snow_depth") 
 
-labels = c("mean_size"="Spawner Size" )
+labels = c("snow_depth"="Snow Depth Trend" )
 
 sp_plot <- ggplot(data = cov_spawner,
                       aes(x=brood_year, y = value, group = variable, color = variable)) +
@@ -137,7 +137,7 @@ sp_plot <- ggplot(data = cov_spawner,
         axis.ticks.x = element_line(color = "white"),
         panel.spacing.y=unit(0, "lines"))  
 sp_plot
-ggsave("output/Spawner_size_covariate_plot.png", width = 5, height = 3 ) 
+ggsave("output/SnowTrend_covariate_plot.png", width = 5, height = 3 ) 
 
 # hatchery =============== 
 cov_b_hatchery <-ggplot(data = cov_b %>% 
@@ -181,8 +181,11 @@ ggsave("output/Plot_hatchery_talk.png",width = 7, height = 3)
 # fullness + temp ========
 cov_b_tempSFI <-ggplot(data = cov_b %>% 
                             filter(variable %in% 
-                                     c("Fullness Index","Aleutian Winter Temperature")) %>% 
-                         dplyr::mutate(variable = factor(variable, levels = c("Fullness Index","Aleutian Winter Temperature"))),
+                                     c("Fullness Index","GOA Winter Temperature")) %>% 
+                         dplyr::mutate(variable = factor(variable, 
+                                                         levels = c("Fullness Index","GOA Winter Temperature"))) %>%
+                         group_by(variable) %>%
+                         dplyr::mutate(value =as.numeric(scale(value))),
                    aes(x=brood_year, y = value, group = variable, color = variable)) +
   geom_hline(yintercept =0, linetype =2, color = "white") +
   geom_line() +
@@ -190,7 +193,7 @@ cov_b_tempSFI <-ggplot(data = cov_b %>%
   scale_color_manual(values= c("#72e1e1","#009474")) +
   facet_wrap(~variable,nrow = 3) +
   theme_classic() +
-  ylab("Mean Covariate") + 
+  ylab("Mean Covariate Trend") + 
   xlab("Brood Year") +
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
         plot.background = element_blank(), #element_rect(fill = "black", colour = NA),

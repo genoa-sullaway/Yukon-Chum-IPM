@@ -12,7 +12,6 @@ bh_fit <- read_rds("output/stan_fit_DATA.RDS")
 years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
   filter(cal_year >= year_min) %>%
   dplyr::select(cal_year) %>%
-  # dplyr::mutate(brood_year = cal_year) %>% 
   dplyr::mutate(time = c(1:nrow(.)))
 
 # return  ====== 
@@ -21,7 +20,7 @@ adult_cvs <- read_xlsx("data/chum_cv.xlsx") %>%
   dplyr::select(brood_year,fall_spawner_cv) 
 
 pred_return <-  as.data.frame(bh_fit, pars = c("N_brood_year_return")) %>%
-  mutate(draw = 1:nrow(.)) %>%
+  dplyr::mutate(draw = 1:nrow(.)) %>%
   gather(1:(ncol(.)-1), key = "rowname", value = "value") %>%
   data.frame() %>%
   group_by(rowname) %>%
@@ -195,16 +194,16 @@ ggsave("output_sullaway_etal/Plot_Figure_3.png", width = 6, height = 5, bg="whit
 
 # juv plot for talk ===================
 juv_plot_talk <- ggplot(data = n_j_summary_clean) +
-  geom_ribbon(aes(x=brood_year, ymin =ci_95_low/1000000,
+  geom_ribbon(aes(x=Year, ymin =ci_95_low/1000000,
                   ymax = ci_95_high/1000000),   fill =  "#EAAA00") +
-  geom_line(aes(x=brood_year, y = mean/1000000)) +
-  geom_errorbar(aes(x=brood_year, ymin = (obs-sd)/1000000,
+  geom_line(aes(x=Year, y = mean/1000000)) +
+  geom_errorbar(aes(x=Year, ymin = (obs-sd)/1000000,
                     ymax = (obs+sd)/1000000), width = 0.1, alpha = 0.6,color = "white") + 
-  geom_point(aes(x=brood_year, y = (obs)/1000000), alpha = 0.6, color = "white") +
+  geom_point(aes(x=Year, y = (obs)/1000000), alpha = 0.6, color = "white") +
   # geom_line(aes(x=brood_year, y = (obs)), color = "white" ) +
   # scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
   theme_classic() + 
-  xlab("Brood Year") + 
+  xlab("Calender Year") + 
   ylab("Est. Juv. Abundance\n (Millions)") +
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
         plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
@@ -228,7 +227,7 @@ juv_plot_talk <- ggplot(data = n_j_summary_clean) +
 
    
 juv_plot_talk 
-ggsave("output/Plot_juv_fit_Obs_TALK.png", width = 8, height = 6, bg="transparent")
+ggsave("output/Plot_juv_fit_Obs_TALK.png", width = 13, height = 3, bg="transparent")
 
 # return plot for talk =======
 return_plot_talk <- ggplot(data = pred_return) +
@@ -263,7 +262,11 @@ return_plot_talk <- ggplot(data = pred_return) +
         axis.ticks.x = element_line(color = "white"),
         panel.spacing.y=unit(0, "lines")) 
 
-
 return_plot_talk 
-ggsave("output/Plot_return_fit_Obs_TALK.png", width = 10, height = 6, bg="transparent")
+ggsave("output/Plot_return_fit_Obs_TALK.png", width = 13, height = 3, bg="transparent")
+
+# 
+# 
+# return_plot_talk 
+# ggsave("output/Plot_return_fit_Obs_TALK.png", width = 7, height = 4, bg="transparent")
 

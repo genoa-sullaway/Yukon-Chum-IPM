@@ -237,7 +237,7 @@ both <- st_difference(mask, mask2)
 
 ## manuscript figure  ===============
 # just fall, a little more detail on the plot 
-
+ 
 fall_plot <- ggplot() +
     geom_sf(data = na_outline, fill = "white") +
   geom_sf(data = ariv, aes(
@@ -259,8 +259,25 @@ fall_plot <- ggplot() +
   # geom_sf(data = lower_box, fill = "white", color = "white") + 
  # geom_sf(data = polygon_NBS, fill = NA, color = "black") + 
   geom_point(data = NBS_survey_grid, aes(x = Lon, y= Lat), color = "darkgray", size = 1, alpha = 0.7) + 
-  geom_point(aes(x= -144.0657, y= 65.8252), color = "#D4AF37", size = 4, shape = 18) + # plot Circle lat long (source of snow data)
-  coord_sf(
+  # geom_point(aes(x= -144.0657, y= 65.8252), color = "#D4AF37", size = 4, shape = 18) + # plot Circle lat long (source of snow data)
+  # geom_point(aes(x= -147.7200, y= 64.8401), color = "#A67C00", size = 4, shape = 18) + # plot Fairbanks lat long (source of snow data)
+  # geom_point(aes(x= -152.0887, y= 65.1709), color = "#E6C766", size = 4, shape = 18) + # plot Tanana lat long (source of snow data)
+  new_scale_color() +
+  geom_point(
+    data = data.frame(
+      lon = c(-144.0657, -147.7200, -152.0887),
+      lat = c(65.8252, 64.8401, 65.1709),
+      site = c("Circle", "Fairbanks", "Tanana") ),
+    aes(x = lon, y = lat, color = site),
+    size = 4, shape = 17) +
+  scale_color_manual(
+    values = c(
+      "Circle"   = "#D4AF37",
+      "Fairbanks" = "#A67C00",
+      "Tanana"    = "#E6C766"
+    ),
+    name = "Snow Data Locations") +
+   coord_sf(
     crs = crsLONGLAT,
     xlim = c(-173,#bb["xmin"], 
              -132.5),#bb["xmax"]),
@@ -303,13 +320,13 @@ fall_plot <- ggplot() +
 
 # save manuscript figure ========
 ggsave(
-  filename = "output/Figure_1_ak_rivers_fall_weirs.png",
+  filename = "output_sullaway_etal/Figure_1_ak_rivers_fall_weirs.png",
   width = 9, height = 6, dpi = 600,
   # bg = "white", 
   device = "png", fall_plot
 )
 
-# stop here for manuscript figure =======
+# STOP here for manuscript figure =======
 # keep going for alt map figures ========
   
 ## just fall fish with lat longs ===============
