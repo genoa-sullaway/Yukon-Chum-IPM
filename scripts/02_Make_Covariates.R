@@ -97,7 +97,8 @@ write_csv(stage_a_cov, "data/processed_covariates/stage_a_all.csv")
 # Stage B - Load data ============= 
 fullness_df<-readRDS("data/processed_covariates/fullness_cov.RDS") %>%
   dplyr::rename(Year = "SampleYear_add1") %>%
-  dplyr::select(Year, full_index_scale )  
+  dplyr::select(Year, full_index_scale )  %>%
+  dplyr::mutate(brood_year = Year-2)
 
 # chum_df<-read_csv("output/total_chum_CovB.csv") %>%
   # dplyr::rename(Year = "year")
@@ -106,30 +107,32 @@ fullness_df<-readRDS("data/processed_covariates/fullness_cov.RDS") %>%
 chum_df<-read_csv("output/Chum_CovB.csv.csv") %>%
   dplyr::rename(Year = "year")
 
+comp_df<-read_csv("output/Comp_CovB.csv")
+
 # hatchery_chum_df<-read_csv("data/hatchery_Chum_Covariate_AKandAsia.csv") 
 # hatchery_chum_b<-hatchery_chum_df %>%
 #   dplyr::rename(Chum_hatchery="sum") %>%
 #   dplyr::select(Year, Chum_hatchery) %>%
 #   rbind(data.frame(Year = c(2023),
 #                    Chum_hatchery = c(mean(hatchery_chum_df$sum) + 0.01)))
-
-hatchery_pink_df <- read_csv("data/hatchery_Pink_Covariate_AKandAsia.csv")
-hatchery_pink_b <- hatchery_pink_df%>%
-  dplyr::rename(Pink_hatchery="sum") %>%
-  dplyr::select(Year, Pink_hatchery) %>%
-  rbind(data.frame(Year = c(2023),
-                   Pink_hatchery = c(mean(hatchery_pink_df$sum) + 0.01)))
+# 
+# hatchery_pink_df <- read_csv("data/hatchery_Pink_Covariate_AKandAsia.csv")
+# hatchery_pink_b <- hatchery_pink_df%>%
+#   dplyr::rename(Pink_hatchery="sum") %>%
+#   dplyr::select(Year, Pink_hatchery) %>%
+#   rbind(data.frame(Year = c(2023),
+#                    Pink_hatchery = c(mean(hatchery_pink_df$sum) + 0.01)))
 
 sst_b<-read_csv("data/processed_covariates/Stage_B_CDD.csv") %>%
   dplyr::rename(SST_CDD_GOA = "CDD",
                 Year = "year") %>%
-  dplyr::select(Year, SST_CDD_GOA)
+  dplyr::mutate(brood_year = Year-2,
+                SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA))) %>%
+  dplyr::select(brood_year, SST_CDD_GOA) 
 
-stage_b_cov<- left_join(hatchery_pink_b,sst_b) %>%
-              left_join(chum_df) %>%
-              # left_join(hatchery_chum_b) %>%
+stage_b_cov<- left_join(sst_b, comp_df) %>%
               left_join(fullness_df) %>%
-  dplyr::mutate(brood_year = Year-2)
+              dplyr::select(-Year)
 
 # Stage B - Save DF ============= 
 write_csv(stage_b_cov, "data/processed_covariates/stage_b_all.csv")

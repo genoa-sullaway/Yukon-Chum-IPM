@@ -51,7 +51,7 @@ return_plot <- ggplot(data = pred_return) +
   geom_point(aes(x=brood_year, y = obs/1000000) ) +
   theme_classic() + 
   xlab("Brood Year") + 
-  ylab("Est. Return Abundance\n(Millions)") +
+  ylab("Return Abundance\n(Millions)") +
   scale_y_continuous(limits = c(0, 2500000/1000000)) + 
   theme(panel.background = element_blank(),  
         plot.background = element_blank(),  
@@ -164,7 +164,7 @@ juv_plot <- ggplot(data = n_j_summary_clean) +
   # scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
   theme_classic() + 
   xlab("Calendar Year") + 
-  ylab("Est. Juv. Abundance\n (Millions)") +
+  ylab("Est. Relative Juv. \nAbundance (Millions)") +
   theme(panel.background = element_blank(), #element_rect(fill = "black", colour = NA),
         plot.background = element_blank(), #element_rect(fill = "black", colour = NA),
         legend.background = element_blank(),
@@ -186,7 +186,7 @@ juv_plot <- ggplot(data = n_j_summary_clean) +
 
 juv_plot 
 
-## save ======== 
+## MANUSCTIP PLOT save ======== 
 obs_plot <- ggpubr::ggarrange(juv_plot,return_plot, nrow = 2, labels = c("A.", "B."))
 obs_plot
 

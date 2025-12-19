@@ -142,8 +142,8 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
                 #already mean scaled fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
                 pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions))) %>%
   dplyr::select(mean_size,
-                 snow_depth,
-                # yukon_mean_discharge,
+                # snow_depth,
+                yukon_mean_discharge,
                 SST_CDD_NBS, 
                 pollock_recruit_scale
                 ) %>% 
@@ -154,22 +154,11 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
   dplyr::rename(full_index=full_index_scale) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>% 
-  dplyr::mutate( SST_CDD_GOA = as.numeric(scale(SST_CDD_GOA)),
-                 # Chum_hatchery= as.numeric(scale(Chum_hatchery)),
-                 Pink_hatchery= as.numeric(scale(Pink_hatchery))
-                 # full_index = as.numeric(scale(full_index))
-                 ) %>%
   dplyr::select(full_index,
-                # SST_CDD_GOA,
+                SST_CDD_GOA,
                 rolling_avg_chum_nat_hatch,
-                rolling_avg_hatchery_sum
-                # chum
-                # Chum_hatchery,
-                # Pink_hatchery,
-                ) %>%
+                rolling_avg_pink_nat_hatch) %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
-
-stage_b_cov[20,2:3] <-0
 
 # stage_b_cov[20,3:4] <-0
 
@@ -179,7 +168,7 @@ ncovars2 = ncol(stage_b_cov)
 
 # fix marine mortality =======
 # generally low mortality in ocean for older life stages 
-M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
+ M_fill_stan = c(0.06, 0.06, 0.06,0.06) # will be cumulative 
 
 #ess age comp =======
 ess_age_comp = 300 #as.vector(rep(400, times = nRyrs))

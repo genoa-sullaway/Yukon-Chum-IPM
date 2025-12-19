@@ -167,7 +167,7 @@ library(rstan)
   
   # Juvenile stage analyses general =========
   # mean abundance ========
-  covariates <- c("Spawner Size", "Snow Pack", "SST CDD", "Pollock")
+  covariates <- c("Spawner Size", "River Discharge", "SST CDD", "Pollock")
    
   coef_names <- c("theta1[1]", "theta1[2]","theta1[3]", "theta1[4]")
   
@@ -194,7 +194,7 @@ library(rstan)
   
   # Return stage analyses ===========
   covariates <- c("Fullness",
-                  "GOA Temp", "All Chum", "Hatchery Chum")
+                  "GOA Temp", "All Chum", "All Pink")
   coef_names <- c("theta2[1]", "theta2[2]", "theta2[3]","theta2[4]")
   
   for (i in 1:length(covariates)) {
@@ -230,38 +230,38 @@ library(rstan)
   write.csv(ci_df, "output_sullaway_etal/survival_percent_diff.csv" )
   
 #   ## load covariate data ========== 
-# stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
-#     filter(brood_year >= year_min, 
-#            brood_year <= year_max_brood) #%>%
-#     # dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
-#     #               yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
-#     #               fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)), 
-#     #               pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions)))  
-#   
-#   # the temp in 2001 is gonna effect fish from brood year 1999
-#   stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
-#     dplyr::rename(full_index=full_index_scale) %>% 
-#     filter(brood_year >= year_min, 
-#            brood_year <= year_max_brood) #%>% 
-#     # dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
-#     #                Chum_hatchery= as.numeric(scale(Chum_hatchery)),
-#     #                Pink_hatchery= as.numeric(scale(Pink_hatchery))
-#     #                # full_index = as.numeric(scale(full_index))
-#     # )  
-#   
-# # get 1 SD for each covariate ====
-# cov_a_sd <- stage_a_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
-#               gather(1:ncol(.), key = "id", value = "value") %>%           
-#     group_by(id) %>%           
-#     dplyr::summarise(sd = round(sd(value),6))
-#   
-#   cov_b_sd <- stage_b_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
-#     gather(1:ncol(.), key = "id", value = "value") %>%           
-#     group_by(id) %>%           
-#     dplyr::summarise(sd = round(sd(value),6))
-# 
-#    
-#   
+stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+    filter(brood_year >= year_min,
+           brood_year <= year_max_brood) %>%
+     dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)))
+    #               yukon_mean_discharge = as.numeric(scale(yukon_mean_discharge)),
+    #               fall_snow_cummulative = as.numeric(scale(fall_snow_cummulative)),
+    #               pollock_recruit_scale = as.numeric(scale(Recruit_age_1_millions)))
+
+  # the temp in 2001 is gonna effect fish from brood year 1999
+  stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+    dplyr::rename(full_index=full_index_scale) %>%
+    filter(brood_year >= year_min,
+           brood_year <= year_max_brood) #%>%
+    # dplyr::mutate( SST_CDD_Aleut = as.numeric(scale(SST_CDD_Aleut)),
+    #                Chum_hatchery= as.numeric(scale(Chum_hatchery)),
+    #                Pink_hatchery= as.numeric(scale(Pink_hatchery))
+    #                # full_index = as.numeric(scale(full_index))
+    # )
+
+# get 1 SD for each covariate ====
+cov_a_sd <- stage_a_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
+              gather(1:ncol(.), key = "id", value = "value") %>%
+    group_by(id) %>%
+    dplyr::summarise(sd = round(sd(value),6))
+
+  cov_b_sd <- stage_b_cov %>% #cbind(stage_a_cov, stage_b_cov) %>%
+    gather(1:ncol(.), key = "id", value = "value") %>%
+    group_by(id) %>%
+    dplyr::summarise(sd = round(sd(value),6))
+
+
+
 # OLD ===============
   
 #   

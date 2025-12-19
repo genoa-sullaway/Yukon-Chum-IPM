@@ -69,7 +69,7 @@ real  basal_p_1; // mean prod for covariate survival stage 1
 real  basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
- vector <lower=5> [A] alpha;
+ vector <lower=7.5> [A] alpha;
  
  }
 
@@ -242,11 +242,7 @@ model {
    alpha[3] ~  normal(7, 1);
    alpha[4] ~  normal(7, 1);
   
-   // alpha[1] ~  normal(1, 5); 
-   // alpha[2] ~  normal(1, 5);
-   // alpha[3] ~  normal(1, 5);
-   // alpha[4] ~  normal(1, 5);
-
+  
    prob[1] ~ beta(1,1);
    prob[2] ~ beta(1,1);
    prob[3] ~ beta(1,1);

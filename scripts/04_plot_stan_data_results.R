@@ -54,7 +54,7 @@ diagnostics_carrying_cap <- data.frame(summary(bh_fit)$summary[,c("n_eff", "Rhat
 
 # parameter plots ======== 
 plot(bh_fit, show_density = TRUE, ci_level = 0.5, 
-     pars=  c( "theta1[1]","theta1[2]","theta1[3]",# "theta1[4]",  #"theta1[5]","theta1[6]", 
+     pars=  c( "theta1[1]","theta1[2]","theta1[3]","theta1[4]",  #"theta1[5]","theta1[6]", 
                "theta2[1]","theta2[2]","theta2[3]","theta2[4]"),
      fill_color = "blue")
 
@@ -140,9 +140,17 @@ basal_prod <- summary(bh_fit, pars = c("basal_p_1","basal_p_2"),
          probs = c(0.1, 0.9))$summary
          
   summary(bh_fit, pars = c("log_catch_q"), 
-         probs = c(0.1, 0.9))$summary 
+         probs = c(0.1, 0.9))$summary
+
+    summary(bh_fit, pars = c("theta1[1]","theta1[2]", "theta1[3]", "theta1[4]"),
+          probs = c(0.1, 0.9))$summary
+    
+    summary(bh_fit, pars = c("theta2[1]","theta2[2]", "theta2[3]", "theta2[4]"),
+            probs = c(0.1, 0.9))$summary
+    
+    
  # Plot Observed vs Predicted ========
- # year DF for joins ==================
+  # year DF for joins ==================
   years <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
     filter(cal_year >= year_min) %>%
     dplyr::select(cal_year) %>%

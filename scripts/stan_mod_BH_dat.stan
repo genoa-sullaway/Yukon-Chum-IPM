@@ -65,7 +65,7 @@ real log_F_mean;
 vector [A] log_S; // log selectivity 
 vector [nRyrs_T]  log_F_dev_y; 
 
-real  basal_p_1; // mean prod for covariate survival stage 1
+real <lower=-3> basal_p_1; // mean prod for covariate survival stage 1
 real  basal_p_2; // mean prod for covariate survival stage 2
 
 // ricker parameters 
@@ -242,7 +242,7 @@ model {
       
    alpha[1] ~  normal(7, 1); 
    alpha[2] ~  normal(7, 1);
-   alpha[3] ~  normal(7, 1);
+   alpha[3] ~  normal(8, 1);
    alpha[4] ~  normal(7, 1);
   
    // alpha[1] ~  normal(1, 5); 
@@ -267,7 +267,7 @@ model {
   theta2[1] ~ normal(0,0.1);
   theta2[2] ~ normal(0,0.1);
   theta2[3] ~ normal(0,0.1);
-  // theta2[4] ~ normal(0,0.1);
+  theta2[4] ~ normal(0,0.1);
   
   
   // D_scale ~ beta(1,1);   
