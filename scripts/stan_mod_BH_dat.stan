@@ -110,7 +110,7 @@ vector [nByrs] kappa_marine_survival; // predicted survival for marine fish
 matrix  [nByrs, ncovars1] cov_eff1; // array that holds FW and early marine covariate effects by brood year and stock
 matrix  [nByrs, ncovars2] cov_eff2; 
 
-real <lower=0>  catch_q; // related juvebile data to spawner data (on different scales) gets transfomed from log to number 
+real <lower=0>  catch_q; // related juvenile data to spawner data (on different scales) gets transfomed from log to number 
  
 // Age related transformed params ====== 
 matrix<lower=0, upper=1> [nByrs,A] p; // proportion of fish from each brood year that mature at a certain age

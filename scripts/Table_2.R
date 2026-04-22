@@ -97,6 +97,12 @@ summary_df <- rbind(
     notation = "$\\sigma_o$",
     prior = "Beta(0,0.1)"
   ),
+  create_parameter_summary(
+    fit = fit,
+    parameter_name = "theta2[4]",
+    notation = "$\\sigma_o$",
+    prior = "Beta(0,0.1)"
+  ),
   # alpha ====== 
   create_parameter_summary(
     fit = fit,

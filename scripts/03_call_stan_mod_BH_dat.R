@@ -160,7 +160,7 @@ stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
                 rolling_avg_pink_nat_hatch) %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
-# stage_b_cov[20,3:4] <-0
+  stage_b_cov[20,3:4] <-0
 
 # number covariates for each life stage 
 ncovars1 = ncol(stage_a_cov)

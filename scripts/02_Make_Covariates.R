@@ -51,8 +51,8 @@ snow_depth <- read.csv("data/processed_covariates/Stage_A_Snow.csv") %>%
 river_discharge_a <- read_csv("data/processed_covariates/Stage_A_YK_Discharge.csv") %>%
   dplyr::select(Year, mean_discharge,id) %>%
   spread(id, mean_discharge) %>%
-  dplyr::rename(brood_year = "Year",
-                yukon_mean_discharge = "Yukon") %>% 
+  dplyr::mutate(brood_year = Year - 1) %>% 
+  dplyr::rename(yukon_mean_discharge = "Yukon") %>% 
   dplyr::select(brood_year, yukon_mean_discharge)
 
 ### Size =========== 
