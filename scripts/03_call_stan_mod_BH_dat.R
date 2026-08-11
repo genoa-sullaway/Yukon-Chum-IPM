@@ -27,16 +27,17 @@ year_min = 2002
 year_max_cal = 2022
 year_max_brood = 2021 # fall juvenile data go to 2022, but as a brood year it is 2021
 
+here() 
 # load salmon data ==============================================
 ## Fall age comp ================================================
-yukon_fall_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv") %>%
+yukon_fall_obs_agecomp <- read_csv(here("data/processed_data/yukon_fall_age_comp.csv")) %>%
   filter(cal_year >= year_min, 
          cal_year <= year_max_cal) %>%
   dplyr::select(2:ncol(.)) %>%
   as.matrix()
 
 ## Fall brood year age comp ================================================
-yukon_fall_broodyear_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age_comp.csv") %>%
+yukon_fall_broodyear_obs_agecomp <- read_csv(here("data/processed_data/yukon_fall_age_comp.csv")) %>%
   dplyr::select(2:ncol(.)) %>%
   filter(!is.na(abund_0.6)) %>% 
   as.matrix()
@@ -45,14 +46,14 @@ yukon_fall_broodyear_obs_agecomp <- read_csv("data/processed_data/yukon_fall_age
 pi <- colMeans(yukon_fall_broodyear_obs_agecomp)
 
 # add CV =========
-return_CVs <- read_xlsx("data/chum_cv.xlsx") %>%
+return_CVs <- read_xlsx(here("data/chum_cv.xlsx")) %>%
   filter(year >= year_min, 
          year <= year_max_cal) 
  
 mean(return_CVs$fall_spawner_cv)
 
 ## add juvenile index CV ========
-fall_juv_CV <- read_csv("data/Juvenile_Index_CC/Index for Sabrina.csv") %>%
+fall_juv_CV <- read_csv(here("data/Juvenile_Index_CC/Index for Sabrina.csv")) %>%
   filter(Stratum == "Stratum_1")  
 
 
@@ -70,30 +71,30 @@ fall_juv_CV_all <- fall_juv_CV %>%
 mean(fall_juv_CV_all$CV)
 
 ## Spawners, Recruits, Harvest ==================================== 
-yukon_fall_spawners <-read_csv("data/processed_data/yukon_fall_spawners.csv") %>%
+yukon_fall_spawners <-read_csv(here("data/processed_data/yukon_fall_spawners.csv")) %>%
   filter(cal_year >= year_min, 
          cal_year <= year_max_cal) 
 
-yukon_fall_harvest<-read_csv("data/processed_data/yukon_fall_harvest.csv") %>%
+yukon_fall_harvest<-read_csv(here("data/processed_data/yukon_fall_harvest.csv")) %>%
   filter(cal_year >= year_min, 
          cal_year <= year_max_cal) %>% 
   dplyr::select(2) %>%
   as.vector()
 
-yukon_fall_recruits<-read_csv("data/processed_data/yukon_fall_recruits.csv") %>%
+yukon_fall_recruits<-read_csv(here("data/processed_data/yukon_fall_recruits.csv")) %>%
   filter(cal_year >= year_min#,
          #cal_year <= year_max_cal
   ) %>%
   dplyr::select(2) %>%
   as.vector()
 
-yukon_fall_return_brood_year<- read_csv("data/processed_data/yukon_fall_yukon_fall_return_brood_year.csv") %>%
+yukon_fall_return_brood_year<- read_csv(here("data/processed_data/yukon_fall_yukon_fall_return_brood_year.csv")) %>%
   filter(Brood_Year >= year_min,
          !is.na(Brood_Year_Return))
 
 
 ## Fall Juveniles ================================================
-fall_juv <- read_csv("data/processed_data/tidy_juv_fall_yukon.csv")  %>%
+fall_juv <- read_csv(here("data/processed_data/tidy_juv_fall_yukon.csv"))  %>%
   dplyr::mutate(brood_year = Year-1) %>%
   filter(!brood_year>year_max_brood) %>%
   dplyr::select(brood_year,fall_abund)
@@ -134,7 +135,7 @@ N_catch_start_log = log(N_catch_start+ 1.001)
 N_egg_start_log  = log(N_egg_start+ 1.001)
 
 #  covariates =================  
-stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
+stage_a_cov <- read_csv(here("data/processed_covariates/stage_a_all.csv")) %>%
          filter(brood_year >= year_min, 
                 brood_year <= year_max_brood) %>%
   dplyr::mutate(SST_CDD_NBS = as.numeric(scale(SST_CDD_NBS)), 
@@ -150,7 +151,7 @@ stage_a_cov <- read_csv("data/processed_covariates/stage_a_all.csv") %>%
   as.matrix() 
 
 # the temp in 2001 is gonna effect fish from brood year 1999
-stage_b_cov <- read_csv("data/processed_covariates/stage_b_all.csv") %>%
+stage_b_cov <- read_csv(here("data/processed_covariates/stage_b_all.csv")) %>%
   dplyr::rename(full_index=full_index_scale) %>% 
   filter(brood_year >= year_min, 
          brood_year <= year_max_brood) %>% 
@@ -259,7 +260,9 @@ data_list_stan <- list(nByrs=nByrs,
                        juv_CV= fall_juv_CV_all$CV, 
                        return_CV = return_CVs$fall_spawner_cv,
                        D_scale = 0.3
-                       )
+                     )
+
+saveRDS(data_list_stan, file = here("data/model_input_data_list_stan.RDS"))
 
 # mod specifics ============
 # use these for full model

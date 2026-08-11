@@ -23,3 +23,7 @@ scripts/old scripts
 scripts/non_public_Scripts
 notes
 .RDataTmp2
+.csv
+.xlsx
+.xml
+.zip
