@@ -161,6 +161,7 @@ stage_b_cov <- read_csv(here("data/processed_covariates/stage_b_all.csv")) %>%
                 rolling_avg_pink_nat_hatch) %>%
                as.matrix() # add another row because t+a+1 is 2024, so this is basically a dummy row for the last year of fish...
 
+  stage_b_cov[19,3] <-0
   stage_b_cov[20,3:4] <-0
 
 # number covariates for each life stage 
@@ -174,54 +175,7 @@ ncovars2 = ncol(stage_b_cov)
 #ess age comp =======
 ess_age_comp = 300 #as.vector(rep(400, times = nRyrs))
 
-# fix age comp - based on estimates from no covar data 
-# age_comp <- summary(bh_fit, pars = c("pi"), 
-#                     probs = c(0.1, 0.9))$summary[,1]
- 
- 
-# in case i want to fix that  
-#prob = c(0.03180601 0.74323447 0.96200639)
-
 # STAN STARTING VALUES ==========
-# kappa_j_start =  basal_p_1
-# kappa_marine_start = c(basal_p_2,basal_p_2)
-# kappa_marine_mort_start = c(-log(basal_p_2),-log(basal_p_2))
-
-# use average age comp to distribute starting values
-# p <- colMeans(yukon_fall_obs_agecomp[1:21,]) 
-
-# # Initial values ========
-# init_fn <- function(chain_id=1) {
-#   list( 
-#        theta1=list(rnorm(1,-0.1,0.05),
-#                    rnorm(1,0.1,0.05),
-#                    rnorm(1,-0.1,0.05)), # list because there are 3 thetas 
-# 
-#        theta2=list(rnorm(1,-0.01,0.05),
-#                    rnorm(1,-0.01,0.05)), # list becaues two thetas 
-# 
-#        prob = list(rbeta(1,0.25,1),
-#                    rbeta(1,0.75,1),
-#                    rbeta(1,0.2,1)), 
-#        
-#        D_scale = runif(1,0.1,0.8),  
-#        
-#        g = list(runif(1,0.001,0.5),
-#                 runif(1,0.5,1),
-#                 runif(1,0.3,1),
-#                 runif(1,0.001,0.5)), 
-#        
-#        log_catch_q = rnorm(1,-5,0.01),
-#        
-#        log_F_dev_y = rnorm(nRyrs_T,0,2),
-#        log_F_mean = runif(1,0.2,2),
-#           
-#        basal_p_1 = runif(1,0.1,1), 
-#        basal_p_2 = runif(1,0.1,1), 
-#        
-#        sigma_y_j = runif(1,0.5,2)
-#        )
-#      }
 
 # assign data ==========
 data_list_stan <- list(nByrs=nByrs,

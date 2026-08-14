@@ -52,6 +52,12 @@ return_plot <- ggplot(data = pred_return) +
   theme_classic() + 
   xlab("Brood Year") + 
   ylab("Return Abundance\n(Millions)") +
+  # scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
+  scale_x_continuous(
+    limits = c(2002, 2022),
+    breaks = c(2005, 2010, 2015, 2020),
+    expand = c(0, 0)
+  ) +
   scale_y_continuous(limits = c(0, 2500000/1000000)) + 
   theme(panel.background = element_blank(),  
         plot.background = element_blank(),  
@@ -162,6 +168,11 @@ juv_plot <- ggplot(data = n_j_summary_clean) +
   geom_point(aes(x=Year, y = (obs)/1000000), alpha = 0.6) +
   # geom_line(aes(x=brood_year, y = (obs)), color = "white" ) +
   # scale_x_continuous(breaks = c(2002, 2005,2010, 2015,2020)) +
+  scale_x_continuous(
+    limits = c(2002, 2022),
+    breaks = c(2005, 2010, 2015, 2020),
+    expand = c(0, 0)
+  ) + 
   theme_classic() + 
   xlab("Calendar Year") + 
   ylab("Est. Relative Juv. \nAbundance (Millions)") +

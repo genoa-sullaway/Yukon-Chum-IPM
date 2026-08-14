@@ -51,6 +51,102 @@ theta_plot
 ggsave("output_sullaway_etal/Plot_Figure_4.png", width = 7, height = 4)
 
 # STOP HERE FOR MANUSCRIPT PLOTS ===== 
+# supplemental plot for negative SD Change ==========
+
+## Plot percent DECREASE in survival ==================================
+
+ci_decrease <- read_csv(
+  "output_sullaway_etal/survival_percent_diff_decrease.csv"
+) %>%
+  mutate(
+    covariate = case_when(
+      covariate == "SST CDD" ~ "NBS SST",
+      covariate == "GOA Temp" ~ "GOA SST",
+      covariate == "Fullness" ~ "Fullness Index",
+      covariate == "Pollock" ~ "Pollock Recruitment",
+      TRUE ~ covariate
+    ),
+    
+    covariate = factor(
+      covariate,
+      levels = rev(c(
+        "Spawner Size",
+        "River Discharge",
+        "NBS SST",
+        "Pollock Recruitment",
+        "Fullness Index",
+        "GOA SST",
+        "All Chum",
+        "All Pink"
+      ))
+    )
+  )
+
+theta_plot_decrease <- ggplot(
+  data = ci_decrease,
+  aes(
+    x = mean_percent_change,
+    y = covariate,
+    group = stage,
+    color = stage
+  )
+) +
+  geom_errorbar(
+    aes(
+      xmin = lower_95,
+      xmax = upper_95
+    ),
+    width = 0,
+    linewidth = 0.5
+  ) +
+  geom_point(size = 2) +
+  geom_errorbar(
+    aes(
+      xmin = lower_50,
+      xmax = upper_50
+    ),
+    linewidth = 1.5,
+    width = 0
+  ) +
+  theme_classic() +
+  scale_color_manual(
+    values = c("#EAAA00", "#2d9d92")
+  ) +
+  theme(
+    panel.background = element_blank(),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    legend.title = element_blank(),
+    strip.text = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    axis.text.x = element_text(
+      angle = 90,
+      vjust = 0.5,
+      hjust = 1
+    ),
+    panel.spacing.y = unit(0, "lines")
+  ) +
+  geom_vline(xintercept = 0) +
+  ylab("") +
+  xlab("Estimated Percent Change in Survival with a 1 SD Decrease") +
+  facet_wrap(
+    ~stage,
+    scales = "free_y",
+    ncol = 1
+  )
+
+theta_plot_decrease
+
+ggsave(
+  "output_sullaway_etal/Plot_Figure_4_Supplement_1SD_Decrease.png",
+  theta_plot_decrease,
+  width = 7,
+  height = 4
+)
+
 ## percent change plot for talk - white ==========================
 theta_plot1 <- ggplot(data = ci_df,
                       aes(x= mean_percent_change, y = covariate, 

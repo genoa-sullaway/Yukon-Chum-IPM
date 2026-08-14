@@ -60,6 +60,10 @@ size <- read_csv("data/processed_covariates/Stage_A_Size.csv") %>%
   dplyr::rename(brood_year = "Year",
                 mean_size = "trend")
 
+ggplot(data = size, aes(x=brood_year, y = mean_size)) +
+  geom_point()+ 
+  geom_path()
+
 ## early marine stage A ===============
 ### Pollock ========
 pollock <- read_csv("data/processed_covariates/Stage_A_Pollock_Recruitment.csv") %>%
@@ -104,8 +108,8 @@ fullness_df<-readRDS("data/processed_covariates/fullness_cov.RDS") %>%
   # dplyr::rename(Year = "year")
 
 # this has natural and hatchery and just hatchery, all rolling means scaled etc
-chum_df<-read_csv("output/Chum_CovB.csv.csv") %>%
-  dplyr::rename(Year = "year")
+# chum_df<-read_csv("output/Chum_CovB.csv.csv") %>%
+#   dplyr::rename(Year = "year")
 
 comp_df<-read_csv("output/Comp_CovB.csv")
 
@@ -115,7 +119,7 @@ comp_df<-read_csv("output/Comp_CovB.csv")
 #   dplyr::select(Year, Chum_hatchery) %>%
 #   rbind(data.frame(Year = c(2023),
 #                    Chum_hatchery = c(mean(hatchery_chum_df$sum) + 0.01)))
-# 
+  
 # hatchery_pink_df <- read_csv("data/hatchery_Pink_Covariate_AKandAsia.csv")
 # hatchery_pink_b <- hatchery_pink_df%>%
 #   dplyr::rename(Pink_hatchery="sum") %>%
